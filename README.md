@@ -43,3 +43,14 @@ No third-party photographs are bundled. All geometry and textures are generated 
 ## Scope
 
 This first pass intentionally has no objectives, scoring, inventory or fail state. The entire interaction is walking and looking around.
+
+## Other games
+
+### Cat & Two Balconies
+
+Keep an apartment cool without letting an adventurous cat escape. Run it with:
+
+```bash
+cd cat-and-two-balconies
+python3 run.py
+```
