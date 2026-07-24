@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="A small voxel-style walking scene inspired by central Bălți, Moldova."
+    />
+    <title>Bălți City Walk</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.161.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.161.0/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <main id="game" aria-label="Bălți City Walk 3D scene"></main>
+
+    <div id="hud">
+      <div class="location-card">
+        <strong>BĂLȚI · CENTRU</strong>
+        <span>Piața Vasile Alecsandri — inspired scene</span>
+      </div>
+      <div id="crosshair" aria-hidden="true"></div>
+      <div class="controls-hint">WASD move · Mouse look · Shift walk faster · Esc pause</div>
+    </div>
+
+    <section id="intro" class="overlay" aria-labelledby="intro-title">
+      <div class="panel">
+        <div class="eyebrow">ONESHOT GAME 01</div>
+        <h1 id="intro-title">A walk through central Bălți</h1>
+        <p>
+          A compact, block-built interpretation of the broad pedestrian square,
+          mixed Soviet-era streetscape, trees, trolley wires, bell tower and
+          blue-domed cathedral found around the city centre.
+        </p>
+        <button id="start-button" type="button">Începe plimbarea</button>
+        <p class="small">Click the scene again whenever the mouse becomes unlocked.</p>
+      </div>
+    </section>
+
+    <div id="webgl-error" class="overlay hidden" role="alert">
+      <div class="panel">
+        <h1>WebGL could not start</h1>
+        <p>Try a current desktop browser with hardware acceleration enabled.</p>
+      </div>
+    </div>
+
+    <script type="module" src="./game.js"></script>
+  </body>
+</html>
