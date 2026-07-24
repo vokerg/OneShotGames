@@ -1,0 +1,241 @@
+:root {
+color-scheme: dark;
+--red: #9f2428;
+--red-bright: #d3483f;
+--paper: #d8c69b;
+--dim: #9f947b;
+--panel: rgba(12, 12, 10, .82);
+--line: rgba(216, 198, 155, .5);
+}
+* { box-sizing: border-box; }
+html, body {
+margin: 0;
+width: 100%;
+height: 100%;
+overflow: hidden;
+background: #050506;
+font-family: "Arial Narrow", "Roboto Condensed", ui-monospace, Consolas, monospace;
+}
+body { display: grid; place-items: center; }
+#game {
+width: 100vw;
+height: 100vh;
+display: block;
+background: #050506;
+cursor: crosshair;
+image-rendering: auto;
+}
+#ui {
+position: fixed;
+inset: 0;
+pointer-events: none;
+color: var(--paper);
+text-transform: uppercase;
+letter-spacing: .06em;
+font-weight: 800;
+text-shadow: 0 2px 2px #000, 0 0 8px #000;
+}
+#ui::after {
+content: "";
+position: absolute;
+inset: 0;
+background: linear-gradient(rgba(255,255,255,.018) 50%, rgba(0,0,0,.025) 50%);
+background-size: 100% 4px;
+mix-blend-mode: overlay;
+opacity: .45;
+}
+#minimapFrame {
+position: absolute;
+top: clamp(12px, 2vw, 26px);
+left: clamp(12px, 2vw, 26px);
+width: clamp(150px, 15vw, 230px);
+aspect-ratio: 1;
+padding: 8px;
+background: linear-gradient(145deg, rgba(24,23,19,.94), rgba(5,5,5,.9));
+border: 2px solid rgba(212,194,151,.54);
+box-shadow: 0 0 0 3px rgba(0,0,0,.72), 0 12px 30px rgba(0,0,0,.55);
+}
+#minimap { width: 100%; height: 100%; display: block; }
+#sector {
+position: absolute;
+left: clamp(12px, 2vw, 26px);
+top: calc(clamp(150px, 15vw, 230px) + clamp(28px, 4vw, 48px));
+max-width: min(520px, 55vw);
+color: #bdb18f;
+font-size: clamp(11px, 1.15vw, 16px);
+letter-spacing: .14em;
+}
+#objective {
+position: absolute;
+top: clamp(16px, 2vw, 28px);
+right: clamp(16px, 2vw, 28px);
+text-align: right;
+font-size: clamp(11px, 1.1vw, 15px);
+color: #cfc3a3;
+line-height: 1.55;
+}
+#message {
+position: absolute;
+top: 8%;
+left: 50%;
+translate: -50% 0;
+width: min(760px, 82vw);
+text-align: center;
+font-size: clamp(18px, 2.5vw, 34px);
+letter-spacing: .14em;
+color: #e5d5aa;
+}
+#crosshair {
+--gap: 5px;
+position: absolute;
+left: 50%;
+top: 50%;
+width: 26px;
+height: 26px;
+translate: -50% -50%;
+filter: drop-shadow(0 1px 1px #000) drop-shadow(0 0 3px #000);
+opacity: .92;
+}
+#crosshair span { position: absolute; display: block; background: #e9d59f; }
+#crosshair .t { width: 2px; height: 7px; left: 12px; top: 0; }
+#crosshair .b { width: 2px; height: 7px; left: 12px; bottom: 0; }
+#crosshair .l { width: 7px; height: 2px; left: 0; top: 12px; }
+#crosshair .r { width: 7px; height: 2px; right: 0; top: 12px; }
+#hud {
+position: absolute;
+left: clamp(12px, 2vw, 28px);
+right: clamp(12px, 2vw, 28px);
+bottom: clamp(12px, 2vw, 24px);
+display: grid;
+grid-template-columns: minmax(180px, 1fr) auto minmax(180px, 1fr);
+align-items: end;
+gap: clamp(10px, 2vw, 28px);
+}
+.hud-panel {
+min-height: 72px;
+position: relative;
+padding: 10px 14px 9px;
+background: linear-gradient(180deg, rgba(26,25,21,.88), rgba(8,8,7,.88));
+border: 1px solid rgba(211,193,151,.47);
+box-shadow: 0 0 0 3px rgba(0,0,0,.66), inset 0 1px rgba(255,255,255,.035);
+}
+.hud-panel::before, .hud-panel::after {
+content: "";
+position: absolute;
+width: 13px;
+height: 3px;
+background: var(--red);
+top: -2px;
+}
+.hud-panel::before { left: 8px; }
+.hud-panel::after { right: 8px; }
+#healthPanel { justify-self: start; width: min(330px, 29vw); }
+#weaponPanel { justify-self: center; min-width: clamp(190px, 22vw, 310px); text-align: center; }
+#scorePanel { justify-self: end; width: min(330px, 29vw); text-align: right; }
+.hud-label { color: #a99e82; font-size: clamp(10px, .9vw, 13px); }
+.hud-value { color: #f0dfb3; font-size: clamp(24px, 2.4vw, 38px); line-height: 1; }
+#healthValue { color: #df423d; }
+#ammoValue { font-size: clamp(22px, 2.25vw, 35px); }
+.bar {
+margin-top: 8px;
+width: 100%;
+height: 9px;
+background: #190b0b;
+border: 1px solid rgba(220,200,154,.42);
+}
+.fill { height: 100%; background: linear-gradient(90deg, #7d151a, #db403b); }
+.subline { margin-top: 6px; color: #9f957c; font-size: clamp(9px, .78vw, 12px); }
+#menu {
+position: fixed;
+inset: 0;
+display: grid;
+place-items: center;
+padding: 24px;
+color: #e2d3aa;
+background: radial-gradient(circle at 70% 25%, rgba(141,31,34,.18), transparent 35%), linear-gradient(115deg, rgba(5,5,6,.83), rgba(7,7,7,.96)), repeating-linear-gradient(90deg, #151310 0 2px, #0b0b0b 2px 7px);
+}
+#menu::before {
+content: "";
+position: absolute;
+inset: 0;
+opacity: .18;
+background-image: linear-gradient(90deg, transparent 49.5%, rgba(255,255,255,.06) 50%, transparent 50.5%), linear-gradient(0deg, transparent 49.5%, rgba(255,255,255,.04) 50%, transparent 50.5%);
+background-size: 96px 96px;
+}
+#panel {
+position: relative;
+width: min(820px, 94vw);
+border: 1px solid rgba(207,187,143,.43);
+background: linear-gradient(150deg, rgba(26,23,19,.97), rgba(10,10,9,.97));
+padding: clamp(24px, 5vw, 54px);
+box-shadow: 0 0 0 5px rgba(0,0,0,.75), 0 24px 90px #000;
+}
+#panel::after {
+content: "КПСС  •  ОБЪЕКТ 17";
+position: absolute;
+right: 18px;
+bottom: 14px;
+color: rgba(213,194,150,.26);
+font-size: 11px;
+letter-spacing: .2em;
+}
+h1 {
+margin: 0;
+color: #ba302f;
+font-size: clamp(52px, 10vw, 108px);
+line-height: .76;
+letter-spacing: -.07em;
+text-shadow: 5px 6px #4c0d0e, 0 0 34px rgba(164,31,34,.25);
+}
+.subtitle {
+margin: 20px 0 28px;
+color: #d2c29b;
+font-size: clamp(13px, 1.8vw, 21px);
+letter-spacing: .28em;
+}
+.brief { max-width: 680px; color: #bcb194; line-height: 1.65; }
+.controls {
+display: grid;
+grid-template-columns: repeat(2, minmax(0, 1fr));
+gap: 10px 22px;
+margin: 25px 0 30px;
+color: #9f957d;
+}
+kbd {
+min-width: 72px;
+display: inline-block;
+margin-right: 7px;
+padding: 3px 7px;
+border: 1px solid rgba(210,190,145,.42);
+background: #201d18;
+color: #eadbb4;
+text-align: center;
+}
+button {
+pointer-events: auto;
+border: 1px solid #d05a50;
+background: linear-gradient(#ad2f31, #7e171b);
+color: #fff0c8;
+font: inherit;
+font-weight: 900;
+font-size: 17px;
+padding: 14px 24px;
+cursor: pointer;
+box-shadow: 4px 5px #3e090b, inset 0 1px rgba(255,255,255,.18);
+text-transform: uppercase;
+letter-spacing: .13em;
+}
+button:hover { filter: brightness(1.17); translate: -1px -1px; }
+#status { margin-left: 14px; color: #877f6c; font-size: 12px; }
+.hidden { display: none !important; }
+@media (max-width: 680px) {
+#minimapFrame { width: 126px; }
+#sector { top: 154px; }
+#objective { display: none; }
+#hud { grid-template-columns: 1fr auto 1fr; gap: 6px; }
+.hud-panel { min-height: 60px; padding: 8px; }
+#healthPanel, #scorePanel { width: 27vw; min-width: 100px; }
+#weaponPanel { min-width: 150px; }
+.controls { grid-template-columns: 1fr; }
+#status { display: block; margin: 14px 0 0; }
+}

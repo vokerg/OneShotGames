@@ -54,3 +54,13 @@ Keep an apartment cool without letting an adventurous cat escape. Run it with:
 cd cat-and-two-balconies
 python3 run.py
 ```
+
+### Red Fortress
+
+Fight through a Soviet-industrial fortress with textured raycasting, three weapons, four enemy classes, ammunition and health pickups, scoring, and three complete sectors. Run it with:
+
+```bash
+python3 red-fortress/run.py
+```
+
+See [`red-fortress/README.md`](red-fortress/README.md) for controls and implementation details.
