@@ -51,9 +51,13 @@ function resetGame() {
   score = 0;
   flash = 0;
   shake = 0;
-  distractionTimer = 12;
+  distractionTimer = 10;
+  eventDoor = -1;
+  eventKind = "";
+  eventTelegraph = 0;
   catGrace = 3.5;
   rescueTimer = 0;
+  calmCooldown = 0;
   player.x = W / 2;
   player.y = 590;
   player.vx = player.vy = 0;
@@ -63,6 +67,12 @@ function resetGame() {
   cat.state = "room";
   cat.balcony = -1;
   cat.wander = 0;
+  cat.behavior = "wander";
+  cat.intentDoor = -1;
+  cat.decisionTimer = 0;
+  cat.sprintTimer = 0;
+  cat.switchTimer = 0;
+  cat.switchUsed = false;
   doors.forEach(d => { d.open = false; d.anim = 0; });
   ui.overlay.classList.add("hidden");
   mode = "playing";
@@ -110,7 +120,11 @@ function togglePause() {
 function doorCenter(door) { return { x: door.x + (door.side === "left" ? 12 : -12), y: door.y }; }
 
 function nearestInteractable() {
-  if (cat.state === "balcony" && dist(player, cat) < 62) return { type: "cat", distance: dist(player, cat) };
+  const catDistance = dist(player, cat);
+  if (cat.state === "balcony" && catDistance < 62) return { type: "cat", distance: catDistance };
+  if (cat.state === "room" && catDistance < 66 && calmCooldown <= 0 && (curiosity > 16 || cat.behavior !== "wander")) {
+    return { type: "calm", distance: catDistance };
+  }
   let best = null;
   doors.forEach((door, index) => {
     const p = doorCenter(door);
@@ -136,6 +150,9 @@ function interact() {
     cat.x = W / 2 + (Math.random() - .5) * 110;
     cat.y = 420 + Math.random() * 80;
     cat.vx = cat.vy = 0;
+    cat.behavior = "wander";
+    cat.intentDoor = -1;
+    cat.switchUsed = false;
     catGrace = 3.4;
     rescueTimer = 0;
     soundRescue();
@@ -143,10 +160,37 @@ function interact() {
     return;
   }
 
+  if (target.type === "calm") {
+    const interrupted = cat.behavior !== "wander";
+    curiosity = Math.max(0, curiosity - (interrupted ? 34 : 26));
+    composure = clamp(composure + 2, 0, 100);
+    score += interrupted ? 90 : 45;
+    cat.behavior = "wander";
+    cat.intentDoor = -1;
+    cat.decisionTimer = 1.0;
+    cat.sprintTimer = 0;
+    cat.switchUsed = false;
+    catGrace = 1.25;
+    calmCooldown = 3.2;
+    cat.vx *= 0.25;
+    cat.vy *= 0.25;
+    chooseWanderTarget();
+    tone(610, .09, "sine", .025, 80);
+    showToast(interrupted ? "Dash interrupted — the cat settles briefly" : "The cat settles, but only for a moment", 1.7);
+    return;
+  }
+
   const door = doors[target.index];
   door.open = !door.open;
   soundDoor(door.open);
-  showToast(`${target.index === 0 ? "West" : "East"} balcony ${door.open ? "opened" : "closed"}`, 1.2);
+  const side = target.index === 0 ? "West" : "East";
+  const catCommitted = !door.open && cat.state === "room" && cat.intentDoor === target.index && cat.behavior !== "wander" && door.anim > 0.34;
+  if (catCommitted) {
+    showToast(`${side} door is closing — the cat may still slip through!`, 1.5);
+    tone(175, .08, "sawtooth", .02, -25);
+  } else {
+    showToast(`${side} balcony ${door.open ? "opened" : "closing"}`, 1.2);
+  }
 }
 
 function updateUI() {
@@ -169,9 +213,17 @@ function updateUI() {
   ui.stageTitle.textContent = currentStage().name;
   ui.stageDetail.textContent = cat.state === "balcony"
     ? `Rescue the cat in ${Math.max(0, rescueTimer).toFixed(1)} seconds.`
-    : curiosity > 76
-      ? "The cat is ready to bolt. Secure a door or intercept it."
-      : currentStage().detail;
+    : cat.behavior === "sprint"
+      ? `The cat is sprinting toward the ${cat.intentDoor === 0 ? "west" : "east"} balcony — intercept or close it early.`
+      : cat.behavior === "feint"
+        ? "The cat is feinting. It may reverse direction without warning."
+        : cat.behavior === "stalk"
+          ? `The cat is stalking the ${cat.intentDoor === 0 ? "west" : "east"} balcony.`
+          : eventDoor >= 0 && eventTelegraph > 0
+            ? `${eventKind === "birds" ? "Birds" : "A distraction"} are drawing attention to the ${eventDoor === 0 ? "west" : "east"} side.`
+            : curiosity > 70
+              ? "The cat is primed to bolt. Calm it before committing to a cross-breeze."
+              : currentStage().detail;
   if (cat.state === "balcony") {
     ui.curiosityLabel.textContent = "Rescue time";
     ui.curiosityFill.style.width = `${clamp(rescueTimer / currentStage().rescue * 100, 0, 100)}%`;
@@ -190,6 +242,7 @@ function updateUI() {
   if (mode === "playing" && target) {
     ui.prompt.classList.add("visible");
     if (target.type === "cat") ui.promptText.textContent = `Bring the cat inside · ${Math.max(0, rescueTimer).toFixed(1)}s`;
+    else if (target.type === "calm") ui.promptText.textContent = cat.behavior === "wander" ? "Calm the cat" : "Intercept and calm the cat";
     else ui.promptText.textContent = `${doors[target.index].open ? "Close" : "Open"} the ${target.index === 0 ? "west" : "east"} balcony`;
   } else {
     ui.prompt.classList.remove("visible");

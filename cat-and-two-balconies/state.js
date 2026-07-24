@@ -35,10 +35,62 @@ const doors = [
 const doorHalf = 72;
 
 const stages = [
-  { name: "Quiet Afternoon", detail: "Learn the rhythm: cool the room, then secure the doors.", seconds: 38, heat: 1.00, cat: 0.92, curiosity: 0.82, rescue: 8.4 },
-  { name: "Warm Spell", detail: "The sun reaches the windows. Heat builds faster.", seconds: 38, heat: 1.18, cat: 1.06, curiosity: 1.00, rescue: 7.2 },
-  { name: "Street Noise", detail: "Sudden sounds make the cat dash for fresh air.", seconds: 38, heat: 1.30, cat: 1.19, curiosity: 1.20, rescue: 6.2 },
-  { name: "Sunset Rush", detail: "Both temperature and curiosity now change quickly.", seconds: 42, heat: 1.45, cat: 1.34, curiosity: 1.42, rescue: 5.3 },
+  {
+    name: "Quiet Afternoon",
+    detail: "The cat now watches your habits. Calm it before opening both doors.",
+    seconds: 40,
+    heat: 1.00,
+    cat: 0.98,
+    curiosity: 0.90,
+    rescue: 7.8,
+    eventMin: 10.0,
+    eventMax: 14.0,
+    sprintChance: 0.24,
+    switchChance: 0.10,
+    escapeThreshold: 54,
+  },
+  {
+    name: "Warm Spell",
+    detail: "Birds and hallway sounds can pull the cat toward either balcony.",
+    seconds: 40,
+    heat: 1.18,
+    cat: 1.10,
+    curiosity: 1.08,
+    rescue: 6.9,
+    eventMin: 7.5,
+    eventMax: 11.0,
+    sprintChance: 0.40,
+    switchChance: 0.23,
+    escapeThreshold: 48,
+  },
+  {
+    name: "Street Noise",
+    detail: "The cat starts feinting, changing direction, and slipping through closing doors.",
+    seconds: 40,
+    heat: 1.32,
+    cat: 1.24,
+    curiosity: 1.28,
+    rescue: 5.9,
+    eventMin: 5.7,
+    eventMax: 8.8,
+    sprintChance: 0.58,
+    switchChance: 0.42,
+    escapeThreshold: 42,
+  },
+  {
+    name: "Sunset Rush",
+    detail: "Rapid distractions and double-backs make every cooling cycle a gamble.",
+    seconds: 44,
+    heat: 1.48,
+    cat: 1.40,
+    curiosity: 1.52,
+    rescue: 4.9,
+    eventMin: 4.2,
+    eventMax: 6.8,
+    sprintChance: 0.76,
+    switchChance: 0.62,
+    escapeThreshold: 36,
+  },
 ];
 const totalDuration = stages.reduce((sum, stage) => sum + stage.seconds, 0);
 
@@ -57,14 +109,37 @@ let score = 0;
 let flash = 0;
 let shake = 0;
 let toastTimer = 0;
-let distractionTimer = 12;
+let distractionTimer = 10;
+let eventDoor = -1;
+let eventKind = "";
+let eventTelegraph = 0;
 let catGrace = 3;
 let rescueTimer = 0;
+let calmCooldown = 0;
 let muted = false;
 let audioCtx = null;
 
 const player = { x: W / 2, y: 590, r: 20, vx: 0, vy: 0, facing: 0 };
-const cat = { x: W / 2 + 80, y: 430, r: 16, vx: 0, vy: 0, facing: Math.PI, state: "room", balcony: -1, wander: 0, targetX: W / 2, targetY: 380, tail: 0 };
+const cat = {
+  x: W / 2 + 80,
+  y: 430,
+  r: 16,
+  vx: 0,
+  vy: 0,
+  facing: Math.PI,
+  state: "room",
+  balcony: -1,
+  wander: 0,
+  targetX: W / 2,
+  targetY: 380,
+  tail: 0,
+  behavior: "wander",
+  intentDoor: -1,
+  decisionTimer: 0,
+  sprintTimer: 0,
+  switchTimer: 0,
+  switchUsed: false,
+};
 const dust = Array.from({ length: 44 }, (_, i) => ({
   x: (i * 83.71) % W,
   y: 100 + ((i * 137.19) % 600),
