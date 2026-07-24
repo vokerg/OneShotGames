@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#172034" />
+  <title>Cat & Two Balconies</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main id="game-shell">
+    <canvas id="game" width="1296" height="800" aria-label="Cat and Two Balconies game"></canvas>
+
+    <section id="hud" aria-live="polite">
+      <div class="glass metric">
+        <div class="metric-row"><span class="eyebrow">Apartment</span><span class="value" id="temp-value">22.0°C</span></div>
+        <div class="sub" id="airflow-label">Both balcony doors are closed</div>
+        <div class="bar"><div class="fill" id="temp-fill"></div></div>
+      </div>
+      <div class="glass" id="stage-card">
+        <div class="eyebrow" id="stage-number">Stage 1 of 4</div>
+        <div id="stage-title">Quiet Afternoon</div>
+        <div id="stage-detail">Learn the rhythm: cool the room, then secure the doors.</div>
+        <div id="curiosity-row"><span id="curiosity-label">Cat curiosity</span><span id="curiosity-track"><span id="curiosity-fill"></span></span></div>
+      </div>
+      <div class="glass" id="status-card">
+        <div class="eyebrow">Time remaining</div>
+        <div id="clock">02:28</div>
+        <div id="score">0 rescues · 100% composure</div>
+      </div>
+    </section>
+
+    <div class="glass" id="prompt"><kbd>E</kbd><span id="prompt-text">Interact</span></div>
+    <div class="glass" id="toast"></div>
+    <button id="sound" aria-label="Toggle sound" title="Toggle sound (M)">🔊</button>
+
+    <section id="overlay">
+      <div class="glass" id="panel">
+        <div class="cat-mark">🐈</div>
+        <h1 id="overlay-title">Cat & Two Balconies</h1>
+        <p id="overlay-copy">Keep the apartment comfortable while your adventurous cat tests every open door. Cooling needs airflow. Safety needs timing.</p>
+        <div class="rules" id="rules">
+          <div class="rule"><strong>Close both</strong><span>The room heats quickly, but the cat stays safely inside.</span></div>
+          <div class="rule"><strong>Open one</strong><span>Heat rises at half speed. The cat starts watching that balcony.</span></div>
+          <div class="rule"><strong>Open both</strong><span>The room cools fast, but the escape risk doubles.</span></div>
+        </div>
+        <button id="start">Start the afternoon</button>
+        <div id="fineprint">Move with WASD or arrows · Interact with E or Space · Pause with P</div>
+      </div>
+    </section>
+  </main>
+
+  <script src="state.js"></script>
+  <script src="audio-ui.js"></script>
+  <script src="update.js"></script>
+  <script src="render.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
