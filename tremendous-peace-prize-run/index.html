@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#07162f" />
+  <title>Tremendous Peace Prize Run</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main id="shell">
+    <canvas id="game" width="1280" height="720" aria-label="Tremendous Peace Prize Run game"></canvas>
+
+    <section id="hud" aria-live="polite">
+      <div class="hud-card brand-card">
+        <span class="kicker">Campaign</span>
+        <strong id="zone-name">Reciprocal Harbor</strong>
+      </div>
+      <div class="hud-card meter-card">
+        <div class="metric-row"><span>Greatness</span><strong id="greatness-value">0%</strong></div>
+        <div class="meter"><div id="greatness-fill"></div></div>
+      </div>
+      <div class="hud-card score-card">
+        <span><b id="peace-value">0</b> peace points</span>
+        <span><b id="health-value">♥♥♥</b></span>
+      </div>
+    </section>
+
+    <div id="mission-card" class="hud-card">
+      <span class="kicker">Current objective</span>
+      <strong id="mission-title">Cross the tariff docks</strong>
+      <span id="mission-copy">Collect deal tokens and avoid the trade-deficit blobs.</span>
+    </div>
+
+    <div id="toast" class="hud-card"></div>
+
+    <section id="overlay" class="visible">
+      <article class="panel">
+        <div class="seal" aria-hidden="true">★</div>
+        <p class="eyebrow">A one-shot political satire</p>
+        <h1 id="overlay-title">Tremendous<br />Peace Prize Run</h1>
+        <p id="overlay-copy">
+          Play a cartoon Donald Trump in a classic side-scrolling platformer where every brick,
+          obstacle and victory lap has been replaced by tariffs, dealmaking, Iran de-escalation,
+          superlatives and a very fictional trip to Oslo.
+        </p>
+        <div class="feature-grid" id="feature-grid">
+          <div><strong>Run & jump</strong><span>Clear tariff crates, podiums and negotiation tables.</span></div>
+          <div><strong>Make deals</strong><span>Hit diplomacy switches to turn escalation into doves.</span></div>
+          <div><strong>Be unprecedented</strong><span>Fill the Greatness Meter with golden deal tokens.</span></div>
+        </div>
+        <button id="start-button">Start winning</button>
+        <p class="controls">Move: A/D or ←/→ · Jump: W, ↑ or Space · Pause: P · Restart: R</p>
+        <p class="disclaimer">
+          Satire and parody. All events and rewards inside the game are fictional. Not affiliated with
+          Donald Trump, the U.S. government, Nintendo, the Nobel Foundation or the Norwegian Nobel Committee.
+        </p>
+      </article>
+    </section>
+
+    <section id="touch-controls" aria-label="Touch controls">
+      <button data-key="left" aria-label="Move left">◀</button>
+      <button data-key="right" aria-label="Move right">▶</button>
+      <button data-key="jump" class="jump" aria-label="Jump">JUMP</button>
+    </section>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
