@@ -74,3 +74,13 @@ python3 outbreak-directive/run.py
 ```
 
 See [`outbreak-directive/README.md`](outbreak-directive/README.md) for gameplay and implementation details.
+
+### Tremendous Peace Prize Run
+
+Play a cartoon Donald Trump in an original side-scrolling political satire built around tariffs, dealmaking, Iran de-escalation, superlatives and a fictional Nobel Peace Prize finish. Run it with:
+
+```bash
+python3 tremendous-peace-prize-run/run.py
+```
+
+See [`tremendous-peace-prize-run/README.md`](tremendous-peace-prize-run/README.md) for controls, scope and the satire disclaimer.
