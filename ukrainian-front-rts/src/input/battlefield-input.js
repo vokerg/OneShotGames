@@ -116,7 +116,7 @@ export function installBattlefieldInput({ game, ui, canvas, minimap, windowTarge
     } else if (key === 'x' && !event.repeat) {
       if (game.stopSelected()) ui.toast('Orders cancelled.');
       else ui.toast(game.lastError);
-    } else if (key === 'f' && !event.repeat) {
+    } else if (key === 't' && !event.repeat) {
       const state = game.toggleAutoFire();
       if (game.lastError) ui.toast(game.lastError);
       else ui.toast(`Auto-fire ${state ? 'enabled' : 'disabled'} for selected combat units.`);
