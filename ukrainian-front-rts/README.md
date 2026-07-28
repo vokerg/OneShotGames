@@ -37,16 +37,31 @@ The rosters share gameplay archetypes for clarity and balance, but use different
 
 ## Architecture
 
+- `src/main.js` — composition root only
+- `src/app/runtime.js` — mission startup and animation-frame lifecycle
+- `src/input/battlefield-input.js` — selection, orders, keyboard, zoom, and minimap adapters
+- `src/game.js` — authoritative game state, commands, update ordering, economy, and unit behavior
+- `src/systems/` — focused objective, projectile, and enemy-wave policies
+- `src/core/` — pure helpers with no browser or presentation dependencies
 - `src/config.js` — factions, units, buildings, abilities, missions, upgrades, and balance data
-- `src/game.js` — simulation, economy, production, research, combat, AI, and objectives
 - `src/render.js` — base terrain, unit, effect, fog, portrait, and minimap renderer
 - `src/art-pass.js` — additive high-fidelity procedural unit and portrait rendering layer
 - `src/art-lab.js` — controlled full-roster comparison scene
 - `src/ui.js` — campaign screen, dashboard, production, research, and objective presentation
-- `src/main.js` — input wiring and main loop
+- `docs/ARCHITECTURE.md` — dependency direction, module ownership, lifecycle, and extension patterns
+- `docs/CHANGE_GUIDE.md` — targeted workflows for fixes, features, and visual work
 - `docs/ART_PIPELINE.md` — art direction, production workflow, validation criteria, and sprite-atlas migration plan
+- `AGENTS.md` — scoped implementation rules for contributors and coding agents
 
 New units, heroes, abilities, upgrades, and missions should normally begin as data additions in `config.js`; only genuinely new mechanics need simulation or renderer changes. Unit visual experiments should begin in `art-pass.js`, be compared in `art-lab.html`, and move to an atlas only after their silhouettes and animation language are stable.
+
+## Verification
+
+```bash
+bash verify.sh
+```
+
+The verifier checks all JavaScript modules with Node's syntax checker and enforces the main architecture boundaries without adding dependencies. Browser playtesting remains required for game feel, rendering, and interaction changes.
 
 ## Controls
 
