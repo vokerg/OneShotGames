@@ -162,7 +162,7 @@ export class UI {
       description: allAutoFire
         ? 'Idle combat units automatically engage enemies.'
         : 'Weapons remain silent until explicitly ordered.',
-      meta: 'F',
+      meta: 'T',
       className: `command ${allAutoFire ? 'stance-on' : 'stance-off'}`,
       disabled: !combatUnits.length,
       onClick: () => {
@@ -177,7 +177,8 @@ export class UI {
   appendAbilities(unit) {
     const type = UNIT_TYPES[unit.type];
     for (const abilityId of type.abilities || []) {
-      const ability = ABILITIES[abilityId] || { name: abilityId, desc: 'Special action', key: '' };
+      const ability = ABILITIES[abilityId];
+      if (!ability) continue;
       const buildType = BUILD_ACTIONS[abilityId];
       const cooldown = unit.abilityCd[abilityId] || 0;
       const buildCost = buildType ? BUILDING_TYPES[buildType].cost : null;
