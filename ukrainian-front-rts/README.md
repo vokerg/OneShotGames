@@ -12,23 +12,26 @@ Then open `http://127.0.0.1:8080`.
 
 ## Current systems
 
-- Three-mission campaign with story briefs and objective tracking
-- Asymmetric Ukrainian and Russian rosters
-- Workers, automatic resource harvesting, three resource types, drop-off, construction, production queues, and command capacity
-- Infantry, medics, drones, IFVs, artillery, armor, and hero characters
-- Stylized hero characters based on Volodymyr Zelensky, Valerii Zaluzhnyi, Vladimir Putin, and Yevgeny Prigozhin
-- Active abilities, cooldowns, buffs, healing, fog of war, enemy waves, minimap, formation movement, and attack-move
-- Procedural pixel-art renderer and period-inspired beveled dashboard
+- Three operational sectors: the Siverskyi Donets line in Donbas, the Orikhiv–Tokmak axis in Zaporizhzhia, and a lower-Dnipro bridgehead in Kherson
+- Ukrainian-language objectives, facility names, battlefield labels, abilities, logistics terminology, and command-panel text
+- War-specific force terminology including mechanized squads, engineer-sapper sections, FPV strike teams, CASEVAC groups, Storm-Z detachments, motor-rifle squads, and brigade command posts
+- Named vehicle roster: M2A2 Bradley ODS-SA, T-64BV model 2017, 2S22 Bohdana, and T-72B3M
+- Workers, automatic resource harvesting, three resource types, logistics drop-off, construction, production queues, and command capacity
+- Six vehicle modernization projects: anti-drone protection, thermal sights, NATO 155 mm ammunition, active protection, digital command-and-control, and mine rollers
+- Research prerequisites and live stat modification for durability, sight, range, damage, reload time, and mobility
+- Infantry, medics, drones, IFVs, tanks, artillery, and stylized hero characters
+- Active abilities, cooldowns, smoke screening, buffs, healing, fog of war, enemy waves, minimap, formation movement, and attack-move
+- Upgraded procedural pixel-art renderer with vehicle-specific silhouettes, tracks, turrets, barrels, markings, denser terrain, battlefield labels, improved resource sites, smoke, and richer buildings
 
 ## Architecture
 
-- `src/config.js` — declarative units, buildings, abilities, missions, and balance data
-- `src/game.js` — simulation, economy, production, combat, AI, and objectives
-- `src/render.js` — terrain, sprites, effects, fog, portrait, and minimap rendering
-- `src/ui.js` — campaign screen, dashboard, command buttons, and objective presentation
+- `src/config.js` — declarative units, buildings, upgrades, abilities, geography, missions, and balance data
+- `src/game.js` — simulation, economy, research, production, combat, AI, and objectives
+- `src/render.js` — terrain, sprites, vehicles, effects, fog, portrait, and minimap rendering
+- `src/ui.js` — campaign screen, Ukrainian dashboard terminology, research controls, command buttons, and objective presentation
 - `src/main.js` — input wiring and main loop
 
-New units, heroes, abilities, and missions should normally begin as data additions in `config.js`; only genuinely new mechanics need simulation or renderer changes.
+New units, regions, upgrades, heroes, abilities, and missions should normally begin as data additions in `config.js`; only genuinely new mechanics need simulation or renderer changes.
 
 ## Controls
 
@@ -40,10 +43,6 @@ New units, heroes, abilities, and missions should normally begin as data additio
 - Mouse wheel: zoom
 - Minimap click: jump camera
 
-## Verification
-
-The JavaScript modules pass `node --check`. A headless Chromium run was executed against an inline test bundle, including mission selection and gameplay rendering, with no page errors. The test caught and led to a fix for an incorrect fog compositing implementation.
-
 ## Design note
 
-The target is the strong silhouette readability, compact information density, beveled interface framing, resource economy, and tactical pacing associated with mid-1990s RTS games. This is an original work rather than a Warcraft recreation. The named public figures are stylized historical-fiction characters, and their dialogue and game roles are fictionalized.
+The target is strong silhouette readability, compact information density, beveled interface framing, resource economy, and tactical pacing associated with mid-1990s RTS games. This is an original work rather than a Warcraft recreation. Named public figures are stylized historical-fiction characters, and their dialogue and game roles are fictionalized.
