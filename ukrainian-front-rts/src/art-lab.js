@@ -29,7 +29,7 @@ for(const [teamKey,types] of Object.entries(roster)){
 }
 
 game.camera={x:innerWidth/2-origin.x*.85,y:innerHeight/2-origin.y*.85,z:.85};
-let paused=false,facing=1,last=performance.now();
+let paused=false,facing=1,valueCheck=false,last=performance.now();
 
 function centerCamera(){
  const centerX=origin.x+4*145,centerY=origin.y+125;
@@ -45,13 +45,24 @@ function drawLabels(){
   q.fillStyle='rgba(10,14,11,.78)';q.fillRect(Math.round(s.x-58),Math.round(s.y+34*z),116,17);
   q.fillStyle=unit.team===TEAM.UA?'#8fc7e8':'#dfb49e';q.fillText(type.short||type.name,Math.round(s.x),Math.round(s.y+46*z));
  }
+ q.textAlign='right';q.fillStyle='#f0cf71';q.fillText(valueCheck?'VALUE CHECK':'FULL COLOR',canvas.width-18,canvas.height-18);
  q.restore();
+}
+
+function applyValueCheck(){
+ if(!valueCheck)return;
+ const q=renderer.x,image=q.getImageData(0,0,canvas.width,canvas.height),d=image.data;
+ for(let i=0;i<d.length;i+=4){
+  const y=Math.round(d[i]*.2126+d[i+1]*.7152+d[i+2]*.0722);
+  d[i]=d[i+1]=d[i+2]=y;
+ }
+ q.putImageData(image,0,0);
 }
 
 function capture(){
  const stamp=new Date().toISOString().replace(/[:.]/g,'-');
  const link=document.createElement('a');
- link.download=`fields-of-resolve-roster-z${game.camera.z.toFixed(2)}-${paused?'still':'motion'}-${stamp}.png`;
+ link.download=`fields-of-resolve-roster-z${game.camera.z.toFixed(2)}-${paused?'still':'motion'}-${valueCheck?'value':'color'}-${stamp}.png`;
  link.href=canvas.toDataURL('image/png');
  link.click();
 }
@@ -65,6 +76,7 @@ addEventListener('keydown',event=>{
   facing*=-1;
   for(const unit of game.units)unit.angle=facing>0?-Math.PI/2:Math.PI/2;
  }
+ if(event.key.toLowerCase()==='v')valueCheck=!valueCheck;
  if(event.key.toLowerCase()==='s')capture();
  if(event.code==='Space'){
   event.preventDefault();paused=!paused;
@@ -75,6 +87,6 @@ addEventListener('resize',centerCamera);
 
 function frame(now){
  const dt=Math.min(.033,(now-last)/1000);last=now;if(!paused)game.time+=dt;
- renderer.render();drawLabels();requestAnimationFrame(frame);
+ renderer.render();drawLabels();applyValueCheck();requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
