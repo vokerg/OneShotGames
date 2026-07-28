@@ -23,6 +23,13 @@ const runtime = createGameRuntime({ game, renderer, ui });
 const disposeInput = installBattlefieldInput({ game, ui, canvas, minimap });
 
 ui.buildMissionCards(runtime.startMission);
+ui.setEndgameActions({
+  retry: () => runtime.startMission(game.missionIndex),
+  operations: () => {
+    game.mission = null;
+    ui.showMissionSelect();
+  },
+});
 objectivesButton.addEventListener('click', () => ui.e.objectives.classList.toggle('hidden'));
 runtime.start();
 
