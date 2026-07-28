@@ -1,0 +1,9 @@
+{
+  "name": "oneshotgames",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Small, self-contained browser games and interactive scenes.",
+  "scripts": {
+    "start": "node server.mjs"
+  }
+}
