@@ -48,6 +48,14 @@ function drawLabels(){
  q.restore();
 }
 
+function capture(){
+ const stamp=new Date().toISOString().replace(/[:.]/g,'-');
+ const link=document.createElement('a');
+ link.download=`fields-of-resolve-roster-z${game.camera.z.toFixed(2)}-${paused?'still':'motion'}-${stamp}.png`;
+ link.href=canvas.toDataURL('image/png');
+ link.click();
+}
+
 addEventListener('keydown',event=>{
  if(event.key==='1'||event.key==='2'||event.key==='3'){
   game.camera.z=event.key==='1'?.65:event.key==='2'?.85:1.15;
@@ -57,6 +65,7 @@ addEventListener('keydown',event=>{
   facing*=-1;
   for(const unit of game.units)unit.angle=facing>0?-Math.PI/2:Math.PI/2;
  }
+ if(event.key.toLowerCase()==='s')capture();
  if(event.code==='Space'){
   event.preventDefault();paused=!paused;
   for(const unit of game.units)unit.order=paused?null:{kind:'lab-motion'};
