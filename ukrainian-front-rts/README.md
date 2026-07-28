@@ -20,6 +20,7 @@ For focused unit-art review, open `http://127.0.0.1:8080/art-lab.html`. The art 
 - Faction-specific names, equipment, markings, silhouettes, palettes, and battlefield roles
 - Workers, resource recovery, three resource types, construction placement, production queues, and command capacity
 - Warcraft-style command cards with attack-move, stop, and per-unit auto-fire enabled by default
+- Stable command-card input that preserves buttons across unchanged animation frames
 - Headquarters, infantry-area, and workshop production roles with explicit queue progress and error feedback
 - Ukrainian vehicle modernization tree with protection, optics, ammunition, command, and mobility upgrades
 - Stylized command characters based on Volodymyr Zelenskyy, Valerii Zaluzhnyi, Vladimir Putin, and Yevgeny Prigozhin
@@ -49,7 +50,7 @@ A logistics depot increases command capacity but does not produce units.
 ## Constructing buildings
 
 1. Select a Ukrainian Combat Engineer Section.
-2. Choose Logistics Depot, Infantry Assembly Area, or Repair Workshop from the command card.
+2. Choose Logistics Depot, Infantry Assembly Area, or Repair Workshop from the command card, or press `1`, `2`, or `3` respectively.
 3. Move the placement preview to open ground.
 4. Left-click a green site to begin construction. Right-click or press `Esc` to cancel.
 
@@ -68,11 +69,12 @@ The assigned engineer moves to the site and completes the structure. Production 
 - `src/art-pass.js` — additive high-fidelity unit and portrait rendering layer
 - `src/environment-art-pass.js` — additive building, resource-site, engineer, construction, and placement rendering layer
 - `src/art-lab.js` — controlled full-roster comparison scene
-- `src/ui.js` — campaign screen, command cards, production, research, objectives, and endgame presentation
+- `src/ui.js` — campaign screen, state-stable command cards, production, research, objectives, and endgame presentation
 - `docs/ARCHITECTURE.md` — dependency direction, module ownership, lifecycle, and extension patterns
 - `docs/CHANGE_GUIDE.md` — targeted workflows for fixes, features, and visual work
 - `docs/ART_PIPELINE.md` — art direction, production workflow, validation criteria, and sprite-atlas migration plan
 - `docs/GAMEPLAY_POLISH_PASS.md` — command behavior, production flow, wave balance, endgame rules, and visual-pass rationale
+- `docs/INTERACTION_FIXES.md` — command-card root cause, same-type selection, construction shortcuts, and regression checks
 - `AGENTS.md` — scoped implementation rules for contributors and coding agents
 
 New units, heroes, abilities, upgrades, and missions should normally begin as data additions in `config.js`; only genuinely new mechanics need simulation or renderer changes. Unit visual experiments should begin in `art-pass.js` and be compared in `art-lab.html`. Environment experiments should begin in `environment-art-pass.js` and be validated in representative missions before moving to an atlas.
@@ -83,16 +85,18 @@ New units, heroes, abilities, upgrades, and missions should normally begin as da
 bash verify.sh
 ```
 
-The verifier checks all JavaScript modules with Node's syntax checker and enforces the main architecture boundaries without adding dependencies. Browser playtesting remains required for game feel, rendering, construction placement, production feedback, and interaction changes.
+The verifier checks all JavaScript modules with Node's syntax checker, enforces the main architecture boundaries, and runs dependency-free command-card and battlefield-input regression checks. Browser playtesting remains required for game feel, rendering, construction placement, production feedback, and interaction changes.
 
 ## Controls
 
 - Left click or drag: select
+- Double-click a friendly unit: select all visible friendly units of the same type
 - Shift-click: additive selection
 - Right click: move, attack, or cancel construction placement
 - `Q`, then right click: attack-move
 - `X`: stop selected units
 - `T`: toggle auto-fire for selected combat units
+- `1`, `2`, `3`: place depot, infantry area, or repair workshop with an engineer selected
 - `Esc`: cancel construction placement
 - WASD or arrows: camera
 - Mouse wheel: zoom
