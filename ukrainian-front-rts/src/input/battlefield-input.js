@@ -5,6 +5,11 @@ const MIN_ZOOM = 0.55;
 const MAX_ZOOM = 1.45;
 const WORLD_WIDTH = 2560;
 const WORLD_HEIGHT = 1664;
+const BUILD_HOTKEYS = {
+  1: { ability: 'buildDepot', label: 'logistics depot' },
+  2: { ability: 'buildBarracks', label: 'infantry assembly area' },
+  3: { ability: 'buildWorkshop', label: 'repair workshop' },
+};
 
 export function installBattlefieldInput({ game, ui, canvas, minimap, windowTarget = window }) {
   const disposers = [];
@@ -79,6 +84,33 @@ export function installBattlefieldInput({ game, ui, canvas, minimap, windowTarge
     ui.refresh();
   };
 
+  const onDoubleClick = (event) => {
+    if (event.button !== 0 || game.gameOver) return;
+    const world = game.worldPos(event.clientX, event.clientY);
+    const hit = game.hit(world.x, world.y);
+    if (!hit || hit.team !== TEAM.UA || !game.units.includes(hit)) return;
+
+    const bounds = canvas.getBoundingClientRect();
+    game.select(null);
+    for (const unit of game.units) {
+      if (unit.team !== TEAM.UA || unit.type !== hit.type) continue;
+      const screenX = unit.x * game.camera.z + game.camera.x;
+      const screenY = unit.y * game.camera.z + game.camera.y;
+      if (
+        screenX >= bounds.left &&
+        screenX <= bounds.right &&
+        screenY >= bounds.top &&
+        screenY <= bounds.bottom
+      ) {
+        game.select(unit, true);
+      }
+    }
+
+    game.mouse.down = false;
+    game.mouse.drag = false;
+    ui.refresh();
+  };
+
   const onContextMenu = (event) => {
     event.preventDefault();
     if (game.gameOver) return;
@@ -109,6 +141,14 @@ export function installBattlefieldInput({ game, ui, canvas, minimap, windowTarge
     if (key === 'escape' && game.pendingBuild) {
       game.cancelBuild();
       ui.toast('Construction placement cancelled.');
+      ui.refresh();
+    } else if (BUILD_HOTKEYS[key] && !event.repeat) {
+      const command = BUILD_HOTKEYS[key];
+      if (game.useAbility(command.ability)) {
+        ui.toast(`Place ${command.label}: left-click valid ground, right-click to cancel.`);
+      } else {
+        ui.toast(game.lastError);
+      }
       ui.refresh();
     } else if (key === 'q' && !event.repeat) {
       if (game.armAttackMove()) ui.toast('Attack-move: right-click destination.');
@@ -144,6 +184,7 @@ export function installBattlefieldInput({ game, ui, canvas, minimap, windowTarge
   listen(canvas, 'mousedown', onMouseDown);
   listen(canvas, 'mousemove', onMouseMove);
   listen(canvas, 'mouseup', onMouseUp);
+  listen(canvas, 'dblclick', onDoubleClick);
   listen(canvas, 'contextmenu', onContextMenu);
   listen(canvas, 'wheel', onWheel, { passive: false });
   listen(windowTarget, 'keydown', onKeyDown);
