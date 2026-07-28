@@ -18,42 +18,64 @@ For focused unit-art review, open `http://127.0.0.1:8080/art-lab.html`. The art 
 - Two explicit factions: Ukraine and Russia
 - Mirrored faction archetypes: engineer, infantry, drone, medic, IFV, tank, and self-propelled artillery
 - Faction-specific names, equipment, markings, silhouettes, palettes, and battlefield roles
-- Workers, resource recovery, three resource types, construction, production queues, and command capacity
+- Workers, resource recovery, three resource types, construction placement, production queues, and command capacity
+- Warcraft-style command cards with attack-move, stop, and per-unit auto-fire enabled by default
+- Headquarters, infantry-area, and workshop production roles with explicit queue progress and error feedback
 - Ukrainian vehicle modernization tree with protection, optics, ammunition, command, and mobility upgrades
 - Stylized command characters based on Volodymyr Zelenskyy, Valerii Zaluzhnyi, Vladimir Putin, and Yevgeny Prigozhin
-- Active abilities, cooldowns, buffs, healing, fog of war, enemy waves, minimap, formation movement, and attack-move
+- Active abilities, cooldowns, buffs, healing, fog of war, telegraphed enemy waves, minimap, formation movement, and attack-move
+- Explicit victory and defeat reports, including total-force-elimination defeat handling
 - Procedural pixel-art terrain, roads, shelterbelts, logistics sites, buildings, portraits, effects, and faction-specific sprites
 - High-readability unit art pass with stronger silhouettes, three-value shading, outlines, class cues, faction accents, and lightweight animation
+- Detailed static building and resource-site renders with construction scaffolding and placement previews
 - Dedicated in-browser roster art lab for side-by-side visual validation
 - Latin-script English interface throughout
 
-## Faction rosters
+## Producing units
 
-Ukraine fields Ukrainian Combat Engineers, Mechanized Infantry, FPV Strike Teams, CASEVAC Teams, M2A2 Bradley IFVs, T-64BV tanks, and 2S22 Bohdana artillery.
+1. Select a Ukrainian production facility.
+2. The command card shows only the units that facility can produce.
+3. Click a unit card to reserve resources and command capacity.
+4. The selected facility reports the current item, remaining time, and complete queue.
 
-Russia fields Engineer-Sappers, Motor Rifle Squads, Lancet UAV Teams, Combat Medical Teams, BMP-3 IFVs, T-72B3M tanks, and 2S19 Msta-S artillery.
+Facility roles:
 
-The rosters share gameplay archetypes for clarity and balance, but use different statistics and visual construction rather than simple renaming or palette swaps.
+- **Brigade Command Post:** combat engineers and mission-specific command heroes
+- **Infantry Assembly Area:** mechanized infantry and CASEVAC teams
+- **Repair and Recovery Point:** FPV teams, IFVs, tanks, artillery, and vehicle modernization
+
+A logistics depot increases command capacity but does not produce units.
+
+## Constructing buildings
+
+1. Select a Ukrainian Combat Engineer Section.
+2. Choose Logistics Depot, Infantry Assembly Area, or Repair Workshop from the command card.
+3. Move the placement preview to open ground.
+4. Left-click a green site to begin construction. Right-click or press `Esc` to cancel.
+
+The assigned engineer moves to the site and completes the structure. Production and command-capacity effects activate only when construction finishes.
 
 ## Architecture
 
 - `src/main.js` — composition root only
 - `src/app/runtime.js` — mission startup and animation-frame lifecycle
-- `src/input/battlefield-input.js` — selection, orders, keyboard, zoom, and minimap adapters
+- `src/input/battlefield-input.js` — selection, orders, keyboard, zoom, construction placement, and minimap adapters
 - `src/game.js` — authoritative game state, commands, update ordering, economy, and unit behavior
 - `src/systems/` — focused objective, projectile, and enemy-wave policies
 - `src/core/` — pure helpers with no browser or presentation dependencies
 - `src/config.js` — factions, units, buildings, abilities, missions, upgrades, and balance data
 - `src/render.js` — base terrain, unit, effect, fog, portrait, and minimap renderer
-- `src/art-pass.js` — additive high-fidelity procedural unit and portrait rendering layer
+- `src/art-pass.js` — additive high-fidelity unit and portrait rendering layer
+- `src/environment-art-pass.js` — additive building, resource-site, engineer, construction, and placement rendering layer
 - `src/art-lab.js` — controlled full-roster comparison scene
-- `src/ui.js` — campaign screen, dashboard, production, research, and objective presentation
+- `src/ui.js` — campaign screen, command cards, production, research, objectives, and endgame presentation
 - `docs/ARCHITECTURE.md` — dependency direction, module ownership, lifecycle, and extension patterns
 - `docs/CHANGE_GUIDE.md` — targeted workflows for fixes, features, and visual work
 - `docs/ART_PIPELINE.md` — art direction, production workflow, validation criteria, and sprite-atlas migration plan
+- `docs/GAMEPLAY_POLISH_PASS.md` — command behavior, production flow, wave balance, endgame rules, and visual-pass rationale
 - `AGENTS.md` — scoped implementation rules for contributors and coding agents
 
-New units, heroes, abilities, upgrades, and missions should normally begin as data additions in `config.js`; only genuinely new mechanics need simulation or renderer changes. Unit visual experiments should begin in `art-pass.js`, be compared in `art-lab.html`, and move to an atlas only after their silhouettes and animation language are stable.
+New units, heroes, abilities, upgrades, and missions should normally begin as data additions in `config.js`; only genuinely new mechanics need simulation or renderer changes. Unit visual experiments should begin in `art-pass.js` and be compared in `art-lab.html`. Environment experiments should begin in `environment-art-pass.js` and be validated in representative missions before moving to an atlas.
 
 ## Verification
 
@@ -61,36 +83,35 @@ New units, heroes, abilities, upgrades, and missions should normally begin as da
 bash verify.sh
 ```
 
-The verifier checks all JavaScript modules with Node's syntax checker and enforces the main architecture boundaries without adding dependencies. Browser playtesting remains required for game feel, rendering, and interaction changes.
+The verifier checks all JavaScript modules with Node's syntax checker and enforces the main architecture boundaries without adding dependencies. Browser playtesting remains required for game feel, rendering, construction placement, production feedback, and interaction changes.
 
 ## Controls
 
 - Left click or drag: select
 - Shift-click: additive selection
-- Right click: move or attack
+- Right click: move, attack, or cancel construction placement
 - `Q`, then right click: attack-move
+- `X`: stop selected units
+- `T`: toggle auto-fire for selected combat units
+- `Esc`: cancel construction placement
 - WASD or arrows: camera
 - Mouse wheel: zoom
 - Minimap click: jump camera
 
 ## Art workflow
 
-The game currently uses procedural unit renders because they are fast to iterate, deterministic, compact, and easy to integrate with faction colors. The intended production path is:
+The game currently uses procedural renders because they are fast to iterate, deterministic, compact, and easy to integrate with faction colors. The intended production path is:
 
 1. establish a readable procedural silhouette;
 2. compare the entire roster in the art lab at low, standard, and close zoom;
 3. validate the candidate in a real mission on representative terrain;
 4. add minimal movement and attack feedback;
 5. freeze the design once gameplay reads correctly;
-6. convert stable units into original hand-corrected sprite sheets and atlases.
+6. convert stable units and structures into original hand-corrected sprite sheets and atlases.
 
-A unit should not graduate to sprite production until it remains identifiable by class and faction at the art lab's low zoom, does not merge visually with adjacent roster units, and remains legible over all three terrain palettes.
+A unit or structure should not graduate to sprite production until it remains identifiable by role and faction at low zoom, does not merge visually with adjacent entities, and remains legible over all three terrain palettes.
 
 See `docs/ART_PIPELINE.md` for the full process and definition of done.
-
-## Verification history
-
-The earlier headless-browser pass caught and fixed incorrect fog compositing. The latest renderer pass also corrected building visibility calculations inside fog-of-war. Repository searches were run after the faction refactor for obsolete unit identifiers and known Cyrillic UI terminology; no matches remained.
 
 ## Design note
 
