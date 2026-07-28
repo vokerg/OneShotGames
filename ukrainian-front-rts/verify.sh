@@ -9,3 +9,4 @@ done < <(find "$project_root/src" "$project_root/scripts" -type f \( -name '*.js
 
 node "$project_root/scripts/verify-architecture.mjs"
 node "$project_root/scripts/verify-interactions.mjs"
+node "$project_root/scripts/verify-production-rally.mjs"
