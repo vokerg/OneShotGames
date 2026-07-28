@@ -1,37 +1,49 @@
-# Ukrainian Front RTS
+# Fields of Resolve
 
-A self-contained browser RTS prototype set in a fictionalized Ukrainian defensive campaign. It uses original code, procedural pixel-art graphics, fictional units and commanders, and genre-standard RTS mechanics rather than Warcraft assets, story, names, maps, or source code.
+A modular, dependency-free retro RTS set in a stylized fictionalized version of the war in Ukraine. It uses original code and procedural graphics; no Warcraft assets, maps, dialogue, or code are included.
 
 ## Run
 
 ```bash
-chmod +x run.sh
 ./run.sh
 ```
 
-The launcher starts a local server at `http://127.0.0.1:8080` and opens the game when the operating system supports it. Override the port with `PORT=9000 ./run.sh`.
+Then open `http://127.0.0.1:8080`.
+
+## Current systems
+
+- Three-mission campaign with story briefs and objective tracking
+- Asymmetric Ukrainian and Russian rosters
+- Workers, automatic resource harvesting, three resource types, drop-off, construction, production queues, and command capacity
+- Infantry, medics, drones, IFVs, artillery, armor, and hero characters
+- Stylized hero characters based on Volodymyr Zelensky, Valerii Zaluzhnyi, Vladimir Putin, and Yevgeny Prigozhin
+- Active abilities, cooldowns, buffs, healing, fog of war, enemy waves, minimap, formation movement, and attack-move
+- Procedural pixel-art renderer and period-inspired beveled dashboard
+
+## Architecture
+
+- `src/config.js` — declarative units, buildings, abilities, missions, and balance data
+- `src/game.js` — simulation, economy, production, combat, AI, and objectives
+- `src/render.js` — terrain, sprites, effects, fog, portrait, and minimap rendering
+- `src/ui.js` — campaign screen, dashboard, command buttons, and objective presentation
+- `src/main.js` — input wiring and main loop
+
+New units, heroes, abilities, and missions should normally begin as data additions in `config.js`; only genuinely new mechanics need simulation or renderer changes.
 
 ## Controls
 
-- Left click: select one unit or base.
-- Drag left mouse: box-select units.
-- Shift + left click: add or remove a unit from the selection.
-- Right click: move, attack an enemy, or capture a supply point.
-- `A`: attack-move selected units.
-- `S`: stop selected units.
-- `1`-`4`: recruit infantry, drone, medic, or commander when the base is selected.
-- Arrow keys / WASD: move camera.
-- Mouse wheel: zoom.
+- Left click or drag: select
+- Shift-click: additive selection
+- Right click: move or attack
+- `Q`, then right click: attack-move
+- WASD or arrows: camera
+- Mouse wheel: zoom
+- Minimap click: jump camera
 
-## Prototype scope
+## Verification
 
-- Squad selection, formation movement, collision avoidance, attack-move and target acquisition.
-- Infantry, reconnaissance/strike drones, medics, commanders and headquarters.
-- Command aura, healing, ranged combat, projectile effects and veterancy.
-- Supply-point capture, requisition income, unit production and population cap.
-- Fog-of-war, minimap, camera controls, objective messaging and lightweight enemy AI.
-- Procedural terrain and sprites rendered entirely with Canvas 2D; no external assets or dependencies.
+The JavaScript modules pass `node --check`. A headless Chromium run was executed against an inline test bundle, including mission selection and gameplay rendering, with no page errors. The test caught and led to a fix for an incorrect fog compositing implementation.
 
 ## Design note
 
-The balance targets readable, deliberate 1990s RTS pacing while remaining an original work. Historical conflict is treated as a fictionalized defensive scenario: there are no real political leaders, military insignia, casualty statistics, or recreations of specific battles.
+The target is the strong silhouette readability, compact information density, beveled interface framing, resource economy, and tactical pacing associated with mid-1990s RTS games. This is an original work rather than a Warcraft recreation. The named public figures are stylized historical-fiction characters, and their dialogue and game roles are fictionalized.
