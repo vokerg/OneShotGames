@@ -8,3 +8,4 @@ while IFS= read -r -d '' file; do
 done < <(find "$project_root/src" "$project_root/scripts" -type f \( -name '*.js' -o -name '*.mjs' \) -print0)
 
 node "$project_root/scripts/verify-architecture.mjs"
+node "$project_root/scripts/verify-interactions.mjs"
