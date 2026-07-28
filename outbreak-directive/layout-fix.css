@@ -1,0 +1,72 @@
+/* Keep the desktop command interface pinned to the viewport.
+   Long situation reports scroll inside the left panel instead of
+   increasing the height of the entire application. */
+@media (min-width: 761px) {
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .app-shell {
+    height: calc(100vh - 28px);
+    height: calc(100dvh - 28px);
+    min-height: 0;
+  }
+
+  .main-grid,
+  .left-panel,
+  .right-panel,
+  .intel-feed,
+  .feed-list,
+  .forecast,
+  .map-panel {
+    min-height: 0;
+  }
+
+  .main-grid,
+  .left-panel,
+  .right-panel,
+  .intel-feed,
+  .map-panel {
+    overflow: hidden;
+  }
+
+  .feed-list,
+  .forecast {
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+  }
+
+  #mapSvg {
+    min-height: 0;
+  }
+
+  .feed-list {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(103, 229, 194, 0.32) transparent;
+  }
+
+  .feed-list::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .feed-list::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .feed-list::-webkit-scrollbar-thumb {
+    background: rgba(103, 229, 194, 0.24);
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background-clip: padding-box;
+  }
+
+  .feed-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(103, 229, 194, 0.4);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+}

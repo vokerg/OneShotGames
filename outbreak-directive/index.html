@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#071011" />
+  <title>Outbreak Directive</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="layout-fix.css" />
+</head>
+<body>
+  <div class="app-shell" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="none"><path d="M16 4v24M4 16h24" stroke="#67e5c2" stroke-width="3" stroke-linecap="round"/><circle cx="16" cy="16" r="9" stroke="#67e5c2" stroke-width="1.5" stroke-dasharray="3 3"/></svg>
+        </div>
+        <div>
+          <div class="eyebrow">Global health command</div>
+          <h1>OUTBREAK DIRECTIVE <span class="strain-tag" id="strainTag">// UNCLASSIFIED</span></h1>
+        </div>
+      </div>
+      <div class="global-stats">
+        <div class="stat danger"><div class="stat-label">Active cases</div><div class="stat-value" id="globalCases">—</div><div class="stat-sub" id="caseDelta">Awaiting data</div></div>
+        <div class="stat"><div class="stat-label">Fatalities</div><div class="stat-value" id="globalDeaths">—</div><div class="stat-sub" id="deathLimit">Limit 0</div></div>
+        <div class="stat warn"><div class="stat-label">Hospital stress</div><div class="stat-value" id="hospitalStress">—</div><div class="stat-sub">Network average</div></div>
+        <div class="stat"><div class="stat-label">Public trust</div><div class="stat-value" id="globalTrust">—</div><div class="stat-sub">Mission fails at 0%</div></div>
+        <div class="stat good"><div class="stat-label">Research</div><div class="stat-value" id="researchValue">—</div><div class="stat-sub" id="researchStage">Characterizing pathogen</div></div>
+      </div>
+      <div class="top-actions">
+        <button class="icon-btn" id="soundBtn" title="Toggle sound" aria-label="Toggle sound">♪</button>
+        <button class="icon-btn" id="helpBtn" title="Briefing" aria-label="Open briefing">?</button>
+        <button class="icon-btn" id="restartBtn" title="Restart" aria-label="Restart game">↻</button>
+      </div>
+    </header>
+
+    <main class="main-grid">
+      <aside class="panel left-panel">
+        <div class="mission-block">
+          <div class="day-row">
+            <div><div class="eyebrow">Operational day</div><div class="day-number" id="dayValue">1<span>/ 60</span></div></div>
+            <div class="capacity-wrap"><div class="stat-label">Capacity</div><div class="capacity" id="capacityValue">8 <span>OC</span></div></div>
+          </div>
+          <div class="meter"><i id="capacityMeter"></i></div>
+          <div class="meter-labels"><span>Spent today</span><span id="capacityLabel">0 / 8</span></div>
+        </div>
+        <div class="objectives">
+          <div class="panel-title">Mission thresholds</div>
+          <div class="objective"><div class="objective-icon">✚</div><div class="objective-copy"><b>Protect life</b><small>Keep fatalities below limit</small></div><div class="objective-status" id="deathObjective">Stable</div></div>
+          <div class="objective"><div class="objective-icon">◎</div><div class="objective-copy"><b>Maintain legitimacy</b><small>Keep public trust above zero</small></div><div class="objective-status" id="trustObjective">Stable</div></div>
+          <div class="objective"><div class="objective-icon">◇</div><div class="objective-copy"><b>Break transmission</b><small>Reach zero active cases</small></div><div class="objective-status" id="caseObjective">Active</div></div>
+        </div>
+        <div class="intel-feed">
+          <div class="panel-header"><span class="panel-title">Situation log</span><span class="panel-kicker">Latest first</span></div>
+          <div class="feed-list" id="feedList"></div>
+        </div>
+      </aside>
+
+      <section class="panel map-panel">
+        <div class="map-toolbar">
+          <div class="map-chip"><strong>LIVE</strong> epidemiological network</div>
+          <div class="map-chip" id="mapModeChip">Detected cases</div>
+        </div>
+        <svg id="mapSvg" viewBox="0 0 900 610" role="img" aria-label="Outbreak network map">
+          <defs>
+            <radialGradient id="mapGlow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#2b6e64" stop-opacity=".18"/><stop offset="1" stop-color="#071011" stop-opacity="0"/></radialGradient>
+            <filter id="softGlow"><feGaussianBlur stdDeviation="5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <rect width="900" height="610" fill="url(#mapGlow)" />
+          <path class="landmass" d="M58 205C87 134 171 101 244 125c51 17 90 3 129-28 39-31 102-45 150-19 53 29 71 82 125 94 65 14 127 25 157 82 23 45 8 97-32 128-38 30-86 31-119 66-39 42-57 93-113 111-50 16-93-8-137-24-48-18-98-9-147-2-65 10-135-2-174-55-32-43-15-92 5-135 18-41-49-91-30-138Z" />
+          <path class="landmass" d="M611 68c47-35 115-28 154 16 22 24 30 62 10 87-22 28-61 20-86 43-25 23-37 60-73 66-43 8-84-20-86-64-2-39 30-61 43-94 8-21 17-39 38-54Z" />
+          <g id="routesLayer"></g>
+          <g id="citiesLayer"></g>
+        </svg>
+        <div class="map-legend"><span><i class="legend-dot" style="background:var(--safe)"></i>Controlled</span><span><i class="legend-dot" style="background:var(--amber)"></i>Growing</span><span><i class="legend-dot" style="background:var(--red)"></i>Critical</span></div>
+      </section>
+
+      <aside class="panel right-panel">
+        <div class="panel-header"><span class="panel-title">Regional command</span><span class="panel-kicker" id="regionCode">R-01</span></div>
+        <div class="region-overview">
+          <div class="region-name-row"><div><div class="region-name" id="regionName">—</div><div class="region-pop" id="regionPopulation">Population —</div></div><div class="risk-pill" id="riskPill">Monitoring</div></div>
+          <div class="region-grid">
+            <div class="region-metric"><small>Detected active</small><strong id="regionCases">—</strong></div>
+            <div class="region-metric"><small>Estimated true</small><strong id="regionTrueCases">—</strong></div>
+            <div class="region-metric"><small>Daily change</small><strong id="regionDelta">—</strong></div>
+            <div class="region-metric"><small>Immune</small><strong id="regionImmune">—</strong></div>
+          </div>
+        </div>
+        <div class="systems">
+          <div class="panel-title">Regional systems</div>
+          <div class="system-row"><div class="system-copy"><span>Hospital load</span><span id="hospitalLabel">—</span></div><div class="meter red"><i id="hospitalMeter"></i></div></div>
+          <div class="system-row"><div class="system-copy"><span>Detection coverage</span><span id="detectionLabel">—</span></div><div class="meter"><i id="detectionMeter"></i></div></div>
+          <div class="system-row"><div class="system-copy"><span>Local trust</span><span id="localTrustLabel">—</span></div><div class="meter amber"><i id="localTrustMeter"></i></div></div>
+        </div>
+        <div class="measure-tags" id="measureTags"></div>
+        <div class="forecast">
+          <div class="forecast-card">
+            <div class="forecast-head"><span class="forecast-title">Seven-day projection</span><span class="forecast-badge" id="forecastBadge">Uncertain</span></div>
+            <canvas id="sparkline" width="280" height="74"></canvas>
+            <div class="forecast-copy" id="forecastCopy">Improve surveillance to narrow the estimate.</div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="action-dock">
+      <div class="selected-summary"><div class="eyebrow">Selected region</div><strong id="selectedSummaryName">—</strong><p id="selectedSummaryText">Select a region to issue directives.</p></div>
+      <div class="action-grid" id="actionGrid"></div>
+      <div class="turn-controls"><button class="primary-btn" id="endDayBtn">Advance day →</button><div class="turn-hint" id="turnHint">Unspent capacity does not carry over.</div></div>
+    </footer>
+  </div>
+
+  <div class="modal-backdrop open" id="briefingModal">
+    <div class="modal">
+      <div class="eyebrow">Directive 04 // emerging biological threat</div>
+      <h2 id="modalTitle">The first reports do not agree.</h2>
+      <p id="modalText">A novel respiratory syndrome is moving through international transport links. Your network has limited staff, limited supplies, and one mandate: contain it before the response itself collapses.</p>
+      <div class="briefing-grid">
+        <div class="briefing-card"><b>Contain</b><span>Isolation and travel controls slow spread, but erode trust.</span></div>
+        <div class="briefing-card"><b>Protect</b><span>Treatment capacity cuts deaths and prevents hospital collapse.</span></div>
+        <div class="briefing-card"><b>Outlast</b><span>Research unlocks vaccines. Production and delivery still cost capacity.</span></div>
+      </div>
+      <div id="difficultyBlock">
+        <div class="panel-title">Select response conditions</div>
+        <div class="difficulty-row">
+          <button class="difficulty-btn" data-difficulty="analyst">Analyst<br><small>More capacity, slower spread</small></button>
+          <button class="difficulty-btn active" data-difficulty="director">Director<br><small>Balanced response</small></button>
+          <button class="difficulty-btn" data-difficulty="crisis">Crisis<br><small>Scarce capacity, volatile pathogen</small></button>
+        </div>
+      </div>
+      <div class="modal-actions"><button class="secondary-btn" id="closeHelpBtn" style="display:none">Return to command</button><button class="primary-btn start-btn" id="startBtn">Assume command</button></div>
+    </div>
+  </div>
+
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <script src="game.js"></script>
+</body>
+</html>
