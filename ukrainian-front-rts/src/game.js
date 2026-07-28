@@ -4,6 +4,8 @@ import { updateMissionObjectives } from './systems/objective-system.js';
 import { updateProjectiles } from './systems/projectile-system.js';
 import { spawnEnemyWave } from './systems/wave-system.js';
 
+const COMBAT_ORDER_KINDS = new Set(['attack', 'attackMove']);
+
 export class Game {
   constructor() {
     this.camera = { x: 70, y: 760, z: 0.85 };
@@ -29,6 +31,10 @@ export class Game {
     this.time = 0;
     this.wave = 0;
     this.gameOver = false;
+    this.outcome = null;
+    this.endReason = '';
+    this.lastError = '';
+    this.pendingBuild = null;
     this.terrain = [];
     this.road = [
       [120, 1400],
@@ -39,9 +45,11 @@ export class Game {
       [2300, 260],
     ];
     this.mission = null;
+    this.missionIndex = 0;
   }
 
   start(index = 0) {
+    this.missionIndex = index;
     this.mission = MISSIONS[index];
     this.units = [];
     this.buildings = [];
@@ -53,6 +61,11 @@ export class Game {
     this.time = 0;
     this.wave = 0;
     this.gameOver = false;
+    this.outcome = null;
+    this.endReason = '';
+    this.lastError = '';
+    this.pendingBuild = null;
+    this.mouse.attackMove = false;
     this.player = {
       ...this.mission.start,
       pop: 0,
@@ -61,7 +74,10 @@ export class Game {
       objectives: [false, false, false],
       upgrades: new Set(),
     };
-    this.enemy = { clock: 12 };
+    this.enemy = {
+      clock: this.mission.waves.firstDelay,
+      pausedForCap: false,
+    };
     this.terrain = [];
 
     for (let y = 0; y < WORLD.h / 32; y += 1) {
@@ -72,11 +88,11 @@ export class Game {
     }
 
     this.nodes.push(
-      { x: 490, y: 1280, kind: 'metal', amount: 1600, label: 'Salvage Yard' },
-      { x: 760, y: 1180, kind: 'fuel', amount: 1100, label: 'Fuel Point' },
-      { x: 1120, y: 850, kind: 'intel', amount: 900, label: 'Signals Relay' },
-      { x: 1570, y: 600, kind: 'metal', amount: 1800, label: 'Industrial Site' },
-      { x: 1900, y: 420, kind: 'fuel', amount: 1200, label: 'Forward Fuel Base' },
+      { x: 490, y: 1280, kind: 'metal', amount: 1600, maxAmount: 1600, label: 'Salvage Yard' },
+      { x: 760, y: 1180, kind: 'fuel', amount: 1100, maxAmount: 1100, label: 'Fuel Point' },
+      { x: 1120, y: 850, kind: 'intel', amount: 900, maxAmount: 900, label: 'Signals Relay' },
+      { x: 1570, y: 600, kind: 'metal', amount: 1800, maxAmount: 1800, label: 'Industrial Site' },
+      { x: 1900, y: 420, kind: 'fuel', amount: 1200, maxAmount: 1200, label: 'Forward Fuel Base' },
     );
 
     this.uaHQ = this.addBuilding('hq', TEAM.UA, 230, 1390);
@@ -125,6 +141,11 @@ export class Game {
     };
   }
 
+  fail(message) {
+    this.lastError = message;
+    return false;
+  }
+
   unitStats(type) {
     const base = UNIT_TYPES[type];
     const stats = { ...base };
@@ -164,13 +185,16 @@ export class Game {
       carryKind: null,
       buffs: {},
       kills: 0,
+      autoFire: true,
+      waveSpawned: false,
+      waveId: null,
     };
     this.units.push(unit);
     if (team === TEAM.UA) this.player.pop += stats.pop || 0;
     return unit;
   }
 
-  addBuilding(type, team, x, y) {
+  addBuilding(type, team, x, y, { underConstruction = false } = {}) {
     const stats = BUILDING_TYPES[type];
     const building = {
       id: this.nextId++,
@@ -178,13 +202,15 @@ export class Game {
       team,
       x,
       y,
-      hp: stats.hp,
+      hp: underConstruction ? Math.min(80, stats.hp * 0.12) : stats.hp,
       maxHp: stats.hp,
       selected: false,
       queue: [],
+      underConstruction,
+      capacityGranted: !underConstruction,
     };
     this.buildings.push(building);
-    if (team === TEAM.UA) this.player.cap += stats.pop || 0;
+    if (team === TEAM.UA && building.capacityGranted) this.player.cap += stats.pop || 0;
     return building;
   }
 
@@ -229,19 +255,55 @@ export class Game {
     entity.selected = true;
   }
 
+  armAttackMove() {
+    this.lastError = '';
+    if (!this.selectedUnits().length) return this.fail('Select at least one Ukrainian unit first.');
+    this.pendingBuild = null;
+    this.mouse.attackMove = true;
+    return true;
+  }
+
+  stopSelected() {
+    this.lastError = '';
+    const units = this.selectedUnits();
+    if (!units.length) return this.fail('Select at least one Ukrainian unit first.');
+    for (const unit of units) {
+      unit.order = null;
+      unit.target = null;
+    }
+    this.mouse.attackMove = false;
+    return true;
+  }
+
+  toggleAutoFire() {
+    this.lastError = '';
+    const units = this.selectedUnits().filter((unit) => this.unitStats(unit.type).damage > 0);
+    if (!units.length) return this.fail('The selected group has no weapon systems to toggle.');
+    const nextState = units.some((unit) => !unit.autoFire);
+    units.forEach((unit) => {
+      unit.autoFire = nextState;
+      if (!nextState) unit.target = null;
+    });
+    return nextState;
+  }
+
   issue(x, y, target) {
     const units = this.selectedUnits();
-    if (!units.length) return;
+    if (!units.length || this.gameOver) return false;
+    this.pendingBuild = null;
 
     if (target && target.team === TEAM.RU) {
       units.forEach((unit) => {
         unit.order = { kind: 'attack', target };
+        unit.target = target;
       });
-      return;
+      this.mouse.attackMove = false;
+      return true;
     }
 
     const columns = Math.ceil(Math.sqrt(units.length));
     units.forEach((unit, index) => {
+      unit.target = null;
       unit.order = {
         kind: this.mouse.attackMove ? 'attackMove' : 'move',
         x: x + ((index % columns) - (columns - 1) / 2) * 34,
@@ -249,6 +311,7 @@ export class Game {
       };
     });
     this.mouse.attackMove = false;
+    return true;
   }
 
   canAfford(cost) {
@@ -262,15 +325,14 @@ export class Game {
   }
 
   research(id) {
+    this.lastError = '';
     const upgrade = UPGRADES[id];
-    if (
-      !upgrade ||
-      this.player.upgrades.has(id) ||
-      (upgrade.requires && !this.player.upgrades.has(upgrade.requires)) ||
-      !this.canAfford(upgrade.cost)
-    ) {
-      return false;
+    if (!upgrade) return this.fail('Unknown modernization project.');
+    if (this.player.upgrades.has(id)) return this.fail('That modernization is already complete.');
+    if (upgrade.requires && !this.player.upgrades.has(upgrade.requires)) {
+      return this.fail('Complete the prerequisite modernization first.');
     }
+    if (!this.canAfford(upgrade.cost)) return this.fail('Insufficient resources for this modernization.');
 
     this.pay(upgrade.cost);
     this.player.upgrades.add(id);
@@ -285,58 +347,119 @@ export class Game {
     return true;
   }
 
+  buildingCanProduce(building, type) {
+    const stats = UNIT_TYPES[type];
+    const buildingStats = BUILDING_TYPES[building?.type];
+    if (!stats || !buildingStats) return false;
+    if (buildingStats.produces?.includes(type)) return true;
+    return building.type === 'hq' && stats.hero && this.mission.trainableHeroes.includes(type);
+  }
+
+  heroAlreadyFieldedOrQueued(type) {
+    return (
+      this.units.some((unit) => unit.team === TEAM.UA && unit.type === type) ||
+      this.buildings.some((building) => building.queue.some((item) => item.type === type))
+    );
+  }
+
   queue(type) {
+    this.lastError = '';
     const building = this.selectedEntities()[0];
     const stats = UNIT_TYPES[type];
-    if (
-      !building ||
-      !BUILDING_TYPES[building.type] ||
-      !stats ||
-      stats.faction !== 'ukraine' ||
-      !this.canAfford(stats.cost) ||
-      this.player.pop + stats.pop > this.player.cap
-    ) {
-      return false;
+    if (!building || building.team !== TEAM.UA || !BUILDING_TYPES[building.type]) {
+      return this.fail('Select the Ukrainian production building that should train this unit.');
+    }
+    if (building.underConstruction) return this.fail('Finish constructing this facility first.');
+    if (!stats || stats.faction !== 'ukraine' || !this.buildingCanProduce(building, type)) {
+      return this.fail('This facility cannot produce that unit type.');
+    }
+    if (stats.hero && this.heroAlreadyFieldedOrQueued(type)) {
+      return this.fail('That command hero is already deployed or queued.');
+    }
+    if (building.queue.length >= 5) return this.fail('Production queue is full.');
+    if (!this.canAfford(stats.cost)) return this.fail('Insufficient resources for production.');
+    if (this.player.pop + stats.pop > this.player.cap) {
+      return this.fail('Command capacity exceeded. Construct a logistics depot.');
     }
 
     this.pay(stats.cost);
     this.player.pop += stats.pop;
-    building.queue.push({
-      type,
-      left: stats.hero ? 12 : stats.armor ? 9 : stats.air ? 7 : 5,
-      reserved: true,
-    });
+    const duration = stats.hero ? 12 : stats.armor ? 9 : stats.air ? 7 : 5;
+    building.queue.push({ type, left: duration, duration, reserved: true });
     return true;
   }
 
-  build(type) {
+  beginBuild(type) {
+    this.lastError = '';
     const worker = this.selectedUnits().find((unit) => UNIT_TYPES[unit.type].worker);
     const stats = BUILDING_TYPES[type];
-    if (!worker || !stats) return false;
+    if (!worker) return this.fail('Select a combat engineer to construct buildings.');
+    if (!stats?.cost) return this.fail('That structure cannot be constructed.');
+    if (!this.canAfford(stats.cost)) return this.fail('Insufficient resources for construction.');
+    this.mouse.attackMove = false;
+    this.pendingBuild = { type, workerId: worker.id };
+    return true;
+  }
 
-    const cost =
-      type === 'depot'
-        ? { metal: 100 }
-        : type === 'barracks'
-          ? { metal: 150 }
-          : { metal: 220, fuel: 80 };
-    if (!this.canAfford(cost)) return false;
+  cancelBuild() {
+    if (!this.pendingBuild) return false;
+    this.pendingBuild = null;
+    return true;
+  }
 
-    this.pay(cost);
-    const building = this.addBuilding(type, TEAM.UA, worker.x + 70, worker.y + 35);
-    building.hp = 80;
+  canPlaceBuilding(type, x, y) {
+    const stats = BUILDING_TYPES[type];
+    if (!stats) return false;
+    const marginX = stats.w / 2 + 18;
+    const marginY = stats.h / 2 + 18;
+    if (x < marginX || x > WORLD.w - marginX || y < marginY || y > WORLD.h - marginY) {
+      return false;
+    }
+    const radius = Math.max(stats.w, stats.h) * 0.58;
+    if (this.buildings.some((building) => distance({ x, y }, building) < radius + 58)) return false;
+    if (this.nodes.some((node) => distance({ x, y }, node) < radius + 42)) return false;
+    return true;
+  }
+
+  placeBuilding(x, y) {
+    this.lastError = '';
+    const pending = this.pendingBuild;
+    if (!pending) return this.fail('Choose a structure from an engineer command card first.');
+    const worker = this.units.find(
+      (unit) => unit.id === pending.workerId && unit.team === TEAM.UA && unit.hp > 0,
+    );
+    const stats = BUILDING_TYPES[pending.type];
+    if (!worker) {
+      this.pendingBuild = null;
+      return this.fail('The assigned engineer is no longer available.');
+    }
+    if (!this.canAfford(stats.cost)) return this.fail('Resources changed; construction is no longer affordable.');
+    if (!this.canPlaceBuilding(pending.type, x, y)) {
+      return this.fail('Cannot build there: keep clear of structures, resource sites, and map edges.');
+    }
+
+    this.pay(stats.cost);
+    const building = this.addBuilding(pending.type, TEAM.UA, x, y, { underConstruction: true });
     worker.order = { kind: 'construct', target: building };
+    worker.target = null;
+    this.pendingBuild = null;
+    this.select(building);
     return true;
   }
 
   useAbility(name) {
+    this.lastError = '';
+    if (name === 'buildDepot') return this.beginBuild('depot');
+    if (name === 'buildBarracks') return this.beginBuild('barracks');
+    if (name === 'buildWorkshop') return this.beginBuild('workshop');
+
     const unit = this.selectedUnits()[0];
     if (
       !unit ||
       !(UNIT_TYPES[unit.type].abilities || []).includes(name) ||
       (unit.abilityCd[name] || 0) > 0
     ) {
-      return;
+      return this.fail('That action is unavailable or still on cooldown.');
     }
 
     const setCooldown = (seconds) => {
@@ -369,6 +492,10 @@ export class Game {
         });
       setCooldown(50);
     } else if (name === 'deployInfantry') {
+      const infantryStats = UNIT_TYPES.uaInfantry;
+      if (this.player.pop + infantryStats.pop > this.player.cap) {
+        return this.fail('Command capacity exceeded. Construct a logistics depot.');
+      }
       this.addUnit('uaInfantry', unit.team, unit.x + 30, unit.y + 30);
       setCooldown(30);
     } else if (name === 'smokeLaunchers') {
@@ -377,26 +504,27 @@ export class Game {
       setCooldown(24);
     } else if (['grenade', 'strike', 'barrage', 'counterBattery'].includes(name)) {
       const target = this.nearestEnemy(unit, name === 'barrage' ? 410 : 260);
-      if (target) {
-        target.hp -= name === 'grenade' ? 45 : name === 'strike' ? 90 : 80;
-        this.effects.push({
-          kind: 'blast',
-          x: target.x,
-          y: target.y,
-          radius: 70,
-          life: 0.7,
-          max: 0.7,
-        });
-      }
+      if (!target) return this.fail('No hostile target is in ability range.');
+      target.hp -= name === 'grenade' ? 45 : name === 'strike' ? 90 : 80;
+      this.effects.push({
+        kind: 'blast',
+        x: target.x,
+        y: target.y,
+        radius: 70,
+        life: 0.7,
+        max: 0.7,
+      });
       setCooldown(name === 'grenade' ? 10 : name === 'strike' ? 14 : name === 'barrage' ? 24 : 32);
-    } else if (name === 'buildDepot') {
-      this.build('depot');
-    } else if (name === 'buildBarracks') {
-      this.build('barracks');
+    } else {
+      return this.fail('This ability is not implemented yet.');
     }
+    return true;
   }
 
-  nearestEnemy(unit, range = (unit.team === TEAM.UA ? this.unitStats(unit.type) : UNIT_TYPES[unit.type]).sight) {
+  nearestEnemy(
+    unit,
+    range = (unit.team === TEAM.UA ? this.unitStats(unit.type) : UNIT_TYPES[unit.type]).sight,
+  ) {
     let nearest = null;
     let nearestDistance = range;
     for (const entity of [...this.units, ...this.buildings]) {
@@ -448,8 +576,68 @@ export class Game {
       damage,
       life: 2,
       kind: stats.armor ? 'shell' : 'bullet',
+      source: unit,
     });
     unit.flash = 0.1;
+  }
+
+  updateWorker(unit, stats, dt) {
+    if (!stats.worker || unit.team !== TEAM.UA) return;
+
+    if (unit.order?.kind === 'gather') {
+      const node = unit.order.target;
+      if (node.amount > 0 && distance(unit, node) < 35) {
+        unit.carry = Math.min(40, unit.carry + 18 * dt);
+        unit.carryKind = node.kind;
+        node.amount = Math.max(0, node.amount - 18 * dt);
+        if (unit.carry >= 40) unit.order = { kind: 'return', target: this.uaHQ };
+      } else if (node.amount > 0) {
+        this.move(unit, node.x, node.y, dt);
+      } else {
+        unit.order = null;
+      }
+    } else if (unit.order?.kind === 'return') {
+      if (!this.buildings.includes(this.uaHQ)) {
+        unit.order = null;
+      } else if (distance(unit, this.uaHQ) < 70) {
+        this.player[unit.carryKind] += unit.carry;
+        this.player.mined += unit.carry;
+        unit.carry = 0;
+        const node = this.nodes
+          .filter((candidate) => candidate.kind === unit.carryKind && candidate.amount > 0)
+          .sort((a, b) => distance(a, unit) - distance(b, unit))[0];
+        if (node) unit.order = { kind: 'gather', target: node };
+        else unit.order = null;
+      } else {
+        this.move(unit, this.uaHQ.x, this.uaHQ.y, dt);
+      }
+    } else if (!unit.order && !unit.target) {
+      const node = this.nodes
+        .filter((candidate) => candidate.amount > 0)
+        .sort((a, b) => distance(a, unit) - distance(b, unit))[0];
+      if (node) unit.order = { kind: 'gather', target: node };
+    }
+
+    if (unit.order?.kind === 'construct') {
+      const building = unit.order.target;
+      if (!this.buildings.includes(building)) {
+        unit.order = null;
+      } else if (distance(unit, building) > 55) {
+        this.move(unit, building.x, building.y, dt);
+      } else {
+        const buildTime = BUILDING_TYPES[building.type].buildTime || 8;
+        const buildRate = building.maxHp / buildTime;
+        building.hp = Math.min(building.maxHp, building.hp + buildRate * dt);
+        if (building.hp >= building.maxHp) {
+          building.underConstruction = false;
+          if (!building.capacityGranted) {
+            this.player.cap += BUILDING_TYPES[building.type].pop || 0;
+            building.capacityGranted = true;
+          }
+          unit.order = null;
+        }
+      }
+    }
   }
 
   updateUnit(unit, dt) {
@@ -465,46 +653,10 @@ export class Game {
       if (unit.buffs[buffName] <= 0) delete unit.buffs[buffName];
     }
 
-    if (stats.worker && unit.team === TEAM.UA) {
-      if (unit.order?.kind === 'gather') {
-        const node = unit.order.target;
-        if (node.amount > 0 && distance(unit, node) < 35) {
-          unit.carry = Math.min(40, unit.carry + 18 * dt);
-          unit.carryKind = node.kind;
-          node.amount -= 18 * dt;
-          if (unit.carry >= 40) unit.order = { kind: 'return', target: this.uaHQ };
-        } else {
-          this.move(unit, node.x, node.y, dt);
-        }
-      } else if (unit.order?.kind === 'return') {
-        if (distance(unit, this.uaHQ) < 70) {
-          this.player[unit.carryKind] += unit.carry;
-          this.player.mined += unit.carry;
-          unit.carry = 0;
-          const node = this.nodes
-            .filter((candidate) => candidate.kind === unit.carryKind && candidate.amount > 0)
-            .sort((a, b) => distance(a, unit) - distance(b, unit))[0];
-          if (node) unit.order = { kind: 'gather', target: node };
-        } else {
-          this.move(unit, this.uaHQ.x, this.uaHQ.y, dt);
-        }
-      } else if (!unit.order) {
-        const node = this.nodes
-          .filter((candidate) => candidate.amount > 0)
-          .sort((a, b) => distance(a, unit) - distance(b, unit))[0];
-        if (node) unit.order = { kind: 'gather', target: node };
-      }
+    if (unit.target?.hp <= 0) unit.target = null;
+    if (unit.order?.kind === 'attack' && unit.order.target?.hp <= 0) unit.order = null;
 
-      if (unit.order?.kind === 'construct') {
-        const building = unit.order.target;
-        if (distance(unit, building) > 55) {
-          this.move(unit, building.x, building.y, dt);
-        } else {
-          building.hp = Math.min(building.maxHp, building.hp + 90 * dt);
-          if (building.hp >= building.maxHp) unit.order = null;
-        }
-      }
-    }
+    this.updateWorker(unit, stats, dt);
 
     if (stats.medic) {
       const ally = this.units
@@ -521,19 +673,26 @@ export class Game {
       }
     }
 
-    let target =
+    const explicitTarget =
       unit.order?.kind === 'attack' && unit.order.target?.hp > 0 ? unit.order.target : null;
-    if (!target && (unit.order?.kind === 'attackMove' || unit.team === TEAM.RU)) {
-      target = this.nearestEnemy(unit);
-    }
+    const mayAcquire =
+      stats.damage > 0 &&
+      (unit.team === TEAM.RU || unit.order?.kind === 'attackMove' || (unit.autoFire && !unit.order));
 
+    if (explicitTarget) unit.target = explicitTarget;
+    if (!unit.target && mayAcquire) unit.target = this.nearestEnemy(unit);
+    if (!mayAcquire && !explicitTarget && !COMBAT_ORDER_KINDS.has(unit.order?.kind)) unit.target = null;
+
+    const target = explicitTarget || unit.target;
     if (target) {
       const targetDistance = distance(unit, target);
       if (targetDistance <= stats.range) {
         unit.angle = Math.atan2(target.y - unit.y, target.x - unit.x);
         if (unit.cool <= 0) this.shoot(unit, target);
-      } else {
+      } else if (explicitTarget || unit.team === TEAM.RU || unit.order?.kind === 'attackMove') {
         this.move(unit, target.x, target.y, dt);
+      } else if (targetDistance > stats.sight * 1.15) {
+        unit.target = null;
       }
     } else if (unit.order && (unit.order.kind === 'move' || unit.order.kind === 'attackMove')) {
       if (this.move(unit, unit.order.x, unit.order.y, dt)) unit.order = null;
@@ -545,11 +704,82 @@ export class Game {
   }
 
   spawnWave() {
-    spawnEnemyWave(this);
+    return spawnEnemyWave(this);
   }
 
   updateObjectives() {
     updateMissionObjectives(this);
+  }
+
+  finish(outcome, reason) {
+    if (this.gameOver) return;
+    this.gameOver = true;
+    this.outcome = outcome;
+    this.endReason = reason;
+    this.pendingBuild = null;
+    this.mouse.attackMove = false;
+  }
+
+  updateProduction(dt) {
+    for (const building of this.buildings) {
+      if (building.underConstruction || !building.queue.length) continue;
+      building.queue[0].left -= dt;
+      if (building.queue[0].left > 0) continue;
+
+      const queuedUnit = building.queue.shift();
+      this.addUnit(
+        queuedUnit.type,
+        building.team,
+        building.x + randomBetween(-70, 70),
+        building.y + 85,
+      );
+      if (queuedUnit.reserved) this.player.pop -= UNIT_TYPES[queuedUnit.type].pop;
+    }
+  }
+
+  updateWaves(dt) {
+    const waves = this.mission.waves;
+    if (this.wave >= waves.maxWaves || !this.buildings.includes(this.ruHQ)) return;
+
+    this.enemy.clock -= dt;
+    if (this.enemy.clock > 0) return;
+
+    const activeWaveUnits = this.units.filter(
+      (unit) => unit.team === TEAM.RU && unit.waveSpawned && unit.hp > 0,
+    ).length;
+    if (activeWaveUnits >= waves.maxActive) {
+      this.enemy.clock = 8;
+      this.enemy.pausedForCap = true;
+      return;
+    }
+
+    this.enemy.pausedForCap = false;
+    this.spawnWave();
+    this.enemy.clock = waves.interval;
+  }
+
+  removeDestroyedEntities() {
+    this.units = this.units.filter((unit) => {
+      if (unit.hp > 0) return true;
+      if (unit.team === TEAM.UA) this.player.pop -= UNIT_TYPES[unit.type].pop || 0;
+      this.selected.delete(unit.id);
+      return false;
+    });
+
+    this.buildings = this.buildings.filter((building) => {
+      if (building.hp > 0) return true;
+      if (building.team === TEAM.UA) {
+        if (building.capacityGranted) this.player.cap -= BUILDING_TYPES[building.type].pop || 0;
+        for (const item of building.queue) {
+          if (item.reserved) this.player.pop -= UNIT_TYPES[item.type].pop || 0;
+        }
+      }
+      this.selected.delete(building.id);
+      return false;
+    });
+
+    this.player.pop = Math.max(0, this.player.pop);
+    this.player.cap = Math.max(0, this.player.cap);
   }
 
   update(dt) {
@@ -566,44 +796,20 @@ export class Game {
 
     for (const unit of this.units) this.updateUnit(unit, dt);
     this.updateProjectiles(dt);
-
-    for (const building of this.buildings) {
-      if (!building.queue.length) continue;
-      building.queue[0].left -= dt;
-      if (building.queue[0].left <= 0) {
-        const queuedUnit = building.queue.shift();
-        this.addUnit(
-          queuedUnit.type,
-          building.team,
-          building.x + randomBetween(-70, 70),
-          building.y + 85,
-        );
-        if (queuedUnit.reserved) this.player.pop -= UNIT_TYPES[queuedUnit.type].pop;
-      }
-    }
-
-    this.enemy.clock -= dt;
-    if (this.enemy.clock <= 0) {
-      this.enemy.clock = this.mission.id === 'kherson' ? 12 : 17;
-      this.spawnWave();
-    }
-
-    this.units = this.units.filter((unit) => {
-      if (unit.hp > 0) return true;
-      if (unit.team === TEAM.UA) this.player.pop -= UNIT_TYPES[unit.type].pop || 0;
-      this.selected.delete(unit.id);
-      return false;
-    });
-    this.buildings = this.buildings.filter((building) => {
-      if (building.hp > 0) return true;
-      if (building.team === TEAM.UA) this.player.cap -= BUILDING_TYPES[building.type].pop || 0;
-      this.selected.delete(building.id);
-      return false;
-    });
-
+    this.updateProduction(dt);
+    this.updateWaves(dt);
+    this.removeDestroyedEntities();
     this.updateObjectives();
-    if (this.player.objectives.every(Boolean) || !this.buildings.includes(this.uaHQ)) {
-      this.gameOver = true;
+
+    if (this.player.objectives.every(Boolean)) {
+      this.finish('victory', 'All operational objectives are complete.');
+      return;
+    }
+
+    const hasUkrainianForces = this.units.some((unit) => unit.team === TEAM.UA);
+    const hasUkrainianStructures = this.buildings.some((building) => building.team === TEAM.UA);
+    if (!hasUkrainianForces && !hasUkrainianStructures) {
+      this.finish('defeat', 'All Ukrainian units and structures have been destroyed.');
     }
   }
 }
