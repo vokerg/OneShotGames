@@ -1,6 +1,6 @@
 # Fields of Resolve
 
-A modular, dependency-free retro RTS set in a stylized fictionalized version of the war in Ukraine. It uses original code and procedural graphics; no Warcraft assets, maps, dialogue, or code are included.
+A modular, dependency-free retro RTS set in a stylized fictionalized version of the war in Ukraine. It uses original code and procedural graphics; no Warcraft assets, maps, dialogue, or source code are included.
 
 ## Run
 
@@ -12,26 +12,34 @@ Then open `http://127.0.0.1:8080`.
 
 ## Current systems
 
-- Three operational sectors: the Siverskyi Donets line in Donbas, the Orikhiv–Tokmak axis in Zaporizhzhia, and a lower-Dnipro bridgehead in Kherson
-- Ukrainian-language objectives, facility names, battlefield labels, abilities, logistics terminology, and command-panel text
-- War-specific force terminology including mechanized squads, engineer-sapper sections, FPV strike teams, CASEVAC groups, Storm-Z detachments, motor-rifle squads, and brigade command posts
-- Named vehicle roster: M2A2 Bradley ODS-SA, T-64BV model 2017, 2S22 Bohdana, and T-72B3M
-- Workers, automatic resource harvesting, three resource types, logistics drop-off, construction, production queues, and command capacity
-- Six vehicle modernization projects: anti-drone protection, thermal sights, NATO 155 mm ammunition, active protection, digital command-and-control, and mine rollers
-- Research prerequisites and live stat modification for durability, sight, range, damage, reload time, and mobility
-- Infantry, medics, drones, IFVs, tanks, artillery, and stylized hero characters
-- Active abilities, cooldowns, smoke screening, buffs, healing, fog of war, enemy waves, minimap, formation movement, and attack-move
-- Upgraded procedural pixel-art renderer with vehicle-specific silhouettes, tracks, turrets, barrels, markings, denser terrain, battlefield labels, improved resource sites, smoke, and richer buildings
+- Three-mission campaign across the Donbas, Zaporizhzhia, and lower Dnipro operational sectors
+- Two explicit factions: Ukraine and Russia
+- Mirrored faction archetypes: engineer, infantry, drone, medic, IFV, tank, and self-propelled artillery
+- Faction-specific names, equipment, markings, silhouettes, palettes, and battlefield roles
+- Workers, resource recovery, three resource types, construction, production queues, and command capacity
+- Ukrainian vehicle modernization tree with protection, optics, ammunition, command, and mobility upgrades
+- Stylized command characters based on Volodymyr Zelenskyy, Valerii Zaluzhnyi, Vladimir Putin, and Yevgeny Prigozhin
+- Active abilities, cooldowns, buffs, healing, fog of war, enemy waves, minimap, formation movement, and attack-move
+- Procedural pixel-art terrain, roads, shelterbelts, logistics sites, buildings, portraits, effects, and faction-specific sprites
+- Latin-script English interface throughout
+
+## Faction rosters
+
+Ukraine fields Ukrainian Combat Engineers, Mechanized Infantry, FPV Strike Teams, CASEVAC Teams, M2A2 Bradley IFVs, T-64BV tanks, and 2S22 Bohdana artillery.
+
+Russia fields Engineer-Sappers, Motor Rifle Squads, Lancet UAV Teams, Combat Medical Teams, BMP-3 IFVs, T-72B3M tanks, and 2S19 Msta-S artillery.
+
+The rosters share gameplay archetypes for clarity and balance, but use different statistics and visual construction rather than simple renaming or palette swaps.
 
 ## Architecture
 
-- `src/config.js` — declarative units, buildings, upgrades, abilities, geography, missions, and balance data
-- `src/game.js` — simulation, economy, research, production, combat, AI, and objectives
-- `src/render.js` — terrain, sprites, vehicles, effects, fog, portrait, and minimap rendering
-- `src/ui.js` — campaign screen, Ukrainian dashboard terminology, research controls, command buttons, and objective presentation
+- `src/config.js` — factions, units, buildings, abilities, missions, upgrades, and balance data
+- `src/game.js` — simulation, economy, production, research, combat, AI, and objectives
+- `src/render.js` — terrain, faction-specific sprites, effects, fog, portraits, and minimap
+- `src/ui.js` — campaign screen, dashboard, production, research, and objective presentation
 - `src/main.js` — input wiring and main loop
 
-New units, regions, upgrades, heroes, abilities, and missions should normally begin as data additions in `config.js`; only genuinely new mechanics need simulation or renderer changes.
+New units, heroes, abilities, upgrades, and missions should normally begin as data additions in `config.js`; only genuinely new mechanics need simulation or renderer changes.
 
 ## Controls
 
@@ -43,6 +51,10 @@ New units, regions, upgrades, heroes, abilities, and missions should normally be
 - Mouse wheel: zoom
 - Minimap click: jump camera
 
+## Verification history
+
+The earlier headless-browser pass caught and fixed incorrect fog compositing. The latest renderer pass also corrected building visibility calculations inside fog-of-war. Repository searches were run after the faction refactor for obsolete unit identifiers and known Cyrillic UI terminology; no matches remained.
+
 ## Design note
 
-The target is strong silhouette readability, compact information density, beveled interface framing, resource economy, and tactical pacing associated with mid-1990s RTS games. This is an original work rather than a Warcraft recreation. Named public figures are stylized historical-fiction characters, and their dialogue and game roles are fictionalized.
+The target is the strong silhouette readability, compact information density, beveled interface framing, resource economy, and tactical pacing associated with mid-1990s RTS games. This is an original work rather than a Warcraft recreation. Named public figures are stylized historical-fiction characters, and their dialogue and game roles are fictionalized.
