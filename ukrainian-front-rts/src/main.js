@@ -1,5 +1,6 @@
 import { createGameRuntime } from './app/runtime.js';
 import './art-pass.js';
+import './environment-art-pass.js';
 import { Game } from './game.js';
 import { installBattlefieldInput } from './input/battlefield-input.js';
 import { Renderer } from './render.js';
