@@ -1,5 +1,6 @@
 import { createGameRuntime } from './app/runtime.js';
 import './art-pass.js';
+import './environment-art-pass.js';
 import { Game } from './game.js';
 import { installBattlefieldInput } from './input/battlefield-input.js';
 import { Renderer } from './render.js';
@@ -23,6 +24,13 @@ const runtime = createGameRuntime({ game, renderer, ui });
 const disposeInput = installBattlefieldInput({ game, ui, canvas, minimap });
 
 ui.buildMissionCards(runtime.startMission);
+ui.setEndgameActions({
+  retry: () => runtime.startMission(game.missionIndex),
+  operations: () => {
+    game.mission = null;
+    ui.showMissionSelect();
+  },
+});
 objectivesButton.addEventListener('click', () => ui.e.objectives.classList.toggle('hidden'));
 runtime.start();
 

@@ -11,7 +11,7 @@ export function createGameRuntime({
   const startMission = (missionIndex) => {
     game.start(missionIndex);
     ui.setMission();
-    ui.toast('Mission deployed');
+    ui.toast(`Mission deployed. First enemy assault in ${game.mission.waves.firstDelay} seconds.`);
     lastFrameAt = performance.now();
   };
 

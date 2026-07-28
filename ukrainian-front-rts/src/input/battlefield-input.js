@@ -14,7 +14,7 @@ export function installBattlefieldInput({ game, ui, canvas, minimap, windowTarge
   };
 
   const onMouseDown = (event) => {
-    if (event.button !== 0) return;
+    if (event.button !== 0 || game.gameOver) return;
     game.mouse.down = true;
     game.mouse.drag = false;
     game.mouse.startX = event.clientX;
@@ -38,12 +38,24 @@ export function installBattlefieldInput({ game, ui, canvas, minimap, windowTarge
   };
 
   const onMouseUp = (event) => {
-    if (event.button !== 0) return;
+    if (event.button !== 0 || game.gameOver) return;
     game.mouse.down = false;
+    const world = game.worldPos(event.clientX, event.clientY);
+
+    if (game.pendingBuild && !game.mouse.drag) {
+      if (game.placeBuilding(world.x, world.y)) {
+        ui.toast('Construction started. The assigned engineer is moving to the site.');
+      } else {
+        ui.toast(game.lastError);
+      }
+      game.mouse.drag = false;
+      ui.refresh();
+      return;
+    }
 
     if (game.mouse.drag) {
       const start = game.worldPos(game.mouse.startX, game.mouse.startY);
-      const end = game.worldPos(event.clientX, event.clientY);
+      const end = world;
       game.select(null);
 
       for (const unit of game.units) {
@@ -59,7 +71,6 @@ export function installBattlefieldInput({ game, ui, canvas, minimap, windowTarge
         }
       }
     } else {
-      const world = game.worldPos(event.clientX, event.clientY);
       const hit = game.hit(world.x, world.y);
       game.select(hit?.team === TEAM.UA ? hit : null, event.shiftKey);
     }
@@ -70,6 +81,13 @@ export function installBattlefieldInput({ game, ui, canvas, minimap, windowTarge
 
   const onContextMenu = (event) => {
     event.preventDefault();
+    if (game.gameOver) return;
+    if (game.pendingBuild) {
+      game.cancelBuild();
+      ui.toast('Construction placement cancelled.');
+      ui.refresh();
+      return;
+    }
     const world = game.worldPos(event.clientX, event.clientY);
     game.issue(world.x, world.y, game.hit(world.x, world.y));
   };
@@ -86,9 +104,23 @@ export function installBattlefieldInput({ game, ui, canvas, minimap, windowTarge
   const onKeyDown = (event) => {
     const key = event.key.toLowerCase();
     game.keys.add(key);
-    if (key === 'q' && !event.repeat) {
-      game.mouse.attackMove = true;
-      ui.toast('Attack-move: right-click destination');
+    if (game.gameOver) return;
+
+    if (key === 'escape' && game.pendingBuild) {
+      game.cancelBuild();
+      ui.toast('Construction placement cancelled.');
+      ui.refresh();
+    } else if (key === 'q' && !event.repeat) {
+      if (game.armAttackMove()) ui.toast('Attack-move: right-click destination.');
+      else ui.toast(game.lastError);
+    } else if (key === 'x' && !event.repeat) {
+      if (game.stopSelected()) ui.toast('Orders cancelled.');
+      else ui.toast(game.lastError);
+    } else if (key === 't' && !event.repeat) {
+      const state = game.toggleAutoFire();
+      if (game.lastError) ui.toast(game.lastError);
+      else ui.toast(`Auto-fire ${state ? 'enabled' : 'disabled'} for selected combat units.`);
+      ui.refresh();
     }
   };
 
@@ -101,6 +133,7 @@ export function installBattlefieldInput({ game, ui, canvas, minimap, windowTarge
   };
 
   const onMinimapMouseDown = (event) => {
+    if (game.gameOver) return;
     const bounds = minimap.getBoundingClientRect();
     const x = ((event.clientX - bounds.left) / bounds.width) * WORLD_WIDTH;
     const y = ((event.clientY - bounds.top) / bounds.height) * WORLD_HEIGHT;

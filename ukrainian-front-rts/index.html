@@ -1,1 +1,71 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Fields of Resolve</title><link rel="stylesheet" href="styles.css"></head><body><div id="shell"><canvas id="game"></canvas><div id="topbar"><div class="crest">FIELDS OF RESOLVE</div><div class="resource"><span>⚙</span><b id="metal">0</b><small>metal</small></div><div class="resource"><span>▰</span><b id="fuel">0</b><small>fuel</small></div><div class="resource"><span>★</span><b id="intel">0</b><small>intel</small></div><div class="resource"><span>♟</span><b id="pop">0/0</b><small>command</small></div><button id="objectivesBtn">Objectives</button></div><aside id="objectives" class="hidden"><h2 id="missionTitle"></h2><p id="missionStory"></p><ol id="objectiveList"></ol></aside><div id="message"></div><div id="commandPanel"><section class="portrait"><canvas id="portrait" width="144" height="112"></canvas><div><h3 id="selectionName">No selection</h3><p id="selectionStats">Select units or a building.</p></div></section><section id="abilities"></section><section class="minimapFrame"><canvas id="minimap" width="220" height="138"></canvas></section></div><div id="missionSelect"><div class="book"><h1>Fields of Resolve</h1><p>An original retro RTS campaign inspired by the readability and rhythm of 1990s classics.</p><div id="missionCards"></div><p class="disclaimer">Stylized historical fiction. Public figures appear as exaggerated strategy-game characters; events and dialogue are fictionalized.</p></div></div></div><script type="module" src="src/main.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Fields of Resolve</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="shell">
+      <canvas id="game"></canvas>
+
+      <div id="topbar">
+        <div class="crest">FIELDS OF RESOLVE</div>
+        <div class="resource"><span>⚙</span><b id="metal">0</b><small>metal</small></div>
+        <div class="resource"><span>▰</span><b id="fuel">0</b><small>fuel</small></div>
+        <div class="resource"><span>★</span><b id="intel">0</b><small>intel</small></div>
+        <div class="resource"><span>♟</span><b id="pop">0/0</b><small>command</small></div>
+        <div class="resource threat"><span>⚔</span><b id="waveStatus">staging</b><small>enemy assault</small></div>
+        <button id="objectivesBtn">Objectives</button>
+      </div>
+
+      <aside id="objectives" class="hidden">
+        <h2 id="missionTitle"></h2>
+        <p id="missionStory"></p>
+        <ol id="objectiveList"></ol>
+      </aside>
+
+      <div id="message"></div>
+
+      <div id="commandPanel">
+        <section class="portrait">
+          <canvas id="portrait" width="144" height="112"></canvas>
+          <div>
+            <h3 id="selectionName">No selection</h3>
+            <p id="selectionStats">Select units or a building.</p>
+          </div>
+        </section>
+        <section id="abilities" aria-label="Unit and building commands"></section>
+        <section class="minimapFrame"><canvas id="minimap" width="220" height="138"></canvas></section>
+      </div>
+
+      <div id="missionSelect">
+        <div class="book">
+          <h1>Fields of Resolve</h1>
+          <p>An original retro RTS campaign inspired by the readability and rhythm of 1990s classics.</p>
+          <div id="missionCards"></div>
+          <p class="disclaimer">
+            Stylized historical fiction. Public figures appear as exaggerated strategy-game characters;
+            events and dialogue are fictionalized.
+          </p>
+        </div>
+      </div>
+
+      <div id="endgame" class="hidden" role="dialog" aria-modal="true" aria-labelledby="endgameTitle">
+        <div class="endgameCard">
+          <div class="endgameSeal">⚔</div>
+          <p class="endgameEyebrow">AFTER-ACTION REPORT</p>
+          <h1 id="endgameTitle">Operation Complete</h1>
+          <p id="endgameReason"></p>
+          <div id="endgameStats"></div>
+          <div class="endgameActions">
+            <button id="retryMission">Retry Mission</button>
+            <button id="returnOperations">Return to Operations</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>
