@@ -21,24 +21,29 @@ Renderer.prototype.vehicle=function(q,u,t,z){
  px(q,-w*.39,-h*.35,w*.78,h*.18,p.light);px(q,-w*.39,h*.18,w*.78,h*.13,p.dark);
  px(q,-w*.43,-h*.39,5*z,h*.7,p.light);px(q,w*.43-4*z,-h*.32,4*z,h*.62,p.deep);
  if(tank){
-  // Broad centered turret, short rear deck, and pointed glacis establish the MBT silhouette.
   q.fillStyle=p.dark;q.beginPath();q.ellipse(0,-5*z,13*z,10*z,0,0,Math.PI*2);q.fill();q.strokeStyle=INK;q.lineWidth=Math.max(1,2*z);q.stroke();
   px(q,-8*z,-11*z,12*z,5*z,p.light);px(q,-3*z,-43*z,6*z,35*z,p.deep);px(q,-1*z,-45*z,3*z,32*z,p.metal);
   q.fillStyle=p.light;q.beginPath();q.moveTo(-14*z,-17*z);q.lineTo(14*z,-17*z);q.lineTo(9*z,-23*z);q.lineTo(-9*z,-23*z);q.closePath();q.fill();
   if(detail){px(q,5*z,-9*z,5*z,5*z,p.glass);px(q,-12*z,9*z,24*z,4*z,p.deep)}
  }else if(art){
-  // Rear-heavy fighting compartment and stabilizers keep artillery distinct from tanks.
   px(q,-14*z,-2*z,28*z,19*z,p.dark);outline(q,-14*z,-2*z,28*z,19*z,z);
   q.fillStyle=p.dark;q.beginPath();q.ellipse(0,-9*z,11*z,8*z,0,0,Math.PI*2);q.fill();q.strokeStyle=INK;q.lineWidth=Math.max(1,2*z);q.stroke();
   px(q,-3*z,-55*z,6*z,48*z,p.deep);px(q,-1*z,-57*z,3*z,45*z,p.metal);
   px(q,-18*z,14*z,8*z,4*z,p.deep);px(q,10*z,14*z,8*z,4*z,p.deep);
   if(detail){line(q,-18*z,17*z,-22*z,24*z,p.metal,2*z);line(q,18*z,17*z,22*z,24*z,p.metal,2*z)}
  }else if(ifv){
-  px(q,-12*z,-15*z,24*z,24*z,p.dark);outline(q,-12*z,-15*z,24*z,24*z,z);
-  px(q,-8*z,-14*z,13*z,6*z,p.light);px(q,-2*z,-33*z,5*z,21*z,p.deep);px(q,0,-34*z,2*z,18*z,p.metal);
+  if(t.visual==='bradley'){
+   px(q,-13*z,-16*z,26*z,25*z,p.dark);outline(q,-13*z,-16*z,26*z,25*z,z);
+   px(q,-10*z,-15*z,15*z,7*z,p.light);px(q,3*z,-13*z,8*z,8*z,p.glass);
+   px(q,-7*z,-30*z,5*z,18*z,p.deep);px(q,-5*z,-31*z,2*z,15*z,p.metal);
+   px(q,-15*z,7*z,8*z,9*z,p.light);
+  }else{
+   q.fillStyle=p.dark;q.beginPath();q.moveTo(-12*z,-14*z);q.lineTo(12*z,-14*z);q.lineTo(15*z,9*z);q.lineTo(-15*z,9*z);q.closePath();q.fill();q.strokeStyle=INK;q.lineWidth=Math.max(1,2*z);q.stroke();
+   q.fillStyle=p.light;q.beginPath();q.ellipse(1*z,-7*z,8*z,6*z,0,0,Math.PI*2);q.fill();q.stroke();
+   px(q,-1*z,-30*z,4*z,19*z,p.deep);px(q,1*z,-31*z,2*z,16*z,p.metal);
+   if(detail)for(let x=-10;x<=10;x+=10)px(q,x*z-2*z,8*z,4*z,3*z,p.light);
+  }
  }
- if(t.visual==='bradley'){px(q,9*z,-13*z,5*z,7*z,p.glass);px(q,-14*z,8*z,7*z,8*z,p.light);if(detail)px(q,7*z,7*z,6*z,4*z,p.dark)}
- if(t.visual==='bmp3'){px(q,-14*z,8*z,28*z,6*z,p.light);if(detail)for(let x=-10;x<=10;x+=10)px(q,x*z-2*z,10*z,4*z,3*z,p.dark)}
  if(t.visual==='bohdana'){px(q,-13*z,8*z,26*z,8*z,p.dark);px(q,-15*z,13*z,30*z,4*z,p.deep)}
  if(t.visual==='msta'&&detail)px(q,-10*z,7*z,20*z,7*z,p.dark);
  this.factionMark(q,u.team,-10*z,12*z,4*z);q.restore();
@@ -52,16 +57,17 @@ Renderer.prototype.infantry=function(q,u,t,z){
  q.fillStyle=p.light;q.beginPath();q.arc(0,-12*z,7*z,Math.PI,Math.PI*2);q.fill();px(q,-7*z,-12*z,14*z,5*z,p.light);outline(q,-7*z,-12*z,14*z,5*z,z);
  if(detail){px(q,-4*z,-10*z,3*z,2*z,p.deep);px(q,2*z,-10*z,3*z,2*z,p.deep)}
  if(t.medic){px(q,-7*z,-3*z,14*z,12*z,'#d7d9cf');outline(q,-7*z,-3*z,14*z,12*z,z);px(q,-2*z,-2*z,4*z,10*z,'#9d3835');px(q,-5*z,2*z,10*z,3*z,'#9d3835')}
- else if(t.worker){
-  // Diagonal breaching tool avoids creating a false shoulder-width silhouette.
-  line(q,-10*z,7*z,8*z,-22*z,p.deep,6*z);line(q,-9*z,6*z,7*z,-21*z,p.metal,2*z);line(q,4*z,-23*z,11*z,-18*z,'#b48142',5*z);
-  px(q,-10*z,2*z,6*z,10*z,'#b48142');
- }
+ else if(t.worker){line(q,-10*z,7*z,8*z,-22*z,p.deep,6*z);line(q,-9*z,6*z,7*z,-21*z,p.metal,2*z);line(q,4*z,-23*z,11*z,-18*z,'#b48142',5*z);px(q,-10*z,2*z,6*z,10*z,'#b48142')}
  else if(t.hero){
-  // Command mantle, pennant, and asymmetric shoulder mass separate heroes from rifle squads.
   px(q,-13*z,-5*z,26*z,6*z,p.accent);outline(q,-13*z,-5*z,26*z,6*z,z);
-  px(q,-13*z,1*z,7*z,15*z,p.dark);px(q,7*z,-2*z,6*z,12*z,p.light);
-  line(q,10*z,8*z,10*z,-26*z,INK,3*z);q.fillStyle=p.accent;q.beginPath();q.moveTo(11*z,-25*z);q.lineTo(22*z,-20*z);q.lineTo(11*z,-14*z);q.closePath();q.fill();
+  const strategist=u.type==='uaZaluzhnyi'||u.type==='ruPutin';
+  if(strategist){
+   px(q,-12*z,1*z,8*z,15*z,p.dark);px(q,5*z,0,7*z,14*z,p.light);
+   px(q,-8*z,-20*z,16*z,4*z,p.deep);line(q,-10*z,7*z,10*z,7*z,p.metal,3*z);
+  }else{
+   px(q,-13*z,1*z,7*z,15*z,p.dark);px(q,7*z,-2*z,6*z,12*z,p.light);
+   line(q,10*z,8*z,10*z,-26*z,INK,3*z);q.fillStyle=p.accent;q.beginPath();q.moveTo(11*z,-25*z);q.lineTo(22*z,-20*z);q.lineTo(11*z,-14*z);q.closePath();q.fill();
+  }
  }
  else{px(q,-3*z,-28*z,6*z,25*z,INK);px(q,-1*z,-27*z,3*z,19*z,p.metal);px(q,-11*z,2*z,6*z,10*z,p.dark)}
  const stride=moving?Math.sin(this.g.time*9+(u.id||0))*2*z:0;
