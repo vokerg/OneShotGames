@@ -1,8 +1,11 @@
 import { createGameRuntime } from './app/runtime.js';
 import './art-pass.js';
 import './environment-art-pass.js';
-import { Game } from './game.js';
 import { installBattlefieldInput } from './input/battlefield-input.js';
+import { ProductionGame } from './production-game.js';
+import { installProductionRallyInput } from './production-rally-input.js';
+import { installProductionRenderer } from './production-render.js';
+import { installProductionUI } from './production-ui.js';
 import { Renderer } from './render.js';
 import { UI } from './ui.js';
 
@@ -12,16 +15,20 @@ function requiredElement(selector) {
   return element;
 }
 
+installProductionUI(UI);
+installProductionRenderer(Renderer);
+
 const canvas = requiredElement('#game');
 const minimap = requiredElement('#minimap');
 const portrait = requiredElement('#portrait');
 const objectivesButton = requiredElement('#objectivesBtn');
 
-const game = new Game();
+const game = new ProductionGame();
 const ui = new UI(game);
 const renderer = new Renderer(game, canvas, minimap, portrait);
 const runtime = createGameRuntime({ game, renderer, ui });
 const disposeInput = installBattlefieldInput({ game, ui, canvas, minimap });
+const disposeRallyInput = installProductionRallyInput({ game, ui, canvas });
 
 ui.buildMissionCards(runtime.startMission);
 ui.setEndgameActions({
@@ -37,6 +44,7 @@ runtime.start();
 addEventListener(
   'pagehide',
   () => {
+    disposeRallyInput();
     disposeInput();
     runtime.stop();
   },
