@@ -148,7 +148,7 @@ test('preserves direct movement behavior for air units', () => {
   assert.equal(unit.order, null);
 });
 
-test('resolves mixed ground-unit overlap after all waypoint movement', () => {
+test('resolves mixed ground-unit overlap after all waypoint movement in the step', () => {
   const destination = cellCenter(8, 8);
   const units = [
     makeUnit({ id: 1, type: 'uaInfantry', order: { kind: 'move', ...destination } }),
@@ -162,7 +162,7 @@ test('resolves mixed ground-unit overlap after all waypoint movement', () => {
   assert.equal(result.unitsConsidered, 2);
   assert.equal(result.pairsResolved > 0, true);
   assert.equal(separation > 0, true);
-  assert.equal(units.every((unit) => unit.order === null), true);
+  assert.equal(units.every((unit) => unit.order?.navigationRoute?.nextIndex === 1), true);
 });
 
 test('produces identical fixed-step collision results for reversed unit arrays', () => {
