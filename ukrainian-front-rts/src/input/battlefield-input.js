@@ -6,6 +6,9 @@ import {
   resolveInputAction,
 } from './action-map.js';
 import {
+  createCameraNavigation,
+} from './camera-navigation.js';
+import {
   createControlGroupController,
   resolveControlGroupCommand,
 } from './control-groups.js';
@@ -21,17 +24,53 @@ const MAX_ZOOM = 1.45;
 const WORLD_WIDTH = 2560;
 const WORLD_HEIGHT = 1664;
 
-export function installBattlefieldInput({ game, ui, canvas, minimap, windowTarget = window, keyBindings: keyBindingOverrides = {} }) {
+export function installBattlefieldInput({
+  game,
+  ui,
+  canvas,
+  minimap,
+  windowTarget = window,
+  keyBindings: keyBindingOverrides = {},
+  cameraSettings = {},
+}) {
   const disposers = [];
   const keyBindings = createKeyBindings(keyBindingOverrides);
   const controlGroups = createControlGroupController();
+  const cameraNavigation = createCameraNavigation(
+    game,
+    {
+      width: () => windowTarget.innerWidth,
+      height: () => windowTarget.innerHeight,
+    },
+    cameraSettings,
+  );
   const heldActionsByKey = new Map();
   const listen = (target, type, handler, options) => {
     target.addEventListener(type, handler, options);
     disposers.push(() => target.removeEventListener(type, handler, options));
   };
 
+  let animationFrame = null;
+  let previousFrameTime = null;
+  const requestFrame = windowTarget.requestAnimationFrame?.bind(windowTarget);
+  const cancelFrame = windowTarget.cancelAnimationFrame?.bind(windowTarget);
+  const animateCamera = (time) => {
+    if (previousFrameTime != null) cameraNavigation.update(Math.min(0.05, (time - previousFrameTime) / 1000));
+    previousFrameTime = time;
+    animationFrame = requestFrame(animateCamera);
+  };
+  if (requestFrame) {
+    animationFrame = requestFrame(animateCamera);
+    disposers.push(() => {
+      if (animationFrame != null && cancelFrame) cancelFrame(animationFrame);
+    });
+  }
+
   const onMouseDown = (event) => {
+    if (cameraNavigation.pointerDown(event)) {
+      event.preventDefault();
+      return;
+    }
     if (event.button !== 0 || game.gameOver) return;
     game.mouse.down = true;
     game.mouse.drag = false;
@@ -40,15 +79,25 @@ export function installBattlefieldInput({ game, ui, canvas, minimap, windowTarge
   };
 
   const onMouseMove = (event) => {
+    if (cameraNavigation.pointerMove(event)) event.preventDefault();
     game.mouse.x = event.clientX;
     game.mouse.y = event.clientY;
     const world = game.worldPos(event.clientX, event.clientY);
     game.mouse.wx = world.x;
     game.mouse.wy = world.y;
-    if (game.mouse.down && Math.hypot(event.clientX - game.mouse.startX, event.clientY - game.mouse.startY) > DRAG_THRESHOLD) game.mouse.drag = true;
+    if (
+      game.mouse.down &&
+      Math.hypot(event.clientX - game.mouse.startX, event.clientY - game.mouse.startY) > DRAG_THRESHOLD
+    ) {
+      game.mouse.drag = true;
+    }
   };
 
   const onMouseUp = (event) => {
+    if (cameraNavigation.pointerUp(event)) {
+      event.preventDefault();
+      return;
+    }
     if (event.button !== 0 || game.gameOver) return;
     game.mouse.down = false;
     const world = game.worldPos(event.clientX, event.clientY);
@@ -63,7 +112,13 @@ export function installBattlefieldInput({ game, ui, canvas, minimap, windowTarge
       const start = game.worldPos(game.mouse.startX, game.mouse.startY);
       game.select(null);
       for (const unit of game.units) {
-        if (unit.team === TEAM.UA && unit.x >= Math.min(start.x, world.x) && unit.x <= Math.max(start.x, world.x) && unit.y >= Math.min(start.y, world.y) && unit.y <= Math.max(start.y, world.y)) {
+        if (
+          unit.team === TEAM.UA &&
+          unit.x >= Math.min(start.x, world.x) &&
+          unit.x <= Math.max(start.x, world.x) &&
+          unit.y >= Math.min(start.y, world.y) &&
+          unit.y <= Math.max(start.y, world.y)
+        ) {
           game.selected.add(unit.id);
           unit.selected = true;
         }
@@ -72,7 +127,10 @@ export function installBattlefieldInput({ game, ui, canvas, minimap, windowTarge
     } else {
       const hit = game.hit(world.x, world.y);
       if (event.ctrlKey && hit?.team === TEAM.UA && game.units.includes(hit)) {
-        const result = selectAllOfTypeOnScreen(game, hit, { width: windowTarget.innerWidth, height: windowTarget.innerHeight });
+        const result = selectAllOfTypeOnScreen(game, hit, {
+          width: windowTarget.innerWidth,
+          height: windowTarget.innerHeight,
+        });
         ui.toast(`${result.count} matching unit${result.count === 1 ? '' : 's'} selected on screen.`);
       } else {
         game.select(hit?.team === TEAM.UA ? hit : null, event.shiftKey);
@@ -106,11 +164,27 @@ export function installBattlefieldInput({ game, ui, canvas, minimap, windowTarge
   };
 
   const onKeyDown = (event) => {
+    const bookmarkResult = cameraNavigation.handleBookmark(event);
+    if (bookmarkResult) {
+      event.preventDefault();
+      if (!event.repeat && bookmarkResult.message) ui.toast(bookmarkResult.message);
+      return;
+    }
+    if (event.code === 'Space' && !event.repeat) {
+      event.preventDefault();
+      if (cameraNavigation.focusSelected()) ui.toast('Camera focused on selection.');
+      else ui.toast('Select a unit or facility to focus the camera.');
+      return;
+    }
+
     const controlGroupCommand = resolveControlGroupCommand(event);
     if (controlGroupCommand) {
       event.preventDefault();
       if (game.gameOver || event.repeat) return;
-      const result = controlGroups.execute(game, controlGroupCommand, { width: windowTarget.innerWidth, height: windowTarget.innerHeight });
+      const result = controlGroups.execute(game, controlGroupCommand, {
+        width: windowTarget.innerWidth,
+        height: windowTarget.innerHeight,
+      });
       synchronizePrimarySelection(game);
       if (result.message) ui.toast(result.message);
       if (result.changed) ui.refresh();
@@ -129,14 +203,19 @@ export function installBattlefieldInput({ game, ui, canvas, minimap, windowTarge
       if (result.type) ui.toast(`Active subgroup: ${result.count} × ${result.type}.`);
       ui.refresh();
     } else if (action === INPUT_ACTIONS.CANCEL && game.pendingBuild) {
-      game.cancelBuild(); ui.toast('Construction placement cancelled.'); ui.refresh();
+      game.cancelBuild();
+      ui.toast('Construction placement cancelled.');
+      ui.refresh();
     } else if (action === INPUT_ACTIONS.ATTACK_MOVE && !event.repeat) {
-      if (game.armAttackMove()) ui.toast('Attack-move: right-click destination.'); else ui.toast(game.lastError);
+      if (game.armAttackMove()) ui.toast('Attack-move: right-click destination.');
+      else ui.toast(game.lastError);
     } else if (action === INPUT_ACTIONS.STOP && !event.repeat) {
-      if (game.stopSelected()) ui.toast('Orders cancelled.'); else ui.toast(game.lastError);
+      if (game.stopSelected()) ui.toast('Orders cancelled.');
+      else ui.toast(game.lastError);
     } else if (action === INPUT_ACTIONS.TOGGLE_AUTO_FIRE && !event.repeat) {
       const state = game.toggleAutoFire();
-      if (game.lastError) ui.toast(game.lastError); else ui.toast(`Auto-fire ${state ? 'enabled' : 'disabled'} for selected combat units.`);
+      if (game.lastError) ui.toast(game.lastError);
+      else ui.toast(`Auto-fire ${state ? 'enabled' : 'disabled'} for selected combat units.`);
       ui.refresh();
     }
   };
@@ -147,7 +226,15 @@ export function installBattlefieldInput({ game, ui, canvas, minimap, windowTarge
     if (action && isHeldInputAction(action)) game.keys.delete(action);
     heldActionsByKey.delete(keyId);
   };
-  const onBlur = () => { game.keys.clear(); heldActionsByKey.clear(); game.mouse.down = false; game.mouse.drag = false; };
+
+  const onBlur = () => {
+    game.keys.clear();
+    heldActionsByKey.clear();
+    game.mouse.down = false;
+    game.mouse.drag = false;
+    cameraNavigation.pointerLeave();
+  };
+
   const onMinimapMouseDown = (event) => {
     if (game.gameOver) return;
     const bounds = minimap.getBoundingClientRect();
@@ -157,9 +244,15 @@ export function installBattlefieldInput({ game, ui, canvas, minimap, windowTarge
     game.camera.y = windowTarget.innerHeight / 2 - y * game.camera.z;
   };
 
-  listen(canvas, 'mousedown', onMouseDown); listen(canvas, 'mousemove', onMouseMove); listen(canvas, 'mouseup', onMouseUp);
-  listen(canvas, 'contextmenu', onContextMenu); listen(canvas, 'wheel', onWheel, { passive: false });
-  listen(windowTarget, 'keydown', onKeyDown); listen(windowTarget, 'keyup', onKeyUp); listen(windowTarget, 'blur', onBlur);
+  listen(canvas, 'mousedown', onMouseDown);
+  listen(canvas, 'mousemove', onMouseMove);
+  listen(canvas, 'mouseup', onMouseUp);
+  listen(canvas, 'mouseleave', () => cameraNavigation.pointerLeave());
+  listen(canvas, 'contextmenu', onContextMenu);
+  listen(canvas, 'wheel', onWheel, { passive: false });
+  listen(windowTarget, 'keydown', onKeyDown);
+  listen(windowTarget, 'keyup', onKeyUp);
+  listen(windowTarget, 'blur', onBlur);
   listen(minimap, 'mousedown', onMinimapMouseDown);
   return () => disposers.splice(0).reverse().forEach((dispose) => dispose());
 }
