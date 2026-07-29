@@ -44,6 +44,9 @@ export const CONTENT_SCHEMA_FAMILIES = deepFreeze([
   'aiProfiles',
 ]);
 
+export const TECH_NODE_FAMILIES = deepFreeze(['buildings', 'upgrades']);
+export const CONTENT_REFERENCE_TARGETS = deepFreeze([...CONTENT_SCHEMA_FAMILIES, 'tech-nodes']);
+
 export const CONTENT_SCHEMAS = deepFreeze({
   factions: schema({
     collection: 'record',
@@ -104,7 +107,7 @@ export const CONTENT_SCHEMAS = deepFreeze({
       cost: defaulted('resource-cost', {}),
       buildTime: defaulted('number', 0, { min: 0 }),
       produces: defaulted('string[]', [], { reference: 'units' }),
-      requires: defaulted('string[]', [], { reference: 'tech-nodes' }),
+      requires: defaulted('string[]', [], { reference: 'tech-nodes', acceptsLegacyScalar: true }),
       factions: defaulted('string[]', [], { reference: 'factions' }),
       missionLocks: defaulted('string[]', [], { reference: 'missions' }),
       exclusiveGroup: defaulted('string|null', null),
