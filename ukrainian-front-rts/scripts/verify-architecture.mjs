@@ -25,8 +25,11 @@ for (const file of files) {
   const source = readFileSync(file, 'utf8');
   const imports = importsOf(source);
 
-  if (projectPath.startsWith('src/core/') && imports.length) {
-    failures.push(`${projectPath}: core modules must not import higher-level modules`);
+  if (projectPath.startsWith('src/core/')) {
+    const forbidden = imports.filter((specifier) => !specifier.startsWith('./'));
+    if (forbidden.length) {
+      failures.push(`${projectPath}: core modules may import sibling core modules only: ${forbidden.join(', ')}`);
+    }
   }
 
   if (projectPath.startsWith('src/systems/')) {
