@@ -40,16 +40,25 @@ function command(command, slot = 1) {
 }
 
 test('resolves assignment, additive assignment, recall, and reserved modifiers', () => {
-  assert.deepEqual(resolveControlGroupCommand({ key: '1', ctrlKey: true }), command(CONTROL_GROUP_COMMANDS.ASSIGN));
   assert.deepEqual(
-    resolveControlGroupCommand({ key: '2', ctrlKey: true, shiftKey: true }),
+    resolveControlGroupCommand({ key: '1', code: 'Digit1', ctrlKey: true }),
+    command(CONTROL_GROUP_COMMANDS.ASSIGN),
+  );
+  assert.deepEqual(
+    resolveControlGroupCommand({ key: '@', code: 'Digit2', ctrlKey: true, shiftKey: true }),
     command(CONTROL_GROUP_COMMANDS.ADD, 2),
   );
-  assert.deepEqual(resolveControlGroupCommand({ key: '3', shiftKey: true }), command(CONTROL_GROUP_COMMANDS.ADD, 3));
-  assert.deepEqual(resolveControlGroupCommand({ key: '4' }), command(CONTROL_GROUP_COMMANDS.RECALL, 4));
-  assert.equal(resolveControlGroupCommand({ key: '0' }), null);
-  assert.equal(resolveControlGroupCommand({ key: '1', altKey: true }), null);
-  assert.equal(resolveControlGroupCommand({ key: '1', metaKey: true }), null);
+  assert.deepEqual(
+    resolveControlGroupCommand({ key: '#', code: 'Digit3', shiftKey: true }),
+    command(CONTROL_GROUP_COMMANDS.ADD, 3),
+  );
+  assert.deepEqual(
+    resolveControlGroupCommand({ key: '4', code: 'Digit4' }),
+    command(CONTROL_GROUP_COMMANDS.RECALL, 4),
+  );
+  assert.equal(resolveControlGroupCommand({ key: '0', code: 'Digit0' }), null);
+  assert.equal(resolveControlGroupCommand({ key: '1', code: 'Digit1', altKey: true }), null);
+  assert.equal(resolveControlGroupCommand({ key: '1', code: 'Digit1', metaKey: true }), null);
 });
 
 test('assigns and recalls only selected friendly units', () => {
@@ -58,12 +67,20 @@ test('assigns and recalls only selected friendly units', () => {
   game.selected.add(1);
   game.selected.add(3);
 
-  const assigned = controller.execute(game, command(CONTROL_GROUP_COMMANDS.ASSIGN), { width: 800, height: 600 });
+  const assigned = controller.execute(
+    game,
+    command(CONTROL_GROUP_COMMANDS.ASSIGN),
+    { width: 800, height: 600 },
+  );
   assert.equal(assigned.changed, true);
   assert.deepEqual(controller.members(1), [1]);
 
   game.select(game.units[1]);
-  controller.execute(game, command(CONTROL_GROUP_COMMANDS.RECALL), { width: 800, height: 600 });
+  controller.execute(
+    game,
+    command(CONTROL_GROUP_COMMANDS.RECALL),
+    { width: 800, height: 600 },
+  );
   assert.deepEqual([...game.selected], [1]);
   assert.equal(game.units[0].selected, true);
   assert.equal(game.units[1].selected, false);
@@ -73,15 +90,27 @@ test('adds members without duplicates and leaves current selection intact', () =
   const game = makeGame();
   const controller = createControlGroupController();
   game.select(game.units[0]);
-  controller.execute(game, command(CONTROL_GROUP_COMMANDS.ASSIGN), { width: 800, height: 600 });
+  controller.execute(
+    game,
+    command(CONTROL_GROUP_COMMANDS.ASSIGN),
+    { width: 800, height: 600 },
+  );
 
   game.select(game.units[1]);
-  const added = controller.execute(game, command(CONTROL_GROUP_COMMANDS.ADD), { width: 800, height: 600 });
+  const added = controller.execute(
+    game,
+    command(CONTROL_GROUP_COMMANDS.ADD),
+    { width: 800, height: 600 },
+  );
   assert.equal(added.changed, true);
   assert.deepEqual(controller.members(1), [1, 2]);
   assert.deepEqual([...game.selected], [2]);
 
-  const duplicate = controller.execute(game, command(CONTROL_GROUP_COMMANDS.ADD), { width: 800, height: 600 });
+  const duplicate = controller.execute(
+    game,
+    command(CONTROL_GROUP_COMMANDS.ADD),
+    { width: 800, height: 600 },
+  );
   assert.equal(duplicate.changed, false);
   assert.deepEqual(controller.members(1), [1, 2]);
 });
@@ -91,11 +120,19 @@ test('cleans destroyed or invalid members deterministically before recall', () =
   const controller = createControlGroupController();
   game.selected.add(1);
   game.selected.add(2);
-  controller.execute(game, command(CONTROL_GROUP_COMMANDS.ASSIGN), { width: 800, height: 600 });
+  controller.execute(
+    game,
+    command(CONTROL_GROUP_COMMANDS.ASSIGN),
+    { width: 800, height: 600 },
+  );
 
   game.units = game.units.filter((unit) => unit.id !== 1);
   game.units.find((unit) => unit.id === 2).team = 1;
-  const recalled = controller.execute(game, command(CONTROL_GROUP_COMMANDS.RECALL), { width: 800, height: 600 });
+  const recalled = controller.execute(
+    game,
+    command(CONTROL_GROUP_COMMANDS.RECALL),
+    { width: 800, height: 600 },
+  );
 
   assert.equal(recalled.changed, false);
   assert.deepEqual(controller.members(1), []);
@@ -107,13 +144,25 @@ test('double recall focuses the camera on the stable group centroid', () => {
   const controller = createControlGroupController({ now: () => times.shift(), doubleTapMs: 350 });
   game.selected.add(1);
   game.selected.add(2);
-  controller.execute(game, command(CONTROL_GROUP_COMMANDS.ASSIGN), { width: 800, height: 600 });
+  controller.execute(
+    game,
+    command(CONTROL_GROUP_COMMANDS.ASSIGN),
+    { width: 800, height: 600 },
+  );
 
-  const first = controller.execute(game, command(CONTROL_GROUP_COMMANDS.RECALL), { width: 800, height: 600 });
+  const first = controller.execute(
+    game,
+    command(CONTROL_GROUP_COMMANDS.RECALL),
+    { width: 800, height: 600 },
+  );
   assert.equal(first.focused, false);
   assert.deepEqual(game.camera, { x: 0, y: 0, z: 1 });
 
-  const second = controller.execute(game, command(CONTROL_GROUP_COMMANDS.RECALL), { width: 800, height: 600 });
+  const second = controller.execute(
+    game,
+    command(CONTROL_GROUP_COMMANDS.RECALL),
+    { width: 800, height: 600 },
+  );
   assert.equal(second.focused, true);
   assert.deepEqual(game.camera, { x: 200, y: 80, z: 1 });
 });
@@ -121,8 +170,16 @@ test('double recall focuses the camera on the stable group centroid', () => {
 test('empty assignment and recall return actionable feedback', () => {
   const game = makeGame();
   const controller = createControlGroupController();
-  const assigned = controller.execute(game, command(CONTROL_GROUP_COMMANDS.ASSIGN), { width: 800, height: 600 });
-  const recalled = controller.execute(game, command(CONTROL_GROUP_COMMANDS.RECALL), { width: 800, height: 600 });
+  const assigned = controller.execute(
+    game,
+    command(CONTROL_GROUP_COMMANDS.ASSIGN),
+    { width: 800, height: 600 },
+  );
+  const recalled = controller.execute(
+    game,
+    command(CONTROL_GROUP_COMMANDS.RECALL),
+    { width: 800, height: 600 },
+  );
 
   assert.match(assigned.message, /needs selected units/);
   assert.match(recalled.message, /is empty/);
