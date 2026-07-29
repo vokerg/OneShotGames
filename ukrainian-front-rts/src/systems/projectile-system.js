@@ -1,5 +1,6 @@
 import { prepareProjectile } from '../combat/projectile-accuracy.js';
 import { randomBetween } from '../core/math.js';
+import { applyCoverState } from './cover-system.js';
 
 export const rollImpactDamage = (baseDamage) => baseDamage * randomBetween(0.95, 1.05);
 
@@ -16,7 +17,10 @@ export function updateProjectiles(game, dt) {
     }
 
     if (!Number.isFinite(projectile.aimX) || !Number.isFinite(projectile.aimY)) {
-      prepareProjectile(projectile, game.nextProjectileSeed++);
+      const cover = applyCoverState(game, target);
+      projectile.coverState = cover.id;
+      projectile.damageMultiplier = cover.damageMultiplier;
+      prepareProjectile(projectile, game.nextProjectileSeed++, { accuracyMultiplier: cover.accuracyMultiplier });
     }
 
     const dx = projectile.aimX - projectile.x;
@@ -24,7 +28,9 @@ export function updateProjectiles(game, dt) {
     const remainingDistance = Math.hypot(dx, dy);
 
     if (remainingDistance < projectile.speed * dt + 7) {
-      if (projectile.hit && target.hp > 0) target.hp -= rollImpactDamage(projectile.damage);
+      if (projectile.hit && target.hp > 0) {
+        target.hp -= rollImpactDamage(projectile.damage * (projectile.damageMultiplier ?? 1));
+      }
       projectile.life = 0;
       game.effects.push({
         kind: 'blast',
@@ -35,6 +41,7 @@ export function updateProjectiles(game, dt) {
         max: 0.45,
         impact: projectile.impact || 'kinetic',
         hit: projectile.hit,
+        coverState: projectile.coverState || 'exposed',
       });
       continue;
     }
