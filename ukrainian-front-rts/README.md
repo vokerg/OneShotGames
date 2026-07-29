@@ -2,6 +2,8 @@
 
 A modular, dependency-free retro RTS set in a stylized fictionalized version of the war in Ukraine. It uses original code and procedural graphics; no Warcraft assets, maps, dialogue, or source code are included.
 
+The approved release scope, quality bar, supported platforms, session targets, campaign length, and explicit non-goals are defined in [`docs/PRODUCT_PILLARS.md`](docs/PRODUCT_PILLARS.md). Later feature decisions should cite that contract.
+
 ## Run
 
 ```bash
