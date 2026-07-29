@@ -6,6 +6,7 @@ import { createAttackGroundController, installAttackGroundInput } from './input/
 import { installBattlefieldInput } from './input/battlefield-input.js';
 import { createQueuedOrderController } from './input/queued-orders.js';
 import { Renderer } from './render.js';
+import { createWorkerGatherController } from './systems/worker-gather-system.js';
 import { UI } from './ui.js';
 
 function requiredElement(selector) {
@@ -25,6 +26,7 @@ const renderer = new Renderer(game, canvas, minimap, portrait);
 const runtime = createGameRuntime({ game, renderer, ui });
 const disposeAttackGround = createAttackGroundController(game);
 const disposeQueuedOrders = createQueuedOrderController(game, window);
+const disposeWorkerGather = createWorkerGatherController(game);
 const disposeAttackGroundInput = installAttackGroundInput({ game, canvas, ui });
 const disposeInput = installBattlefieldInput({ game, ui, canvas, minimap });
 
@@ -44,6 +46,7 @@ addEventListener(
   () => {
     disposeInput();
     disposeAttackGroundInput();
+    disposeWorkerGather();
     disposeQueuedOrders();
     disposeAttackGround();
     runtime.stop();
