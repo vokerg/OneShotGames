@@ -22,17 +22,18 @@ test('fortification cover overrides terrain and exposes readable state', () => {
 
 test('cover accuracy multiplier deterministically converts marginal hits to misses', () => {
   const target = { x: 100, y: 100 };
-  const exposed = resolveProjectileAim({ seed: 2, target, kind: 'bullet' });
-  const heavy = resolveProjectileAim({ seed: 2, target, kind: 'bullet', accuracyMultiplier: COVER_LEVELS.heavy.accuracyMultiplier });
+  const exposed = resolveProjectileAim({ seed: 6, target, kind: 'bullet' });
+  const heavy = resolveProjectileAim({ seed: 6, target, kind: 'bullet', accuracyMultiplier: COVER_LEVELS.heavy.accuracyMultiplier });
   assert.equal(exposed.adjustedAccuracy, 0.72);
   assert.equal(heavy.adjustedAccuracy, 0.504);
-  assert.notEqual(exposed.hit, heavy.hit);
+  assert.equal(exposed.hit, true);
+  assert.equal(heavy.hit, false);
 });
 
 test('cover damage mitigation is applied once and included in impact feedback', () => {
   const target = { x: 0, y: 0, hp: 100, fortificationCover: 'heavy' };
   const projectile = { x: 0, y: 0, target, damage: 50, life: 2, kind: 'bullet' };
-  const game = { projectiles: [projectile], effects: [], terrain: [0], nextProjectileSeed: 2 };
+  const game = { projectiles: [projectile], effects: [], terrain: [0], nextProjectileSeed: 3 };
   updateProjectiles(game, 1);
   assert.equal(game.effects[0].coverState, 'heavy');
   assert.ok(target.hp >= 62.2 && target.hp <= 65.8);
