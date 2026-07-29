@@ -24,6 +24,8 @@ export const DEFAULT_TERRAIN_RULES = Object.freeze({
   [TERRAIN_TYPES.BLOCKED]: Object.freeze({ ground: null, amphibious: null, air: 1 }),
 });
 
+const KNOWN_MOVEMENT_LAYERS = new Set(Object.values(MOVEMENT_LAYERS));
+
 function assertPositiveInteger(value, label) {
   if (!Number.isInteger(value) || value <= 0) throw new TypeError(`${label} must be a positive integer.`);
 }
@@ -41,6 +43,17 @@ function normalizeFootprint(footprint = { width: 1, height: 1 }) {
   assertPositiveInteger(footprint.width, 'Footprint width');
   assertPositiveInteger(footprint.height, 'Footprint height');
   return Object.freeze({ width: footprint.width, height: footprint.height });
+}
+
+function normalizeLayers(layers) {
+  if (!Array.isArray(layers) || layers.length === 0) {
+    throw new TypeError('Dynamic blocker layers must be a non-empty array.');
+  }
+  const unique = [...new Set(layers)];
+  for (const layer of unique) {
+    if (!KNOWN_MOVEMENT_LAYERS.has(layer)) throw new Error(`Unknown movement layer: ${layer}`);
+  }
+  return Object.freeze(unique.sort());
 }
 
 function blockerKey(x, y) {
@@ -113,13 +126,16 @@ export class NavigationGrid {
     return Object.freeze(cells);
   }
 
-  addDynamicBlocker(id, origin, footprint = { width: 1, height: 1 }, layers = [MOVEMENT_LAYERS.GROUND, MOVEMENT_LAYERS.AMPHIBIOUS]) {
-    if (typeof id !== 'string' || !id) throw new TypeError('Dynamic blocker id must be a non-empty string.');
+  addDynamicBlocker(
+    id,
+    origin,
+    footprint = { width: 1, height: 1 },
+    layers = [MOVEMENT_LAYERS.GROUND, MOVEMENT_LAYERS.AMPHIBIOUS],
+  ) {
+    if (typeof id !== 'string' || !id.trim()) throw new TypeError('Dynamic blocker id must be a non-empty string.');
     if (this.#dynamicBlockers.has(id)) throw new Error(`Dynamic blocker already exists: ${id}`);
-    const layerSet = new Set(layers);
-    for (const layer of layerSet) if (!Object.values(MOVEMENT_LAYERS).includes(layer)) throw new Error(`Unknown movement layer: ${layer}`);
     const cells = this.cellsForFootprint(origin, footprint);
-    this.#dynamicBlockers.set(id, Object.freeze({ id, cells, layers: layerSet }));
+    this.#dynamicBlockers.set(id, Object.freeze({ id, cells, layers: normalizeLayers(layers) }));
   }
 
   removeDynamicBlocker(id) {
@@ -128,9 +144,10 @@ export class NavigationGrid {
 
   blockerIdsAt(x, y, layer = MOVEMENT_LAYERS.GROUND) {
     assertCell({ x, y }, this.width, this.height);
+    if (!KNOWN_MOVEMENT_LAYERS.has(layer)) throw new Error(`Unknown movement layer: ${layer}`);
     const key = blockerKey(x, y);
     return [...this.#dynamicBlockers.values()]
-      .filter((blocker) => blocker.layers.has(layer) && blocker.cells.some((cell) => blockerKey(cell.x, cell.y) === key))
+      .filter((blocker) => blocker.layers.includes(layer) && blocker.cells.some((cell) => blockerKey(cell.x, cell.y) === key))
       .map((blocker) => blocker.id)
       .sort();
   }
@@ -141,6 +158,23 @@ export class NavigationGrid {
       if (this.movementCost(cell.x, cell.y, layer) === null) return false;
       return this.blockerIdsAt(cell.x, cell.y, layer).every((id) => ignored.has(id));
     });
+  }
+
+  applyMapData({ terrain = [], bridges = [], blockers = [] } = {}) {
+    if (!Array.isArray(terrain) || !Array.isArray(bridges) || !Array.isArray(blockers)) {
+      throw new TypeError('Navigation map data terrain, bridges, and blockers must be arrays.');
+    }
+
+    for (const cell of terrain) {
+      if (!cell || typeof cell.type !== 'string') throw new TypeError('Terrain entries require x, y, and type.');
+      this.setTerrain(cell.x, cell.y, cell.type);
+    }
+    for (const cell of bridges) this.setTerrain(cell.x, cell.y, TERRAIN_TYPES.BRIDGE);
+    for (const blocker of blockers) {
+      if (!blocker || !blocker.origin) throw new TypeError('Blocker entries require id and origin.');
+      this.addDynamicBlocker(blocker.id, blocker.origin, blocker.footprint, blocker.layers);
+    }
+    return this;
   }
 
   snapshot() {
@@ -154,7 +188,7 @@ export class NavigationGrid {
           .map((blocker) => Object.freeze({
             id: blocker.id,
             cells: blocker.cells,
-            layers: Object.freeze([...blocker.layers].sort()),
+            layers: blocker.layers,
           }))
           .sort((left, right) => left.id.localeCompare(right.id)),
       ),
@@ -164,4 +198,18 @@ export class NavigationGrid {
 
 export function createNavigationGrid(options) {
   return new NavigationGrid(options);
+}
+
+export function createNavigationGridFromMapData(mapData, options = {}) {
+  if (!mapData || typeof mapData !== 'object' || Array.isArray(mapData)) {
+    throw new TypeError('Navigation map data must be an object.');
+  }
+  const { width, height, tileSize, defaultTerrain, terrain, bridges, blockers } = mapData;
+  return new NavigationGrid({
+    width,
+    height,
+    tileSize,
+    defaultTerrain,
+    ...options,
+  }).applyMapData({ terrain, bridges, blockers });
 }
