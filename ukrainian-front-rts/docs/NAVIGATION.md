@@ -1,6 +1,6 @@
-# Navigation passability contract
+# Navigation contracts
 
-`src/navigation/navigation-grid.js` owns the deterministic, browser-independent representation of terrain passability. It does not perform path search or move entities; those responsibilities begin with UFR-019 and UFR-020.
+`src/navigation/navigation-grid.js` owns deterministic, browser-independent passability data. `src/navigation/pathfinder.js` owns pure path search over that data. Neither module moves entities; runtime order integration begins with UFR-020.
 
 ## Coordinate model
 
@@ -51,11 +51,29 @@ Dynamic blockers represent structures or other runtime obstructions. IDs must be
 
 `removeDynamicBlocker()` is the invalidation boundary for destruction, cancellation, or relocation. UFR-022 will build caching and invalidation policy above this API.
 
+## A* pathfinding
+
+`findPath(grid, start, goal, options)` performs deterministic bounded A* search and returns a frozen result with `status`, `path`, `cost`, and `visited` fields. Paths include both the start and goal cells.
+
+The status contract distinguishes successful paths, blocked starts, blocked goals, unreachable goals, and explicit search-limit exhaustion. Callers must handle these results rather than assuming every request produces a route.
+
+Search options include:
+
+- movement `layer` and unit `footprint`;
+- blocker IDs to ignore for self-occupancy queries;
+- `maxVisited`, which bounds expanded cells and defaults to the grid area;
+- diagonal policy: `never`, `allow`, or `no-corner-cut`.
+
+The default `no-corner-cut` policy permits diagonals only when both adjacent cardinal placements are passable for the same layer and footprint. Step cost is destination terrain cost multiplied by cardinal or diagonal distance. The heuristic uses the cheapest passable terrain cost for the requested layer, preserving admissibility when roads cost less than open ground.
+
+Equal-cost candidates are ordered by total cost, heuristic, row, column, and insertion sequence. The open set uses a deterministic binary min-heap; repeated searches over identical snapshots and options return identical paths and visit counts.
+
 ## Determinism and ownership
 
 - Terrain storage is row-major.
 - Blocker queries and snapshots sort IDs.
-- Snapshot arrays and records are frozen.
-- The module imports no game, renderer, UI, DOM, or browser service.
-- Map loading and simulation systems may populate the grid; pathfinding and movement may only query it through this contract.
-- Renderer feedback may mirror passability results but must not become authoritative.
+- Snapshot arrays, path results, and path cells are frozen.
+- Navigation modules import no game, renderer, UI, DOM, or browser service.
+- Map loading and simulation systems may populate the grid; pathfinding may only query it.
+- UFR-020 may translate returned cells into waypoints, but movement must not duplicate passability or path-cost rules.
+- Renderer feedback may mirror passability and route results but must not become authoritative.
