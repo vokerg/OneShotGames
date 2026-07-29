@@ -45,6 +45,7 @@ test('stable primary retains a valid explicit unit and falls back by id', () => 
   assert.equal(resolvePrimarySelection(state), 3);
   assert.equal(synchronizePrimarySelection(state, 9), 9);
   assert.equal(resolvePrimarySelection(state), 9);
+  assert.equal(state.selectedEntities()[0].id, 9);
 
   state.selected.delete(9);
   assert.equal(resolvePrimarySelection(state), 3);
@@ -63,6 +64,7 @@ test('Tab cycles deterministic type subgroups and Shift+Tab reverses', () => {
   assert.equal(forward.type, 'tank');
   assert.equal(forward.count, 2);
   assert.equal(state.primarySelectedId, 1);
+  assert.equal(state.selectedEntities()[0].id, 1);
 
   const reverse = cycleSelectionSubgroup(state, -1);
   assert.equal(reverse.type, 'infantry');
