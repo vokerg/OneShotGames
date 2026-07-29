@@ -23,6 +23,17 @@ index.html
           └─ src/systems/        focused simulation policies
 ```
 
+Headless scenario composition is separate from the browser runtime:
+
+```text
+src/app/simulation-harness.js
+  ├─ constructs Game through an injectable factory
+  ├─ resets the seeded simulation stream
+  ├─ supplies temporary numeric viewport globals for Game.start/update
+  ├─ dispatches structured commands to public Game methods
+  └─ advances configured ticks and emits reference-free snapshots
+```
+
 `content-schema.js` is not a second content database. It describes the stable shape of content held in
 `config.js` and future map/AI content modules. Runtime migration to schema-backed loaders is owned by
 later queue tasks.
@@ -31,8 +42,9 @@ Verification code is outside the browser runtime:
 
 ```text
 scripts/run-tests.mjs
-  └─ tests/**/*.test.mjs        Node-native deterministic unit tests
-      └─ public production modules and public Game methods
+  └─ tests/**/*.test.mjs
+      ├─ tests/unit/             fast deterministic unit and state-transition tests
+      └─ tests/sim/              deterministic headless scenario tests
 ```
 
 ## Dependency direction
@@ -41,7 +53,8 @@ Dependencies point inward toward data and pure logic:
 
 ```text
 main → app/input/ui/render/game
-app/input → public Game/UI/Renderer interfaces supplied at construction
+runtime → public Game/UI/Renderer interfaces supplied at construction
+simulation harness → Game/core only; never DOM, renderer, UI, or input
 ui/render → game state + config
 Game → config/core/systems
 config/content-schema → no browser, UI, renderer, or Game modules
@@ -60,7 +73,15 @@ The composition root. It resolves required DOM elements, constructs the game/UI/
 
 ### `src/app/runtime.js`
 
-Owns mission startup and the animation-frame loop. Scheduling is injectable so lifecycle behavior can be tested without a real browser loop. Mission startup derives a mission-specific seed from the configured simulation seed, resets the authoritative random stream, and records the active numeric seed on `game.simulationSeed` before `Game.start` runs.
+Owns browser mission startup and the animation-frame loop. Scheduling is injectable so lifecycle behavior can be tested without a real browser loop. Mission startup derives a mission-specific seed from the configured simulation seed, resets the authoritative random stream, and records the active numeric seed on `game.simulationSeed` before `Game.start` runs.
+
+### `src/app/simulation-harness.js`
+
+Owns deterministic Node-side scenario driving. It constructs `Game` through an injectable factory, applies the same mission-seed derivation used by runtime startup, resolves structured command IDs to live entities, advances one configured tick duration, and produces reference-free snapshots for assertions.
+
+The current `Game` camera code reads `innerWidth` and `innerHeight`. The harness supplies those numeric values only around `Game.start` and `Game.update`, then restores the previous global descriptors. It does not create `window`, `document`, canvas, UI, renderer, input, or animation-frame objects.
+
+The harness is not an alternate simulation implementation. It must call public `Game` methods and must not duplicate combat, economy, objective, wave, or production rules. Its repeated `Game.update(tickSeconds)` loop is a test driver; UFR-007 owns the future fixed-step phase contract used by the browser runtime.
 
 ### `src/input/battlefield-input.js`
 
@@ -112,18 +133,26 @@ Node's built-in `node:test` and `node:assert` modules, end in `.test.mjs`, and m
 exports or instantiate `Game` without starting the browser runtime. Each file must own its fixtures and
 must not depend on another test file's mutations or execution order.
 
+`tests/sim/` owns deterministic whole-scenario tests driven through `src/app/simulation-harness.js`.
+Scenario tests may start missions, issue structured commands, advance configured ticks, inspect snapshots,
+and make small explicit setup mutations through the exposed live `game`. They must not create DOM, canvas,
+renderer, UI, input, or wall-clock dependencies. Only one actively advancing harness should exist per
+process because the current seeded-random stream is process-global.
+
 `scripts/run-tests.mjs` recursively discovers test files in stable path order and delegates execution to
 Node's test runner. Optional path-fragment arguments select a focused subset. An empty suite, unmatched
 filter, assertion failure, import failure, or crashed test process produces a non-zero exit status.
 
 Specialized scripts under `scripts/verify-*.mjs` remain contract and architecture checks. They complement,
-rather than replace, the behavior-focused unit suite.
+rather than replace, behavior-focused unit and scenario tests.
 
 ### Rendering and UI
 
 `render.js` and `art-pass.js` translate state into pixels. `ui.js` translates state into HUD information and invokes public game commands. Neither layer should independently mutate combat outcomes, resources, or objectives.
 
 ## Update lifecycle
+
+### Browser runtime
 
 1. `runtime.startMission` derives and resets the mission seed before initialization.
 2. Input adapters update key/mouse state or call a public game command.
@@ -132,6 +161,15 @@ rather than replace, the behavior-focused unit suite.
 5. Simulation random draws are consumed in that same deterministic call order.
 6. The renderer draws the resulting state.
 7. The UI refreshes from the same state snapshot.
+
+### Headless scenario
+
+1. The harness derives and resets the mission seed.
+2. It calls `Game.start` with a configured numeric viewport and no browser objects.
+3. A test issues structured commands that delegate to public `Game` methods.
+4. `advanceTicks(count)` calls `Game.update(tickSeconds)` exactly `count` times.
+5. The harness converts state and entity references into a deterministic snapshot.
+6. The test asserts the snapshot or uses `assertState`.
 
 Changing update order or the order/number of random draws is a deterministic-behavior change. Document it and update deterministic fixtures because it can affect combat timing, wave geometry, later draws, replays, and presentation consistency.
 
@@ -180,13 +218,22 @@ Changing update order or the order/number of random draws is a deterministic-beh
 5. Reset shared deterministic services inside the test.
 6. Run a focused filter, then the complete `bash verify.sh` command.
 
+### Add a headless scenario test
+
+1. Create one harness per scenario run and start it with an explicit mission index and seed.
+2. Use structured harness commands for the player or test action being exercised.
+3. Advance an exact tick count; do not use wall-clock delays or animation frames.
+4. Assert a reference-free snapshot or use `assertState`.
+5. Run the scenario twice with the same seed when determinism matters, and assert divergence with a different seed when randomness is relevant.
+6. Keep browser interaction and rendering assertions out of the simulation layer.
+
 ### Add a mechanic
 
 1. Identify one authoritative owner.
 2. Implement the rule in a focused system when it is independently testable.
 3. Keep a small `Game` method as the public/delegating interface if callers already use it.
 4. Render feedback from state; do not duplicate the rule in the renderer.
-5. Add or update deterministic unit coverage for its pure policy and public state transition.
+5. Add or update deterministic unit coverage for its pure policy and a headless scenario when cross-system sequencing matters.
 
 ## Verification
 
@@ -196,4 +243,4 @@ Run:
 bash verify.sh
 ```
 
-The verifier checks JavaScript syntax across production, scripts, and tests; runs the Node-native unit suite; validates task-queue integrity and the executable content-schema contract; verifies seeded placement/wave/combat reproducibility and forbidden direct simulation randomness; and enforces key dependency boundaries. It remains dependency-free and complements, rather than replaces, browser playtesting.
+The verifier checks JavaScript syntax across production, scripts, and tests; runs Node-native unit and headless scenario tests; validates task-queue integrity and the executable content-schema contract; verifies seeded placement/wave/combat reproducibility and forbidden direct simulation randomness; and enforces key dependency boundaries. It remains dependency-free and complements, rather than replaces, browser playtesting.
