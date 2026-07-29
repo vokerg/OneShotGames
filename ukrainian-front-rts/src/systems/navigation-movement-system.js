@@ -10,6 +10,7 @@ import {
   currentWaypoint,
   requestWaypointRoute,
 } from '../navigation/waypoint-route.js';
+import { buildingNavigationBlocker } from './construction-placement-system.js';
 import { resolveUnitOverlaps } from './unit-collision-system.js';
 
 const NAVIGATION_ORDER_KINDS = new Set(['move', 'attackMove']);
@@ -22,24 +23,6 @@ const RUNTIME_TERRAIN_RULES = Object.freeze({
   [TERRAIN_TYPES.MUD]: DEFAULT_TERRAIN_RULES[TERRAIN_TYPES.MUD],
   [TERRAIN_TYPES.RUBBLE]: DEFAULT_TERRAIN_RULES[TERRAIN_TYPES.RUBBLE],
 });
-
-function buildingBlocker(building) {
-  const stats = BUILDING_TYPES[building.type];
-  if (!stats) return null;
-
-  const left = Math.max(0, Math.floor((building.x - stats.w / 2) / WORLD.tile));
-  const top = Math.max(0, Math.floor((building.y - stats.h / 2) / WORLD.tile));
-  const right = Math.min(WORLD.w / WORLD.tile, Math.ceil((building.x + stats.w / 2) / WORLD.tile));
-  const bottom = Math.min(WORLD.h / WORLD.tile, Math.ceil((building.y + stats.h / 2) / WORLD.tile));
-  if (right <= left || bottom <= top) return null;
-
-  return {
-    id: `building:${building.id}`,
-    origin: { x: left, y: top },
-    footprint: { width: right - left, height: bottom - top },
-    layers: [MOVEMENT_LAYERS.GROUND, MOVEMENT_LAYERS.AMPHIBIOUS],
-  };
-}
 
 function terrainEntries(game) {
   const entries = [];
@@ -55,10 +38,25 @@ function terrainEntries(game) {
   return entries;
 }
 
+function placementSignature(building) {
+  const placement = building.placement;
+  if (!placement?.origin || !placement?.footprint) return '';
+  return [
+    placement.rotation ?? 0,
+    placement.origin.x,
+    placement.origin.y,
+    placement.footprint.width,
+    placement.footprint.height,
+  ].join(':');
+}
+
 function navigationSignature(game) {
   const buildings = game.buildings
     .filter((building) => building.hp > 0)
-    .map((building) => `${building.id}:${building.type}:${building.x}:${building.y}`)
+    .map(
+      (building) =>
+        `${building.id}:${building.type}:${building.x}:${building.y}:${placementSignature(building)}`,
+    )
     .sort()
     .join('|');
   return `${game.missionIndex}:${game.terrain.length}:${buildings}`;
@@ -67,7 +65,7 @@ function navigationSignature(game) {
 function createRuntimeNavigationGrid(game) {
   const blockers = game.buildings
     .filter((building) => building.hp > 0)
-    .map(buildingBlocker)
+    .map(buildingNavigationBlocker)
     .filter(Boolean);
 
   return createNavigationGridFromMapData({
