@@ -6,8 +6,9 @@
 `src/config.js`. It defines identity, required fields, defaults, references, and compatibility rules
 for factions, units, buildings, abilities, upgrades, missions, maps, and AI profiles.
 
-The schema describes content shape. Cross-record and technology-graph validation is implemented by
-`scripts/content-validator.mjs`; runtime production, research, campaign, and mission-lock behavior
+The schema describes content shape. General cross-record validation is implemented by
+`scripts/content-validator.mjs`, while shared building/upgrade technology validation is implemented by
+`scripts/verify-tech-graph.mjs`. Runtime production, research, campaign, and mission-lock behavior
 remains owned by the queue tasks that implement those systems.
 
 ## Version and compatibility policy
@@ -191,7 +192,7 @@ also declare prerequisites. The validator rejects:
 - missing, duplicate, self, or circular prerequisite references;
 - unknown faction or mission references;
 - single-member exclusivity groups;
-- a node requiring two choices from the same exclusivity group;
+- a node requiring two choices from the same exclusivity group, directly or transitively;
 - a node requiring a member of its own exclusivity group;
 - faction-visible nodes that cannot be reached through faction-compatible prerequisites;
 - mission `availableTech` entries blocked or made unreachable by mission/faction restrictions.
@@ -218,6 +219,6 @@ apply upgrades, serialize progression, or change command-card availability.
 3. Add required/reference/range metadata to `src/content-schema.js`.
 4. Update this document and the focused validator when legal cross-record combinations change.
 5. Add deterministic success and failure fixtures.
-6. Run `node scripts/verify-content-schema.mjs`, `node scripts/content-validator.test.mjs`, and
-   `bash verify.sh`.
+6. Run `node scripts/verify-content-schema.mjs`, `node scripts/verify-tech-graph.test.mjs`,
+   `node scripts/verify-tech-content.mjs`, and `bash verify.sh`.
 7. Keep runtime migration/loading/execution work in its assigned task unless explicitly included.
