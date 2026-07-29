@@ -4,7 +4,7 @@
 
 Fields of Resolve is a dependency-free browser RTS. The architecture keeps authoritative gameplay deterministic, content declarative, browser concerns at the edge, and verification executable through one command. Changes should touch the smallest responsible owner and preserve explicit dependency direction.
 
-This document records the Gate A foundation established by UFR-003 through UFR-011. Later feature lanes may add focused modules, but they must preserve these contracts or update this document and the architecture verifier in the same pull request.
+This document records the Gate A foundation established by UFR-003 through UFR-011 and the navigation layer established by UFR-018 through UFR-022. Later feature lanes may add focused modules, but they must preserve these contracts or update this document and the architecture verifier in the same pull request.
 
 ## Gate A invariants
 
@@ -38,14 +38,22 @@ index.html
           │   ├─ random.js               seeded simulation random stream
           │   ├─ fixed-step-clock.js     fixed-tick accumulator
           │   └─ events.js               domain-event taxonomy and stream
+          ├─ src/navigation/
+          │   ├─ navigation-grid.js      passability, terrain cost, blockers
+          │   ├─ pathfinder.js           deterministic bounded A*
+          │   ├─ waypoint-route.js       world/cell route translation
+          │   └─ path-service.js         cache, invalidation, repath cadence, counters
           └─ src/systems/
               ├─ simulation-phases.js    authoritative phase order
+              ├─ navigation-movement-system.js
               ├─ objective-system.js
               ├─ projectile-system.js
               └─ wave-system.js
 ```
 
 `src/content-schema.js` is not a second content database. It describes the stable shape, defaults, identities, and references of content held in `src/config.js` and later focused content modules.
+
+`src/navigation/` is a browser-independent policy layer. It owns reusable navigation data and route computation, but it does not own units, orders, fixed-step sequencing, collision resolution, or runtime map synchronization. Those authoritative mutations remain in `src/systems/` and `Game`.
 
 ### Headless composition
 
@@ -59,7 +67,7 @@ src/app/simulation-harness.js
   └─ emits reference-free snapshots
 ```
 
-The harness is a deterministic driver, not a second implementation of combat, economy, objectives, waves, production, commands, or simulation phases.
+The harness is a deterministic driver, not a second implementation of combat, economy, objectives, waves, production, commands, navigation, or simulation phases.
 
 ### Verification composition
 
@@ -90,18 +98,19 @@ runtime → injected Game/UI/Renderer interfaces + core fixed-step clock
 simulation harness → Game/core only
 ui/render → config + read-only game state + public game commands
 Game → config/schema/core/systems
-systems → config/schema/core/sibling systems
+systems → config/schema/core/navigation/sibling systems
+navigation → core/sibling navigation modules
 config → schema/core only when needed
 schema → core only when needed
 core → sibling core modules only
 production → never tests
 ```
 
-The architecture verifier enforces the declared production layers: `core`, `schema`, `config`, `systems`, `game`, `app`, `input`, `ui`, `render`, `audio`, and `main`. A new top-level source directory is an architecture change: add its ownership and allowed imports to the verifier, add accepted/rejected tooling fixtures, and update this document.
+The architecture verifier enforces the declared production layers: `core`, `schema`, `config`, `navigation`, `systems`, `game`, `app`, `input`, `ui`, `render`, `audio`, and `main`. Navigation modules may import only `core` and sibling `navigation` modules. Systems may consume navigation policies, but navigation must not import systems, `Game`, app, input, UI, renderer, audio, or main. A new top-level source directory is an architecture change: add its ownership and allowed imports to the verifier, add accepted/rejected tooling fixtures, and update this document.
 
 ### Browser ownership
 
-Direct DOM access is restricted to browser-owned modules such as composition, runtime, input, UI, rendering, and dedicated audio adapters. Simulation, schema, config, core, and headless code must remain browser-independent.
+Direct DOM access is restricted to browser-owned modules such as composition, runtime, input, UI, rendering, and dedicated audio adapters. Simulation, navigation, schema, config, core, and headless code must remain browser-independent.
 
 Direct `Audio`, `AudioContext`, media-source construction, and decoding belong in `src/audio/`. Other layers request sound through domain events or a dedicated injected service; they do not construct browser audio objects.
 
@@ -137,6 +146,12 @@ clock → camera → units → projectiles → production → waves
 ```
 
 A phase may call a focused owner, but runtime, UI, renderer, input, and tests must not create alternate phase orders.
+
+### `src/navigation/`
+
+Owns deterministic browser-independent navigation policies. `navigation-grid.js` owns passability, terrain costs, movement layers, footprints, and blockers. `pathfinder.js` owns bounded deterministic A*. `waypoint-route.js` translates between cell paths and world-space route objects. `path-service.js` owns bounded route-template caching, revision invalidation, fixed-tick repath cadence, and deterministic counters.
+
+Navigation accepts explicit grids, points, options, revisions, request IDs, and tick values. It never reads `Game`, units, buildings, missions, DOM, canvas, audio, or renderer state. It returns policy results and route objects; `src/systems/navigation-movement-system.js` remains responsible for deriving runtime grids, assigning unit routes, pausing throttled orders, advancing movement, and invoking collision resolution.
 
 ### `src/core/random.js`
 
@@ -197,7 +212,7 @@ Events are observation and integration records. They do not replace authoritativ
 9. The renderer draws the latest completed state once.
 10. The UI refreshes from that same state.
 
-Changing tick duration, phase order, random draw order, event ordering, or command validation is deterministic-behavior work and requires corresponding tests and documentation.
+Changing tick duration, phase order, random draw order, event ordering, command validation, navigation request order, or repath cadence is deterministic-behavior work and requires corresponding tests and documentation.
 
 ## Test layers
 
@@ -211,7 +226,7 @@ Whole-scenario tests driven through `src/app/simulation-harness.js`. They issue 
 
 ### `tests/tooling/`
 
-Temporary-project fixtures for executable development contracts such as architecture and unified verification. They may create isolated filesystem trees but must not mutate the repository checkout or weaken a rule merely to make current production code pass.
+Temporary-project fixtures for executable development contracts such as architecture and verification. They may create isolated filesystem trees but must not mutate the repository checkout or weaken a rule merely to make current production code pass.
 
 ### Specialized verifiers
 
@@ -240,6 +255,7 @@ Use `docs/CHANGE_GUIDE.md` for task-oriented routing. The non-negotiable rules a
 - update schema code and human-readable schema docs together;
 - add new domain-event types to the central taxonomy rather than using ad-hoc strings;
 - register every new production layer in the architecture verifier;
+- keep navigation policy browser-independent and runtime mutation in systems;
 - extend the unified verification stage list in one place only;
 - run focused tests first and `bash verify.sh` before completion.
 
@@ -252,5 +268,6 @@ Gate A is closed when the following remain true on `main`:
 - the browser runtime uses fixed-step simulation phases;
 - the domain-event contract is dependency-free and one-directional;
 - architecture boundaries and browser ownership are executable checks;
+- navigation policies are declared, browser-independent, and consumed only through systems;
 - one verification command owns syntax, tests, and repository contracts;
 - this architecture document and `docs/CHANGE_GUIDE.md` match those owners.
