@@ -38,7 +38,7 @@ export function clearOrders(unit) {
 
 export function advanceOrderQueue(unit, completedOrder) {
   const queue = ensureOrderQueue(unit);
-  if (queue.length && (queue[0] === completedOrder || sameOrder(queue[0], completedOrder))) queue.shift();
+  if (queue.length && sameOrder(queue[0], completedOrder)) queue.shift();
   unit.order = queue[0] || null;
   unit.target = unit.order?.kind === 'attack' ? unit.order.target : null;
   return unit.order;
@@ -51,8 +51,7 @@ function sameOrder(a, b) {
 }
 
 export function queuedWaypoints(unit) {
-  const queue = ensureOrderQueue(unit);
-  return queue
+  return ensureOrderQueue(unit)
     .map((order, index) => {
       if (order.kind === 'attack') {
         const target = order.target;
@@ -67,23 +66,34 @@ export function queuedWaypoints(unit) {
     .filter(Boolean);
 }
 
-export function createQueuedOrderController(game) {
+export function createQueuedOrderController(game, keyTarget = globalThis) {
   const originalIssue = game.issue.bind(game);
   const originalStopSelected = game.stopSelected.bind(game);
   const originalUpdateUnit = game.updateUnit.bind(game);
+  let shiftHeld = false;
+  const onKeyDown = (event) => { if (event.key === 'Shift') shiftHeld = true; };
+  const onKeyUp = (event) => { if (event.key === 'Shift') shiftHeld = false; };
+  const onBlur = () => { shiftHeld = false; };
+  keyTarget?.addEventListener?.('keydown', onKeyDown);
+  keyTarget?.addEventListener?.('keyup', onKeyUp);
+  keyTarget?.addEventListener?.('blur', onBlur);
 
-  game.issue = (x, y, target, { append = false } = {}) => {
+  game.issue = (x, y, target, options = {}) => {
     const units = game.selectedUnits();
     if (!units.length || game.gameOver) return false;
-    const attackMove = game.mouse.attackMove;
+    const append = options.append ?? shiftHeld;
+    const previous = new Map(units.map((unit) => [unit.id, cloneOrder(unit.order)]));
     const accepted = originalIssue(x, y, target);
     if (!accepted) return false;
     for (const unit of units) {
       const issued = cloneOrder(unit.order);
-      if (append) appendOrder(unit, issued);
-      else replaceOrders(unit, issued);
+      if (append) {
+        unit.order = previous.get(unit.id);
+        appendOrder(unit, issued);
+      } else {
+        replaceOrders(unit, issued);
+      }
     }
-    game.mouse.attackMove = false;
     return true;
   };
 
@@ -111,5 +121,8 @@ export function createQueuedOrderController(game) {
     game.stopSelected = originalStopSelected;
     game.updateUnit = originalUpdateUnit;
     delete game.queuedWaypoints;
+    keyTarget?.removeEventListener?.('keydown', onKeyDown);
+    keyTarget?.removeEventListener?.('keyup', onKeyUp);
+    keyTarget?.removeEventListener?.('blur', onBlur);
   };
 }
