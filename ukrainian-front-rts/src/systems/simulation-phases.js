@@ -1,5 +1,6 @@
 import { TEAM, WORLD } from '../config.js';
 import { clamp } from '../core/math.js';
+import { updateUnitsWithNavigation } from './navigation-movement-system.js';
 
 function requirePositiveStep(stepSeconds) {
   if (!Number.isFinite(stepSeconds) || stepSeconds <= 0) {
@@ -22,7 +23,7 @@ function updateCamera(game, stepSeconds) {
 }
 
 function updateUnits(game, stepSeconds) {
-  for (const unit of game.units) game.updateUnit(unit, stepSeconds);
+  updateUnitsWithNavigation(game, stepSeconds);
 }
 
 function updateProjectiles(game, stepSeconds) {
