@@ -6,14 +6,20 @@ export function validateTechGraph({ buildings = {}, upgrades = {}, factions = {}
   const nodes = { ...buildings, ...upgrades };
   const factionIds = new Set(Object.values(factions).map((faction) => faction?.id));
   const missionIds = new Set(missions.map((mission) => mission?.id));
+  const exclusiveGroups = new Map();
 
   for (const [id, node] of Object.entries(nodes)) {
     const path = buildings[id] ? `BUILDING_TYPES.${id}` : `UPGRADES.${id}`;
     for (const required of asList(node.requires)) if (!nodes[required]) add(errors, `${path}.requires`, `missing tech node ${required}`);
     for (const faction of asList(node.factions)) if (!factionIds.has(faction)) add(errors, `${path}.factions`, `missing faction ${faction}`);
     for (const mission of asList(node.missionLocks)) if (!missionIds.has(mission)) add(errors, `${path}.missionLocks`, `missing mission ${mission}`);
-    if (node.exclusiveGroup != null && (typeof node.exclusiveGroup !== 'string' || !node.exclusiveGroup.trim())) add(errors, `${path}.exclusiveGroup`, 'must be a non-empty string or null');
+    if (node.exclusiveGroup != null) {
+      if (typeof node.exclusiveGroup !== 'string' || !node.exclusiveGroup.trim()) add(errors, `${path}.exclusiveGroup`, 'must be a non-empty string or null');
+      else exclusiveGroups.set(node.exclusiveGroup, [...(exclusiveGroups.get(node.exclusiveGroup) ?? []), id]);
+    }
   }
+
+  for (const [group, ids] of exclusiveGroups) if (ids.length < 2) add(errors, `exclusiveGroup.${group}`, 'must contain at least two technology choices');
 
   const visiting = new Set();
   const visited = new Set();
@@ -27,11 +33,19 @@ export function validateTechGraph({ buildings = {}, upgrades = {}, factions = {}
   }
   for (const id of Object.keys(nodes)) visit(id, []);
 
-  for (const [id, node] of Object.entries(nodes)) {
-    if (node.techRoot) continue;
-    const requires = asList(node.requires);
-    if (!requires.length) add(errors, `${id}.requires`, 'technology node is unreachable because it has no prerequisite and is not marked techRoot');
+  const roots = Object.keys(nodes).filter((id) => nodes[id].techRoot || asList(nodes[id].requires).length === 0);
+  const reachable = new Set(roots);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const [id, node] of Object.entries(nodes)) {
+      if (!reachable.has(id) && asList(node.requires).every((required) => reachable.has(required))) {
+        reachable.add(id);
+        changed = true;
+      }
+    }
   }
+  for (const id of Object.keys(nodes)) if (!reachable.has(id)) add(errors, `${id}.requires`, 'technology node is unreachable from any root');
 
   for (const [index, mission] of missions.entries()) {
     for (const id of asList(mission.availableTech)) if (!nodes[id]) add(errors, `MISSIONS[${index}].availableTech`, `missing tech node ${id}`);
