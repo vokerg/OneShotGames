@@ -17,6 +17,10 @@ import {
   selectAllOfTypeOnScreen,
   synchronizePrimarySelection,
 } from './selection-subgroups.js';
+import {
+  createTerrainCursorPresenter,
+  terrainCursorFeedback,
+} from './terrain-cursor-feedback.js';
 
 const DRAG_THRESHOLD = 6;
 const MIN_ZOOM = 0.55;
@@ -32,6 +36,7 @@ export function installBattlefieldInput({
   windowTarget = window,
   keyBindings: keyBindingOverrides = {},
   cameraSettings = {},
+  documentTarget = globalThis.document,
 }) {
   const disposers = [];
   const keyBindings = createKeyBindings(keyBindingOverrides);
@@ -44,10 +49,30 @@ export function installBattlefieldInput({
     },
     cameraSettings,
   );
+  const terrainCursor = createTerrainCursorPresenter({
+    canvas,
+    documentTarget,
+    root: documentTarget?.body,
+  });
+  disposers.push(() => terrainCursor.dispose());
   const heldActionsByKey = new Map();
   const listen = (target, type, handler, options) => {
     target.addEventListener(type, handler, options);
     disposers.push(() => target.removeEventListener(type, handler, options));
+  };
+
+  const clearTerrainFeedback = () => {
+    game.mouse.terrainFeedback = null;
+    terrainCursor.clear();
+  };
+  const updateTerrainFeedback = (clientX, clientY, world) => {
+    if (game.gameOver || game.pendingBuild || game.mouse.drag) {
+      clearTerrainFeedback();
+      return;
+    }
+    const feedback = terrainCursorFeedback(game, world);
+    game.mouse.terrainFeedback = feedback;
+    terrainCursor.update(feedback, { x: clientX, y: clientY });
   };
 
   let animationFrame = null;
@@ -91,6 +116,7 @@ export function installBattlefieldInput({
     ) {
       game.mouse.drag = true;
     }
+    updateTerrainFeedback(event.clientX, event.clientY, world);
   };
 
   const onMouseUp = (event) => {
@@ -106,6 +132,7 @@ export function installBattlefieldInput({
       else ui.toast(game.lastError);
       game.mouse.drag = false;
       ui.refresh();
+      updateTerrainFeedback(event.clientX, event.clientY, world);
       return;
     }
     if (game.mouse.drag) {
@@ -139,6 +166,7 @@ export function installBattlefieldInput({
     }
     game.mouse.drag = false;
     ui.refresh();
+    updateTerrainFeedback(event.clientX, event.clientY, world);
   };
 
   const onContextMenu = (event) => {
@@ -148,6 +176,8 @@ export function installBattlefieldInput({
       game.cancelBuild();
       ui.toast('Construction placement cancelled.');
       ui.refresh();
+      const world = game.worldPos(event.clientX, event.clientY);
+      updateTerrainFeedback(event.clientX, event.clientY, world);
       return;
     }
     const world = game.worldPos(event.clientX, event.clientY);
@@ -233,6 +263,12 @@ export function installBattlefieldInput({
     game.mouse.down = false;
     game.mouse.drag = false;
     cameraNavigation.pointerLeave();
+    clearTerrainFeedback();
+  };
+
+  const onPointerLeave = () => {
+    cameraNavigation.pointerLeave();
+    clearTerrainFeedback();
   };
 
   const onMinimapMouseDown = (event) => {
@@ -247,7 +283,7 @@ export function installBattlefieldInput({
   listen(canvas, 'mousedown', onMouseDown);
   listen(canvas, 'mousemove', onMouseMove);
   listen(canvas, 'mouseup', onMouseUp);
-  listen(canvas, 'mouseleave', () => cameraNavigation.pointerLeave());
+  listen(canvas, 'mouseleave', onPointerLeave);
   listen(canvas, 'contextmenu', onContextMenu);
   listen(canvas, 'wheel', onWheel, { passive: false });
   listen(windowTarget, 'keydown', onKeyDown);
