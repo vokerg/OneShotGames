@@ -1,5 +1,6 @@
 import { BUILDING_TYPES, TEAM, UNIT_TYPES, WORLD } from '../config.js';
 import {
+  DEFAULT_TERRAIN_RULES,
   MOVEMENT_LAYERS,
   TERRAIN_TYPES,
   createNavigationGridFromMapData,
@@ -14,6 +15,11 @@ const NAVIGATION_ORDER_KINDS = new Set(['move', 'attackMove']);
 const TERRAIN_BY_RUNTIME_VALUE = Object.freeze({
   1: TERRAIN_TYPES.MUD,
   2: TERRAIN_TYPES.RUBBLE,
+});
+const RUNTIME_TERRAIN_RULES = Object.freeze({
+  [TERRAIN_TYPES.OPEN]: DEFAULT_TERRAIN_RULES[TERRAIN_TYPES.OPEN],
+  [TERRAIN_TYPES.MUD]: DEFAULT_TERRAIN_RULES[TERRAIN_TYPES.MUD],
+  [TERRAIN_TYPES.RUBBLE]: DEFAULT_TERRAIN_RULES[TERRAIN_TYPES.RUBBLE],
 });
 
 function buildingBlocker(building) {
@@ -71,7 +77,7 @@ function createRuntimeNavigationGrid(game) {
     terrain: terrainEntries(game),
     bridges: [],
     blockers,
-  });
+  }, { terrainRules: RUNTIME_TERRAIN_RULES });
 }
 
 export function synchronizeNavigationGrid(game) {
