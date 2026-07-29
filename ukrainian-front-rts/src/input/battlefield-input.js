@@ -1,4 +1,10 @@
 import { TEAM } from '../config.js';
+import {
+  createKeyBindings,
+  INPUT_ACTIONS,
+  isHeldInputAction,
+  resolveInputAction,
+} from './action-map.js';
 
 const DRAG_THRESHOLD = 6;
 const MIN_ZOOM = 0.55;
@@ -6,8 +12,17 @@ const MAX_ZOOM = 1.45;
 const WORLD_WIDTH = 2560;
 const WORLD_HEIGHT = 1664;
 
-export function installBattlefieldInput({ game, ui, canvas, minimap, windowTarget = window }) {
+export function installBattlefieldInput({
+  game,
+  ui,
+  canvas,
+  minimap,
+  windowTarget = window,
+  keyBindings: keyBindingOverrides = {},
+}) {
   const disposers = [];
+  const keyBindings = createKeyBindings(keyBindingOverrides);
+  const heldActionsByKey = new Map();
   const listen = (target, type, handler, options) => {
     target.addEventListener(type, handler, options);
     disposers.push(() => target.removeEventListener(type, handler, options));
@@ -102,21 +117,26 @@ export function installBattlefieldInput({ game, ui, canvas, minimap, windowTarge
   };
 
   const onKeyDown = (event) => {
-    const key = event.key.toLowerCase();
-    game.keys.add(key);
+    const action = resolveInputAction(keyBindings, event.key);
+    if (!action) return;
+
+    if (isHeldInputAction(action)) {
+      game.keys.add(action);
+      heldActionsByKey.set(event.code || event.key, action);
+    }
     if (game.gameOver) return;
 
-    if (key === 'escape' && game.pendingBuild) {
+    if (action === INPUT_ACTIONS.CANCEL && game.pendingBuild) {
       game.cancelBuild();
       ui.toast('Construction placement cancelled.');
       ui.refresh();
-    } else if (key === 'q' && !event.repeat) {
+    } else if (action === INPUT_ACTIONS.ATTACK_MOVE && !event.repeat) {
       if (game.armAttackMove()) ui.toast('Attack-move: right-click destination.');
       else ui.toast(game.lastError);
-    } else if (key === 'x' && !event.repeat) {
+    } else if (action === INPUT_ACTIONS.STOP && !event.repeat) {
       if (game.stopSelected()) ui.toast('Orders cancelled.');
       else ui.toast(game.lastError);
-    } else if (key === 't' && !event.repeat) {
+    } else if (action === INPUT_ACTIONS.TOGGLE_AUTO_FIRE && !event.repeat) {
       const state = game.toggleAutoFire();
       if (game.lastError) ui.toast(game.lastError);
       else ui.toast(`Auto-fire ${state ? 'enabled' : 'disabled'} for selected combat units.`);
@@ -124,10 +144,16 @@ export function installBattlefieldInput({ game, ui, canvas, minimap, windowTarge
     }
   };
 
-  const onKeyUp = (event) => game.keys.delete(event.key.toLowerCase());
+  const onKeyUp = (event) => {
+    const keyId = event.code || event.key;
+    const action = heldActionsByKey.get(keyId) || resolveInputAction(keyBindings, event.key);
+    if (action && isHeldInputAction(action)) game.keys.delete(action);
+    heldActionsByKey.delete(keyId);
+  };
 
   const onBlur = () => {
     game.keys.clear();
+    heldActionsByKey.clear();
     game.mouse.down = false;
     game.mouse.drag = false;
   };
