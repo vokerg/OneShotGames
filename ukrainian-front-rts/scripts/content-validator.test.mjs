@@ -12,7 +12,7 @@ function validFixture() {
     },
     BUILDING_TYPES: {
       hq: { cost: {}, produces: [], techRoot: true, factions: ['ukraine', 'russia'] },
-      barracks: { cost: { metal: 20 }, produces: ['soldier'], requires: ['hq'], factions: ['ukraine'] },
+      barracks: { cost: { metal: 20 }, produces: ['soldier'], requires: 'hq', factions: ['ukraine'] },
     },
     UPGRADES: {
       first: { techRoot: true, factions: ['ukraine'], cost: { intel: 5 } },
