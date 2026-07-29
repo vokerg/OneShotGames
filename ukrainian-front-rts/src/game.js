@@ -2,6 +2,7 @@ import { BUILDING_TYPES, MISSIONS, TEAM, UNIT_TYPES, UPGRADES, WORLD } from './c
 import { clamp, distance, randomBetween } from './core/math.js';
 import { updateMissionObjectives } from './systems/objective-system.js';
 import { updateProjectiles } from './systems/projectile-system.js';
+import { runSimulationStep } from './systems/simulation-phases.js';
 import { spawnEnemyWave } from './systems/wave-system.js';
 
 const COMBAT_ORDER_KINDS = new Set(['attack', 'attackMove']);
@@ -657,7 +658,6 @@ export class Game {
     if (unit.order?.kind === 'attack' && unit.order.target?.hp <= 0) unit.order = null;
 
     this.updateWorker(unit, stats, dt);
-
     if (stats.medic) {
       const ally = this.units
         .filter(
@@ -783,33 +783,6 @@ export class Game {
   }
 
   update(dt) {
-    if (this.gameOver) return;
-    this.time += dt;
-
-    const pan = 400 * dt;
-    if (this.keys.has('arrowup') || this.keys.has('w')) this.camera.y += pan;
-    if (this.keys.has('arrowdown') || this.keys.has('s')) this.camera.y -= pan;
-    if (this.keys.has('arrowleft') || this.keys.has('a')) this.camera.x += pan;
-    if (this.keys.has('arrowright') || this.keys.has('d')) this.camera.x -= pan;
-    this.camera.x = clamp(this.camera.x, innerWidth - WORLD.w * this.camera.z - 100, 100);
-    this.camera.y = clamp(this.camera.y, innerHeight - WORLD.h * this.camera.z - 180, 100);
-
-    for (const unit of this.units) this.updateUnit(unit, dt);
-    this.updateProjectiles(dt);
-    this.updateProduction(dt);
-    this.updateWaves(dt);
-    this.removeDestroyedEntities();
-    this.updateObjectives();
-
-    if (this.player.objectives.every(Boolean)) {
-      this.finish('victory', 'All operational objectives are complete.');
-      return;
-    }
-
-    const hasUkrainianForces = this.units.some((unit) => unit.team === TEAM.UA);
-    const hasUkrainianStructures = this.buildings.some((building) => building.team === TEAM.UA);
-    if (!hasUkrainianForces && !hasUkrainianStructures) {
-      this.finish('defeat', 'All Ukrainian units and structures have been destroyed.');
-    }
+    runSimulationStep(this, dt);
   }
 }

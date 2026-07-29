@@ -10,6 +10,8 @@ The architecture is optimized for incremental game development: balance edits, b
 index.html
   └─ src/main.js                 composition root
       ├─ src/app/runtime.js      mission start + animation-frame lifecycle
+      │   └─ src/core/fixed-step-clock.js
+      │                           frame accumulator and fixed tick cadence
       ├─ src/input/              browser input adapters
       ├─ src/ui.js               HUD and command presentation
       ├─ src/render.js           base renderer
@@ -21,6 +23,8 @@ index.html
           ├─ src/core/           pure reusable helpers
           │   └─ random.js       seeded simulation random stream
           └─ src/systems/        focused simulation policies
+              └─ simulation-phases.js
+                                  ordered fixed-step phase contract
 ```
 
 Headless scenario composition is separate from the browser runtime:
@@ -31,7 +35,7 @@ src/app/simulation-harness.js
   ├─ resets the seeded simulation stream
   ├─ supplies temporary numeric viewport globals for Game.start/update
   ├─ dispatches structured commands to public Game methods
-  └─ advances configured ticks and emits reference-free snapshots
+  └─ advances configured fixed ticks and emits reference-free snapshots
 ```
 
 `content-schema.js` is not a second content database. It describes the stable shape of content held in
@@ -53,7 +57,7 @@ Dependencies point inward toward data and pure logic:
 
 ```text
 main → app/input/ui/render/game
-runtime → public Game/UI/Renderer interfaces supplied at construction
+runtime → public Game/UI/Renderer interfaces + core fixed-step clock
 simulation harness → Game/core only; never DOM, renderer, UI, or input
 ui/render → game state + config
 Game → config/core/systems
@@ -73,7 +77,9 @@ The composition root. It resolves required DOM elements, constructs the game/UI/
 
 ### `src/app/runtime.js`
 
-Owns browser mission startup and the animation-frame loop. Scheduling is injectable so lifecycle behavior can be tested without a real browser loop. Mission startup derives a mission-specific seed from the configured simulation seed, resets the authoritative random stream, and records the active numeric seed on `game.simulationSeed` before `Game.start` runs.
+Owns browser mission startup and the animation-frame loop. Scheduling is injectable so lifecycle behavior can be tested without a real browser loop. Mission startup derives a mission-specific seed from the configured simulation seed, resets the authoritative random stream, records the active numeric seed on `game.simulationSeed`, starts `Game`, and resets the fixed-step clock.
+
+Animation-frame elapsed time is presentation timing, not simulation timing. The runtime passes capped frame deltas into `src/core/fixed-step-clock.js`, executes zero or more fixed simulation ticks, then renders and refreshes the UI once. A slow or fast display therefore changes render frequency without changing tick duration or phase order.
 
 ### `src/app/simulation-harness.js`
 
@@ -81,15 +87,15 @@ Owns deterministic Node-side scenario driving. It constructs `Game` through an i
 
 The current `Game` camera code reads `innerWidth` and `innerHeight`. The harness supplies those numeric values only around `Game.start` and `Game.update`, then restores the previous global descriptors. It does not create `window`, `document`, canvas, UI, renderer, input, or animation-frame objects.
 
-The harness is not an alternate simulation implementation. It must call public `Game` methods and must not duplicate combat, economy, objective, wave, or production rules. Its repeated `Game.update(tickSeconds)` loop is a test driver; UFR-007 owns the future fixed-step phase contract used by the browser runtime.
+The harness is not an alternate simulation implementation. It must call public `Game` methods and must not duplicate combat, economy, objective, wave, production, or phase rules. Its configured tick should use `FIXED_SIMULATION_STEP_SECONDS` unless a focused test deliberately validates a different explicit step contract.
 
 ### `src/input/battlefield-input.js`
 
-Translates browser events into game commands and camera state. It owns selection gestures, orders, attack-move arming, zoom, keyboard state, minimap navigation, blur cleanup, and listener disposal.
+Translates browser events into named game actions, commands, and camera state. It owns selection gestures, orders, attack-move arming, zoom, keyboard state, minimap navigation, blur cleanup, and listener disposal.
 
 ### `src/game.js`
 
-The authoritative state container and gameplay facade. It owns entities, resources, production, unit behavior, commands, and update sequencing. Large independent policies are delegated to `src/systems/` through compatibility methods.
+The authoritative state container and gameplay facade. It owns entities, resources, production, unit behavior, commands, and compatibility delegation methods. `Game.update(stepSeconds)` is the public simulation-tick boundary and delegates sequencing to `src/systems/simulation-phases.js`; callers must not invoke individual phases to create an alternate update order.
 
 Simulation code must request random ranges through `src/core/math.js` or use the seeded service directly. It must not call `Math.random`. Existing hero placement, production exits, and initial weapon cooldowns therefore consume the same mission stream as system-level random decisions.
 
@@ -97,15 +103,20 @@ Simulation code must request random ranges through `src/core/math.js` or use the
 
 Focused policies that operate on explicit game state:
 
+- `simulation-phases.js` — authoritative ordered step: clock, camera, units, projectiles, production, waves, cleanup, objectives, then outcome;
 - `objective-system.js` — mission completion conditions;
 - `projectile-system.js` — projectile travel, seeded impact damage rolls, and cleanup;
 - `wave-system.js` — enemy composition, seeded deployment jitter, and spawn orders.
 
 New systems should expose functions that accept state explicitly. Avoid hidden globals and circular imports. Random draws are the exception only in that they consume the explicitly reset mission stream owned by `src/core/random.js`; systems must never create private unseeded streams.
 
+Adding, removing, or reordering a phase is an integration change. Update `SIMULATION_PHASES`, the phase-order tests, deterministic scenario fixtures, and this document together.
+
 ### `src/core/`
 
 Pure helpers with no browser or game-object dependencies. These modules are the easiest to unit test and safest to reuse. Core modules may import sibling core modules but no higher project layer.
+
+`fixed-step-clock.js` owns the frame accumulator, default 30 Hz simulation step, maximum accepted frame delta, tick index, reset behavior, and interpolation fraction. It accepts elapsed time and invokes a supplied callback once per complete fixed tick; it never imports or mutates game state.
 
 `random.js` owns the single authoritative simulation random stream for the current mission. It provides stable string/number seed normalization, mission-stream derivation, range/integer/pick operations, and snapshot/restore. `math.js` keeps the compatibility `randomBetween` helper but delegates every draw to that service.
 
@@ -139,6 +150,8 @@ and make small explicit setup mutations through the exposed live `game`. They mu
 renderer, UI, input, or wall-clock dependencies. Only one actively advancing harness should exist per
 process because the current seeded-random stream is process-global.
 
+Fixed-step coverage has two layers: unit tests prove accumulator and phase-order contracts; simulation tests drive identical command streams through different render-frame chunking and require reference-free snapshots to match.
+
 `scripts/run-tests.mjs` recursively discovers test files in stable path order and delegates execution to
 Node's test runner. Optional path-fragment arguments select a focused subset. An empty suite, unmatched
 filter, assertion failure, import failure, or crashed test process produces a non-zero exit status.
@@ -154,13 +167,14 @@ rather than replace, behavior-focused unit and scenario tests.
 
 ### Browser runtime
 
-1. `runtime.startMission` derives and resets the mission seed before initialization.
+1. `runtime.startMission` derives and resets the mission seed before initialization and resets the fixed-step accumulator.
 2. Input adapters update key/mouse state or call a public game command.
-3. `runtime.js` computes a capped delta time.
-4. `Game.update` advances unit behavior, projectiles, production, waves, cleanup, and objectives in a stable order.
-5. Simulation random draws are consumed in that same deterministic call order.
-6. The renderer draws the resulting state.
-7. The UI refreshes from the same state snapshot.
+3. Each animation frame contributes a capped elapsed duration to `fixed-step-clock.js`.
+4. The clock calls `Game.update(FIXED_SIMULATION_STEP_SECONDS)` once per complete accumulated tick; a frame may execute zero, one, or multiple ticks.
+5. `Game.update` delegates the authoritative order: clock, camera, units, projectiles, production, waves, destroyed-entity cleanup, objectives, and outcome resolution.
+6. Simulation random draws are consumed in that same deterministic tick and phase order.
+7. The renderer draws the latest completed state once per animation frame.
+8. The UI refreshes from that same state snapshot.
 
 ### Headless scenario
 
@@ -168,10 +182,11 @@ rather than replace, behavior-focused unit and scenario tests.
 2. It calls `Game.start` with a configured numeric viewport and no browser objects.
 3. A test issues structured commands that delegate to public `Game` methods.
 4. `advanceTicks(count)` calls `Game.update(tickSeconds)` exactly `count` times.
-5. The harness converts state and entity references into a deterministic snapshot.
-6. The test asserts the snapshot or uses `assertState`.
+5. Each update uses the same phase runner as the browser runtime.
+6. The harness converts state and entity references into a deterministic snapshot.
+7. The test asserts the snapshot or uses `assertState`.
 
-Changing update order or the order/number of random draws is a deterministic-behavior change. Document it and update deterministic fixtures because it can affect combat timing, wave geometry, later draws, replays, and presentation consistency.
+Changing tick duration, phase order, or the order/number of random draws is a deterministic-behavior change. Document it and update deterministic fixtures because it can affect movement, combat timing, production, wave geometry, later draws, replays, and presentation consistency.
 
 ## Extension patterns
 
@@ -208,6 +223,15 @@ Changing update order or the order/number of random draws is a deterministic-beh
 3. Keep draw order stable and avoid consuming random values in renderer/UI code on behalf of simulation.
 4. Add a same-seed fixture and a different-seed divergence assertion.
 5. Include random state in any future checkpoint, save, replay, or rollback boundary.
+
+### Add or change a simulation phase
+
+1. Confirm the work cannot remain inside an existing focused phase owner.
+2. Add or reorder the phase in `src/systems/simulation-phases.js`; do not sequence it from runtime, UI, renderer, or input code.
+3. Define its state inputs, mutation boundary, and position relative to cleanup and outcome resolution.
+4. Preserve one `Game.update` call per fixed tick and never use animation-frame delta inside a simulation rule.
+5. Update phase-order tests and run frame-chunking scenario equivalence coverage.
+6. Document random-draw or serialization implications.
 
 ### Add a unit test
 
