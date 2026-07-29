@@ -9,7 +9,7 @@ import {
   synchronizePrimarySelection,
 } from '../../src/input/selection-subgroups.js';
 
-const TEAM_UA = 'ua';
+const TEAM_UA = 0;
 
 function unit(id, type, x = 20, y = 20, overrides = {}) {
   return { id, type, team: TEAM_UA, x, y, hp: 100, selected: false, ...overrides };
@@ -74,7 +74,7 @@ test('select-all-of-type includes only living friendly units visible on screen',
   const visible = unit(2, 'infantry', 90, 90);
   const offscreen = unit(3, 'infantry', 220, 90);
   const destroyed = unit(4, 'infantry', 70, 70, { hp: 0 });
-  const enemy = unit(5, 'infantry', 60, 60, { team: 'ru' });
+  const enemy = unit(5, 'infantry', 60, 60, { team: 1 });
   const otherType = unit(6, 'tank', 60, 60);
   const state = game([source, visible, offscreen, destroyed, enemy, otherType]);
 
