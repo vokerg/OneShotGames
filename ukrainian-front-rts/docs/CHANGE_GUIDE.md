@@ -49,7 +49,18 @@ Not every feature needs every slice. A balance patch can be config-only; a visua
 4. Cover the successful transition, important rejection paths, and state that must remain unchanged on failure.
 5. Reset shared deterministic services inside the affected test and never depend on file execution order.
 6. Run a focused subset with `node scripts/run-tests.mjs <path-fragment>`, then run `bash verify.sh`.
-7. Keep headless scenario stepping and browser interaction coverage in their dedicated later test layers.
+7. Keep whole-scenario stepping and browser interaction coverage in their dedicated test layers.
+
+## Headless simulation workflow
+
+1. Use `src/app/simulation-harness.js`; do not construct renderer, UI, input, canvas, or animation-frame substitutes.
+2. Start the harness with an explicit mission index, seed, viewport, and tick duration when the defaults are not part of the behavior under test.
+3. Issue structured harness commands so the scenario delegates to public `Game` methods.
+4. Advance an exact number of configured ticks rather than sleeping or using wall-clock time.
+5. Assert the reference-free snapshot or use `assertState`; keep direct live-game setup mutations small and explicit.
+6. For random behavior, repeat the same command stream with the same seed and compare snapshots.
+7. Do not implement fixed-step phases in the harness; browser/runtime phase ownership belongs to UFR-007.
+8. Run `node scripts/run-tests.mjs sim`, then run `bash verify.sh`.
 
 ## Visual improvement workflow
 
@@ -72,6 +83,8 @@ A new system should:
 - return a result or mutate the supplied authoritative state deliberately;
 - have a single clear reason to change.
 
+An app-layer adapter such as the simulation harness may receive or construct `Game`, but it must delegate rules to the public facade and remain independent of renderer, UI, and input modules.
+
 ## Review checklist
 
 - Is the change confined to `ukrainian-front-rts/`?
@@ -79,6 +92,7 @@ A new system should:
 - Can balance/content remain in `config.js`?
 - Do schema and content documentation match affected data?
 - Do unit tests cover the changed pure rule or public state transition?
+- Does a cross-system change have a deterministic headless scenario test?
 - Does `main.js` still read as composition rather than behavior?
 - Are event listeners disposable and key state cleared on blur?
 - Do all documented controls work, including W/A/S/D?
