@@ -1,4 +1,4 @@
-const PLAYER_ORDER_KINDS = new Set(['move', 'attackMove', 'attack']);
+const PLAYER_ORDER_KINDS = new Set(['move', 'attackMove', 'attack', 'attackGround']);
 
 function cloneOrder(order) {
   if (!order) return null;
