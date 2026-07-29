@@ -1,14 +1,24 @@
+import {
+  DEFAULT_SIMULATION_SEED,
+  deriveSimulationSeed,
+  setSimulationSeed,
+} from '../core/random.js';
+
 export function createGameRuntime({
   game,
   renderer,
   ui,
+  simulationSeed = DEFAULT_SIMULATION_SEED,
   requestFrame = window.requestAnimationFrame.bind(window),
   cancelFrame = window.cancelAnimationFrame.bind(window),
 }) {
   let lastFrameAt = performance.now();
   let frameHandle = null;
 
-  const startMission = (missionIndex) => {
+  const startMission = (missionIndex, seed = simulationSeed) => {
+    const activeSeed = deriveSimulationSeed(seed, missionIndex);
+    setSimulationSeed(activeSeed);
+    game.simulationSeed = activeSeed;
     game.start(missionIndex);
     ui.setMission();
     ui.toast(`Mission deployed. First enemy assault in ${game.mission.waves.firstDelay} seconds.`);
