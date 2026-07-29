@@ -41,6 +41,16 @@ Not every feature needs every slice. A balance patch can be config-only; a visua
 7. Do not fold cross-record validation, migrations, map loaders, or AI behavior into a schema-only task.
 8. Run `bash verify.sh` so the schema registry and default materialization checks execute.
 
+## Unit test workflow
+
+1. Identify the public function, public `Game` method, or focused system that owns the behavior.
+2. Add a deterministic `*.test.mjs` file under `tests/unit/`; do not add a third-party framework.
+3. Use `node:test` and `node:assert`, with the smallest explicit fixture that exercises the owner directly.
+4. Cover the successful transition, important rejection paths, and state that must remain unchanged on failure.
+5. Reset shared deterministic services inside the affected test and never depend on file execution order.
+6. Run a focused subset with `node scripts/run-tests.mjs <path-fragment>`, then run `bash verify.sh`.
+7. Keep headless scenario stepping and browser interaction coverage in their dedicated later test layers.
+
 ## Visual improvement workflow
 
 1. Define the gameplay read before drawing.
@@ -68,6 +78,7 @@ A new system should:
 - Is there one authoritative implementation of each rule?
 - Can balance/content remain in `config.js`?
 - Do schema and content documentation match affected data?
+- Do unit tests cover the changed pure rule or public state transition?
 - Does `main.js` still read as composition rather than behavior?
 - Are event listeners disposable and key state cleared on blur?
 - Do all documented controls work, including W/A/S/D?

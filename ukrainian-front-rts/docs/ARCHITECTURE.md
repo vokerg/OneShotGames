@@ -27,6 +27,14 @@ index.html
 `config.js` and future map/AI content modules. Runtime migration to schema-backed loaders is owned by
 later queue tasks.
 
+Verification code is outside the browser runtime:
+
+```text
+scripts/run-tests.mjs
+  └─ tests/**/*.test.mjs        Node-native deterministic unit tests
+      └─ public production modules and public Game methods
+```
+
 ## Dependency direction
 
 Dependencies point inward toward data and pure logic:
@@ -39,9 +47,10 @@ Game → config/core/systems
 config/content-schema → no browser, UI, renderer, or Game modules
 systems → config/core only
 core → sibling core modules only; never browser, UI, renderer, Game, or systems
+tests → public production modules; production modules never import tests
 ```
 
-A lower layer must not import a higher layer. In particular, simulation systems do not import DOM modules, and renderer code does not own combat or objective rules.
+A lower layer must not import a higher layer. In particular, simulation systems do not import DOM modules, renderer code does not own combat or objective rules, and production code never imports test infrastructure.
 
 ## Module ownership
 
@@ -96,6 +105,20 @@ renderer, UI, or simulation modules.
 renaming a field, or changing field meaning is a schema-version change rather than an ordinary balance
 edit.
 
+### Tests and verification
+
+`tests/unit/` owns fast deterministic unit tests that run in Node without DOM or canvas. Test files use
+Node's built-in `node:test` and `node:assert` modules, end in `.test.mjs`, and may import public production
+exports or instantiate `Game` without starting the browser runtime. Each file must own its fixtures and
+must not depend on another test file's mutations or execution order.
+
+`scripts/run-tests.mjs` recursively discovers test files in stable path order and delegates execution to
+Node's test runner. Optional path-fragment arguments select a focused subset. An empty suite, unmatched
+filter, assertion failure, import failure, or crashed test process produces a non-zero exit status.
+
+Specialized scripts under `scripts/verify-*.mjs` remain contract and architecture checks. They complement,
+rather than replace, the behavior-focused unit suite.
+
 ### Rendering and UI
 
 `render.js` and `art-pass.js` translate state into pixels. `ui.js` translates state into HUD information and invokes public game commands. Neither layer should independently mutate combat outcomes, resources, or objectives.
@@ -148,12 +171,22 @@ Changing update order or the order/number of random draws is a deterministic-beh
 4. Add a same-seed fixture and a different-seed divergence assertion.
 5. Include random state in any future checkpoint, save, replay, or rollback boundary.
 
+### Add a unit test
+
+1. Choose the smallest public owner of the behavior.
+2. Add a deterministic `tests/unit/*.test.mjs` file using `node:test` and `node:assert`.
+3. Build explicit fixtures rather than starting the browser runtime.
+4. Cover success, failure, and no-mutation guarantees relevant to the rule.
+5. Reset shared deterministic services inside the test.
+6. Run a focused filter, then the complete `bash verify.sh` command.
+
 ### Add a mechanic
 
 1. Identify one authoritative owner.
 2. Implement the rule in a focused system when it is independently testable.
 3. Keep a small `Game` method as the public/delegating interface if callers already use it.
 4. Render feedback from state; do not duplicate the rule in the renderer.
+5. Add or update deterministic unit coverage for its pure policy and public state transition.
 
 ## Verification
 
@@ -163,4 +196,4 @@ Run:
 bash verify.sh
 ```
 
-The verifier checks JavaScript syntax, task-queue integrity, the executable content-schema contract, seeded placement/wave/combat reproducibility, forbidden direct simulation randomness, and key dependency boundaries. It is intentionally dependency-free; it complements, rather than replaces, browser playtesting.
+The verifier checks JavaScript syntax across production, scripts, and tests; runs the Node-native unit suite; validates task-queue integrity and the executable content-schema contract; verifies seeded placement/wave/combat reproducibility and forbidden direct simulation randomness; and enforces key dependency boundaries. It remains dependency-free and complements, rather than replaces, browser playtesting.
