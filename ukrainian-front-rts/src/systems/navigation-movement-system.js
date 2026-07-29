@@ -10,6 +10,7 @@ import {
   currentWaypoint,
   requestWaypointRoute,
 } from '../navigation/waypoint-route.js';
+import { resolveUnitOverlaps } from './unit-collision-system.js';
 
 const NAVIGATION_ORDER_KINDS = new Set(['move', 'attackMove']);
 const TERRAIN_BY_RUNTIME_VALUE = Object.freeze({
@@ -101,6 +102,11 @@ function unitNavigationLayer(stats) {
   return stats.air ? MOVEMENT_LAYERS.AIR : MOVEMENT_LAYERS.GROUND;
 }
 
+function unitRuntimeStats(game, unit) {
+  if (unit.team === TEAM.UA && typeof game.unitStats === 'function') return game.unitStats(unit.type);
+  return UNIT_TYPES[unit.type];
+}
+
 function routeFailureMessage(status) {
   if (status === PATH_STATUSES.GOAL_BLOCKED) return 'Destination is blocked.';
   if (status === PATH_STATUSES.START_BLOCKED) return 'Unit cannot leave its current position.';
@@ -164,4 +170,9 @@ export function updateUnitWithNavigation(game, unit, stepSeconds, state = synchr
 export function updateUnitsWithNavigation(game, stepSeconds) {
   const state = synchronizeNavigationGrid(game);
   for (const unit of game.units) updateUnitWithNavigation(game, unit, stepSeconds, state);
+  return resolveUnitOverlaps(
+    game.units,
+    (unit) => unitRuntimeStats(game, unit),
+    { worldWidth: WORLD.w, worldHeight: WORLD.h },
+  );
 }
