@@ -4,8 +4,12 @@ import './environment-art-pass.js';
 import { Game } from './game.js';
 import { createAttackGroundController, installAttackGroundInput } from './input/attack-ground.js';
 import { installBattlefieldInput } from './input/battlefield-input.js';
+import { installConstructionPlacementInput } from './input/construction-placement-input.js';
 import { createQueuedOrderController } from './input/queued-orders.js';
+import { synchronizeNavigationGrid } from './systems/navigation-movement-system.js';
 import { Renderer } from './render.js';
+import { installConstructionPreview } from './render/construction-preview.js';
+import { createConstructionPlacementController } from './systems/construction-placement-system.js';
 import { createWorkerGatherController } from './systems/worker-gather-system.js';
 import { UI } from './ui.js';
 
@@ -26,7 +30,12 @@ const renderer = new Renderer(game, canvas, minimap, portrait);
 const runtime = createGameRuntime({ game, renderer, ui });
 const disposeAttackGround = createAttackGroundController(game);
 const disposeQueuedOrders = createQueuedOrderController(game, window);
+const disposeConstructionPlacement = createConstructionPlacementController(game, {
+  synchronizeNavigation: synchronizeNavigationGrid,
+});
 const disposeWorkerGather = createWorkerGatherController(game);
+const disposeConstructionPreview = installConstructionPreview({ game, renderer });
+const disposeConstructionPlacementInput = installConstructionPlacementInput({ game, ui });
 const disposeAttackGroundInput = installAttackGroundInput({ game, canvas, ui });
 const disposeInput = installBattlefieldInput({ game, ui, canvas, minimap });
 
@@ -46,7 +55,10 @@ addEventListener(
   () => {
     disposeInput();
     disposeAttackGroundInput();
+    disposeConstructionPlacementInput();
+    disposeConstructionPreview();
     disposeWorkerGather();
+    disposeConstructionPlacement();
     disposeQueuedOrders();
     disposeAttackGround();
     runtime.stop();
