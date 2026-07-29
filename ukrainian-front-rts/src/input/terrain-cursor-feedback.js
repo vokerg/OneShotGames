@@ -27,6 +27,17 @@ const TONE_BY_STATE = Object.freeze({
   [TERRAIN_CURSOR_STATES.BLOCKED]: Object.freeze({ border: '#ef7f73', background: 'rgba(68, 28, 27, .94)' }),
 });
 
+const CURSOR_STYLES = `
+#game[data-terrain-cursor="fast"],
+#game[data-terrain-cursor="amphibious"] { cursor: cell !important; }
+#game[data-terrain-cursor="normal"] { cursor: crosshair !important; }
+#game[data-terrain-cursor="slow"] { cursor: progress !important; }
+#game[data-terrain-cursor="very-slow"] { cursor: wait !important; }
+#game[data-terrain-cursor="blocked"] { cursor: not-allowed !important; }
+body.placing #game { cursor: copy !important; }
+body.placing .terrainCursorFeedback { display: none !important; }
+`;
+
 function selectedMovementLayer(game) {
   const selectedUnits = game?.selectedUnits?.() ?? [];
   const selectedEntities = game?.selectedEntities?.() ?? [];
@@ -117,25 +128,33 @@ function createBadge(documentTarget) {
   return badge;
 }
 
+function createCursorStyle(documentTarget) {
+  const style = documentTarget.createElement('style');
+  style.className = 'terrainCursorStyles';
+  style.textContent = CURSOR_STYLES;
+  return style;
+}
+
 export function createTerrainCursorPresenter({
   canvas,
   documentTarget = globalThis.document,
   root = documentTarget?.body,
+  styleRoot = documentTarget?.head ?? root,
 } = {}) {
   if (!canvas?.style || !canvas?.dataset || !documentTarget?.createElement || !root?.appendChild) {
     const clear = () => {};
-    return Object.freeze({ update: clear, clear, dispose: clear, element: null });
+    return Object.freeze({ update: clear, clear, dispose: clear, element: null, styleElement: null });
   }
 
   const badge = createBadge(documentTarget);
+  const styleElement = createCursorStyle(documentTarget);
   root.appendChild(badge);
-  const originalCursor = canvas.style.cursor;
+  styleRoot?.appendChild?.(styleElement);
 
   const clear = () => {
     badge.style.display = 'none';
     badge.textContent = '';
     delete canvas.dataset.terrainCursor;
-    canvas.style.cursor = originalCursor;
   };
 
   const update = (feedback, pointer) => {
@@ -145,7 +164,6 @@ export function createTerrainCursorPresenter({
     }
     const tone = TONE_BY_STATE[feedback.state] ?? TONE_BY_STATE[TERRAIN_CURSOR_STATES.NORMAL];
     canvas.dataset.terrainCursor = feedback.state;
-    canvas.style.cursor = feedback.cursor;
     badge.textContent = `${feedback.label} · ${feedback.detail}`;
     badge.style.borderColor = tone.border;
     badge.style.background = tone.background;
@@ -157,7 +175,8 @@ export function createTerrainCursorPresenter({
   const dispose = () => {
     clear();
     badge.remove?.();
+    styleElement.remove?.();
   };
 
-  return Object.freeze({ update, clear, dispose, element: badge });
+  return Object.freeze({ update, clear, dispose, element: badge, styleElement });
 }
