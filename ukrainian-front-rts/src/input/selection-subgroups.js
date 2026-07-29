@@ -1,5 +1,7 @@
 import { TEAM } from '../config.js';
 
+const PRIMARY_ADAPTER = Symbol('primarySelectionAdapter');
+
 function byId(left, right) {
   return left.id - right.id;
 }
@@ -21,7 +23,20 @@ function setPrimary(game, unitId = null) {
   return unitId;
 }
 
+export function installPrimarySelectionAdapter(game) {
+  if (game[PRIMARY_ADAPTER] || typeof game.selectedEntities !== 'function') return;
+  const originalSelectedEntities = game.selectedEntities.bind(game);
+  game.selectedEntities = () => {
+    const entities = originalSelectedEntities();
+    const primaryIndex = entities.findIndex((entity) => entity.id === game.primarySelectedId);
+    if (primaryIndex <= 0) return entities;
+    return [entities[primaryIndex], ...entities.slice(0, primaryIndex), ...entities.slice(primaryIndex + 1)];
+  };
+  game[PRIMARY_ADAPTER] = true;
+}
+
 export function resolvePrimarySelection(game) {
+  installPrimarySelectionAdapter(game);
   const selected = selectedFriendlyUnits(game);
   if (!selected.length) return setPrimary(game, null);
   if (selected.some((unit) => unit.id === game.primarySelectedId)) return game.primarySelectedId;
@@ -29,6 +44,7 @@ export function resolvePrimarySelection(game) {
 }
 
 export function synchronizePrimarySelection(game, preferredId = null) {
+  installPrimarySelectionAdapter(game);
   const selected = selectedFriendlyUnits(game);
   if (!selected.length) return setPrimary(game, null);
   if (preferredId != null && selected.some((unit) => unit.id === preferredId)) {
