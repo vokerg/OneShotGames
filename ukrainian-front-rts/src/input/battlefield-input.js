@@ -5,6 +5,10 @@ import {
   isHeldInputAction,
   resolveInputAction,
 } from './action-map.js';
+import {
+  createControlGroupController,
+  resolveControlGroupCommand,
+} from './control-groups.js';
 
 const DRAG_THRESHOLD = 6;
 const MIN_ZOOM = 0.55;
@@ -22,6 +26,7 @@ export function installBattlefieldInput({
 }) {
   const disposers = [];
   const keyBindings = createKeyBindings(keyBindingOverrides);
+  const controlGroups = createControlGroupController();
   const heldActionsByKey = new Map();
   const listen = (target, type, handler, options) => {
     target.addEventListener(type, handler, options);
@@ -117,6 +122,19 @@ export function installBattlefieldInput({
   };
 
   const onKeyDown = (event) => {
+    const controlGroupCommand = resolveControlGroupCommand(event);
+    if (controlGroupCommand) {
+      event.preventDefault();
+      if (game.gameOver || event.repeat) return;
+      const result = controlGroups.execute(game, controlGroupCommand, {
+        width: windowTarget.innerWidth,
+        height: windowTarget.innerHeight,
+      });
+      if (result.message) ui.toast(result.message);
+      if (result.changed) ui.refresh();
+      return;
+    }
+
     const action = resolveInputAction(keyBindings, event.key);
     if (!action) return;
 
