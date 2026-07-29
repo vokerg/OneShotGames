@@ -1,6 +1,5 @@
 import { BUILDING_TYPES, TEAM, UNIT_TYPES, WORLD } from '../config.js';
 import {
-  DEFAULT_TERRAIN_RULES,
   MOVEMENT_LAYERS,
   TERRAIN_TYPES,
   createNavigationGridFromMapData,
@@ -11,32 +10,14 @@ import {
   requestWaypointRoute,
 } from '../navigation/waypoint-route.js';
 import { buildingNavigationBlocker } from './construction-placement-system.js';
+import {
+  RUNTIME_TERRAIN_RULES,
+  runtimeNavigationTerrainData,
+  updateUnitWithTerrainMovement,
+} from './terrain-movement-system.js';
 import { resolveUnitOverlaps } from './unit-collision-system.js';
 
 const NAVIGATION_ORDER_KINDS = new Set(['move', 'attackMove']);
-const TERRAIN_BY_RUNTIME_VALUE = Object.freeze({
-  1: TERRAIN_TYPES.MUD,
-  2: TERRAIN_TYPES.RUBBLE,
-});
-const RUNTIME_TERRAIN_RULES = Object.freeze({
-  [TERRAIN_TYPES.OPEN]: DEFAULT_TERRAIN_RULES[TERRAIN_TYPES.OPEN],
-  [TERRAIN_TYPES.MUD]: DEFAULT_TERRAIN_RULES[TERRAIN_TYPES.MUD],
-  [TERRAIN_TYPES.RUBBLE]: DEFAULT_TERRAIN_RULES[TERRAIN_TYPES.RUBBLE],
-});
-
-function terrainEntries(game) {
-  const entries = [];
-  for (let index = 0; index < game.terrain.length; index += 1) {
-    const type = TERRAIN_BY_RUNTIME_VALUE[game.terrain[index]];
-    if (!type) continue;
-    entries.push({
-      x: index % (WORLD.w / WORLD.tile),
-      y: Math.floor(index / (WORLD.w / WORLD.tile)),
-      type,
-    });
-  }
-  return entries;
-}
 
 function placementSignature(building) {
   const placement = building.placement;
@@ -67,14 +48,17 @@ function createRuntimeNavigationGrid(game) {
     .filter((building) => building.hp > 0)
     .map(buildingNavigationBlocker)
     .filter(Boolean);
+  const terrainData = runtimeNavigationTerrainData(game);
 
   return createNavigationGridFromMapData({
     width: WORLD.w / WORLD.tile,
     height: WORLD.h / WORLD.tile,
     tileSize: WORLD.tile,
     defaultTerrain: TERRAIN_TYPES.OPEN,
-    terrain: terrainEntries(game),
-    bridges: [],
+    terrain: terrainData.terrain,
+    shelterbelts: terrainData.shelterbelts,
+    roads: terrainData.roads,
+    bridges: terrainData.bridges,
     blockers,
   }, { terrainRules: RUNTIME_TERRAIN_RULES });
 }
@@ -97,7 +81,7 @@ export function synchronizeNavigationGrid(game) {
 }
 
 function unitNavigationLayer(stats) {
-  return stats.air ? MOVEMENT_LAYERS.AIR : MOVEMENT_LAYERS.GROUND;
+  return stats.movementLayer ?? (stats.air ? MOVEMENT_LAYERS.AIR : MOVEMENT_LAYERS.GROUND);
 }
 
 function unitRuntimeStats(game, unit) {
@@ -137,7 +121,7 @@ export function updateUnitWithNavigation(game, unit, stepSeconds, state = synchr
   const order = unit.order;
   const stats = UNIT_TYPES[unit.type];
   if (!order || !NAVIGATION_ORDER_KINDS.has(order.kind) || stats?.air) {
-    game.updateUnit(unit, stepSeconds);
+    updateUnitWithTerrainMovement(game, unit, stepSeconds, state.grid);
     return;
   }
 
@@ -152,7 +136,7 @@ export function updateUnitWithNavigation(game, unit, stepSeconds, state = synchr
 
   order.x = waypoint.x;
   order.y = waypoint.y;
-  game.updateUnit(unit, stepSeconds);
+  updateUnitWithTerrainMovement(game, unit, stepSeconds, state.grid);
 
   if (unit.order === null) {
     route.nextIndex += 1;
