@@ -1,6 +1,6 @@
 # Navigation contracts
 
-`src/navigation/navigation-grid.js` owns deterministic, browser-independent passability data. `src/navigation/pathfinder.js` owns pure path search over that data. `src/navigation/waypoint-route.js` translates path results into runtime-ready world-space waypoints. Entity movement remains authoritative in the simulation layer.
+`src/navigation/navigation-grid.js` owns deterministic, browser-independent passability data. `src/navigation/pathfinder.js` owns pure path search over that data. `src/navigation/waypoint-route.js` translates path results into runtime-ready world-space waypoints. `src/systems/navigation-movement-system.js` synchronizes runtime map/building state and delegates fixed-step unit movement through those routes.
 
 ## Coordinate model
 
@@ -76,7 +76,15 @@ A route preserves the path status, goal cell, cost, and visited-cell count for r
 
 `followWaypointRoute(route, unit, dt, moveToward)` delegates physical movement to the simulation-owned callback and advances at most one waypoint per call. This keeps speed, facing, buffs, and fixed-step movement inside `Game` or a focused movement system while preventing those layers from duplicating path search.
 
-UFR-020 runtime wiring still needs to create the navigation grid from active map data, register building footprints as blockers, attach routes to ground move/attack-move orders, and remove routes when orders are stopped or replaced.
+## Runtime integration
+
+The fixed-step `units` phase calls `updateUnitsWithNavigation()`. The movement system lazily creates an 80×52 grid from `WORLD`, maps the current runtime terrain values to open/mud/rubble costs, and registers every live building as a ground/amphibious dynamic blocker using its authored width and height.
+
+A stable building signature controls invalidation. Construction, destruction, or relocation increments the navigation revision and causes existing move/attack-move orders to request a fresh route from their current position. New order objects naturally replace old route state.
+
+Ground `move` and `attackMove` orders expose the current route waypoint through the existing `Game.updateUnit()` contract. When that method reaches a waypoint and clears the order, the movement system advances one route step and restores the same order until the final destination is reached. Air units preserve their previous direct-movement behavior.
+
+Blocked, unreachable, and search-limited player orders are cancelled safely. Ukrainian units receive actionable `lastError` feedback; simulation state never retains an order with an unusable route.
 
 ## Determinism and ownership
 
@@ -84,6 +92,7 @@ UFR-020 runtime wiring still needs to create the navigation grid from active map
 - Blocker queries and snapshots sort IDs.
 - Snapshot arrays, path results, path cells, and waypoint arrays are frozen.
 - Navigation modules import no game, renderer, UI, DOM, or browser service.
-- Map loading and simulation systems may populate the grid; pathfinding may only query it.
-- The simulation may translate returned waypoints into movement, but must not duplicate passability or path-cost rules.
+- `src/systems/navigation-movement-system.js` owns runtime synchronization and may import config/navigation contracts.
+- `Game` remains authoritative for speed, facing, buffs, combat acquisition, and physical position updates.
+- Collision/separation, caching, formations, stuck recovery, and additional command types remain later queue tasks.
 - Renderer feedback may mirror passability and route results but must not become authoritative.
