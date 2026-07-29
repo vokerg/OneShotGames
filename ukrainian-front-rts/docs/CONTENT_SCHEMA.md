@@ -4,19 +4,11 @@
 
 `src/content-schema.js` is the executable contract for declarative content stored in or beside
 `src/config.js`. It defines identity, required fields, defaults, references, and compatibility rules
-for the eight content families used by the implementation queue:
+for factions, units, buildings, abilities, upgrades, missions, maps, and AI profiles.
 
-- factions;
-- units;
-- buildings;
-- abilities;
-- upgrades;
-- missions;
-- maps;
-- AI profiles.
-
-The schema describes content shape. It does not implement map loading, AI behavior, mission triggers,
-or cross-reference validation; those remain assigned to later queue tasks.
+The schema describes content shape. Cross-record and technology-graph validation is implemented by
+`scripts/content-validator.mjs`; runtime production, research, campaign, and mission-lock behavior
+remains owned by the queue tasks that implement those systems.
 
 ## Version and compatibility policy
 
@@ -29,27 +21,19 @@ A change is compatible within v1 when it only:
 - adds a reference or numeric constraint that existing valid content already satisfies;
 - adds a new content record using the existing contract.
 
-Increment the schema version when a change:
+Increment the schema version when a change adds a required field to existing records, removes or
+renames a field, changes a type or identity source, changes an existing value's meaning, or changes a
+default in a way that alters existing content behavior.
 
-- adds a required field to existing records;
-- removes or renames a field;
-- changes a field type or identity source;
-- changes the meaning of an existing value;
-- changes a default in a way that alters existing content behavior.
-
-A breaking version must include a migration plan before saves, replays, editors, or external content
-packs depend on the schema.
-
-All v1 families set `allowExtensions: true`. Feature tasks may add task-specific fields without
-silently making them part of the stable baseline. A later schema task must promote widely used
-extensions into documented required or defaulted fields.
+All v1 families set `allowExtensions: true`. Feature tasks may add task-owned fields without silently
+making them part of the stable baseline. Stable additions must be promoted into this contract and
+human-readable document.
 
 ## Identity and collection rules
 
 A `record` collection is an object keyed by stable content ID. A collection-key identity means the
-registry key is the canonical ID even when the stored value has no `id` property.
-
-An `array` collection stores its stable ID in a required field.
+registry key is the canonical ID even when the value has no `id` property. An `array` collection stores
+its stable ID in a required field.
 
 | Family | Collection | Canonical identity |
 | --- | --- | --- |
@@ -62,246 +46,178 @@ An `array` collection stores its stable ID in a required field.
 | maps | record | required `id` field |
 | AI profiles | record | required `id` field |
 
-References are string IDs. Fields that contain multiple references use string arrays. The future
-content validator must report missing targets and cycles with the source family, source ID, and field.
+References are string IDs. Fields containing multiple references use string arrays. The virtual
+`tech-nodes` reference target is the union of building and upgrade collection keys; those IDs share one
+namespace and therefore must not collide.
 
-## Required and defaulted fields
+## Defaults
 
-`applyContentDefaults(family, value)` returns a new object and fills only absent optional fields.
-It does not mutate source content, validate required fields, or overwrite explicitly supplied falsy
+`applyContentDefaults(family, value)` returns a new object and fills only absent optional fields. It
+does not mutate source content, validate required fields, or overwrite explicitly supplied falsy
 values. Array and object defaults are cloned for every call.
+
+## Family contracts
 
 ### Factions
 
-Required:
-
-- `id: string`
-- `name: string`
-- `short: string`
-- `primary: color`
-- `secondary: color`
-- `marking: string`
+Required: `id`, `name`, `short`, `primary`, `secondary`, and `marking`.
 
 Defaults:
 
-- `description = ""`
-- `playable = true`
-- `aiProfile = null` — optional reference to an AI profile
+- `description = ""`;
+- `playable = true`;
+- `aiProfile = null`, optionally referencing an AI profile.
 
 ### Units
 
 The collection key is the unit ID.
 
-Required:
+Required: `faction`, `archetype`, `name`, `short`, `role`, `hp`, `speed`, `range`, `damage`, `rate`,
+`sight`, `cost`, `pop`, `size`, `visual`, and `abilities`.
 
-- `faction: string` — faction reference
-- `archetype: string`
-- `name: string`
-- `short: string`
-- `role: string`
-- `hp: number >= 0`
-- `speed: number >= 0`
-- `range: number >= 0`
-- `damage: number >= 0`
-- `rate: number > 0`
-- `sight: number >= 0`
-- `cost: resource-cost`
-- `pop: number >= 0`
-- `size: number > 0`
-- `visual: string`
-- `abilities: string[]` — ability references
+Numeric constraints: `hp`, `speed`, `range`, `damage`, `sight`, and `pop` are non-negative; `rate` and
+`size` are greater than zero. `faction` references factions and `abilities` references abilities.
 
-Defaults:
-
-- `title = null`
-- `worker = false`
-- `air = false`
-- `medic = false`
-- `armor = false`
-- `vehicleClass = null`
-- `hero = false`
+Defaults: `title = null`, `worker = false`, `air = false`, `medic = false`, `armor = false`,
+`vehicleClass = null`, and `hero = false`.
 
 ### Buildings
 
-The collection key is the building ID.
+The collection key is both the building ID and its technology-node ID.
 
-Required:
-
-- `name: string`
-- `desc: string`
-- `hp: number > 0`
-- `w: number > 0`
-- `h: number > 0`
-- `sight: number >= 0`
+Required: `name`, `desc`, `hp`, `w`, `h`, and `sight`.
 
 Defaults:
 
-- `ruName = null`
-- `pop = 0`
-- `cost = {}`
-- `buildTime = 0`
-- `produces = []` — unit references
+- `ruName = null`;
+- `pop = 0`;
+- `cost = {}`;
+- `buildTime = 0`;
+- `produces = []`, referencing units;
+- `requires = []`, referencing building or upgrade tech nodes;
+- `factions = []`, meaning unrestricted;
+- `missionLocks = []`, referencing missions where the node is unavailable;
+- `exclusiveGroup = null`, meaning the node is not a mutually exclusive choice;
+- `techRoot = false`.
 
-A zero build time documents the current immediate/non-constructible fallback. Construction tasks may
-add stronger production rules as compatible optional fields or through a later schema version.
+The canonical prerequisite representation is a string array. A single legacy string remains accepted
+while existing runtime content is migrated.
 
 ### Abilities
 
-The collection key is the ability ID.
+The collection key is the ability ID. Required: `name`, `key`, and `desc`.
 
-Required:
+Defaults: `cooldown = 0`, `target = "none"`, `range = 0`, `radius = 0`, and `cost = {}`.
 
-- `name: string`
-- `key: string`
-- `desc: string`
-
-Defaults:
-
-- `cooldown = 0`
-- `target = "none"`
-- `range = 0`
-- `radius = 0`
-- `cost = {}`
-
-These defaults describe metadata only. Ability execution remains authoritative in simulation systems
-until a later task defines a data-driven effect contract.
+These defaults describe metadata only. Ability execution remains authoritative in simulation systems.
 
 ### Upgrades
 
-The collection key is the upgrade ID.
+The collection key is both the upgrade ID and its technology-node ID.
 
-Required:
-
-- `name: string`
-- `tier: integer >= 0`
-- `applies: string[]`
-- `cost: resource-cost`
-- `desc: string`
-- `mods: modifier-map`
+Required: `name`, `tier`, `applies`, `cost`, `desc`, and `mods`. `tier` is a non-negative integer.
 
 Defaults:
 
-- `requires = null` — optional upgrade reference
-- `researchTime = 0`
+- `requires = []`, referencing building or upgrade tech nodes;
+- `factions = []`, meaning unrestricted;
+- `missionLocks = []`, referencing missions where the node is unavailable;
+- `exclusiveGroup = null`;
+- `techRoot = false`;
+- `researchTime = 0`.
 
-A zero research time preserves the current immediate-research behavior.
+The canonical prerequisite representation is a string array. A single legacy string remains accepted
+for compatibility with the current configuration. A zero research time preserves immediate-research
+behavior until the research-system task owns execution.
 
 ### Missions
 
-Required:
-
-- `id: string`
-- `region: string`
-- `title: string`
-- `story: string`
-- `objectives: string[]`
-- `start: resource-state`
-- `heroes: string[]` — unit references
-- `trainableHeroes: string[]` — unit references
-- `enemyHeroes: string[]` — unit references
-- `waves: wave-policy`
+Required: `id`, `region`, `title`, `story`, `objectives`, `start`, `heroes`, `trainableHeroes`,
+`enemyHeroes`, and `waves`.
 
 Defaults:
 
-- `map = null` — current hard-coded battlefield fallback
-- `playerFaction = "ukraine"`
-- `enemyFaction = "russia"`
-- `aiProfile = null`
-- `briefing = []`
-- `debriefing = []`
-- `triggers = []`
+- `map = null`;
+- `playerFaction = "ukraine"`;
+- `enemyFaction = "russia"`;
+- `aiProfile = null`;
+- `availableTech = []`;
+- `lockedTech = []`;
+- `briefing = []`;
+- `debriefing = []`;
+- `triggers = []`.
 
-The `objectives` field remains presentation text in v1. Later campaign/objective tasks may add
-structured objective records without changing the meaning of this field in existing missions.
+`availableTech` lists technology nodes a mission explicitly expects to be reachable. The validator
+checks those nodes against faction restrictions, node-level mission locks, mission `lockedTech`, and
+prerequisite closure. An empty list makes no explicit reachability assertion. `lockedTech` always blocks
+the listed nodes for that mission.
+
+The `objectives` field remains presentation text in v1. Later campaign/objective tasks may add structured
+records without changing existing objective text.
 
 ### Maps
 
-Required:
+Required: `id`, `name`, `width`, `height`, `tileSize`, `terrain`, and `spawns`. Dimensions and tile size
+must be greater than zero.
 
-- `id: string`
-- `name: string`
-- `width: number > 0`
-- `height: number > 0`
-- `tileSize: number > 0`
-- `terrain: terrain-data`
-- `spawns: spawn-map`
+Defaults: `resources = []`, `roads = []`, `blockers = []`, `decorations = []`, and `metadata = {}`.
 
-Defaults:
-
-- `resources = []`
-- `roads = []`
-- `blockers = []`
-- `decorations = []`
-- `metadata = {}`
-
-`terrain-data` and `spawn-map` are deliberately opaque v1 payload types. UFR-018 and the authored-map
-tasks own their concrete tile, movement-layer, footprint, and spawn semantics.
-
-Example shape:
-
-```js
-{
-  id: 'donbas-crossing',
-  name: 'Siverskyi Donets Crossing',
-  width: 2560,
-  height: 1664,
-  tileSize: 32,
-  terrain: { encoding: 'rows', rows: [] },
-  spawns: { player: [], enemy: [] },
-}
-```
+`terrain-data` and `spawn-map` are opaque v1 payloads. Navigation and authored-map tasks own their
+concrete semantics.
 
 ### AI profiles
 
-Required:
+Required: `id` and `name`.
 
-- `id: string`
-- `name: string`
+Defaults: `faction = null`, `difficulty = "normal"`, `scouting = {}`, `economy = {}`,
+`production = {}`, `combat = {}`, and `missionOverrides = {}`.
 
-Defaults:
+Policy objects are versioned extension bags, not implemented behavior.
 
-- `faction = null`
-- `difficulty = "normal"`
-- `scouting = {}`
-- `economy = {}`
-- `production = {}`
-- `combat = {}`
-- `missionOverrides = {}`
+## Technology graph contract
 
-The policy objects are versioned extension bags, not implemented behavior. AI tasks must document
-their owned keys and promote stable cross-profile keys into a future schema revision when necessary.
+Buildings and upgrades form one directed graph. Each node may declare:
 
-Example shape:
+- `requires`: prerequisite tech-node IDs;
+- `factions`: factions allowed to use the node; an empty list means all factions;
+- `missionLocks`: missions where the node is blocked;
+- `exclusiveGroup`: a named set of mutually exclusive choices;
+- `techRoot`: an explicit root marker for documentation and future presentation.
 
-```js
-{
-  id: 'wave-default',
-  name: 'Default assault-wave profile',
-  faction: 'russia',
-  combat: { aggression: 1 },
-}
-```
+Nodes with no prerequisites are implicit roots for v1 compatibility. An explicit `techRoot` may not
+also declare prerequisites. The validator rejects:
+
+- building/upgrade ID collisions;
+- missing, duplicate, self, or circular prerequisite references;
+- unknown faction or mission references;
+- single-member exclusivity groups;
+- a node requiring two choices from the same exclusivity group;
+- a node requiring a member of its own exclusivity group;
+- faction-visible nodes that cannot be reached through faction-compatible prerequisites;
+- mission `availableTech` entries blocked or made unreachable by mission/faction restrictions.
+
+This contract validates declarative possibility. It does not execute research, consume resources,
+apply upgrades, serialize progression, or change command-card availability.
 
 ## Shared payload types
 
-The v1 descriptors use named payload types so later validators can centralize their detailed rules:
-
-- `color` — a renderer-compatible color string;
-- `resource-cost` — non-negative resource amounts keyed by resource ID;
-- `resource-state` — mission starting resource values;
-- `modifier-map` — numeric or policy modifiers keyed by stat/rule ID;
-- `wave-policy` — mission wave timing and cap data;
-- `terrain-data` — authored or generated terrain payload;
-- `spawn-map` — named spawn groups and placement data;
-- `point[][]` — one or more ordered paths;
-- `object[]` / `object` — extension payloads whose stable keys are owned by later tasks.
+- `color`: renderer-compatible color string;
+- `resource-cost`: non-negative resource amounts keyed by resource ID;
+- `resource-state`: mission starting resource values;
+- `modifier-map`: numeric or policy modifiers keyed by stat/rule ID;
+- `wave-policy`: mission wave timing and cap data;
+- `terrain-data`: authored or generated terrain payload;
+- `spawn-map`: named spawn groups and placement data;
+- `point[][]`: one or more ordered paths;
+- `object[]` / `object`: extension payloads owned by later tasks.
 
 ## Extension workflow
 
 1. Identify the owning family and whether the change is compatible within v1.
 2. Add an explicit default for every new optional field.
 3. Add required/reference/range metadata to `src/content-schema.js`.
-4. Update this document with the field and its runtime owner.
-5. Run `bash verify.sh`.
-6. Leave cross-record validation and migration behavior in their dedicated queue tasks unless the
-   current task explicitly owns them.
+4. Update this document and the focused validator when legal cross-record combinations change.
+5. Add deterministic success and failure fixtures.
+6. Run `node scripts/verify-content-schema.mjs`, `node scripts/content-validator.test.mjs`, and
+   `bash verify.sh`.
+7. Keep runtime migration/loading/execution work in its assigned task unless explicitly included.
