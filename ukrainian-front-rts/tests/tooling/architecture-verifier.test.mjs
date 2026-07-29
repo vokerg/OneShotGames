@@ -70,6 +70,20 @@ test('accepts the documented production dependency direction', () => {
   }
 });
 
+test('accepts dedicated UI modules as the UI layer and permits UI-owned DOM adapters', () => {
+  const root = validProject();
+  try {
+    write(root, 'src/ui/ui-contract.js', 'export const REGIONS = [];');
+    write(root, 'src/ui/dom-adapter.js', "import { REGIONS } from './ui-contract.js'; export const mount = () => document.querySelector(REGIONS[0]);");
+    assert.deepEqual(verifyArchitectureProject({ projectRoot: root }), {
+      filesChecked: 17,
+      failures: [],
+    });
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('rejects forbidden layer imports and imports outside src', () => {
   assert.ok(verifyMutation('src/core/events.js', "import { Game } from '../game.js'; export { Game };")
     .some((failure) => failure.includes('core layer cannot import game layer')));
@@ -79,6 +93,8 @@ test('rejects forbidden layer imports and imports outside src', () => {
     .some((failure) => failure.includes('app layer cannot import systems layer')));
   assert.ok(verifyMutation('src/ui.js', "import helper from '../tests/helper.js'; export { helper };")
     .some((failure) => failure.includes('cannot import outside src')));
+  assert.ok(verifyMutation('src/ui/ui-state.js', "import { Game } from '../game.js'; export { Game };")
+    .some((failure) => failure.includes('ui layer cannot import game layer')));
 });
 
 test('rejects unclassified source modules instead of allowing a boundary bypass', () => {
