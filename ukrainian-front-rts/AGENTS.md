@@ -4,6 +4,14 @@
 
 These instructions apply only to `ukrainian-front-rts/`. Do not modify sibling games while working under this directory.
 
+## GitHub access: connector first
+
+Use the connected GitHub app/connectors for remote repository operations whenever they support the required action. This includes resolving current `main`, searching branches/PRs/issues, checking task claims, creating branches and commits, reading or updating repository files, and creating/updating/commenting on draft PRs.
+
+The GitHub CLI (`gh`) is not a prerequisite. Do not run `gh --version` or `gh auth status` as a gate, and do not stop merely because `gh` is missing or unauthenticated when the connector can complete the work. Use `gh` only as an optional fallback for an operation the connector does not expose (for example, detailed GitHub Actions log inspection). If that fallback is unavailable, continue all connector-supported work and report only the specific remaining gap.
+
+Use local `git` for checkout/worktree operations and local verification when a checkout is available; keep its branch and commit state aligned with connector-visible GitHub state.
+
 ## Start here: feature conveyor
 
 Before changing code, read these files in order:
