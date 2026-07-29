@@ -68,6 +68,54 @@ function compareNodes(left, right) {
     left.sequence - right.sequence;
 }
 
+class MinHeap {
+  #items = [];
+  #compare;
+
+  constructor(compare) {
+    this.#compare = compare;
+  }
+
+  get size() {
+    return this.#items.length;
+  }
+
+  push(value) {
+    const items = this.#items;
+    items.push(value);
+    let index = items.length - 1;
+    while (index > 0) {
+      const parent = Math.floor((index - 1) / 2);
+      if (this.#compare(items[parent], value) <= 0) break;
+      items[index] = items[parent];
+      index = parent;
+    }
+    items[index] = value;
+  }
+
+  pop() {
+    const items = this.#items;
+    if (!items.length) return null;
+    const root = items[0];
+    const tail = items.pop();
+    if (!items.length) return root;
+
+    let index = 0;
+    while (true) {
+      const left = index * 2 + 1;
+      const right = left + 1;
+      if (left >= items.length) break;
+      let child = left;
+      if (right < items.length && this.#compare(items[right], items[left]) < 0) child = right;
+      if (this.#compare(tail, items[child]) <= 0) break;
+      items[index] = items[child];
+      index = child;
+    }
+    items[index] = tail;
+    return root;
+  }
+}
+
 function freezePath(path) {
   return Object.freeze(path.map((cell) => Object.freeze({ x: cell.x, y: cell.y })));
 }
@@ -134,8 +182,7 @@ export function findPath(grid, start, goal, {
 
   const minimumCost = minimumMovementCost(grid, layer);
   const nodes = new Map();
-  const open = [];
-  const openKeys = new Set();
+  const open = new MinHeap(compareNodes);
   const closed = new Set();
   let sequence = 0;
 
@@ -152,19 +199,16 @@ export function findPath(grid, start, goal, {
   };
   nodes.set(startKey, startNode);
   open.push(startNode);
-  openKeys.add(startKey);
 
   let visited = 0;
   const steps = diagonalPolicy === DIAGONAL_POLICIES.NEVER
     ? CARDINAL_STEPS
     : [...CARDINAL_STEPS, ...DIAGONAL_STEPS];
 
-  while (open.length) {
-    open.sort(compareNodes);
-    const current = open.shift();
+  while (open.size) {
+    const current = open.pop();
     const currentKey = keyOf(current.x, current.y);
-    openKeys.delete(currentKey);
-    if (closed.has(currentKey)) continue;
+    if (closed.has(currentKey) || nodes.get(currentKey) !== current) continue;
 
     if (visited >= maxVisited) return result(PATH_STATUSES.SEARCH_LIMIT, { visited });
     closed.add(currentKey);
@@ -193,16 +237,17 @@ export function findPath(grid, start, goal, {
       if (existing && tentativeG >= existing.g) continue;
 
       const h = heuristic({ x, y }, goal, diagonalPolicy, minimumCost);
-      const neighbor = existing ?? { x, y, sequence: sequence++ };
-      neighbor.g = tentativeG;
-      neighbor.h = h;
-      neighbor.f = tentativeG + h;
-      neighbor.parent = currentKey;
+      const neighbor = {
+        x,
+        y,
+        g: tentativeG,
+        h,
+        f: tentativeG + h,
+        parent: currentKey,
+        sequence: sequence++,
+      };
       nodes.set(neighborKey, neighbor);
-      if (!openKeys.has(neighborKey)) {
-        open.push(neighbor);
-        openKeys.add(neighborKey);
-      }
+      open.push(neighbor);
     }
   }
 
