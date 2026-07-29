@@ -5,6 +5,7 @@ import { Game } from './game.js';
 import { createAttackGroundController, installAttackGroundInput } from './input/attack-ground.js';
 import { installBattlefieldInput } from './input/battlefield-input.js';
 import { installConstructionPlacementInput } from './input/construction-placement-input.js';
+import { installDoubleClickSelection } from './input/double-click-selection.js';
 import { createQueuedOrderController } from './input/queued-orders.js';
 import { synchronizeNavigationGrid } from './systems/navigation-movement-system.js';
 import { Renderer } from './render.js';
@@ -38,6 +39,7 @@ const disposeConstructionPreview = installConstructionPreview({ game, renderer }
 const disposeConstructionPlacementInput = installConstructionPlacementInput({ game, ui });
 const disposeAttackGroundInput = installAttackGroundInput({ game, canvas, ui });
 const disposeInput = installBattlefieldInput({ game, ui, canvas, minimap });
+const disposeDoubleClickSelection = installDoubleClickSelection({ game, ui, canvas });
 
 ui.buildMissionCards(runtime.startMission);
 ui.setEndgameActions({
@@ -53,6 +55,7 @@ runtime.start();
 addEventListener(
   'pagehide',
   () => {
+    disposeDoubleClickSelection();
     disposeInput();
     disposeAttackGroundInput();
     disposeConstructionPlacementInput();
