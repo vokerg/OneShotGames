@@ -136,15 +136,17 @@ class FakeElement {
   }
 }
 
-test('cursor presenter exposes immediate visual text and restores canvas state', () => {
+test('cursor presenter exposes visual text without overriding placement cursor priority', () => {
   const body = new FakeElement();
+  const head = new FakeElement();
   const documentTarget = {
     body,
+    head,
     createElement: () => new FakeElement(),
   };
   const canvas = new FakeElement();
   canvas.style.cursor = 'crosshair';
-  const presenter = createTerrainCursorPresenter({ canvas, documentTarget, root: body });
+  const presenter = createTerrainCursorPresenter({ canvas, documentTarget, root: body, styleRoot: head });
 
   presenter.update({
     state: TERRAIN_CURSOR_STATES.SLOW,
@@ -154,12 +156,15 @@ test('cursor presenter exposes immediate visual text and restores canvas state',
   }, { x: 100, y: 80 });
 
   assert.equal(body.children.length, 1);
+  assert.equal(head.children.length, 1);
   assert.equal(canvas.dataset.terrainCursor, TERRAIN_CURSOR_STATES.SLOW);
-  assert.equal(canvas.style.cursor, 'progress');
+  assert.equal(canvas.style.cursor, 'crosshair');
   assert.equal(presenter.element.textContent, 'Rubble · Reduced pace · 74%');
   assert.equal(presenter.element.style.display, 'block');
   assert.equal(presenter.element.style.left, '116px');
   assert.equal(presenter.element.style.top, '98px');
+  assert.match(presenter.styleElement.textContent, /body\.placing #game \{ cursor: copy !important; \}/);
+  assert.match(presenter.styleElement.textContent, /body\.placing \.terrainCursorFeedback \{ display: none !important; \}/);
 
   presenter.clear();
   assert.equal(canvas.style.cursor, 'crosshair');
@@ -168,4 +173,5 @@ test('cursor presenter exposes immediate visual text and restores canvas state',
 
   presenter.dispose();
   assert.equal(presenter.element.removed, true);
+  assert.equal(presenter.styleElement.removed, true);
 });
