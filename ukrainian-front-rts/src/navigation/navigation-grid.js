@@ -11,7 +11,16 @@ export const TERRAIN_TYPES = Object.freeze({
   RUBBLE: 'rubble',
   WATER: 'water',
   BRIDGE: 'bridge',
+  SHELTERBELT: 'shelterbelt',
   BLOCKED: 'blocked',
+});
+
+export const TERRAIN_MOVEMENT_BANDS = Object.freeze({
+  FAST: 'fast',
+  NORMAL: 'normal',
+  SLOW: 'slow',
+  VERY_SLOW: 'very-slow',
+  IMPASSABLE: 'impassable',
 });
 
 export const DEFAULT_TERRAIN_RULES = Object.freeze({
@@ -21,7 +30,19 @@ export const DEFAULT_TERRAIN_RULES = Object.freeze({
   [TERRAIN_TYPES.RUBBLE]: Object.freeze({ ground: 1.35, amphibious: 1.35, air: 1 }),
   [TERRAIN_TYPES.WATER]: Object.freeze({ ground: null, amphibious: 1.2, air: 1 }),
   [TERRAIN_TYPES.BRIDGE]: Object.freeze({ ground: 1, amphibious: 1, air: 1 }),
+  [TERRAIN_TYPES.SHELTERBELT]: Object.freeze({ ground: 1.15, amphibious: 1.15, air: 1 }),
   [TERRAIN_TYPES.BLOCKED]: Object.freeze({ ground: null, amphibious: null, air: 1 }),
+});
+
+export const TERRAIN_PRESENTATION = Object.freeze({
+  [TERRAIN_TYPES.OPEN]: Object.freeze({ label: 'Open ground', detail: 'Standard movement' }),
+  [TERRAIN_TYPES.ROAD]: Object.freeze({ label: 'Road', detail: 'Faster movement' }),
+  [TERRAIN_TYPES.MUD]: Object.freeze({ label: 'Mud', detail: 'Severely reduced movement' }),
+  [TERRAIN_TYPES.RUBBLE]: Object.freeze({ label: 'Rubble', detail: 'Reduced movement' }),
+  [TERRAIN_TYPES.WATER]: Object.freeze({ label: 'Water', detail: 'Ground units cannot cross' }),
+  [TERRAIN_TYPES.BRIDGE]: Object.freeze({ label: 'Bridge', detail: 'Ground crossing' }),
+  [TERRAIN_TYPES.SHELTERBELT]: Object.freeze({ label: 'Shelterbelt', detail: 'Slightly reduced movement' }),
+  [TERRAIN_TYPES.BLOCKED]: Object.freeze({ label: 'Blocked terrain', detail: 'Impassable' }),
 });
 
 const KNOWN_MOVEMENT_LAYERS = new Set(Object.values(MOVEMENT_LAYERS));
@@ -58,6 +79,37 @@ function normalizeLayers(layers) {
 
 function blockerKey(x, y) {
   return `${x},${y}`;
+}
+
+export function movementBandForCost(cost) {
+  if (cost === null) return TERRAIN_MOVEMENT_BANDS.IMPASSABLE;
+  if (!Number.isFinite(cost) || cost <= 0) throw new TypeError('Terrain movement cost must be null or a positive finite number.');
+  if (cost < 1) return TERRAIN_MOVEMENT_BANDS.FAST;
+  if (cost === 1) return TERRAIN_MOVEMENT_BANDS.NORMAL;
+  if (cost < 1.5) return TERRAIN_MOVEMENT_BANDS.SLOW;
+  return TERRAIN_MOVEMENT_BANDS.VERY_SLOW;
+}
+
+export function terrainMovementProfile(terrain, layer = MOVEMENT_LAYERS.GROUND, terrainRules = DEFAULT_TERRAIN_RULES) {
+  if (!KNOWN_MOVEMENT_LAYERS.has(layer)) throw new Error(`Unknown movement layer: ${layer}`);
+  const rule = terrainRules[terrain];
+  if (!rule) throw new Error(`Unknown terrain type: ${terrain}`);
+  const cost = rule[layer];
+  if (cost === undefined) throw new Error(`Terrain ${terrain} does not define movement layer: ${layer}`);
+  const presentation = TERRAIN_PRESENTATION[terrain] ?? Object.freeze({
+    label: terrain,
+    detail: cost === null ? 'Impassable' : 'Modified movement',
+  });
+  return Object.freeze({
+    terrain,
+    layer,
+    label: presentation.label,
+    detail: presentation.detail,
+    cost,
+    passable: cost !== null,
+    speedMultiplier: cost === null ? 0 : 1 / cost,
+    band: movementBandForCost(cost),
+  });
 }
 
 export class NavigationGrid {
@@ -113,6 +165,15 @@ export class NavigationGrid {
     return cost;
   }
 
+  movementProfile(x, y, layer = MOVEMENT_LAYERS.GROUND) {
+    return terrainMovementProfile(this.getTerrain(x, y), layer, this.terrainRules);
+  }
+
+  movementProfileAtWorld(x, y, layer = MOVEMENT_LAYERS.GROUND) {
+    const cell = this.worldToCell(x, y);
+    return Object.freeze({ ...this.movementProfile(cell.x, cell.y, layer), cell });
+  }
+
   cellsForFootprint(origin, footprint = { width: 1, height: 1 }) {
     assertCell(origin, this.width, this.height, 'Footprint origin');
     const normalized = normalizeFootprint(footprint);
@@ -160,15 +221,23 @@ export class NavigationGrid {
     });
   }
 
-  applyMapData({ terrain = [], bridges = [], blockers = [] } = {}) {
-    if (!Array.isArray(terrain) || !Array.isArray(bridges) || !Array.isArray(blockers)) {
-      throw new TypeError('Navigation map data terrain, bridges, and blockers must be arrays.');
+  applyMapData({ terrain = [], shelterbelts = [], roads = [], bridges = [], blockers = [] } = {}) {
+    if (
+      !Array.isArray(terrain) ||
+      !Array.isArray(shelterbelts) ||
+      !Array.isArray(roads) ||
+      !Array.isArray(bridges) ||
+      !Array.isArray(blockers)
+    ) {
+      throw new TypeError('Navigation map data terrain, shelterbelts, roads, bridges, and blockers must be arrays.');
     }
 
     for (const cell of terrain) {
       if (!cell || typeof cell.type !== 'string') throw new TypeError('Terrain entries require x, y, and type.');
       this.setTerrain(cell.x, cell.y, cell.type);
     }
+    for (const cell of shelterbelts) this.setTerrain(cell.x, cell.y, TERRAIN_TYPES.SHELTERBELT);
+    for (const cell of roads) this.setTerrain(cell.x, cell.y, TERRAIN_TYPES.ROAD);
     for (const cell of bridges) this.setTerrain(cell.x, cell.y, TERRAIN_TYPES.BRIDGE);
     for (const blocker of blockers) {
       if (!blocker || !blocker.origin) throw new TypeError('Blocker entries require id and origin.');
@@ -204,12 +273,22 @@ export function createNavigationGridFromMapData(mapData, options = {}) {
   if (!mapData || typeof mapData !== 'object' || Array.isArray(mapData)) {
     throw new TypeError('Navigation map data must be an object.');
   }
-  const { width, height, tileSize, defaultTerrain, terrain, bridges, blockers } = mapData;
+  const {
+    width,
+    height,
+    tileSize,
+    defaultTerrain,
+    terrain,
+    shelterbelts,
+    roads,
+    bridges,
+    blockers,
+  } = mapData;
   return new NavigationGrid({
     width,
     height,
     tileSize,
     defaultTerrain,
     ...options,
-  }).applyMapData({ terrain, bridges, blockers });
+  }).applyMapData({ terrain, shelterbelts, roads, bridges, blockers });
 }
