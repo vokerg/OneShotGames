@@ -37,6 +37,7 @@ test('rasterizes visual road polylines into stable row-major cells', () => {
     { x: 0, y: 0 },
     { x: 1, y: 0 },
     { x: 2, y: 0 },
+    { x: 3, y: 0 },
   ]);
   assert.equal(Object.isFrozen(cells), true);
   assert.throws(() => roadCellsFromPolyline([[0, Number.NaN]]), /finite x and y/);
@@ -88,14 +89,14 @@ test('derives per-layer terrain multipliers from the current cell', () => {
 });
 
 test('scales only physical displacement while preserving simulation time', () => {
-  const grid = new NavigationGrid({ width: 2, height: 1, tileSize: 32 });
-  grid.setTerrain(0, 0, TERRAIN_TYPES.MUD);
+  const grid = new NavigationGrid({ width: 3, height: 3, tileSize: 32 });
+  grid.setTerrain(1, 1, TERRAIN_TYPES.MUD);
   const unit = {
     type: 'uaInfantry',
     team: TEAM.UA,
-    x: 8,
-    y: 16,
-    order: { kind: 'move', x: 100, y: 16 },
+    x: 40,
+    y: 40,
+    order: { kind: 'move', x: 100, y: 40 },
     target: null,
     elapsed: 0,
   };
@@ -109,8 +110,8 @@ test('scales only physical displacement while preserving simulation time', () =>
 
   const result = updateUnitWithTerrainMovement(game, unit, 0.5, grid);
   assert.equal(unit.elapsed, 0.5);
-  assert.equal(unit.x, 18);
-  assert.equal(unit.y, 16);
+  assert.equal(unit.x, 50);
+  assert.equal(unit.y, 40);
   assert.equal(unit.terrainMovementMultiplier, 1 / 1.6);
   assert.equal(result.displacement.moved, 16);
   assert.equal(result.displacement.adjusted, 10);
