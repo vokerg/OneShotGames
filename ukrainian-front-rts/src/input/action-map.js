@@ -7,6 +7,7 @@ export const INPUT_ACTIONS = Object.freeze({
   ATTACK_MOVE: 'attackMove',
   STOP: 'stop',
   TOGGLE_AUTO_FIRE: 'toggleAutoFire',
+  CYCLE_SELECTION_SUBGROUP: 'cycleSelectionSubgroup',
 });
 
 export const DEFAULT_KEY_BINDINGS = Object.freeze({
@@ -22,6 +23,7 @@ export const DEFAULT_KEY_BINDINGS = Object.freeze({
   q: INPUT_ACTIONS.ATTACK_MOVE,
   x: INPUT_ACTIONS.STOP,
   t: INPUT_ACTIONS.TOGGLE_AUTO_FIRE,
+  tab: INPUT_ACTIONS.CYCLE_SELECTION_SUBGROUP,
 });
 
 const HELD_ACTIONS = new Set([
