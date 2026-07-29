@@ -74,4 +74,4 @@ test('invalid timing contracts fail before mutating clock state', () => {
   assert.throws(() => clock.advance(-0.1, () => {}), /non-negative finite/);
   assert.throws(() => clock.advance(0.1, null), /callback/);
   assert.equal(clock.snapshot().tick, 0);
-}
+});
