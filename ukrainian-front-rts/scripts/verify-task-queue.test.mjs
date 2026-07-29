@@ -56,9 +56,9 @@ const cases = [
     expected: ['dependency range', 'descending'],
   },
   {
-    name: 'dependency cycle',
-    markdown: queue(row({ id: 'UFR-001', depends: 'UFR-002' }), row({ id: 'UFR-002', depends: 'UFR-001' })),
-    expected: ['dependency cycle'],
+    name: 'self dependency',
+    markdown: queue(row({ id: 'UFR-001', depends: 'UFR-001' })),
+    expected: ['task cannot depend on itself'],
   },
   {
     name: 'parallel policy requires explanation',
