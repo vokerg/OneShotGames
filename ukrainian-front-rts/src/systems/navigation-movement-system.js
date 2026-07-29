@@ -1,4 +1,4 @@
-import { BUILDING_TYPES, UNIT_TYPES, WORLD } from '../config.js';
+import { BUILDING_TYPES, TEAM, UNIT_TYPES, WORLD } from '../config.js';
 import {
   MOVEMENT_LAYERS,
   TERRAIN_TYPES,
@@ -116,7 +116,7 @@ function ensureNavigationRoute(game, unit, order, state) {
   order.navigationRevision = state.revision;
 
   if (order.navigationRoute.status !== PATH_STATUSES.FOUND) {
-    if (unit.team === 0) game.lastError = routeFailureMessage(order.navigationRoute.status);
+    if (unit.team === TEAM.UA) game.lastError = routeFailureMessage(order.navigationRoute.status);
     unit.order = null;
     unit.target = null;
   }
