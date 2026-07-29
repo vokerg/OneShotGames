@@ -1,4 +1,9 @@
 import {
+  createFixedStepClock,
+  FIXED_SIMULATION_STEP_SECONDS,
+  MAX_FRAME_DELTA_SECONDS,
+} from '../core/fixed-step-clock.js';
+import {
   DEFAULT_SIMULATION_SEED,
   deriveSimulationSeed,
   setSimulationSeed,
@@ -9,10 +14,17 @@ export function createGameRuntime({
   renderer,
   ui,
   simulationSeed = DEFAULT_SIMULATION_SEED,
+  simulationStepSeconds = FIXED_SIMULATION_STEP_SECONDS,
+  maxFrameDeltaSeconds = MAX_FRAME_DELTA_SECONDS,
+  now = () => performance.now(),
   requestFrame = window.requestAnimationFrame.bind(window),
   cancelFrame = window.cancelAnimationFrame.bind(window),
 }) {
-  let lastFrameAt = performance.now();
+  const simulationClock = createFixedStepClock({
+    stepSeconds: simulationStepSeconds,
+    maxFrameDeltaSeconds,
+  });
+  let lastFrameAt = now();
   let frameHandle = null;
 
   const startMission = (missionIndex, seed = simulationSeed) => {
@@ -20,17 +32,18 @@ export function createGameRuntime({
     setSimulationSeed(activeSeed);
     game.simulationSeed = activeSeed;
     game.start(missionIndex);
+    simulationClock.reset();
     ui.setMission();
     ui.toast(`Mission deployed. First enemy assault in ${game.mission.waves.firstDelay} seconds.`);
-    lastFrameAt = performance.now();
+    lastFrameAt = now();
   };
 
-  const frame = (now) => {
-    const dt = Math.min(0.033, (now - lastFrameAt) / 1000);
-    lastFrameAt = now;
+  const frame = (frameAt) => {
+    const frameDeltaSeconds = Math.max(0, (frameAt - lastFrameAt) / 1000);
+    lastFrameAt = frameAt;
 
     if (game.mission) {
-      game.update(dt);
+      simulationClock.advance(frameDeltaSeconds, (stepSeconds) => game.update(stepSeconds));
       renderer.render();
       ui.refresh();
     }
@@ -40,7 +53,7 @@ export function createGameRuntime({
 
   const start = () => {
     if (frameHandle !== null) return;
-    lastFrameAt = performance.now();
+    lastFrameAt = now();
     frameHandle = requestFrame(frame);
   };
 
@@ -50,5 +63,5 @@ export function createGameRuntime({
     frameHandle = null;
   };
 
-  return { startMission, start, stop };
+  return { startMission, start, stop, simulationClock };
 }
