@@ -124,8 +124,18 @@ assert.deepEqual(runtimeGame.placement, firstRuntimePlacement);
 runtime.startMission(1);
 assert.notDeepEqual(runtimeGame.placement, firstRuntimePlacement);
 
+const gamePath = join(projectRoot, 'src/game.js');
+const gameSource = readFileSync(gamePath, 'utf8');
+for (const [pattern, description] of [
+  [/390 \+ randomBetween\(-25, 25\)/, 'hero placement'],
+  [/cool: randomBetween\(0, 0\.4\)/, 'initial weapon cooldown'],
+  [/building\.x \+ randomBetween\(-70, 70\)/, 'production exit placement'],
+]) {
+  assert.match(gameSource, pattern, `Game must route ${description} through randomBetween.`);
+}
+
 const simulationFiles = [
-  join(projectRoot, 'src/game.js'),
+  gamePath,
   join(projectRoot, 'src/core/math.js'),
   ...readdirSync(join(projectRoot, 'src/systems'))
     .filter((name) => name.endsWith('.js'))
