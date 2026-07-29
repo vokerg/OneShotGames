@@ -14,6 +14,33 @@ const OBJECTIVE_PATTERNS = [
 const entries = (value) => Object.entries(value ?? {});
 const add = (errors, path, message) => errors.push(`${path}: ${message}`);
 
+function normalizeReferenceList(value) {
+  if (value === undefined || value === null || value === '') return [];
+  return Array.isArray(value) ? value : [value];
+}
+
+function validateReferenceList(errors, path, value, knownIds, label, { allowScalar = false } = {}) {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value) && !(allowScalar && typeof value === 'string')) {
+    add(errors, path, allowScalar ? 'must be a string or an array of strings' : 'must be an array of strings');
+    return [];
+  }
+
+  const references = normalizeReferenceList(value);
+  const seen = new Set();
+  references.forEach((reference, index) => {
+    const itemPath = Array.isArray(value) ? `${path}[${index}]` : path;
+    if (typeof reference !== 'string' || reference.length === 0) {
+      add(errors, itemPath, 'must be a non-empty string');
+      return;
+    }
+    if (seen.has(reference)) add(errors, itemPath, `duplicate ${label} reference ${reference}`);
+    seen.add(reference);
+    if (!knownIds.has(reference)) add(errors, itemPath, `missing ${label} reference ${reference}`);
+  });
+  return references.filter((reference) => typeof reference === 'string' && reference.length > 0);
+}
+
 function validateCost(errors, path, cost) {
   if (cost === undefined) return;
   if (!cost || typeof cost !== 'object' || Array.isArray(cost)) return add(errors, path, 'cost must be an object');
@@ -23,19 +50,137 @@ function validateCost(errors, path, cost) {
   }
 }
 
-function validateUpgradeCycles(errors, upgrades) {
+function collectTechNodes(errors, buildings, upgrades) {
+  const nodes = new Map();
+  for (const [id, data] of entries(buildings)) nodes.set(id, { id, data, path: `BUILDING_TYPES.${id}`, family: 'building' });
+  for (const [id, data] of entries(upgrades)) {
+    if (nodes.has(id)) add(errors, `UPGRADES.${id}`, `duplicate tech-node id ${id}; building and upgrade IDs share one namespace`);
+    else nodes.set(id, { id, data, path: `UPGRADES.${id}`, family: 'upgrade' });
+  }
+  return nodes;
+}
+
+function validateTechCycles(errors, nodes, requirements) {
   const visiting = new Set();
   const visited = new Set();
   function visit(id, stack) {
     if (visited.has(id)) return;
-    if (visiting.has(id)) return add(errors, `UPGRADES.${id}.requires`, `circular prerequisite: ${[...stack.slice(stack.indexOf(id)), id].join(' -> ')}`);
+    if (visiting.has(id)) {
+      const cycleStart = stack.indexOf(id);
+      return add(errors, `${nodes.get(id)?.path ?? `TECH.${id}`}.requires`, `circular prerequisite: ${[...stack.slice(cycleStart), id].join(' -> ')}`);
+    }
     visiting.add(id);
-    const required = upgrades[id]?.requires;
-    if (required && upgrades[required]) visit(required, [...stack, id]);
+    for (const requiredId of requirements.get(id) ?? []) if (nodes.has(requiredId)) visit(requiredId, [...stack, id]);
     visiting.delete(id);
     visited.add(id);
   }
-  for (const id of Object.keys(upgrades)) visit(id, []);
+  for (const id of nodes.keys()) visit(id, []);
+}
+
+function allowedForFaction(node, factionId) {
+  const restrictions = normalizeReferenceList(node.data?.factions);
+  return restrictions.length === 0 || restrictions.includes(factionId);
+}
+
+function computeReachableTech(nodes, requirements, factionId, blocked = new Set()) {
+  const reachable = new Set();
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const [id, node] of nodes) {
+      if (reachable.has(id) || blocked.has(id) || !allowedForFaction(node, factionId)) continue;
+      const requiredIds = requirements.get(id) ?? [];
+      if ((node.data?.techRoot === true || requiredIds.length === 0) && requiredIds.every((requiredId) => reachable.has(requiredId))) {
+        reachable.add(id);
+        changed = true;
+        continue;
+      }
+      if (requiredIds.length > 0 && requiredIds.every((requiredId) => reachable.has(requiredId))) {
+        reachable.add(id);
+        changed = true;
+      }
+    }
+  }
+  return reachable;
+}
+
+function validateTechGraph(errors, { buildings, upgrades, factions, missions }) {
+  const factionIds = new Set(entries(factions).map(([, faction]) => faction?.id).filter((id) => typeof id === 'string'));
+  const missionIds = new Set(missions.map((mission) => mission?.id).filter((id) => typeof id === 'string'));
+  const nodes = collectTechNodes(errors, buildings, upgrades);
+  const techIds = new Set(nodes.keys());
+  const requirements = new Map();
+  const exclusiveGroups = new Map();
+
+  for (const [id, node] of nodes) {
+    const allowScalar = node.family === 'upgrade';
+    const requiredIds = validateReferenceList(errors, `${node.path}.requires`, node.data?.requires, techIds, 'tech-node', { allowScalar });
+    requirements.set(id, requiredIds);
+    if (requiredIds.includes(id)) add(errors, `${node.path}.requires`, 'a tech node cannot require itself');
+
+    validateReferenceList(errors, `${node.path}.factions`, node.data?.factions, factionIds, 'faction');
+    validateReferenceList(errors, `${node.path}.missionLocks`, node.data?.missionLocks, missionIds, 'mission');
+
+    if (node.data?.techRoot !== undefined && typeof node.data.techRoot !== 'boolean') add(errors, `${node.path}.techRoot`, 'must be a boolean');
+    if (node.data?.techRoot === true && requiredIds.length > 0) add(errors, `${node.path}.techRoot`, 'a tech root cannot also declare prerequisites');
+
+    const group = node.data?.exclusiveGroup;
+    if (group !== undefined && group !== null) {
+      if (typeof group !== 'string' || group.trim().length === 0) add(errors, `${node.path}.exclusiveGroup`, 'must be null or a non-empty string');
+      else {
+        const members = exclusiveGroups.get(group) ?? [];
+        members.push(id);
+        exclusiveGroups.set(group, members);
+      }
+    }
+  }
+
+  validateTechCycles(errors, nodes, requirements);
+
+  for (const [group, members] of exclusiveGroups) {
+    if (members.length < 2) add(errors, `TECH.exclusiveGroup.${group}`, `must contain at least two choices; found ${members[0]}`);
+  }
+
+  for (const [id, requiredIds] of requirements) {
+    const node = nodes.get(id);
+    const ownGroup = node?.data?.exclusiveGroup;
+    const requiredGroups = new Map();
+    for (const requiredId of requiredIds) {
+      const group = nodes.get(requiredId)?.data?.exclusiveGroup;
+      if (!group) continue;
+      if (group === ownGroup) add(errors, `${node.path}.requires`, `cannot require ${requiredId} from its own mutually exclusive group ${group}`);
+      const previous = requiredGroups.get(group);
+      if (previous) add(errors, `${node.path}.requires`, `cannot require mutually exclusive choices ${previous} and ${requiredId} from group ${group}`);
+      else requiredGroups.set(group, requiredId);
+    }
+  }
+
+  for (const factionId of factionIds) {
+    const reachable = computeReachableTech(nodes, requirements, factionId);
+    for (const [id, node] of nodes) {
+      if (allowedForFaction(node, factionId) && !reachable.has(id)) add(errors, node.path, `tech node is not reachable for faction ${factionId} from compatible roots`);
+    }
+  }
+
+  missions.forEach((mission, index) => {
+    const path = `MISSIONS[${index}]`;
+    const factionId = mission?.playerFaction ?? 'ukraine';
+    const available = validateReferenceList(errors, `${path}.availableTech`, mission?.availableTech, techIds, 'tech-node');
+    const locked = validateReferenceList(errors, `${path}.lockedTech`, mission?.lockedTech, techIds, 'tech-node');
+    const blocked = new Set(locked);
+    for (const [id, node] of nodes) if (normalizeReferenceList(node.data?.missionLocks).includes(mission?.id)) blocked.add(id);
+
+    for (const id of available) {
+      if (blocked.has(id)) add(errors, `${path}.availableTech`, `${id} is both available and locked for mission ${mission?.id ?? index}`);
+      const node = nodes.get(id);
+      if (node && !allowedForFaction(node, factionId)) add(errors, `${path}.availableTech`, `${id} is not available to faction ${factionId}`);
+    }
+
+    if (factionIds.has(factionId) && available.length > 0) {
+      const reachable = computeReachableTech(nodes, requirements, factionId, blocked);
+      for (const id of available) if (!reachable.has(id)) add(errors, `${path}.availableTech`, `${id} is not reachable after mission locks and faction restrictions`);
+    }
+  });
 }
 
 function validateCommandCardHotkeys(errors, units, abilities) {
@@ -91,24 +236,24 @@ export function validateContent(content) {
     validateCost(errors, `BUILDING_TYPES.${id}.cost`, building?.cost);
     for (const unitId of building?.produces ?? []) if (!units[unitId]) add(errors, `BUILDING_TYPES.${id}.produces`, `missing unit reference ${unitId}`);
   }
-  for (const [id, upgrade] of entries(upgrades)) {
-    validateCost(errors, `UPGRADES.${id}.cost`, upgrade?.cost);
-    if (upgrade?.requires && !upgrades[upgrade.requires]) add(errors, `UPGRADES.${id}.requires`, `missing upgrade reference ${upgrade.requires}`);
-  }
-  validateUpgradeCycles(errors, upgrades);
+  for (const [id, upgrade] of entries(upgrades)) validateCost(errors, `UPGRADES.${id}.cost`, upgrade?.cost);
   validateCommandCardHotkeys(errors, units, abilities);
 
   if (!Array.isArray(missions)) add(errors, 'MISSIONS', 'must be an array');
-  else missions.forEach((mission, index) => {
-    const path = `MISSIONS[${index}]`;
-    if (!regions[mission?.region]) add(errors, `${path}.region`, `missing region reference ${JSON.stringify(mission?.region)}`);
-    validateCost(errors, `${path}.start`, mission?.start);
-    for (const field of ['heroes', 'trainableHeroes', 'enemyHeroes']) for (const unitId of mission?.[field] ?? []) {
-      if (!units[unitId]) add(errors, `${path}.${field}`, `missing unit reference ${unitId}`);
-      else if (!units[unitId].hero) add(errors, `${path}.${field}`, `${unitId} is not a hero unit`);
-    }
-    validateObjectives(errors, mission, index);
-  });
+  else {
+    missions.forEach((mission, index) => {
+      const path = `MISSIONS[${index}]`;
+      if (!regions[mission?.region]) add(errors, `${path}.region`, `missing region reference ${JSON.stringify(mission?.region)}`);
+      if (mission?.playerFaction !== undefined && !factionIds.has(mission.playerFaction)) add(errors, `${path}.playerFaction`, `missing faction reference ${JSON.stringify(mission.playerFaction)}`);
+      validateCost(errors, `${path}.start`, mission?.start);
+      for (const field of ['heroes', 'trainableHeroes', 'enemyHeroes']) for (const unitId of mission?.[field] ?? []) {
+        if (!units[unitId]) add(errors, `${path}.${field}`, `missing unit reference ${unitId}`);
+        else if (!units[unitId].hero) add(errors, `${path}.${field}`, `${unitId} is not a hero unit`);
+      }
+      validateObjectives(errors, mission, index);
+    });
+    validateTechGraph(errors, { buildings, upgrades, factions, missions });
+  }
   return errors;
 }
 
