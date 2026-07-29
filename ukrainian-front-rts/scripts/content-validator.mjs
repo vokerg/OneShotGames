@@ -113,8 +113,7 @@ function validateTechGraph(errors, { buildings, upgrades, factions, missions }) 
   const exclusiveGroups = new Map();
 
   for (const [id, node] of nodes) {
-    const allowScalar = node.family === 'upgrade';
-    const requiredIds = validateReferenceList(errors, `${node.path}.requires`, node.data?.requires, techIds, 'tech-node', { allowScalar });
+    const requiredIds = validateReferenceList(errors, `${node.path}.requires`, node.data?.requires, techIds, 'tech-node', { allowScalar: true });
     requirements.set(id, requiredIds);
     if (requiredIds.includes(id)) add(errors, `${node.path}.requires`, 'a tech node cannot require itself');
 
