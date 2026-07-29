@@ -30,6 +30,17 @@ Prefer vertical slices with one owner per concern:
 
 Not every feature needs every slice. A balance patch can be config-only; a visual pass can be renderer-only.
 
+## Content and schema workflow
+
+1. Read `docs/CONTENT_SCHEMA.md` before adding or changing declarative content.
+2. Keep content instances in `src/config.js` or the focused content module introduced by its queue task.
+3. Use the collection key or required `id` field exactly as the family contract specifies.
+4. Add optional fields with explicit defaults in `src/content-schema.js`.
+5. Treat new required fields, identity changes, renames, type changes, or changed meanings as a schema-version change.
+6. Update `src/content-schema.js` and `docs/CONTENT_SCHEMA.md` in the same PR.
+7. Do not fold cross-record validation, migrations, map loaders, or AI behavior into a schema-only task.
+8. Run `bash verify.sh` so the schema registry and default materialization checks execute.
+
 ## Visual improvement workflow
 
 1. Define the gameplay read before drawing.
@@ -56,6 +67,7 @@ A new system should:
 - Is the change confined to `ukrainian-front-rts/`?
 - Is there one authoritative implementation of each rule?
 - Can balance/content remain in `config.js`?
+- Do schema and content documentation match affected data?
 - Does `main.js` still read as composition rather than behavior?
 - Are event listeners disposable and key state cleared on blur?
 - Do all documented controls work, including W/A/S/D?
