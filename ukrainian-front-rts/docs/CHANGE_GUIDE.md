@@ -13,7 +13,7 @@ Use this guide to route work to one authoritative owner, keep dependency directi
 7. Run the focused command, then `bash verify.sh`.
 8. Perform browser, visual, audio, or performance checks required by the affected flow.
 
-Do not fix authoritative-state defects in UI or renderer code. Do not add gameplay rules to `main.js`, runtime scheduling, input listeners, or domain-event consumers.
+Do not fix authoritative-state defects in UI or renderer code. Do not add gameplay rules to `main.js`, runtime scheduling, input listeners, domain-event consumers, or navigation policy modules.
 
 ## Change routing
 
@@ -21,6 +21,7 @@ Do not fix authoritative-state defects in UI or renderer code. Do not add gamepl
 | --- | --- | --- | --- |
 | Balance or content instance | `src/config.js` | schema/content docs and validators | renderer branches for gameplay values |
 | Content field or identity | `src/content-schema.js` | `docs/CONTENT_SCHEMA.md`, validators, migrations | silent shape changes in consumers |
+| Navigation data/search/cache policy | focused module in `src/navigation/` | navigation movement system, deterministic tests, `docs/NAVIGATION.md` | importing `Game`, systems, DOM, UI, renderer, or audio |
 | Simulation rule | focused `src/systems/` module + small `Game` delegate | phase order, random/event implications | UI, renderer, runtime |
 | Fixed-step order or timing | `src/systems/simulation-phases.js`, `src/core/fixed-step-clock.js` | runtime, harness, deterministic scenarios | animation-frame delta in rules |
 | Random authoritative decision | `src/core/random.js` service or core helpers | same-seed/different-seed tests | `Math.random` in simulation |
@@ -49,6 +50,7 @@ Examples:
 - Objective completes early: objective system, not HUD text.
 - Slow displays change outcomes: fixed-step runtime/phase contract, not unit speed values.
 - Sound plays twice: audio consumer/event mapping, not combat state.
+- Route cache returns stale blockers: navigation revision/cache policy, not unit movement speed.
 - Contract violation is not caught: focused verifier and tooling fixtures, not CI-only logic.
 
 ## Content and schema workflow
@@ -63,21 +65,34 @@ Examples:
 8. Keep runtime migration/loading work in its own owner unless explicitly included.
 9. Run focused schema/content checks, then `bash verify.sh`.
 
+## Navigation-policy workflow
+
+1. Put passability, movement-layer, footprint, path search, waypoint conversion, cache identity, invalidation, repath cadence, and deterministic navigation counters in focused `src/navigation/` modules.
+2. Pass grids, points, options, revisions, request IDs, and fixed-step ticks explicitly; do not import `Game`, systems, config instances, DOM, renderer, UI, or audio.
+3. Keep runtime map/building synchronization, unit order assignment, pause/resume behavior, movement advancement, and collision sequencing in `src/systems/navigation-movement-system.js` or the focused system assigned by the task.
+4. Include every behavior-affecting option in deterministic cache identity. Never share mutable route progress between units.
+5. Invalidate caches through an explicit grid/revision boundary when structures or authored passability change.
+6. Express repath limits in fixed simulation ticks, not wall-clock milliseconds or animation frames.
+7. Keep caches and request-tracking state bounded or explicitly releasable.
+8. Add pure navigation tests and runtime integration coverage for any system adapter change.
+9. Update `docs/NAVIGATION.md`; update architecture verifier fixtures when layer direction changes.
+10. Run `node scripts/run-tests.mjs navigation`, the architecture tooling test when relevant, then `bash verify.sh`.
+
 ## Simulation-mechanic workflow
 
 1. Define the authoritative state inputs and mutation boundary.
-2. Put independently testable policy in a focused system.
+2. Put independently testable policy in a focused system, or in `src/navigation/` only when the concern is reusable navigation policy rather than game-state mutation.
 3. Keep a small `Game` method as the public facade when existing callers need it.
 4. Decide which fixed-step phase owns execution.
 5. Use seeded randomness for every replay-relevant draw.
 6. Emit domain events only after successful state mutation.
 7. Render and display feedback from state/events; do not duplicate the rule.
 8. Add unit coverage and a headless scenario when cross-system order matters.
-9. Document changes to tick order, random draw order, event order, serialization, or replay behavior.
+9. Document changes to tick order, random draw order, event order, serialization, replay behavior, or navigation request order.
 
 ## Fixed-step or deterministic-behavior workflow
 
-A change is deterministic-behavior work when it modifies tick duration, phase order, command execution order, entity iteration order, random draw order, event sequence order, or snapshot shape.
+A change is deterministic-behavior work when it modifies tick duration, phase order, command execution order, entity iteration order, random draw order, event sequence order, navigation request order, repath cadence, cache eviction order, or snapshot shape.
 
 1. Update the authoritative owner only.
 2. Preserve one `Game.update(fixedStep)` call per simulation tick.
@@ -150,7 +165,7 @@ Use `tests/tooling/` for architecture, verification, queue, or similar executabl
 
 Create a module when the concern has its own vocabulary, independently testable policy, and a single reason to change.
 
-A focused simulation/core module should:
+A focused simulation/core/navigation module should:
 
 - accept required state explicitly;
 - avoid DOM and direct browser audio APIs;
@@ -195,9 +210,9 @@ Never leave a new `src/` directory unclassified.
 - Is there one authoritative implementation of each rule?
 - Does dependency direction still point inward?
 - Does `main.js` remain composition only?
-- Are fixed-step, random, event, and command ordering implications explicit?
+- Are fixed-step, random, event, command, navigation-request, and repath-order implications explicit?
 - Do schema code, content data, and human-readable docs agree?
-- Do tests use the correct unit, simulation, or tooling layer?
+- Do tests use the correct unit, navigation, simulation, or tooling layer?
 - Is a new source layer registered in architecture verification?
 - Does `bash verify.sh` remain the only top-level verification command?
 - Were required browser, visual, audio, and performance checks performed?
