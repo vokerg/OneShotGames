@@ -5,10 +5,13 @@ import {
   TERRAIN_TYPES,
   createNavigationGridFromMapData,
 } from '../navigation/navigation-grid.js';
+import {
+  PATH_REQUEST_RESULTS,
+  createNavigationPathService,
+} from '../navigation/path-service.js';
 import { PATH_STATUSES } from '../navigation/pathfinder.js';
 import {
   currentWaypoint,
-  requestWaypointRoute,
 } from '../navigation/waypoint-route.js';
 import { buildingNavigationBlocker } from './construction-placement-system.js';
 import { resolveUnitOverlaps } from './unit-collision-system.js';
@@ -86,12 +89,22 @@ export function synchronizeNavigationGrid(game) {
 
   const signature = navigationSignature(game);
   if (!game.navigationState || game.navigationState.signature !== signature) {
-    const revision = (game.navigationState?.revision ?? 0) + 1;
+    const previous = game.navigationState;
+    const revision = (previous?.revision ?? 0) + 1;
+    const grid = createRuntimeNavigationGrid(game);
+    const pathService = previous?.pathService ?? createNavigationPathService();
+    pathService.setGrid(grid, revision);
     game.navigationState = {
-      grid: createRuntimeNavigationGrid(game),
+      grid,
       signature,
       revision,
+      tick: previous?.tick ?? 0,
+      pathService,
     };
+  } else if (!game.navigationState.pathService) {
+    game.navigationState.pathService = createNavigationPathService();
+    game.navigationState.pathService.setGrid(game.navigationState.grid, game.navigationState.revision);
+    game.navigationState.tick ??= 0;
   }
   return game.navigationState;
 }
@@ -112,21 +125,38 @@ function routeFailureMessage(status) {
   return 'Destination is unreachable.';
 }
 
+function navigationRequestId(unit) {
+  return `unit:${unit.id}`;
+}
+
 function ensureNavigationRoute(game, unit, order, state) {
   if (order.navigationRoute && order.navigationRevision === state.revision) return order.navigationRoute;
 
   const destination = order.navigationDestination ?? { x: order.x, y: order.y };
   order.navigationDestination = Object.freeze({ x: destination.x, y: destination.y });
-  order.navigationRoute = requestWaypointRoute(
-    state.grid,
+  const request = state.pathService.requestRoute(
     { x: unit.x, y: unit.y },
     order.navigationDestination,
     { layer: unitNavigationLayer(UNIT_TYPES[unit.type]) },
+    {
+      requestId: navigationRequestId(unit),
+      tick: state.tick,
+      force: !order.navigationRoute,
+    },
   );
+
+  if (request.status === PATH_REQUEST_RESULTS.THROTTLED) {
+    order.navigationRepathTick = request.retryTick;
+    return null;
+  }
+
+  order.navigationRoute = request.route;
   order.navigationRevision = state.revision;
+  delete order.navigationRepathTick;
 
   if (order.navigationRoute.status !== PATH_STATUSES.FOUND) {
     if (unit.team === TEAM.UA) game.lastError = routeFailureMessage(order.navigationRoute.status);
+    state.pathService.releaseRequest(navigationRequestId(unit));
     unit.order = null;
     unit.target = null;
   }
@@ -136,17 +166,20 @@ function ensureNavigationRoute(game, unit, order, state) {
 export function updateUnitWithNavigation(game, unit, stepSeconds, state = synchronizeNavigationGrid(game)) {
   const order = unit.order;
   const stats = UNIT_TYPES[unit.type];
+  const requestId = navigationRequestId(unit);
   if (!order || !NAVIGATION_ORDER_KINDS.has(order.kind) || stats?.air) {
+    state.pathService.releaseRequest(requestId);
     game.updateUnit(unit, stepSeconds);
     return;
   }
 
   const route = ensureNavigationRoute(game, unit, order, state);
-  if (unit.order !== order || route.status !== PATH_STATUSES.FOUND) return;
+  if (!route || unit.order !== order || route.status !== PATH_STATUSES.FOUND) return;
 
   const waypoint = currentWaypoint(route);
   if (!waypoint) {
     unit.order = null;
+    state.pathService.releaseRequest(requestId);
     return;
   }
 
@@ -161,12 +194,15 @@ export function updateUnitWithNavigation(game, unit, stepSeconds, state = synchr
       order.x = next.x;
       order.y = next.y;
       unit.order = order;
+    } else {
+      state.pathService.releaseRequest(requestId);
     }
   }
 }
 
 export function updateUnitsWithNavigation(game, stepSeconds) {
   const state = synchronizeNavigationGrid(game);
+  state.tick += 1;
   for (const unit of game.units) updateUnitWithNavigation(game, unit, stepSeconds, state);
   return resolveUnitOverlaps(
     game.units,
