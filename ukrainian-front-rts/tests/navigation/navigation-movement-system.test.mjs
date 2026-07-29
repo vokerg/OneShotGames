@@ -56,18 +56,26 @@ test('routes a ground move order around a building footprint', () => {
   });
   const unit = game.units[0];
 
-  for (let step = 0; step < 20 && unit.order; step += 1) {
+  updateUnitWithNavigation(game, unit, 1 / 30);
+  const route = unit.order.navigationRoute;
+  for (let step = 1; step < 20 && unit.order; step += 1) {
     updateUnitWithNavigation(game, unit, 1 / 30);
   }
 
-  const route = unit.order?.navigationRoute ?? game.navigationState?.lastRoute;
   assert.deepEqual({ x: unit.x, y: unit.y }, destination);
   assert.equal(unit.order, null);
   assert.equal(game.lastError, '');
-  assert.equal(route, undefined);
+  assert.equal(route.nextIndex, route.waypoints.length);
+  assert.equal(
+    route.waypoints.some((point) => {
+      const cell = game.navigationState.grid.worldToCell(point.x, point.y);
+      return game.navigationState.grid.blockerIdsAt(cell.x, cell.y).length > 0;
+    }),
+    false,
+  );
 });
 
-test('retains the route object while advancing intermediate waypoints', () => {
+test('retains the route object while advancing attack-move waypoints', () => {
   const game = makeGame({
     buildings: [depot()],
     order: { kind: 'attackMove', ...cellCenter(5, 1) },
@@ -79,13 +87,6 @@ test('retains the route object while advancing intermediate waypoints', () => {
   assert.equal(unit.order.kind, 'attackMove');
   assert.equal(unit.order.navigationRoute.nextIndex, 1);
   assert.equal(unit.order.navigationRoute.waypoints.length > 1, true);
-  assert.equal(
-    unit.order.navigationRoute.waypoints.some((point) => {
-      const cell = game.navigationState.grid.worldToCell(point.x, point.y);
-      return game.navigationState.grid.blockerIdsAt(cell.x, cell.y).length > 0;
-    }),
-    false,
-  );
 });
 
 test('invalidates routes when a structure blocker is removed', () => {
