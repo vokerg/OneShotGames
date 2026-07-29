@@ -118,6 +118,54 @@ test('invalidates routes when a structure blocker is removed', () => {
 
   assert.equal(second.revision, first.revision + 1);
   assert.deepEqual(second.grid.blockerIdsAt(2, 1), []);
+  assert.equal(second.pathService.metrics().invalidations, 1);
+});
+
+test('shares cached path templates across units without sharing route progress', () => {
+  const destination = cellCenter(8, 4);
+  const units = [
+    makeUnit({ id: 1, order: { kind: 'move', ...destination } }),
+    makeUnit({ id: 2, order: { kind: 'move', ...destination } }),
+  ];
+  const game = makeGame({ units });
+
+  updateUnitsWithNavigation(game, 1 / 30);
+
+  const firstRoute = units[0].order.navigationRoute;
+  const secondRoute = units[1].order.navigationRoute;
+  const metrics = game.navigationState.pathService.metrics();
+  assert.notEqual(firstRoute, secondRoute);
+  assert.equal(firstRoute.waypoints, secondRoute.waypoints);
+  assert.equal(firstRoute.nextIndex, 1);
+  assert.equal(secondRoute.nextIndex, 1);
+  assert.equal(metrics.searches, 1);
+  assert.equal(metrics.cacheHits, 1);
+});
+
+test('bounds structure-triggered replans and resumes at the deterministic retry tick', () => {
+  const destination = cellCenter(5, 1);
+  const game = makeGame({ order: { kind: 'move', ...destination } });
+  const unit = game.units[0];
+
+  updateUnitsWithNavigation(game, 1 / 30);
+  const firstRevision = game.navigationState.revision;
+  const pausedPosition = { x: unit.x, y: unit.y };
+  game.buildings = [depot()];
+
+  updateUnitsWithNavigation(game, 1 / 30);
+  assert.equal(game.navigationState.revision, firstRevision + 1);
+  assert.deepEqual({ x: unit.x, y: unit.y }, pausedPosition);
+  assert.equal(unit.order.navigationRepathTick, 7);
+
+  for (let tick = 3; tick <= 6; tick += 1) {
+    updateUnitsWithNavigation(game, 1 / 30);
+    assert.deepEqual({ x: unit.x, y: unit.y }, pausedPosition);
+  }
+  updateUnitsWithNavigation(game, 1 / 30);
+
+  assert.equal(unit.order.navigationRevision, game.navigationState.revision);
+  assert.equal('navigationRepathTick' in unit.order, false);
+  assert.equal(game.navigationState.pathService.metrics().throttled, 5);
 });
 
 test('cancels blocked player orders with actionable feedback', () => {
