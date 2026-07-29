@@ -2,6 +2,7 @@ import { createGameRuntime } from './app/runtime.js';
 import './art-pass.js';
 import './environment-art-pass.js';
 import { Game } from './game.js';
+import { createAttackGroundController, installAttackGroundInput } from './input/attack-ground.js';
 import { installBattlefieldInput } from './input/battlefield-input.js';
 import { createQueuedOrderController } from './input/queued-orders.js';
 import { Renderer } from './render.js';
@@ -22,7 +23,9 @@ const game = new Game();
 const ui = new UI(game);
 const renderer = new Renderer(game, canvas, minimap, portrait);
 const runtime = createGameRuntime({ game, renderer, ui });
+const disposeAttackGround = createAttackGroundController(game);
 const disposeQueuedOrders = createQueuedOrderController(game, window);
+const disposeAttackGroundInput = installAttackGroundInput({ game, canvas, ui });
 const disposeInput = installBattlefieldInput({ game, ui, canvas, minimap });
 
 ui.buildMissionCards(runtime.startMission);
@@ -40,7 +43,9 @@ addEventListener(
   'pagehide',
   () => {
     disposeInput();
+    disposeAttackGroundInput();
     disposeQueuedOrders();
+    disposeAttackGround();
     runtime.stop();
   },
   { once: true },
