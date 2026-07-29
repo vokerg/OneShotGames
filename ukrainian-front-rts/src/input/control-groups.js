@@ -8,12 +8,14 @@ export const CONTROL_GROUP_COMMANDS = Object.freeze({
 
 const DEFAULT_DOUBLE_TAP_MS = 350;
 
-function normalizeSlot(key) {
-  return /^[1-9]$/.test(String(key || '')) ? Number(key) : null;
+function normalizeSlot(event) {
+  const codeMatch = /^Digit([1-9])$/.exec(String(event?.code || ''));
+  if (codeMatch) return Number(codeMatch[1]);
+  return /^[1-9]$/.test(String(event?.key || '')) ? Number(event.key) : null;
 }
 
 export function resolveControlGroupCommand(event) {
-  const slot = normalizeSlot(event?.key);
+  const slot = normalizeSlot(event);
   if (slot === null || event?.altKey || event?.metaKey) return null;
 
   if (event.ctrlKey) {
@@ -81,14 +83,30 @@ export function createControlGroupController({
     const selected = selectedEligibleUnits(game);
 
     if (command === CONTROL_GROUP_COMMANDS.ASSIGN) {
-      if (!selected.length) return { handled: true, changed: false, message: `Control group ${slot} needs selected units.` };
+      if (!selected.length) {
+        return {
+          handled: true,
+          changed: false,
+          message: `Control group ${slot} needs selected units.`,
+        };
+      }
       groups.set(slot, new Set(selected.map((unit) => unit.id)));
       lastRecallAt.delete(slot);
-      return { handled: true, changed: true, message: `Assigned ${selected.length} unit${selected.length === 1 ? '' : 's'} to control group ${slot}.` };
+      return {
+        handled: true,
+        changed: true,
+        message: `Assigned ${selected.length} unit${selected.length === 1 ? '' : 's'} to control group ${slot}.`,
+      };
     }
 
     if (command === CONTROL_GROUP_COMMANDS.ADD) {
-      if (!selected.length) return { handled: true, changed: false, message: `Select units to add to control group ${slot}.` };
+      if (!selected.length) {
+        return {
+          handled: true,
+          changed: false,
+          message: `Select units to add to control group ${slot}.`,
+        };
+      }
       const members = groups.get(slot) || new Set();
       const before = members.size;
       for (const unit of selected) members.add(unit.id);
@@ -108,7 +126,8 @@ export function createControlGroupController({
 
     applyUnitSelection(game, units);
     const recalledAt = now();
-    const focused = recalledAt - (lastRecallAt.get(slot) ?? Number.NEGATIVE_INFINITY) <= doubleTapMs;
+    const previousRecallAt = lastRecallAt.get(slot) ?? Number.NEGATIVE_INFINITY;
+    const focused = recalledAt - previousRecallAt <= doubleTapMs;
     lastRecallAt.set(slot, recalledAt);
     if (focused) focusCamera(game, units, viewport);
 
