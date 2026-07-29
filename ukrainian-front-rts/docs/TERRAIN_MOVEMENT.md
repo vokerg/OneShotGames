@@ -63,14 +63,18 @@ record.
 
 The battlefield input adapter presents that record in two synchronized ways:
 
-- the canvas uses a cursor appropriate to fast, normal, slow, very slow, amphibious, or blocked terrain;
+- the canvas receives a semantic data attribute for fast, normal, slow, very slow, amphibious, or blocked terrain;
 - a small pointer-following label shows terrain name and movement consequence.
+
+The presenter installs scoped cursor rules rather than writing an inline cursor. Construction placement
+therefore takes priority immediately, and its CSS rule also hides a previously visible terrain badge
+without waiting for the next pointer event. Existing inline canvas styles remain untouched.
 
 The presenter is browser-owned and injectable. In Node or another environment without a DOM it becomes
 a no-op, so importing or testing battlefield input does not create a browser dependency.
 
-Feedback is hidden during construction placement, drag selection, game-over state, pointer leave, blur,
-and adapter disposal. The presenter restores the canvas's prior inline cursor when cleared.
+Feedback state is cleared during construction placement, drag selection, game-over state, pointer leave,
+blur, and adapter disposal. CSS independently guarantees the same placement priority during transitions.
 
 ## Ownership and extension
 
@@ -110,5 +114,5 @@ Browser checks for the integrated adapter:
 2. Move the pointer across open, mud, and rubble cells and confirm cursor/label changes.
 3. Hover an impassable or dynamically blocked cell and confirm blocked feedback.
 4. Select an air unit and confirm ground terrain reports unaffected air movement.
-5. Begin construction placement and confirm terrain feedback yields to the construction cursor.
+5. Begin construction placement and confirm the copy cursor replaces terrain feedback immediately.
 6. Drag-select, leave the canvas, and refocus the window; confirm the label never remains stranded.
