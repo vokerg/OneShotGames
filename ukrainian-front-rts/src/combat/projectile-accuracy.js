@@ -17,18 +17,19 @@ export function deterministicUnit(seed, salt = 0) {
   return hash32((Number(seed) || 0) ^ Math.imul(Number(salt) || 0, 0x9e3779b1)) / 0x100000000;
 }
 
-export function resolveProjectileAim({ seed, target, kind = 'bullet' }) {
+export function resolveProjectileAim({ seed, target, kind = 'bullet', accuracyMultiplier = 1 }) {
   const profile = PROJECTILE_PROFILES[kind] || PROJECTILE_PROFILES.bullet;
   if (!target) throw new TypeError('target is required');
-  const hit = deterministicUnit(seed, 1) < profile.accuracy;
-  if (hit) return Object.freeze({ hit: true, x: target.x, y: target.y, profile });
+  const adjustedAccuracy = Math.max(0, Math.min(1, profile.accuracy * accuracyMultiplier));
+  const hit = deterministicUnit(seed, 1) < adjustedAccuracy;
+  if (hit) return Object.freeze({ hit: true, x: target.x, y: target.y, profile, adjustedAccuracy });
   const angle = deterministicUnit(seed, 2) * Math.PI * 2;
   const radius = Math.sqrt(deterministicUnit(seed, 3)) * profile.dispersion;
-  return Object.freeze({ hit: false, x: target.x + Math.cos(angle) * radius, y: target.y + Math.sin(angle) * radius, profile });
+  return Object.freeze({ hit: false, x: target.x + Math.cos(angle) * radius, y: target.y + Math.sin(angle) * radius, profile, adjustedAccuracy });
 }
 
-export function prepareProjectile(projectile, seed) {
-  const aim = resolveProjectileAim({ seed, target: projectile.target, kind: projectile.kind });
+export function prepareProjectile(projectile, seed, { accuracyMultiplier = 1 } = {}) {
+  const aim = resolveProjectileAim({ seed, target: projectile.target, kind: projectile.kind, accuracyMultiplier });
   projectile.seed = seed;
   projectile.hit = aim.hit;
   projectile.aimX = aim.x;
@@ -36,5 +37,6 @@ export function prepareProjectile(projectile, seed) {
   projectile.speed = aim.profile.speed;
   projectile.impact = aim.profile.impact;
   projectile.impactRadius = aim.profile.radius;
+  projectile.resolvedAccuracy = aim.adjustedAccuracy;
   return projectile;
 }
