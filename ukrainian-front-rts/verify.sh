@@ -10,4 +10,5 @@ find "$project_root/src" "$project_root/scripts" -type f \( -name '*.js' -o -nam
 
 node "$project_root/scripts/verify-task-queue.test.mjs"
 node "$project_root/scripts/verify-task-queue.mjs"
+node "$project_root/scripts/verify-content-schema.mjs"
 node "$project_root/scripts/verify-architecture.mjs"
