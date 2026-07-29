@@ -15,10 +15,16 @@ index.html
       ├─ src/render.js           base renderer
       ├─ src/art-pass.js         additive unit/portrait art override
       └─ src/game.js             authoritative simulation facade
-          ├─ src/config.js       content and balance data
+          ├─ src/config.js       content and balance instances
+          ├─ src/content-schema.js
+          │                     versioned content contracts and defaults
           ├─ src/core/           pure reusable helpers
           └─ src/systems/        focused simulation policies
 ```
+
+`content-schema.js` is not a second content database. It describes the stable shape of content held in
+`config.js` and future map/AI content modules. Runtime migration to schema-backed loaders is owned by
+later queue tasks.
 
 ## Dependency direction
 
@@ -29,6 +35,7 @@ main → app/input/ui/render/game
 app/input → public Game/UI/Renderer interfaces supplied at construction
 ui/render → game state + config
 Game → config/core/systems
+config/content-schema → no browser, UI, renderer, or Game modules
 systems → config/core only
 core → no project modules
 ```
@@ -71,6 +78,17 @@ Pure helpers with no browser or game-object dependencies. These modules are the 
 
 The content database: factions, units, buildings, missions, abilities, upgrades, costs, and statistics. Content additions should remain declarative until they require a genuinely new rule.
 
+### `src/content-schema.js`
+
+The executable schema registry for factions, units, buildings, abilities, upgrades, missions, maps, and
+AI profiles. It owns schema version, identity source, required fields, explicit defaults, reference
+metadata, and default materialization. It must remain dependency-free and must not import runtime,
+renderer, UI, or simulation modules.
+
+`docs/CONTENT_SCHEMA.md` is the human-readable contract. Adding a required field, changing identity,
+renaming a field, or changing field meaning is a schema-version change rather than an ordinary balance
+edit.
+
 ### Rendering and UI
 
 `render.js` and `art-pass.js` translate state into pixels. `ui.js` translates state into HUD information and invokes public game commands. Neither layer should independently mutate combat outcomes, resources, or objectives.
@@ -89,18 +107,28 @@ Changing this order is an architectural change and should be documented because 
 
 ### Add a unit
 
-1. Add the unit definition to `config.js`.
-2. Add it to the appropriate production list and roster data.
-3. Give it a renderer/art-pass implementation.
-4. Validate it in `art-lab.html` and a mission.
-5. Add a system only when the unit introduces a rule that existing archetype flags cannot express.
+1. Check the unit contract in `docs/CONTENT_SCHEMA.md`.
+2. Add the unit definition to `config.js`.
+3. Add it to the appropriate production list and roster data.
+4. Give it a renderer/art-pass implementation.
+5. Validate it in `art-lab.html` and a mission.
+6. Add a system only when the unit introduces a rule that existing archetype flags cannot express.
 
 ### Add a mission
 
-1. Add declarative mission data in `config.js`.
-2. Register an objective updater in `objective-system.js`.
-3. Add a wave policy only when composition differs from existing mission rules.
-4. Keep mission-specific UI copy in mission data rather than branching in the UI.
+1. Check the mission contract in `docs/CONTENT_SCHEMA.md`.
+2. Add declarative mission data in `config.js`.
+3. Register an objective updater in `objective-system.js`.
+4. Add a wave policy only when composition differs from existing mission rules.
+5. Keep mission-specific UI copy in mission data rather than branching in the UI.
+
+### Add or change a content field
+
+1. Identify the schema family and authoritative runtime owner.
+2. Prefer an optional field with an explicit default for a compatible v1 addition.
+3. Treat new required fields, identity changes, renames, type changes, and semantic changes as a schema-version change.
+4. Update `src/content-schema.js` and `docs/CONTENT_SCHEMA.md` together.
+5. Leave cross-record validation and migrations to their dedicated owners unless the assigned task includes them.
 
 ### Add a mechanic
 
@@ -117,4 +145,4 @@ Run:
 bash verify.sh
 ```
 
-The verifier checks JavaScript syntax and key dependency boundaries. It is intentionally small and dependency-free; it complements, rather than replaces, browser playtesting.
+The verifier checks JavaScript syntax, task-queue integrity, the executable content-schema contract, and key dependency boundaries. It is intentionally dependency-free; it complements, rather than replaces, browser playtesting.
