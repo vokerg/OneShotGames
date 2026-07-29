@@ -21,6 +21,7 @@ export class UI {
     this.g = game;
     this.to = null;
     this.lastOutcome = null;
+    this.commandSignature = '';
     this.e = {
       metal: document.querySelector('#metal'),
       fuel: document.querySelector('#fuel'),
@@ -99,6 +100,8 @@ export class UI {
     this.e.endgame.classList.add('hidden');
     this.e.select.classList.add('hidden');
     this.lastOutcome = null;
+    this.commandSignature = '';
+    this.e.abilities.innerHTML = '';
     document.body.classList.remove('placing');
   }
 
@@ -106,6 +109,8 @@ export class UI {
     this.e.endgame.classList.add('hidden');
     this.e.select.classList.remove('hidden');
     this.lastOutcome = null;
+    this.commandSignature = '';
+    this.e.abilities.innerHTML = '';
     document.body.classList.remove('placing');
   }
 
@@ -127,7 +132,16 @@ export class UI {
     button.className = `ability ${className}`.trim();
     button.disabled = disabled;
     button.innerHTML = `<strong>${title}</strong><small>${description}</small>${meta ? `<span class="abilityMeta">${meta}</span>` : ''}`;
-    button.onclick = onClick;
+
+    const activate = (event) => {
+      if (button.disabled) return;
+      if (event.type === 'pointerdown' && event.button !== 0) return;
+      if (event.type === 'click' && event.detail !== 0) return;
+      onClick();
+    };
+    button.addEventListener('pointerdown', activate);
+    button.addEventListener('click', activate);
+
     this.e.abilities.appendChild(button);
     return button;
   }
@@ -252,6 +266,38 @@ export class UI {
     }
   }
 
+  commandStateSignature(entities) {
+    const selected = entities
+      .map((entity) => {
+        if (UNIT_TYPES[entity.type]) {
+          const cooldowns = (UNIT_TYPES[entity.type].abilities || [])
+            .map((abilityId) => `${abilityId}:${Math.ceil(entity.abilityCd[abilityId] || 0)}`)
+            .join(',');
+          return `unit:${entity.id}:${entity.type}:${entity.team}:${entity.autoFire ? 1 : 0}:${cooldowns}`;
+        }
+        const queue = (entity.queue || []).map((item) => item.type).join(',');
+        return `building:${entity.id}:${entity.type}:${entity.team}:${entity.underConstruction ? 1 : 0}:${queue}`;
+      })
+      .join('|');
+    const upgrades = [...(this.g.player?.upgrades || [])].sort().join(',');
+    const fieldedHeroes = (this.g.mission?.trainableHeroes || [])
+      .filter((typeId) => this.g.heroAlreadyFieldedOrQueued(typeId))
+      .sort()
+      .join(',');
+    const pendingBuild = this.g.pendingBuild
+      ? `${this.g.pendingBuild.type}:${this.g.pendingBuild.workerId}`
+      : 'none';
+    return `${this.g.gameOver ? 'over' : 'live'}::${pendingBuild}::${selected}::${upgrades}::${fieldedHeroes}`;
+  }
+
+  shouldRenderCommands(entities) {
+    const signature = this.commandStateSignature(entities);
+    if (signature === this.commandSignature) return false;
+    this.commandSignature = signature;
+    this.e.abilities.innerHTML = '';
+    return true;
+  }
+
   selectionSummary(entities) {
     return Object.entries(
       entities.reduce((summary, entity) => {
@@ -328,7 +374,7 @@ export class UI {
 
     const entities = this.g.selectedEntities();
     const entity = entities[0];
-    this.e.abilities.innerHTML = '';
+    const renderCommands = this.shouldRenderCommands(entities);
 
     if (!entity) {
       this.e.name.textContent = this.g.pendingBuild ? 'Choose Construction Site' : 'No unit selected';
@@ -342,7 +388,7 @@ export class UI {
       const units = entities.filter((candidate) => UNIT_TYPES[candidate.type]);
       this.e.name.textContent = `Ukrainian Tactical Group (${entities.length})`;
       this.e.stats.textContent = this.selectionSummary(entities);
-      this.appendUnitCommands(units);
+      if (renderCommands) this.appendUnitCommands(units);
       return;
     }
 
@@ -354,7 +400,7 @@ export class UI {
       const stats = entity.team === TEAM.UA ? this.g.unitStats(entity.type) : UNIT_TYPES[entity.type];
       const stance = entity.autoFire ? 'Auto-fire ON' : 'Auto-fire OFF';
       this.e.stats.textContent = `Combat strength ${Math.ceil(entity.hp)}/${Math.ceil(entity.maxHp)} · ${type.role || type.short || ''} · Firepower ${Math.round(stats.damage)} · Observation ${Math.round(stats.sight)} · ${stance}`;
-      if (entity.team === TEAM.UA) {
+      if (renderCommands && entity.team === TEAM.UA) {
         this.appendUnitCommands([entity]);
         this.appendAbilities(entity);
       }
@@ -362,7 +408,7 @@ export class UI {
     }
 
     this.e.stats.textContent = `Structural strength ${Math.ceil(entity.hp)}/${Math.ceil(entity.maxHp)} · ${this.buildingStatus(entity)}`;
-    if (entity.team === TEAM.UA) {
+    if (renderCommands && entity.team === TEAM.UA) {
       this.appendProduction(entity);
       this.appendUpgrades(entity);
     }
