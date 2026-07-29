@@ -5,6 +5,7 @@ import {
   MOVEMENT_LAYERS,
   NavigationGrid,
   TERRAIN_TYPES,
+  createNavigationGridFromMapData,
 } from '../../src/navigation/navigation-grid.js';
 
 test('converts between world positions and deterministic grid cells', () => {
@@ -61,6 +62,44 @@ test('represents bridge cells as ground-passable terrain over water', () => {
   assert.equal(grid.isPassable(2, 0, { layer: MOVEMENT_LAYERS.AMPHIBIOUS }), true);
 });
 
+test('builds terrain, bridges, footprints, and blockers from map data', () => {
+  const grid = createNavigationGridFromMapData({
+    width: 4,
+    height: 3,
+    tileSize: 16,
+    terrain: [
+      { x: 0, y: 1, type: TERRAIN_TYPES.WATER },
+      { x: 1, y: 1, type: TERRAIN_TYPES.WATER },
+      { x: 2, y: 1, type: TERRAIN_TYPES.WATER },
+    ],
+    bridges: [{ x: 1, y: 1 }],
+    blockers: [{
+      id: 'hq',
+      origin: { x: 2, y: 0 },
+      footprint: { width: 2, height: 2 },
+      layers: [MOVEMENT_LAYERS.GROUND],
+    }],
+  });
+
+  assert.equal(grid.tileSize, 16);
+  assert.equal(grid.getTerrain(1, 1), TERRAIN_TYPES.BRIDGE);
+  assert.equal(grid.isPassable(0, 1), false);
+  assert.equal(grid.isPassable(1, 1), true);
+  assert.equal(grid.isPassable(2, 0), false);
+  assert.equal(grid.isPassable(2, 0, { layer: MOVEMENT_LAYERS.AMPHIBIOUS }), true);
+});
+
+test('rejects malformed map data and blocker layers', () => {
+  assert.throws(() => createNavigationGridFromMapData(null), /must be an object/);
+  assert.throws(
+    () => createNavigationGridFromMapData({ width: 2, height: 2, terrain: [{ x: 0, y: 0 }] }),
+    /Terrain entries require/,
+  );
+  const grid = new NavigationGrid({ width: 2, height: 2 });
+  assert.throws(() => grid.addDynamicBlocker('bad', { x: 0, y: 0 }, undefined, []), /non-empty array/);
+  assert.throws(() => grid.blockerIdsAt(0, 0, 'naval'), /Unknown movement layer/);
+});
+
 test('produces stable snapshots independent of insertion order', () => {
   const grid = new NavigationGrid({ width: 2, height: 2 });
   grid.addDynamicBlocker('z', { x: 1, y: 1 });
@@ -70,4 +109,5 @@ test('produces stable snapshots independent of insertion order', () => {
   assert.deepEqual(snapshot.blockers.map((blocker) => blocker.id), ['a', 'z']);
   assert.equal(Object.isFrozen(snapshot), true);
   assert.equal(Object.isFrozen(snapshot.terrain), true);
+  assert.equal(Object.isFrozen(snapshot.blockers[0].layers), true);
 });
