@@ -118,7 +118,7 @@ function layerOf(path) {
   if (path === 'src/game.js') return 'game';
   if (path === 'src/config.js') return 'config';
   if (path === 'src/content-schema.js') return 'schema';
-  if (path === 'src/ui.js') return 'ui';
+  if (path === 'src/ui.js' || path.startsWith('src/ui/')) return 'ui';
   if (['src/render.js', 'src/art-pass.js', 'src/environment-art-pass.js'].includes(path) || path.startsWith('src/render/')) return 'render';
   for (const layer of ['core', 'systems', 'app', 'input', 'audio']) {
     if (path.startsWith(`src/${layer}/`)) return layer;
@@ -134,7 +134,7 @@ function resolvedImport(sourcePath, specifier) {
 }
 
 function ownsDom(path) {
-  return path === 'src/main.js' || path === 'src/ui.js' || path === 'src/render.js' ||
+  return path === 'src/main.js' || path === 'src/ui.js' || path.startsWith('src/ui/') || path === 'src/render.js' ||
     path === 'src/art-pass.js' || path === 'src/environment-art-pass.js' ||
     path === 'src/app/runtime.js' || path.startsWith('src/input/') ||
     path.startsWith('src/render/') || path.startsWith('src/audio/');
