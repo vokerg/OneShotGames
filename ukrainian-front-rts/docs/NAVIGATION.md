@@ -1,12 +1,12 @@
 # Navigation contracts
 
-`src/navigation/navigation-grid.js` owns deterministic, browser-independent passability data. `src/navigation/pathfinder.js` owns pure path search over that data. Neither module moves entities; runtime order integration begins with UFR-020.
+`src/navigation/navigation-grid.js` owns deterministic, browser-independent passability data. `src/navigation/pathfinder.js` owns pure path search over that data. `src/navigation/waypoint-route.js` translates path results into runtime-ready world-space waypoints. `src/systems/navigation-movement-system.js` synchronizes runtime map/building state and delegates fixed-step unit movement through those routes.
 
 ## Coordinate model
 
 A navigation grid has positive integer `width`, `height`, and `tileSize` values. Cells use zero-based integer coordinates. `worldToCell()` maps world positions by flooring against `tileSize`, and `cellToWorldCenter()` returns the center of a cell.
 
-Out-of-bounds coordinates and footprints are rejected rather than silently clamped. This keeps authored map errors and invalid path requests observable.
+Out-of-bounds coordinates and footprints are rejected rather than silently clamped. This keeps authored map errors and invalid path requests observable. The waypoint-request boundary clamps player-facing formation destinations to the valid world extent before converting them to a goal cell.
 
 ## Movement layers and terrain
 
@@ -68,12 +68,31 @@ The default `no-corner-cut` policy permits diagonals only when both adjacent car
 
 Equal-cost candidates are ordered by total cost, heuristic, row, column, and insertion sequence. The open set uses a deterministic binary min-heap; repeated searches over identical snapshots and options return identical paths and visit counts.
 
+## Waypoint routes
+
+`requestWaypointRoute(grid, start, destination, options)` converts world-space positions to cells, runs the authoritative pathfinder, and converts the resulting cells back to frozen world-space waypoints. The exact clamped destination is appended after cell centers so formations retain their requested endpoint rather than stopping at the goal-cell center.
+
+A route preserves the path status, goal cell, cost, and visited-cell count for runtime feedback and telemetry. Failed requests contain no waypoints. `nextIndex` is the only mutable route field; replacing an order creates a new route and does not mutate the previous order.
+
+`followWaypointRoute(route, unit, dt, moveToward)` delegates physical movement to the simulation-owned callback and advances at most one waypoint per call. This keeps speed, facing, buffs, and fixed-step movement inside `Game` or a focused movement system while preventing those layers from duplicating path search.
+
+## Runtime integration
+
+The fixed-step `units` phase calls `updateUnitsWithNavigation()`. The movement system lazily creates an 80×52 grid from `WORLD`, maps the current runtime terrain values to open/mud/rubble costs, and registers every live building as a ground/amphibious dynamic blocker using its authored width and height.
+
+A stable building signature controls invalidation. Construction, destruction, or relocation increments the navigation revision and causes existing move/attack-move orders to request a fresh route from their current position. New order objects naturally replace old route state.
+
+Ground `move` and `attackMove` orders expose the current route waypoint through the existing `Game.updateUnit()` contract. When that method reaches a waypoint and clears the order, the movement system advances one route step and restores the same order until the final destination is reached. Air units preserve their previous direct-movement behavior.
+
+Blocked, unreachable, and search-limited player orders are cancelled safely. Ukrainian units receive actionable `lastError` feedback; simulation state never retains an order with an unusable route.
+
 ## Determinism and ownership
 
 - Terrain storage is row-major.
 - Blocker queries and snapshots sort IDs.
-- Snapshot arrays, path results, and path cells are frozen.
+- Snapshot arrays, path results, path cells, and waypoint arrays are frozen.
 - Navigation modules import no game, renderer, UI, DOM, or browser service.
-- Map loading and simulation systems may populate the grid; pathfinding may only query it.
-- UFR-020 may translate returned cells into waypoints, but movement must not duplicate passability or path-cost rules.
+- `src/systems/navigation-movement-system.js` owns runtime synchronization and may import config/navigation contracts.
+- `Game` remains authoritative for speed, facing, buffs, combat acquisition, and physical position updates.
+- Collision/separation, caching, formations, stuck recovery, and additional command types remain later queue tasks.
 - Renderer feedback may mirror passability and route results but must not become authoritative.
