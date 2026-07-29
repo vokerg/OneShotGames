@@ -2,269 +2,281 @@
 
 ## Goals
 
-The architecture is optimized for incremental game development: balance edits, bug fixes, new mechanics, and visual passes should touch the smallest responsible module. The project intentionally remains dependency-free and browser-native.
+Fields of Resolve is a dependency-free browser RTS. The architecture favors deterministic simulation, explicit ownership, browser-independent policy modules, and small compatibility-preserving changes. A balance edit, bug fix, mechanic, input feature, or visual pass should touch the smallest authoritative owner rather than spreading corrective logic across UI, rendering, and simulation.
 
 ## Runtime composition
 
 ```text
 index.html
-  └─ src/main.js                 composition root
-      ├─ src/app/runtime.js      mission start + animation-frame lifecycle
+  └─ src/main.js                         composition root
+      ├─ src/app/runtime.js              mission startup + animation-frame lifecycle
       │   └─ src/core/fixed-step-clock.js
-      │                           frame accumulator and fixed tick cadence
-      ├─ src/input/              browser input adapters
-      ├─ src/ui.js               HUD and command presentation
-      ├─ src/render.js           base renderer
-      ├─ src/art-pass.js         additive unit/portrait art override
-      └─ src/game.js             authoritative simulation facade
-          ├─ src/config.js       content and balance instances
-          ├─ src/content-schema.js
-          │                     versioned content contracts and defaults
-          ├─ src/core/           pure reusable helpers
-          │   └─ random.js       seeded simulation random stream
-          └─ src/systems/        focused simulation policies
-              └─ simulation-phases.js
-                                  ordered fixed-step phase contract
+      ├─ src/input/battlefield-input.js  browser events → public game commands/state
+      ├─ src/ui.js                       HUD/command presentation
+      ├─ src/render.js                   base renderer
+      ├─ src/art-pass.js                 additive unit/portrait art
+      ├─ src/environment-art-pass.js     additive terrain/environment art
+      └─ src/game.js                     authoritative simulation facade
+          ├─ src/config.js               content and balance instances
+          ├─ src/content-schema.js       executable content contracts/defaults
+          ├─ src/core/                   pure helpers and cross-cutting contracts
+          │   ├─ fixed-step-clock.js
+          │   ├─ random.js
+          │   └─ events.js
+          ├─ src/navigation/             passability, path search, waypoint contracts
+          ├─ src/combat/                 pure combat schema/policy contracts
+          └─ src/systems/                explicit-state simulation policies
+              ├─ simulation-phases.js
+              ├─ navigation-movement-system.js
+              ├─ unit-collision-system.js
+              ├─ objective-system.js
+              ├─ projectile-system.js
+              └─ wave-system.js
 ```
 
-Headless scenario composition is separate from the browser runtime:
+`src/main.js` constructs and connects objects. It does not own gameplay rules. `Game` and focused systems own authoritative mutation; input and UI invoke public commands; renderers read state.
+
+## Headless composition
 
 ```text
 src/app/simulation-harness.js
   ├─ constructs Game through an injectable factory
-  ├─ resets the seeded simulation stream
-  ├─ supplies temporary numeric viewport globals for Game.start/update
+  ├─ derives/resets the mission random stream
+  ├─ supplies temporary numeric viewport globals only around Game calls
   ├─ dispatches structured commands to public Game methods
-  └─ advances configured fixed ticks and emits reference-free snapshots
+  ├─ advances exact fixed ticks
+  └─ emits reference-free snapshots
 ```
 
-`content-schema.js` is not a second content database. It describes the stable shape of content held in
-`config.js` and future map/AI content modules. Runtime migration to schema-backed loaders is owned by
-later queue tasks.
+The harness is not an alternate simulation. It must not duplicate phase order, combat, movement, economy, objectives, production, or wave rules.
 
-Verification code is outside the browser runtime:
+## Verification composition
 
 ```text
-scripts/run-tests.mjs
-  └─ tests/**/*.test.mjs
-      ├─ tests/unit/             fast deterministic unit and state-transition tests
-      └─ tests/sim/              deterministic headless scenario tests
+bash verify.sh                         only supported top-level command
+  └─ scripts/run-verification.mjs
+      └─ scripts/lib/verification-runner.mjs
+          ├─ stable syntax discovery for src/scripts/tests
+          ├─ complete Node test suite
+          ├─ queue/content/technology fixtures and production validation
+          ├─ seeded-random verification
+          └─ scripts/verify-architecture.mjs
+              └─ scripts/lib/architecture-verifier.mjs
 ```
+
+The verification runner is fail-fast and preserves the first failing stage's non-zero status. CI should run `bash verify.sh`; it must not maintain a second copy of the stage list.
 
 ## Dependency direction
 
-Dependencies point inward toward data and pure logic:
+Dependencies point inward toward contracts, data, and pure logic:
 
 ```text
 main → app/input/ui/render/game
 runtime → public Game/UI/Renderer interfaces + core fixed-step clock
-simulation harness → Game/core only; never DOM, renderer, UI, or input
+simulation harness → Game/core; never DOM, renderer, UI, or input
 ui/render → game state + config
-Game → config/core/systems
+Game → config/core/navigation/combat/systems
+systems → config/core/navigation/combat/sibling systems where explicitly required
+navigation → navigation + core-compatible data only
+combat → combat + core-compatible data only
 config/content-schema → no browser, UI, renderer, or Game modules
-systems → config/core only
-core → sibling core modules only; never browser, UI, renderer, Game, or systems
-tests → public production modules; production modules never import tests
+core → sibling core modules only
+production → never tests or scripts
+tests/scripts → public production modules and project files
 ```
 
-A lower layer must not import a higher layer. In particular, simulation systems do not import DOM modules, renderer code does not own combat or objective rules, and production code never imports test infrastructure.
+A lower layer must not import a higher layer. Simulation systems do not import `Game`, UI, or renderer classes. Navigation and combat policy modules do not access DOM APIs. Renderer and UI code do not become authoritative merely because they display a result.
+
+### Executable architecture policy
+
+`scripts/lib/architecture-verifier.mjs` is the machine-enforced boundary contract. It currently declares the original Gate A layers (`core`, `schema`, `config`, `systems`, `game`, `app`, `input`, `ui`, `render`, `audio`, and `main`), checks required composition imports, rejects production imports outside `src/`, restricts DOM ownership, restricts direct audio construction to `src/audio/`, and enforces single content-schema ownership.
+
+Current `main` also contains dedicated `src/navigation/` and `src/combat/` policy directories introduced after that original layer table. Their intended inward-only ownership is documented here and in their focused contracts. A future architecture-policy change must add those directories explicitly rather than treating unclassified modules as an informal exception. Documentation must not silently redefine the executable verifier.
 
 ## Module ownership
 
 ### `src/main.js`
 
-The composition root. It resolves required DOM elements, constructs the game/UI/renderer, installs adapters, and starts the runtime. Keep it readable enough to understand startup at a glance.
+Composition only: resolve required DOM elements, construct `Game`, UI, renderer, runtime, and input adapters, wire callbacks, and start the application. Startup should remain understandable at a glance.
 
 ### `src/app/runtime.js`
 
-Owns browser mission startup and the animation-frame loop. Scheduling is injectable so lifecycle behavior can be tested without a real browser loop. Mission startup derives a mission-specific seed from the configured simulation seed, resets the authoritative random stream, records the active numeric seed on `game.simulationSeed`, starts `Game`, and resets the fixed-step clock.
-
-Animation-frame elapsed time is presentation timing, not simulation timing. The runtime passes capped frame deltas into `src/core/fixed-step-clock.js`, executes zero or more fixed simulation ticks, then renders and refreshes the UI once. A slow or fast display therefore changes render frequency without changing tick duration or phase order.
+Owns mission startup and animation-frame scheduling. It derives and resets the mission seed, starts `Game`, resets the fixed-step accumulator, advances zero or more fixed ticks per frame, then renders and refreshes UI once. Display frame rate never changes simulation tick duration or phase order.
 
 ### `src/app/simulation-harness.js`
 
-Owns deterministic Node-side scenario driving. It constructs `Game` through an injectable factory, applies the same mission-seed derivation used by runtime startup, resolves structured command IDs to live entities, advances one configured tick duration, and produces reference-free snapshots for assertions.
-
-The current `Game` camera code reads `innerWidth` and `innerHeight`. The harness supplies those numeric values only around `Game.start` and `Game.update`, then restores the previous global descriptors. It does not create `window`, `document`, canvas, UI, renderer, input, or animation-frame objects.
-
-The harness is not an alternate simulation implementation. It must call public `Game` methods and must not duplicate combat, economy, objective, wave, production, or phase rules. Its configured tick should use `FIXED_SIMULATION_STEP_SECONDS` unless a focused test deliberately validates a different explicit step contract.
+Owns deterministic Node-side scenario driving. It invokes public `Game` methods, advances configured ticks, and produces reference-free snapshots. It may supply temporary numeric `innerWidth`/`innerHeight` values because current camera initialization reads them, but it does not create browser objects.
 
 ### `src/input/battlefield-input.js`
 
-Translates browser events into named game actions, commands, and camera state. It owns selection gestures, orders, attack-move arming, zoom, keyboard state, minimap navigation, blur cleanup, and listener disposal.
+Owns browser listener registration/disposal, selection gestures, commands, attack-move arming, zoom, keyboard state, minimap navigation, and blur cleanup. It translates browser events; it does not implement simulation outcomes.
 
 ### `src/game.js`
 
-The authoritative state container and gameplay facade. It owns entities, resources, production, unit behavior, commands, and compatibility delegation methods. `Game.update(stepSeconds)` is the public simulation-tick boundary and delegates sequencing to `src/systems/simulation-phases.js`; callers must not invoke individual phases to create an alternate update order.
+Authoritative state container and public gameplay facade. `Game.update(stepSeconds)` is the public tick boundary and delegates sequencing to `src/systems/simulation-phases.js`. Existing public delegates such as `updateProjectiles`, `spawnWave`, and `updateObjectives` remain compatibility boundaries until an assigned task deliberately migrates them.
 
-Simulation code must request random ranges through `src/core/math.js` or use the seeded service directly. It must not call `Math.random`. Existing hero placement, production exits, and initial weapon cooldowns therefore consume the same mission stream as system-level random decisions.
+Simulation randomness must use `src/core/random.js` directly or the compatibility helper in `src/core/math.js`. Authoritative code must not call `Math.random`.
 
 ### `src/systems/`
 
-Focused policies that operate on explicit game state:
+Focused policies operate on explicit game state and do not import the `Game` class:
 
-- `simulation-phases.js` — authoritative ordered step: clock, camera, units, projectiles, production, waves, cleanup, objectives, then outcome;
-- `objective-system.js` — mission completion conditions;
-- `projectile-system.js` — projectile travel, seeded impact damage rolls, and cleanup;
+- `simulation-phases.js` — authoritative order: clock, camera, units, projectiles, production, waves, cleanup, objectives, outcome;
+- `navigation-movement-system.js` — runtime navigation-grid synchronization, route requests, waypoint sequencing, and post-movement collision invocation;
+- `unit-collision-system.js` — deterministic footprint-aware unit separation only;
+- `objective-system.js` — mission objective transitions;
+- `projectile-system.js` — projectile travel/impact lifecycle owned by the currently merged runtime contract;
 - `wave-system.js` — enemy composition, seeded deployment jitter, and spawn orders.
 
-New systems should expose functions that accept state explicitly. Avoid hidden globals and circular imports. Random draws are the exception only in that they consume the explicitly reset mission stream owned by `src/core/random.js`; systems must never create private unseeded streams.
+Adding, removing, or reordering a phase is an integration change. Update `SIMULATION_PHASES`, phase-order tests, deterministic scenario fixtures, and this document together.
 
-Adding, removing, or reordering a phase is an integration change. Update `SIMULATION_PHASES`, the phase-order tests, deterministic scenario fixtures, and this document together.
+### `src/navigation/`
+
+Browser-independent navigation contracts:
+
+- `navigation-grid.js` — movement layers, terrain costs, map-data ingestion, footprints, dynamic blockers, snapshots, and world/cell conversion;
+- `pathfinder.js` — deterministic bounded A* with explicit diagonal policy and stable tie-breaking;
+- `waypoint-route.js` — world-space request boundary and route/waypoint state.
+
+Runtime systems may query these contracts; navigation modules do not import `Game`, UI, renderer, input, or browser services. See `docs/NAVIGATION.md`.
+
+### `src/combat/`
+
+Pure combat contracts introduced after Gate A. `combat-schema.js` owns damage, armor, target-domain, penetration, splash, and resistance vocabulary. Runtime projectile/targeting systems consume those contracts as their queue tasks merge. See `docs/COMBAT_SCHEMA.md`.
 
 ### `src/core/`
 
-Pure helpers with no browser or game-object dependencies. These modules are the easiest to unit test and safest to reuse. Core modules may import sibling core modules but no higher project layer.
+Pure reusable helpers with no browser or game-object dependencies.
 
-`fixed-step-clock.js` owns the frame accumulator, default 30 Hz simulation step, maximum accepted frame delta, tick index, reset behavior, and interpolation fraction. It accepts elapsed time and invokes a supplied callback once per complete fixed tick; it never imports or mutates game state.
+- `fixed-step-clock.js` owns the frame accumulator, 30 Hz default tick, accepted frame cap, tick index, reset behavior, and interpolation fraction.
+- `random.js` owns the single authoritative mission random stream, seed normalization/derivation, draws, and snapshot/restore.
+- `events.js` owns the dependency-free domain-event type registry, ordered buffer, tick/sequence metadata, subscriptions, and drain/peek lifecycle.
 
-`random.js` owns the single authoritative simulation random stream for the current mission. It provides stable string/number seed normalization, mission-stream derivation, range/integer/pick operations, and snapshot/restore. `math.js` keeps the compatibility `randomBetween` helper but delegates every draw to that service.
+`events.js` defines a contract; it does not make presentation consumers authoritative. Producers emit only after state mutation. Consumers observe immutable identifier/value payloads and must not feed presentation state back into simulation rules. See `docs/DOMAIN_EVENTS.md`.
 
-Presentation-only deterministic patterns may continue to derive values from coordinates or entity state. Any random value that changes entities, resources, waves, combat, objectives, AI, or replay-relevant effects belongs to the simulation stream.
+### `src/config.js` and `src/content-schema.js`
 
-### `src/config.js`
+`config.js` is the current content/balance instance database. `content-schema.js` is the executable schema registry: schema version, families, identity source, required fields, explicit defaults, reference metadata, and default materialization. It is not a second content database.
 
-The content database: factions, units, buildings, missions, abilities, upgrades, costs, and statistics. Content additions should remain declarative until they require a genuinely new rule.
-
-### `src/content-schema.js`
-
-The executable schema registry for factions, units, buildings, abilities, upgrades, missions, maps, and
-AI profiles. It owns schema version, identity source, required fields, explicit defaults, reference
-metadata, and default materialization. It must remain dependency-free and must not import runtime,
-renderer, UI, or simulation modules.
-
-`docs/CONTENT_SCHEMA.md` is the human-readable contract. Adding a required field, changing identity,
-renaming a field, or changing field meaning is a schema-version change rather than an ordinary balance
-edit.
-
-### Tests and verification
-
-`tests/unit/` owns fast deterministic unit tests that run in Node without DOM or canvas. Test files use
-Node's built-in `node:test` and `node:assert` modules, end in `.test.mjs`, and may import public production
-exports or instantiate `Game` without starting the browser runtime. Each file must own its fixtures and
-must not depend on another test file's mutations or execution order.
-
-`tests/sim/` owns deterministic whole-scenario tests driven through `src/app/simulation-harness.js`.
-Scenario tests may start missions, issue structured commands, advance configured ticks, inspect snapshots,
-and make small explicit setup mutations through the exposed live `game`. They must not create DOM, canvas,
-renderer, UI, input, or wall-clock dependencies. Only one actively advancing harness should exist per
-process because the current seeded-random stream is process-global.
-
-Fixed-step coverage has two layers: unit tests prove accumulator and phase-order contracts; simulation tests drive identical command streams through different render-frame chunking and require reference-free snapshots to match.
-
-`scripts/run-tests.mjs` recursively discovers test files in stable path order and delegates execution to
-Node's test runner. Optional path-fragment arguments select a focused subset. An empty suite, unmatched
-filter, assertion failure, import failure, or crashed test process produces a non-zero exit status.
-
-Specialized scripts under `scripts/verify-*.mjs` remain contract and architecture checks. They complement,
-rather than replace, behavior-focused unit and scenario tests.
+Required-field additions, identity changes, renames, type changes, and semantic changes are schema-version changes. Update `src/content-schema.js` and `docs/CONTENT_SCHEMA.md` together.
 
 ### Rendering and UI
 
-`render.js` and `art-pass.js` translate state into pixels. `ui.js` translates state into HUD information and invokes public game commands. Neither layer should independently mutate combat outcomes, resources, or objectives.
+`render.js`, art passes, and focused renderer modules translate state into pixels. `ui.js` translates state into HUD information and invokes public commands. Neither may independently mutate combat outcomes, path results, resources, production, or objectives.
 
-## Update lifecycle
+## Fixed-step lifecycle
 
 ### Browser runtime
 
-1. `runtime.startMission` derives and resets the mission seed before initialization and resets the fixed-step accumulator.
-2. Input adapters update key/mouse state or call a public game command.
-3. Each animation frame contributes a capped elapsed duration to `fixed-step-clock.js`.
-4. The clock calls `Game.update(FIXED_SIMULATION_STEP_SECONDS)` once per complete accumulated tick; a frame may execute zero, one, or multiple ticks.
-5. `Game.update` delegates the authoritative order: clock, camera, units, projectiles, production, waves, destroyed-entity cleanup, objectives, and outcome resolution.
-6. Simulation random draws are consumed in that same deterministic tick and phase order.
-7. The renderer draws the latest completed state once per animation frame.
-8. The UI refreshes from that same state snapshot.
+1. `runtime.startMission` derives/resets the mission seed, starts `Game`, and resets the accumulator.
+2. Input adapters update transient input state or invoke a public command.
+3. Each animation frame contributes a capped elapsed duration to the fixed-step clock.
+4. The clock calls `Game.update(FIXED_SIMULATION_STEP_SECONDS)` once per complete accumulated tick.
+5. `Game.update` runs clock, camera, units, projectiles, production, waves, cleanup, objectives, then outcome.
+6. Within the units phase, all units advance through navigation/waypoints before deterministic unit separation is applied.
+7. Authoritative random draws occur in deterministic tick and phase order.
+8. The renderer draws the latest completed state once per animation frame.
+9. UI refreshes from the same completed state.
 
 ### Headless scenario
 
-1. The harness derives and resets the mission seed.
-2. It calls `Game.start` with a configured numeric viewport and no browser objects.
-3. A test issues structured commands that delegate to public `Game` methods.
+1. The harness derives/resets the mission seed.
+2. It calls `Game.start` with a numeric viewport and no browser object graph.
+3. The test issues structured commands through public methods.
 4. `advanceTicks(count)` calls `Game.update(tickSeconds)` exactly `count` times.
-5. Each update uses the same phase runner as the browser runtime.
-6. The harness converts state and entity references into a deterministic snapshot.
+5. Each call uses the same phase runner as the browser runtime.
+6. The harness converts mutable state/references into a deterministic snapshot.
 7. The test asserts the snapshot or uses `assertState`.
 
-Changing tick duration, phase order, or the order/number of random draws is a deterministic-behavior change. Document it and update deterministic fixtures because it can affect movement, combat timing, production, wave geometry, later draws, replays, and presentation consistency.
+Changing tick duration, phase order, unit iteration order, event emission order, or random draw count is a deterministic-behavior change and requires fixture/documentation review.
 
-## Extension patterns
+## Domain-event flow
 
-### Add a unit
+The event stream is an optional decoupling boundary, not a second simulation loop:
 
-1. Check the unit contract in `docs/CONTENT_SCHEMA.md`.
-2. Add the unit definition to `config.js`.
-3. Add it to the appropriate production list and roster data.
-4. Give it a renderer/art-pass implementation.
-5. Validate it in `art-lab.html` and a mission.
-6. Add a system only when the unit introduces a rule that existing archetype flags cannot express.
+```text
+authoritative system mutation
+  → emit registered event type with tick/sequence/source/immutable payload
+    → synchronous focused subscribers and/or buffered drain
+      → UI/audio/telemetry/replay adapters observe
+```
 
-### Add a mission
+Rules:
 
-1. Check the mission contract in `docs/CONTENT_SCHEMA.md`.
-2. Add declarative mission data in `config.js`.
-3. Register an objective updater in `objective-system.js`.
-4. Add a wave policy only when composition differs from existing mission rules.
-5. Keep mission-specific UI copy in mission data rather than branching in the UI.
-6. Verify restarting the mission with the same seed reproduces initialization and early random outcomes.
+1. Mutate authoritative state first, then emit.
+2. Use `DOMAIN_EVENT_TYPES`; ad-hoc strings are rejected.
+3. Payloads contain stable IDs/values, never DOM nodes, renderer objects, or mutable entities.
+4. Consumer presence or failure must not change gameplay rules.
+5. Preserve emission order when adding replay, telemetry, or presentation adapters.
 
-### Add or change a content field
+## Test layers
 
-1. Identify the schema family and authoritative runtime owner.
-2. Prefer an optional field with an explicit default for a compatible v1 addition.
-3. Treat new required fields, identity changes, renames, type changes, and semantic changes as a schema-version change.
-4. Update `src/content-schema.js` and `docs/CONTENT_SCHEMA.md` together.
-5. Leave cross-record validation and migrations to their dedicated owners unless the assigned task includes them.
+The repository uses Node's built-in `node:test` and `node:assert`:
 
-### Add a random simulation decision
+- `tests/unit/` — focused logic and public state-transition tests;
+- `tests/core/` — core contracts such as event-stream behavior;
+- `tests/sim/` — deterministic whole-scenario tests through the harness;
+- `tests/navigation/` — grid, A*, waypoint, movement, and collision fixtures;
+- `tests/combat/` — pure combat-schema/policy fixtures;
+- `tests/tooling/` — architecture and verification-runner temporary-project fixtures.
 
-1. Confirm the value changes authoritative or replay-relevant state.
-2. Use `randomBetween` or the seeded service; never call `Math.random` in `game.js` or `src/systems/`.
-3. Keep draw order stable and avoid consuming random values in renderer/UI code on behalf of simulation.
-4. Add a same-seed fixture and a different-seed divergence assertion.
-5. Include random state in any future checkpoint, save, replay, or rollback boundary.
+Test files are independent `*.test.mjs` modules. Production never imports tests. Use explicit fixtures, avoid wall-clock waits, and reset process-global deterministic services when relevant.
 
-### Add or change a simulation phase
+## Extension recipes
 
-1. Confirm the work cannot remain inside an existing focused phase owner.
-2. Add or reorder the phase in `src/systems/simulation-phases.js`; do not sequence it from runtime, UI, renderer, or input code.
-3. Define its state inputs, mutation boundary, and position relative to cleanup and outcome resolution.
-4. Preserve one `Game.update` call per fixed tick and never use animation-frame delta inside a simulation rule.
-5. Update phase-order tests and run frame-chunking scenario equivalence coverage.
-6. Document random-draw or serialization implications.
+### Add or change declarative content
 
-### Add a unit test
+1. Read `docs/CONTENT_SCHEMA.md`.
+2. Change the smallest content instance owner.
+3. Add optional fields with explicit defaults where compatible.
+4. Treat required/identity/type/meaning changes as schema-version work.
+5. Run focused validation and `bash verify.sh`.
 
-1. Choose the smallest public owner of the behavior.
-2. Add a deterministic `tests/unit/*.test.mjs` file using `node:test` and `node:assert`.
-3. Build explicit fixtures rather than starting the browser runtime.
-4. Cover success, failure, and no-mutation guarantees relevant to the rule.
-5. Reset shared deterministic services inside the test.
-6. Run a focused filter, then the complete `bash verify.sh` command.
+### Add a simulation mechanic
 
-### Add a headless scenario test
+1. Name one authoritative owner.
+2. Prefer a focused system accepting explicit state.
+3. Keep a small `Game` delegate when public callers already depend on it.
+4. Place mutation in the existing phase unless a new phase is genuinely required.
+5. Emit domain events only after mutation when consumers need decoupled feedback.
+6. Add focused tests and a headless scenario when sequencing crosses systems.
 
-1. Create one harness per scenario run and start it with an explicit mission index and seed.
-2. Use structured harness commands for the player or test action being exercised.
-3. Advance an exact tick count; do not use wall-clock delays or animation frames.
-4. Assert a reference-free snapshot or use `assertState`.
-5. Run the scenario twice with the same seed when determinism matters, and assert divergence with a different seed when randomness is relevant.
-6. Keep browser interaction and rendering assertions out of the simulation layer.
+### Add a navigation rule
 
-### Add a mechanic
+1. Put passability/cost/search contracts in `src/navigation/`.
+2. Put runtime state synchronization and entity mutation in `src/systems/`.
+3. Do not duplicate passability in input, renderer, or UI.
+4. Add deterministic corridor/blocker/group fixtures and performance evidence where search or large groups are affected.
 
-1. Identify one authoritative owner.
-2. Implement the rule in a focused system when it is independently testable.
-3. Keep a small `Game` method as the public/delegating interface if callers already use it.
-4. Render feedback from state; do not duplicate the rule in the renderer.
-5. Add or update deterministic unit coverage for its pure policy and a headless scenario when cross-system sequencing matters.
+### Add a domain event
+
+1. Extend `DOMAIN_EVENT_TYPES`.
+2. Define the producer's authoritative mutation point.
+3. Use stable payload IDs/values and explicit source metadata.
+4. Add ordering, immutability, subscription, and drain/peek coverage as applicable.
+5. Keep presentation consumers read-only.
+
+### Add a verification stage
+
+1. Add the project-wide command to `VERIFICATION_COMMANDS` in `scripts/lib/verification-runner.mjs`.
+2. Add temporary-project runner coverage in `tests/tooling/verification-runner.test.mjs`.
+3. Preserve stable ordering, fail-fast behavior, and exact exit-status propagation.
+4. Update `docs/VERIFICATION.md`.
+5. Do not add another top-level shell command.
+
+### Add an architecture layer or import direction
+
+1. Define the owner, allowed inward dependencies, and browser/DOM policy.
+2. Update `layerOf`, `ALLOWED_IMPORTS`, and any required-import contracts in the architecture verifier.
+3. Add fixture tests for allowed and forbidden edges.
+4. Update this document and `docs/CHANGE_GUIDE.md` in the same PR.
 
 ## Verification
 
-Run:
+Run from `ukrainian-front-rts/`:
 
 ```bash
 bash verify.sh
 ```
 
-The verifier checks JavaScript syntax across production, scripts, and tests; runs Node-native unit and headless scenario tests; validates task-queue integrity and the executable content-schema contract; verifies seeded placement/wave/combat reproducibility and forbidden direct simulation randomness; and enforces key dependency boundaries. It remains dependency-free and complements, rather than replaces, browser playtesting.
+The unified runner validates shell/JavaScript syntax, runs all Node tests, executes queue/content/technology/randomness contracts, and then checks architecture boundaries. It complements browser playtesting; it does not replace mission startup and interaction checks for runtime changes.
