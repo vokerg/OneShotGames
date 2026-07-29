@@ -1,4 +1,6 @@
-export const randomBetween = (min, max) => min + Math.random() * (max - min);
+import { simulationRandom } from './random.js';
+
+export const randomBetween = (min, max) => simulationRandom.range(min, max);
 
 export const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 

@@ -19,6 +19,7 @@ index.html
           ├─ src/content-schema.js
           │                     versioned content contracts and defaults
           ├─ src/core/           pure reusable helpers
+          │   └─ random.js       seeded simulation random stream
           └─ src/systems/        focused simulation policies
 ```
 
@@ -37,7 +38,7 @@ ui/render → game state + config
 Game → config/core/systems
 config/content-schema → no browser, UI, renderer, or Game modules
 systems → config/core only
-core → no project modules
+core → sibling core modules only; never browser, UI, renderer, Game, or systems
 ```
 
 A lower layer must not import a higher layer. In particular, simulation systems do not import DOM modules, and renderer code does not own combat or objective rules.
@@ -50,7 +51,7 @@ The composition root. It resolves required DOM elements, constructs the game/UI/
 
 ### `src/app/runtime.js`
 
-Owns mission startup and the animation-frame loop. Scheduling is injectable so lifecycle behavior can be tested without a real browser loop.
+Owns mission startup and the animation-frame loop. Scheduling is injectable so lifecycle behavior can be tested without a real browser loop. Mission startup derives a mission-specific seed from the configured simulation seed, resets the authoritative random stream, and records the active numeric seed on `game.simulationSeed` before `Game.start` runs.
 
 ### `src/input/battlefield-input.js`
 
@@ -60,19 +61,25 @@ Translates browser events into game commands and camera state. It owns selection
 
 The authoritative state container and gameplay facade. It owns entities, resources, production, unit behavior, commands, and update sequencing. Large independent policies are delegated to `src/systems/` through compatibility methods.
 
+Simulation code must request random ranges through `src/core/math.js` or use the seeded service directly. It must not call `Math.random`. Existing hero placement, production exits, and initial weapon cooldowns therefore consume the same mission stream as system-level random decisions.
+
 ### `src/systems/`
 
 Focused policies that operate on explicit game state:
 
 - `objective-system.js` — mission completion conditions;
-- `projectile-system.js` — projectile travel, impact, damage, and cleanup;
-- `wave-system.js` — enemy composition and spawn orders.
+- `projectile-system.js` — projectile travel, seeded impact damage rolls, and cleanup;
+- `wave-system.js` — enemy composition, seeded deployment jitter, and spawn orders.
 
-New systems should expose functions that accept state explicitly. Avoid hidden globals and circular imports.
+New systems should expose functions that accept state explicitly. Avoid hidden globals and circular imports. Random draws are the exception only in that they consume the explicitly reset mission stream owned by `src/core/random.js`; systems must never create private unseeded streams.
 
 ### `src/core/`
 
-Pure helpers with no browser or game-object dependencies. These modules are the easiest to unit test and safest to reuse.
+Pure helpers with no browser or game-object dependencies. These modules are the easiest to unit test and safest to reuse. Core modules may import sibling core modules but no higher project layer.
+
+`random.js` owns the single authoritative simulation random stream for the current mission. It provides stable string/number seed normalization, mission-stream derivation, range/integer/pick operations, and snapshot/restore. `math.js` keeps the compatibility `randomBetween` helper but delegates every draw to that service.
+
+Presentation-only deterministic patterns may continue to derive values from coordinates or entity state. Any random value that changes entities, resources, waves, combat, objectives, AI, or replay-relevant effects belongs to the simulation stream.
 
 ### `src/config.js`
 
@@ -95,13 +102,15 @@ edit.
 
 ## Update lifecycle
 
-1. Input adapters update key/mouse state or call a public game command.
-2. `runtime.js` computes a capped delta time.
-3. `Game.update` advances unit behavior, projectiles, production, waves, cleanup, and objectives in a stable order.
-4. The renderer draws the resulting state.
-5. The UI refreshes from the same state snapshot.
+1. `runtime.startMission` derives and resets the mission seed before initialization.
+2. Input adapters update key/mouse state or call a public game command.
+3. `runtime.js` computes a capped delta time.
+4. `Game.update` advances unit behavior, projectiles, production, waves, cleanup, and objectives in a stable order.
+5. Simulation random draws are consumed in that same deterministic call order.
+6. The renderer draws the resulting state.
+7. The UI refreshes from the same state snapshot.
 
-Changing this order is an architectural change and should be documented because it can affect combat timing and presentation consistency.
+Changing update order or the order/number of random draws is a deterministic-behavior change. Document it and update deterministic fixtures because it can affect combat timing, wave geometry, later draws, replays, and presentation consistency.
 
 ## Extension patterns
 
@@ -121,6 +130,7 @@ Changing this order is an architectural change and should be documented because 
 3. Register an objective updater in `objective-system.js`.
 4. Add a wave policy only when composition differs from existing mission rules.
 5. Keep mission-specific UI copy in mission data rather than branching in the UI.
+6. Verify restarting the mission with the same seed reproduces initialization and early random outcomes.
 
 ### Add or change a content field
 
@@ -129,6 +139,14 @@ Changing this order is an architectural change and should be documented because 
 3. Treat new required fields, identity changes, renames, type changes, and semantic changes as a schema-version change.
 4. Update `src/content-schema.js` and `docs/CONTENT_SCHEMA.md` together.
 5. Leave cross-record validation and migrations to their dedicated owners unless the assigned task includes them.
+
+### Add a random simulation decision
+
+1. Confirm the value changes authoritative or replay-relevant state.
+2. Use `randomBetween` or the seeded service; never call `Math.random` in `game.js` or `src/systems/`.
+3. Keep draw order stable and avoid consuming random values in renderer/UI code on behalf of simulation.
+4. Add a same-seed fixture and a different-seed divergence assertion.
+5. Include random state in any future checkpoint, save, replay, or rollback boundary.
 
 ### Add a mechanic
 
@@ -145,4 +163,4 @@ Run:
 bash verify.sh
 ```
 
-The verifier checks JavaScript syntax, task-queue integrity, the executable content-schema contract, and key dependency boundaries. It is intentionally dependency-free; it complements, rather than replaces, browser playtesting.
+The verifier checks JavaScript syntax, task-queue integrity, the executable content-schema contract, seeded placement/wave/combat reproducibility, forbidden direct simulation randomness, and key dependency boundaries. It is intentionally dependency-free; it complements, rather than replaces, browser playtesting.

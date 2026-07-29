@@ -1,3 +1,7 @@
+import { randomBetween } from '../core/math.js';
+
+export const rollImpactDamage = (baseDamage) => baseDamage * randomBetween(0.95, 1.05);
+
 export function updateProjectiles(game, dt) {
   for (const projectile of game.projectiles) {
     projectile.life -= dt;
@@ -13,7 +17,7 @@ export function updateProjectiles(game, dt) {
     const remainingDistance = Math.hypot(dx, dy);
 
     if (remainingDistance < projectile.speed * dt + 7) {
-      target.hp -= projectile.damage;
+      target.hp -= rollImpactDamage(projectile.damage);
       projectile.life = 0;
       game.effects.push({
         kind: 'blast',

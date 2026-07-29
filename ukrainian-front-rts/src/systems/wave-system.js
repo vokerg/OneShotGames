@@ -1,4 +1,5 @@
 import { TEAM } from '../config.js';
+import { randomBetween } from '../core/math.js';
 
 const WAVE_POOLS = {
   donbas: [
@@ -41,8 +42,8 @@ export function spawnEnemyWave(game) {
     const unit = game.addUnit(
       unitType,
       TEAM.RU,
-      game.ruHQ.x - 105 - column * 38,
-      game.ruHQ.y + 95 + row * 42 + column * 10,
+      game.ruHQ.x - 105 - column * 38 + randomBetween(-8, 8),
+      game.ruHQ.y + 95 + row * 42 + column * 10 + randomBetween(-6, 6),
     );
     unit.waveSpawned = true;
     unit.waveId = game.wave;
