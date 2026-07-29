@@ -1,6 +1,6 @@
 # Navigation contracts
 
-`src/navigation/navigation-grid.js` owns deterministic, browser-independent passability data. `src/navigation/pathfinder.js` owns pure path search over that data. `src/navigation/waypoint-route.js` translates path results into runtime-ready world-space waypoints. `src/systems/navigation-movement-system.js` synchronizes runtime map/building state and delegates fixed-step unit movement through those routes.
+`src/navigation/navigation-grid.js` owns deterministic, browser-independent passability data. `src/navigation/pathfinder.js` owns pure path search over that data. `src/navigation/waypoint-route.js` translates path results into runtime-ready world-space waypoints. `src/systems/navigation-movement-system.js` synchronizes runtime map/building state, delegates fixed-step unit movement through those routes, and invokes `src/systems/unit-collision-system.js` after all units have advanced for the step.
 
 ## Coordinate model
 
@@ -86,13 +86,24 @@ Ground `move` and `attackMove` orders expose the current route waypoint through 
 
 Blocked, unreachable, and search-limited player orders are cancelled safely. Ukrainian units receive actionable `lastError` feedback; simulation state never retains an order with an unusable route.
 
+## Unit collision and soft separation
+
+`resolveUnitOverlaps(units, getStats, options)` operates after every ground unit has completed its movement update for the fixed step. It derives a circular collision radius from the existing unit `size` value, ignores air and destroyed units, and clamps the full footprint inside world bounds.
+
+Pairs are evaluated in stable unit-ID order. Exact coordinate overlaps use an ID-derived direction rather than randomness. Separation is accumulated per pass and applied simultaneously, so input-array order does not affect the result. Three bounded soft-separation passes run by default; subsequent fixed steps continue convergence without an unbounded solver loop.
+
+Displacement is mass weighted using radius squared. Larger vehicles therefore move less than lighter infantry when they overlap. The collision system changes positions only: it does not rewrite orders, paths, facing, combat targets, or authored unit statistics.
+
+The resolver requires unique stable unit IDs and returns frozen diagnostics containing considered-unit count, resolved-pair count, and maximum observed overlap. UFR-022 may expose those counters through the path service; formation preservation and stuck recovery remain UFR-023 and UFR-024.
+
 ## Determinism and ownership
 
 - Terrain storage is row-major.
 - Blocker queries and snapshots sort IDs.
 - Snapshot arrays, path results, path cells, and waypoint arrays are frozen.
 - Navigation modules import no game, renderer, UI, DOM, or browser service.
-- `src/systems/navigation-movement-system.js` owns runtime synchronization and may import config/navigation contracts.
-- `Game` remains authoritative for speed, facing, buffs, combat acquisition, and physical position updates.
-- Collision/separation, caching, formations, stuck recovery, and additional command types remain later queue tasks.
-- Renderer feedback may mirror passability and route results but must not become authoritative.
+- `src/systems/navigation-movement-system.js` owns runtime synchronization and fixed-step movement sequencing.
+- `src/systems/unit-collision-system.js` owns unit-to-unit footprint separation only.
+- `Game` remains authoritative for speed, facing, buffs, combat acquisition, and physical movement before separation.
+- Path caching, formations, stuck recovery, transports, and additional command types remain later queue tasks.
+- Renderer feedback may mirror passability, route, and collision results but must not become authoritative.
