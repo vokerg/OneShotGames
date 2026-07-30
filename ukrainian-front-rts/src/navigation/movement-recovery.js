@@ -84,7 +84,8 @@ export function retargetMovementRecoveryState(
     throw new TypeError('Recovery retarget distance must be a non-negative finite number.');
   }
   if (state.detour || distance(state.target, target) < retargetDistance) return false;
-  resetProgressTarget(state, unit, target);
+  state.target = freezePoint(target);
+  state.bestDistance = distance(unit, target);
   return true;
 }
 
@@ -204,6 +205,7 @@ export function chooseLocalDetour(
       ? 1
       : Math.abs(directionX * movementY - directionY * movementX) / (directionLength * movementLength);
     const progress = currentDistance - candidateDistance;
+    if (directionLength > 0 && lateral < 0.35) continue;
     candidates.push({
       cell,
       key,
