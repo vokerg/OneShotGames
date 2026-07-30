@@ -1,4 +1,5 @@
 import { TEAM } from '../config.js';
+import { updateObjectiveLibrary } from './objective-library.js';
 import { unitsIncludingPassengers } from './transport-system.js';
 
 function hasCompletedBuilding(game, type) {
@@ -43,9 +44,11 @@ const OBJECTIVE_UPDATERS = {
 };
 
 export function updateMissionObjectives(game) {
+  if (game.mission?.objectiveDefinitions?.length) return updateObjectiveLibrary(game);
   const updateObjectives = OBJECTIVE_UPDATERS[game.mission.id];
   if (!updateObjectives) {
     throw new Error(`No objective system registered for mission: ${game.mission.id}`);
   }
   updateObjectives(game);
+  return null;
 }
