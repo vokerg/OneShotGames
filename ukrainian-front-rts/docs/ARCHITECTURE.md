@@ -29,6 +29,7 @@ index.html
       │                                   frame accumulator and fixed tick cadence
       ├─ src/input/                      browser input adapters
       ├─ src/ui.js                       HUD and command presentation
+      ├─ src/ui/economy-hud-overview.js  economy presentation + public commands
       ├─ src/render.js                   base renderer
       ├─ src/art-pass.js                 additive visual override
       └─ src/game.js                     authoritative simulation facade
@@ -40,6 +41,8 @@ index.html
           │   └─ events.js               domain-event taxonomy and stream
           └─ src/systems/
               ├─ simulation-phases.js    authoritative phase order
+              ├─ research-queue-system.js pure research queue contract
+              ├─ research-queue-runtime.js live facility research commands/state
               ├─ objective-system.js
               ├─ projectile-system.js
               └─ wave-system.js
@@ -132,11 +135,15 @@ Owns authoritative state and provides the public gameplay facade. Existing calle
 Owns the fixed-step order:
 
 ```text
-clock → camera → units → projectiles → production → waves
+clock → camera → units → projectiles → production → research → waves
       → destroyed-entity cleanup → objectives → outcome
 ```
 
 A phase may call a focused owner, but runtime, UI, renderer, input, and tests must not create alternate phase orders.
+
+### `src/systems/research-queue-system.js` and `research-queue-runtime.js`
+
+`research-queue-system.js` owns the immutable UFR-061 queue, contention, progress, cancellation, refund, and completion contracts. `research-queue-runtime.js` adapts those contracts to live Ukrainian workshop facilities, public research commands, player resources, completed upgrades, facility loss, and existing-unit stat reconciliation. It exposes a narrow `updateResearch(stepSeconds)` delegate, and authoritative progress occurs only in the `research` simulation phase immediately after production. UI reads queue descriptors and invokes public commands; it never edits research state directly.
 
 ### `src/core/random.js`
 
@@ -164,7 +171,7 @@ New required fields, identity changes, renames, type changes, and semantic chang
 
 ### Rendering and UI
 
-`render.js` and visual-pass modules translate state into pixels. `ui.js` translates state into information and invokes public commands. Neither layer owns combat outcomes, resources, objectives, path decisions, or production completion.
+`render.js` and visual-pass modules translate state into pixels. `ui.js` and focused UI modules translate state into information and invoke public commands. Neither layer owns combat outcomes, resources, objectives, path decisions, production completion, or research completion.
 
 ## State, command, and event flow
 
@@ -188,14 +195,15 @@ Events are observation and integration records. They do not replace authoritativ
 
 1. `runtime.startMission` derives and resets the mission seed.
 2. `Game.start` initializes authoritative mission state.
-3. The fixed-step accumulator is reset.
-4. Input adapters update held actions or invoke public commands.
-5. Each animation frame contributes a capped elapsed duration.
-6. The clock invokes `Game.update(FIXED_SIMULATION_STEP_SECONDS)` once per complete tick.
-7. `Game.update` runs the documented phase order.
-8. Seeded random draws and domain-event sequence order follow authoritative execution order.
-9. The renderer draws the latest completed state once.
-10. The UI refreshes from that same state.
+3. Installed system adapters initialize facility-scoped research and other feature state.
+4. The fixed-step accumulator is reset.
+5. Input adapters update held actions or invoke public commands.
+6. Each animation frame contributes a capped elapsed duration.
+7. The clock invokes `Game.update(FIXED_SIMULATION_STEP_SECONDS)` once per complete tick.
+8. `Game.update` runs the documented phase order, including production before research contention/progress.
+9. Seeded random draws and domain-event sequence order follow authoritative execution order.
+10. The renderer draws the latest completed state once.
+11. The UI refreshes from that same state.
 
 Changing tick duration, phase order, random draw order, event ordering, or command validation is deterministic-behavior work and requires corresponding tests and documentation.
 

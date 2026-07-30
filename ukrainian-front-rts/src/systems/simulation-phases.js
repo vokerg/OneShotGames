@@ -4,6 +4,7 @@ import { updateConstructionProgress } from './construction-progress-runtime.js';
 import { updateUnitsWithNavigation } from './navigation-movement-system.js';
 import { updateMissionScriptObjectivePhase } from './mission-script-system.js';
 import { updateProductionQueues } from './production-queue-system.js';
+import { updateResearchQueues } from './research-queue-runtime.js';
 
 function requirePositiveStep(stepSeconds) {
   if (!Number.isFinite(stepSeconds) || stepSeconds <= 0) {
@@ -35,7 +36,21 @@ function updateProjectiles(game, stepSeconds) {
 }
 
 function updateProduction(game, stepSeconds) {
+  game.researchProductionBusyBuildingIds = new Set(
+    (game.buildings || [])
+      .filter((building) => building.queue?.length && !building.productionPaused)
+      .map((building) => building.id),
+  );
   updateProductionQueues(game, stepSeconds);
+}
+
+function updateResearch(game, stepSeconds) {
+  try {
+    if (typeof game.updateResearch === 'function') game.updateResearch(stepSeconds);
+    else updateResearchQueues(game, stepSeconds);
+  } finally {
+    delete game.researchProductionBusyBuildingIds;
+  }
 }
 
 function updateWaves(game, stepSeconds) {
@@ -69,6 +84,7 @@ const PHASES = Object.freeze([
   Object.freeze({ id: 'units', run: updateUnits }),
   Object.freeze({ id: 'projectiles', run: updateProjectiles }),
   Object.freeze({ id: 'production', run: updateProduction }),
+  Object.freeze({ id: 'research', run: updateResearch }),
   Object.freeze({ id: 'waves', run: updateWaves }),
   Object.freeze({ id: 'cleanup', run: removeDestroyedEntities }),
   Object.freeze({ id: 'objectives', run: updateObjectives }),
