@@ -43,15 +43,16 @@ test('miss impacts do not damage the target', () => {
   assert.equal(game.effects[0].hit, false);
 });
 
-test('projectile update samples active smoke along the firing lane', () => {
-  const target = { x: 100, y: 0, hp: 100 };
+test('projectile update consumes the existing smoke-launcher effect', () => {
+  const target = { x: 100, y: 0, hp: 100, buffs: { smoke: 8 } };
   const game = {
-    projectiles: [{ x: 0, y: 0, target, damage: 10, life: 2, kind: 'bullet' }],
-    effects: [],
+    projectiles: [{ x: 0, y: 0, target, damage: 5.5, life: 2, kind: 'bullet' }],
+    effects: [{ kind: 'smoke', x: 50, y: 0, radius: 60, life: 8, max: 8 }],
     nextProjectileSeed: 6,
-    smokeClouds: [{ x: 50, y: 0, radius: 60, density: 1, duration: 8, remaining: 8 }],
   };
   updateProjectiles(game, 0.001);
-  assert.ok(game.projectiles[0].smokeDensity > 0.8);
+  assert.ok(game.projectiles[0].smokeDensity > 0.65);
   assert.equal(game.projectiles[0].hit, false);
+  assert.equal(game.projectiles[0].damage, 10);
+  assert.equal(game.projectiles[0].legacySmokeDamageNormalized, true);
 });
