@@ -79,6 +79,7 @@ function researchRow(entry = {}) {
   const rawItems = array(entry.items);
   return {
     facilityId: String(entry.facilityId ?? ''),
+    buildingId: entry.buildingId == null ? null : String(entry.buildingId),
     name: string(entry.name, 'Research facility'),
     paused: Boolean(entry.paused),
     blockedReason: string(entry.blockedReason),
