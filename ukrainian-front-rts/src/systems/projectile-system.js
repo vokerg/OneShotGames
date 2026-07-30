@@ -1,5 +1,6 @@
 import { prepareProjectile } from '../combat/projectile-accuracy.js';
 import { randomBetween } from '../core/math.js';
+import { sampleSmokeLineDensity } from './smoke-system.js';
 
 export const rollImpactDamage = (baseDamage) => baseDamage * randomBetween(0.95, 1.05);
 
@@ -16,7 +17,10 @@ export function updateProjectiles(game, dt) {
     }
 
     if (!Number.isFinite(projectile.aimX) || !Number.isFinite(projectile.aimY)) {
-      prepareProjectile(projectile, game.nextProjectileSeed++);
+      const smokeClouds = game.smokeState?.clouds || game.smokeClouds || [];
+      prepareProjectile(projectile, game.nextProjectileSeed++, {
+        smokeDensity: sampleSmokeLineDensity(smokeClouds, projectile, target),
+      });
     }
 
     const dx = projectile.aimX - projectile.x;
@@ -35,6 +39,8 @@ export function updateProjectiles(game, dt) {
         max: 0.45,
         impact: projectile.impact || 'kinetic',
         hit: projectile.hit,
+        smokeDensity: projectile.smokeDensity || 0,
+        adjustedAccuracy: projectile.adjustedAccuracy,
       });
       continue;
     }
