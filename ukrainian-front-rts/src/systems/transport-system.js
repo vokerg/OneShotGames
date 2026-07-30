@@ -35,9 +35,16 @@ function unitStats(game, unit) {
   return UNIT_TYPES[unit.type] ?? null;
 }
 
+function requireGameUnits(game) {
+  if (!game || !Array.isArray(game.units)) {
+    throw new TypeError('Transport operations require a game units collection.');
+  }
+}
+
 function requireGameCollections(game) {
-  if (!game || !Array.isArray(game.units) || !Array.isArray(game.buildings) || !(game.selected instanceof Set)) {
-    throw new TypeError('Transport operations require game units, buildings, and selected collections.');
+  requireGameUnits(game);
+  if (!Array.isArray(game.buildings) || !(game.selected instanceof Set)) {
+    throw new TypeError('Transport mutations require game buildings and selected collections.');
   }
 }
 
@@ -75,7 +82,7 @@ export function transportSnapshot(game, transport) {
 }
 
 export function unitsIncludingPassengers(game) {
-  requireGameCollections(game);
+  requireGameUnits(game);
   const active = [...game.units];
   const cargo = active.flatMap((unit) => (Array.isArray(unit.passengers) ? unit.passengers : []));
   return Object.freeze([...active, ...cargo].sort((left, right) => left.id - right.id));
