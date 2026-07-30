@@ -1,6 +1,7 @@
 import { TEAM, WORLD } from '../config.js';
 import { clamp } from '../core/math.js';
 import { updateUnitsWithNavigation } from './navigation-movement-system.js';
+import { updateMissionScriptObjectivePhase } from './mission-script-system.js';
 import { updateProductionQueues } from './production-queue-system.js';
 
 function requirePositiveStep(stepSeconds) {
@@ -43,8 +44,8 @@ function removeDestroyedEntities(game) {
   game.removeDestroyedEntities();
 }
 
-function updateObjectives(game) {
-  game.updateObjectives();
+function updateObjectives(game, stepSeconds) {
+  updateMissionScriptObjectivePhase(game, stepSeconds);
 }
 
 function resolveOutcome(game) {
