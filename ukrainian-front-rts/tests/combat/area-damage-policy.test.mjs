@@ -48,6 +48,36 @@ test('linear falloff preserves full inner damage and applies the minimum ratio a
   assert.deepEqual(result.skipped.map(({ targetId, reason }) => [targetId, reason]), [['outside', 'outside-radius']]);
 });
 
+test('constant and quadratic curves produce their documented midpoint damage', () => {
+  const common = {
+    impactX: 0,
+    impactY: 0,
+    radius: 100,
+    baseDamage: 100,
+    source: { side: 'red' },
+    targets: [target('midpoint', 50)],
+  };
+  const constant = resolveAreaDamage({
+    ...common,
+    policy: createAreaDamagePolicy({
+      falloffCurve: SPLASH_FALLOFF_CURVES.CONSTANT,
+      innerRadiusRatio: 0,
+      minimumDamageRatio: 0,
+    }),
+  });
+  const quadratic = resolveAreaDamage({
+    ...common,
+    policy: createAreaDamagePolicy({
+      falloffCurve: SPLASH_FALLOFF_CURVES.QUADRATIC,
+      innerRadiusRatio: 0,
+      minimumDamageRatio: 0,
+    }),
+  });
+
+  assert.equal(constant.applications[0].damage, 100);
+  assert.equal(quadratic.applications[0].damage, 25);
+});
+
 test('collision radius measures splash distance to the target footprint', () => {
   const result = resolveAreaDamage({
     impactX: 0,
@@ -99,6 +129,18 @@ test('structure damage is independently disabled, full, or scaled', () => {
     policy: createAreaDamagePolicy({ structureDamageMode: STRUCTURE_DAMAGE_MODES.SCALED, structureDamageMultiplier: 0.5 }),
   });
   assert.equal(scaled.applications[0].damage, 40);
+
+  const alliedScaled = resolveAreaDamage({
+    impactX: 0, impactY: 0, radius: 10, baseDamage: 80, source: { side: 'blue' },
+    targets: [target('allied-building', 0, { domain: TARGET_DOMAINS.STRUCTURE })],
+    policy: createAreaDamagePolicy({
+      friendlyFireMode: FRIENDLY_FIRE_MODES.SCALED,
+      friendlyFireMultiplier: 0.5,
+      structureDamageMode: STRUCTURE_DAMAGE_MODES.SCALED,
+      structureDamageMultiplier: 0.5,
+    }),
+  });
+  assert.equal(alliedScaled.applications[0].damage, 20);
 });
 
 test('target resolution is stable by id and effect output contains no live target references', () => {
