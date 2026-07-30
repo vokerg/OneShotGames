@@ -1,7 +1,6 @@
 import { TEAM, WORLD } from '../config.js';
 import { clamp } from '../core/math.js';
 import { updateUnitsWithNavigation } from './navigation-movement-system.js';
-import { updateSmokeState } from './smoke-system.js';
 
 function requirePositiveStep(stepSeconds) {
   if (!Number.isFinite(stepSeconds) || stepSeconds <= 0) {
@@ -25,10 +24,6 @@ function updateCamera(game, stepSeconds) {
 
 function updateUnits(game, stepSeconds) {
   updateUnitsWithNavigation(game, stepSeconds);
-}
-
-function updateSmoke(game, stepSeconds) {
-  if (game.smokeState) updateSmokeState(game.smokeState, stepSeconds);
 }
 
 function updateProjectiles(game, stepSeconds) {
@@ -68,7 +63,6 @@ const PHASES = Object.freeze([
   Object.freeze({ id: 'clock', run: advanceClock }),
   Object.freeze({ id: 'camera', run: updateCamera }),
   Object.freeze({ id: 'units', run: updateUnits }),
-  Object.freeze({ id: 'smoke', run: updateSmoke }),
   Object.freeze({ id: 'projectiles', run: updateProjectiles }),
   Object.freeze({ id: 'production', run: updateProduction }),
   Object.freeze({ id: 'waves', run: updateWaves }),
