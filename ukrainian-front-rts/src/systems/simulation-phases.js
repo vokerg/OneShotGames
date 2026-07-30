@@ -1,5 +1,6 @@
 import { TEAM, WORLD } from '../config.js';
 import { clamp } from '../core/math.js';
+import { updateConstructionProgress } from './construction-progress-runtime.js';
 import { updateUnitsWithNavigation } from './navigation-movement-system.js';
 import { updateMissionScriptObjectivePhase } from './mission-script-system.js';
 import { updateProductionQueues } from './production-queue-system.js';
@@ -26,6 +27,7 @@ function updateCamera(game, stepSeconds) {
 
 function updateUnits(game, stepSeconds) {
   updateUnitsWithNavigation(game, stepSeconds);
+  updateConstructionProgress(game, stepSeconds);
 }
 
 function updateProjectiles(game, stepSeconds) {

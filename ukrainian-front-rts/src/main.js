@@ -16,6 +16,7 @@ import { synchronizeNavigationGrid } from './systems/navigation-movement-system.
 import { Renderer } from './render.js';
 import { installConstructionPreview } from './render/construction-preview.js';
 import { createConstructionPlacementController } from './systems/construction-placement-system.js';
+import { createConstructionProgressController } from './systems/construction-progress-runtime.js';
 import { createProductionExitController } from './systems/production-exit-system.js';
 import { createProductionQueueController } from './systems/production-queue-system.js';
 import { createResourceDropOffController } from './systems/resource-dropoff-system.js';
@@ -62,6 +63,7 @@ const disposeWorkerGather = createWorkerGatherController(game);
 const disposeResourceDropOff = createResourceDropOffController(game, {
   synchronizeNavigation: synchronizeNavigationGrid,
 });
+const disposeConstructionProgress = createConstructionProgressController(game);
 const disposeStances = createStanceController(game);
 const disposeTacticalCommands = createTacticalCommandController(game);
 const disposeVeterancy = createVeterancyController(game);
@@ -109,6 +111,7 @@ addEventListener(
     disposeVeterancy();
     disposeTacticalCommands();
     disposeStances();
+    disposeConstructionProgress();
     disposeResourceDropOff();
     disposeWorkerGather();
     disposeConstructionPlacement();
