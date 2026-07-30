@@ -22,14 +22,15 @@ const ALLOWED_IMPORTS = Object.freeze({
   core: new Set(['core']),
   schema: new Set(['core', 'schema']),
   config: new Set(['core', 'schema', 'config']),
-  systems: new Set(['core', 'schema', 'config', 'systems']),
-  game: new Set(['core', 'schema', 'config', 'systems', 'game']),
+  ai: new Set(['core', 'schema', 'config', 'ai']),
+  systems: new Set(['core', 'schema', 'config', 'ai', 'systems']),
+  game: new Set(['core', 'schema', 'config', 'ai', 'systems', 'game']),
   app: new Set(['core', 'schema', 'config', 'game', 'app']),
   input: new Set(['core', 'schema', 'config', 'input']),
   ui: new Set(['core', 'schema', 'config', 'ui']),
   render: new Set(['core', 'schema', 'config', 'render']),
   audio: new Set(['core', 'schema', 'config', 'audio']),
-  main: new Set(['core', 'schema', 'config', 'systems', 'game', 'app', 'input', 'ui', 'render', 'audio', 'main']),
+  main: new Set(['core', 'schema', 'config', 'ai', 'systems', 'game', 'app', 'input', 'ui', 'render', 'audio', 'main']),
 });
 
 const DOM_CHECKS = Object.freeze([
@@ -116,11 +117,11 @@ function scrub(source) {
 function layerOf(path) {
   if (path === 'src/main.js') return 'main';
   if (path === 'src/game.js') return 'game';
-  if (path === 'src/config.js') return 'config';
+  if (path === 'src/config.js' || path.startsWith('src/content/')) return 'config';
   if (path === 'src/content-schema.js') return 'schema';
   if (path === 'src/ui.js' || path.startsWith('src/ui/')) return 'ui';
   if (['src/render.js', 'src/art-pass.js', 'src/environment-art-pass.js'].includes(path) || path.startsWith('src/render/')) return 'render';
-  for (const layer of ['core', 'systems', 'app', 'input', 'audio']) {
+  for (const layer of ['core', 'systems', 'ai', 'app', 'input', 'audio']) {
     if (path.startsWith(`src/${layer}/`)) return layer;
   }
   return 'other';
