@@ -17,9 +17,11 @@ import { createConstructionPlacementController } from './systems/construction-pl
 import { createProductionQueueController } from './systems/production-queue-system.js';
 import { createTacticalCommandController } from './systems/tactical-command-system.js';
 import { createTransportController } from './systems/transport-system.js';
+import { createVeterancyController } from './systems/veterancy-system.js';
 import { createWorkerGatherController } from './systems/worker-gather-system.js';
 import { UI } from './ui.js';
 import { installTacticalCommandCard } from './ui/tactical-command-card.js';
+import { installVeterancyIndicator } from './ui/veterancy-indicator.js';
 
 function requiredElement(selector) {
   const element = document.querySelector(selector);
@@ -48,8 +50,10 @@ const disposeConstructionPlacement = createConstructionPlacementController(game,
 });
 const disposeWorkerGather = createWorkerGatherController(game);
 const disposeTacticalCommands = createTacticalCommandController(game);
+const disposeVeterancy = createVeterancyController(game);
 const disposeProductionQueueControls = installProductionQueueControls({ game, ui });
 const disposeTacticalCommandCard = installTacticalCommandCard(ui);
+const disposeVeterancyIndicator = installVeterancyIndicator({ game, ui });
 const disposeConstructionPreview = installConstructionPreview({ game, renderer });
 const disposeConstructionPlacementInput = installConstructionPlacementInput({ game, ui });
 const disposeAttackGroundInput = installAttackGroundInput({ game, canvas, ui });
@@ -77,8 +81,10 @@ addEventListener(
     disposeAttackGroundInput();
     disposeConstructionPlacementInput();
     disposeConstructionPreview();
+    disposeVeterancyIndicator();
     disposeTacticalCommandCard();
     disposeProductionQueueControls();
+    disposeVeterancy();
     disposeTacticalCommands();
     disposeWorkerGather();
     disposeConstructionPlacement();
