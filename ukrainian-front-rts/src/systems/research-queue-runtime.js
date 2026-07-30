@@ -41,22 +41,37 @@ function createFacilityState(game, building) {
   });
 }
 
+function synchronizeCompletedTechIds(game, state) {
+  const completedTechIds = [...new Set([
+    ...(state.completedTechIds || []),
+    ...(game.player?.upgrades || []),
+  ])].sort();
+  if (
+    completedTechIds.length === state.completedTechIds.length &&
+    completedTechIds.every((techId, index) => techId === state.completedTechIds[index])
+  ) return state;
+  return Object.freeze({ ...state, completedTechIds: Object.freeze(completedTechIds) });
+}
+
 function installFacilityState(game, building, state = createFacilityState(game, building)) {
   game.researchQueueStates ??= {};
-  game.researchQueueStates[state.facilityId] = state;
-  building.researchQueueState = state;
-  return state;
+  const synchronized = synchronizeCompletedTechIds(game, state);
+  game.researchQueueStates[synchronized.facilityId] = synchronized;
+  building.researchQueueState = synchronized;
+  return synchronized;
 }
 
 function ensureFacilityState(game, building) {
   if (!isResearchFacility(building)) return null;
   const id = researchFacilityId(building);
   const state = building.researchQueueState || game.researchQueueStates?.[id];
-  return state ? installFacilityState(game, building, state) : installFacilityState(game, building);
+  return installFacilityState(game, building, state || createFacilityState(game, building));
 }
 
 function facilityById(game, facilityId) {
-  return researchFacilities(game).find((building) => researchFacilityId(building) === facilityId) || null;
+  return researchFacilities(game).find((building) =>
+    building.hp > 0 && researchFacilityId(building) === facilityId,
+  ) || null;
 }
 
 function addResources(player, resources = {}) {
@@ -150,7 +165,9 @@ export function setQueuedResearchPaused(game, facilityId, paused) {
 }
 
 function refundMissingFacilities(game) {
-  const liveIds = new Set(researchFacilities(game).map(researchFacilityId));
+  const liveIds = new Set(researchFacilities(game)
+    .filter((building) => building.hp > 0)
+    .map(researchFacilityId));
   for (const [facilityId, state] of Object.entries(game.researchQueueStates || {})) {
     if (liveIds.has(facilityId)) continue;
     const refunded = totalResearchRefund(state);
