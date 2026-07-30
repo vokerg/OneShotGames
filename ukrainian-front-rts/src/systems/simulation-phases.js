@@ -36,12 +36,21 @@ function updateProjectiles(game, stepSeconds) {
 }
 
 function updateProduction(game, stepSeconds) {
+  game.researchProductionBusyBuildingIds = new Set(
+    (game.buildings || [])
+      .filter((building) => building.queue?.length && !building.productionPaused)
+      .map((building) => building.id),
+  );
   updateProductionQueues(game, stepSeconds);
 }
 
 function updateResearch(game, stepSeconds) {
-  if (typeof game.updateResearch === 'function') game.updateResearch(stepSeconds);
-  else updateResearchQueues(game, stepSeconds);
+  try {
+    if (typeof game.updateResearch === 'function') game.updateResearch(stepSeconds);
+    else updateResearchQueues(game, stepSeconds);
+  } finally {
+    delete game.researchProductionBusyBuildingIds;
+  }
 }
 
 function updateWaves(game, stepSeconds) {
