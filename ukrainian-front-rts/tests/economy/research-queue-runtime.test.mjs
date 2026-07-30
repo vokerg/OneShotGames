@@ -77,7 +77,13 @@ test('enforces prerequisites and pauses research while production uses the works
   workshop.queue.push({ type: 'uaTank' });
   advance(game, 5);
   assert.equal(workshop.researchQueueState.queue[0].remaining, 20);
+
   workshop.queue.length = 0;
+  game.researchProductionBusyBuildingIds = new Set([workshop.id]);
+  advance(game, 5);
+  delete game.researchProductionBusyBuildingIds;
+  assert.equal(workshop.researchQueueState.queue[0].remaining, 20);
+
   assert.equal(game.setResearchPaused(workshop.researchQueueState.facilityId, true), true);
   advance(game, 5);
   assert.equal(workshop.researchQueueState.queue[0].remaining, 20);
