@@ -33,6 +33,18 @@ function cloudList(stateOrClouds) {
   return stateOrClouds?.clouds || [];
 }
 
+function cloudRemaining(cloud) {
+  if (Number.isFinite(cloud?.remaining)) return cloud.remaining;
+  if (Number.isFinite(cloud?.life)) return cloud.life;
+  return 0;
+}
+
+function cloudDuration(cloud) {
+  if (Number.isFinite(cloud?.duration) && cloud.duration > 0) return cloud.duration;
+  if (Number.isFinite(cloud?.max) && cloud.max > 0) return cloud.max;
+  return cloudRemaining(cloud);
+}
+
 function distanceToSegment(point, start, end) {
   const dx = end.x - start.x;
   const dy = end.y - start.y;
@@ -100,11 +112,12 @@ export function deployGameSmoke(game, specification) {
 }
 
 export function effectiveSmokeDensity(cloud) {
-  if (!cloud || !Number.isFinite(cloud.remaining) || cloud.remaining <= 0) return 0;
-  const duration = Number.isFinite(cloud.duration) && cloud.duration > 0 ? cloud.duration : cloud.remaining;
+  const remaining = cloudRemaining(cloud);
+  if (!cloud || remaining <= 0) return 0;
+  const duration = cloudDuration(cloud);
   const fadeDuration = duration * SMOKE_POLICY.fadeFraction;
-  const fadeMultiplier = fadeDuration > 0 && cloud.remaining < fadeDuration ? cloud.remaining / fadeDuration : 1;
-  return normalizeSmokeDensity(cloud.density * fadeMultiplier);
+  const fadeMultiplier = fadeDuration > 0 && remaining < fadeDuration ? remaining / fadeDuration : 1;
+  return normalizeSmokeDensity((cloud.density ?? DEFAULT_SMOKE_PROFILE.density) * fadeMultiplier);
 }
 
 export function updateSmokeState(state, dt) {
@@ -125,7 +138,7 @@ export function sampleSmokeDensity(stateOrClouds, point) {
   const contributions = [];
   for (const cloud of cloudList(stateOrClouds)) {
     const radius = Number(cloud.radius || 0);
-    if (radius <= 0 || cloud.remaining <= 0) continue;
+    if (radius <= 0 || cloudRemaining(cloud) <= 0) continue;
     const distance = Math.hypot(point.x - cloud.x, point.y - cloud.y);
     if (distance >= radius) continue;
     contributions.push(effectiveSmokeDensity(cloud) * (1 - distance / radius));
@@ -186,8 +199,8 @@ export function snapshotSmokeClouds(stateOrClouds) {
       x: cloud.x,
       y: cloud.y,
       radius: cloud.radius,
-      remaining: cloud.remaining,
-      duration: cloud.duration,
+      remaining: cloudRemaining(cloud),
+      duration: cloudDuration(cloud),
       density: effectiveSmokeDensity(cloud),
     })),
   );
