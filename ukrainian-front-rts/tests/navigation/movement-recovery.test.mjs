@@ -8,6 +8,7 @@ import {
   ensureMovementRecoveryState,
   finishLocalDetour,
   recordMovementProgress,
+  retargetMovementRecoveryState,
 } from '../../src/navigation/movement-recovery.js';
 
 function makeGrid({ width = 5, height = 5, tileSize = 10, blocked = [] } = {}) {
@@ -60,6 +61,20 @@ test('resets the stall window after meaningful progress', () => {
   assert.equal(progressing.status, MOVEMENT_RECOVERY_STATUSES.PROGRESSING);
   assert.equal(stalled.status, MOVEMENT_RECOVERY_STATUSES.STALLED);
   assert.equal(state.stalledSeconds, 0.2);
+});
+
+test('does not reset accumulated stall time when a formation target shifts', () => {
+  const order = {};
+  const route = { nextIndex: 0 };
+  const unit = { x: 5, y: 15 };
+  const state = ensureMovementRecoveryState(order, route, unit, { x: 45, y: 15 });
+
+  recordMovementProgress(state, unit, 0.5, { stuckSeconds: 0.75 });
+  retargetMovementRecoveryState(state, unit, { x: 45, y: 30 }, { retargetDistance: 8 });
+  const result = recordMovementProgress(state, unit, 0.25, { stuckSeconds: 0.75 });
+
+  assert.equal(result.status, MOVEMENT_RECOVERY_STATUSES.STUCK);
+  assert.equal(state.stalledSeconds, 0.75);
 });
 
 test('chooses deterministic lateral detours and never retries an attempted cell', () => {
