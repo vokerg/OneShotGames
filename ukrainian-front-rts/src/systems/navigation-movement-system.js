@@ -1,5 +1,9 @@
 import { BUILDING_TYPES, TEAM, UNIT_TYPES, WORLD } from '../config.js';
 import {
+  formationRouteDestination,
+  resolveFormationWaypoint,
+} from '../core/formation.js';
+import {
   MOVEMENT_LAYERS,
   TERRAIN_TYPES,
   createNavigationGridFromMapData,
@@ -99,7 +103,7 @@ function routeFailureMessage(status) {
 function ensureNavigationRoute(game, unit, order, state) {
   if (order.navigationRoute && order.navigationRevision === state.revision) return order.navigationRoute;
 
-  const destination = order.navigationDestination ?? { x: order.x, y: order.y };
+  const destination = order.navigationDestination ?? formationRouteDestination(order);
   order.navigationDestination = Object.freeze({ x: destination.x, y: destination.y });
   order.navigationRoute = requestWaypointRoute(
     state.grid,
@@ -134,16 +138,30 @@ export function updateUnitWithNavigation(game, unit, stepSeconds, state = synchr
     return;
   }
 
-  order.x = waypoint.x;
-  order.y = waypoint.y;
+  const formationWaypoint = resolveFormationWaypoint(state.grid, waypoint, order, {
+    layer: unitNavigationLayer(stats),
+  });
+  order.x = formationWaypoint.x;
+  order.y = formationWaypoint.y;
+  if (order.formation) {
+    order.formationCompression = formationWaypoint.compression;
+    order.formationState = formationWaypoint.state;
+  }
   updateUnitWithTerrainMovement(game, unit, stepSeconds, state.grid);
 
   if (unit.order === null) {
     route.nextIndex += 1;
     const next = currentWaypoint(route);
     if (next) {
-      order.x = next.x;
-      order.y = next.y;
+      const nextFormationWaypoint = resolveFormationWaypoint(state.grid, next, order, {
+        layer: unitNavigationLayer(stats),
+      });
+      order.x = nextFormationWaypoint.x;
+      order.y = nextFormationWaypoint.y;
+      if (order.formation) {
+        order.formationCompression = nextFormationWaypoint.compression;
+        order.formationState = nextFormationWaypoint.state;
+      }
       unit.order = order;
     }
   }
