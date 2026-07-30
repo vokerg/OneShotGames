@@ -1,428 +1,770 @@
 # Fields of Resolve — faction doctrine bible
 
-## Purpose
+## Status, scope, and authority
 
-This document is the normative design contract for UFR-070 and the faction roster tasks that follow it. It defines how the two playable factions must create different decisions in economy, reconnaissance, fires, mobility, durability, command, and counterplay.
+This document is the approved design contract for UFR-069. It defines the strategic identities of the playable Ukrainian and Russian factions for later technology-tree, roster, AI, campaign, balance, art, audio, and user-interface work.
 
-The factions may share low-level systems, interface conventions, and broad battlefield roles. They must not become mirrored rosters with different names, colors, or slightly shifted statistics. Every branch of each faction must reinforce a distinct strategic rhythm and expose readable weaknesses that the opponent can exploit.
+It is not a historical, political, or military assessment. **Fields of Resolve** is stylized historical fiction. The factions below are original game abstractions built to produce readable, asymmetric RTS decisions. Later content must not present these mechanics, fictional operations, dialogue, or outcomes as factual reporting.
 
-## Fictional framing
+This document owns doctrine and asymmetry principles only. It does not add units, buildings, upgrades, missions, runtime rules, balance values, or assets. Numeric tuning belongs to later implementation and balance tasks.
 
-Fields of Resolve is stylized alternate-history fiction. Faction doctrine in this document is a gameplay abstraction, not a claim of documentary accuracy, prediction, endorsement, or exhaustive representation of real armed forces.
+The governing product constraints are:
 
-Named people, formations, equipment families, and scenarios introduced later must remain fictionalized or clearly presented as dramatic abstractions. The game must not convert contemporary reporting, alleged conduct, or disputed events into unqualified factual narration.
+- player comprehension and trustworthy command before spectacle;
+- tactical terrain and explicit counters;
+- a complete economy-to-victory loop;
+- deterministic, data-driven systems;
+- a campaign-led single-player experience;
+- no palette-mirrored factions;
+- no hidden stat cheats as the default difficulty model;
+- no roster breadth that lacks visible purpose, counterplay, and production ownership.
 
-## Shared match contract
+## Shared conflict model
 
-Both factions must be able to complete the full RTS loop:
+Both factions contest the same strategic resources and battlefield spaces, but they solve those problems differently.
 
-- establish and expand an economy;
-- scout and deny information;
-- construct production, support, and defensive infrastructure;
-- field infantry, vehicles, drones, fires, air defense, engineering, logistics, and command support;
-- attack, defend, raid, recover, and replace losses;
-- answer every major enemy strategy through at least two viable counter paths;
-- win through map control and objective completion rather than one mandatory unit composition.
+The shared match loop is:
 
-Shared capability does not imply shared implementation. Equivalent battlefield problems should usually be solved through different costs, timing, positioning, command requirements, or combined-arms dependencies.
+1. establish information about terrain, routes, objectives, and enemy composition;
+2. secure a sustainable economy and command capacity;
+3. shape the battlefield through positioning, obstacles, fires, and denial;
+4. create a temporary local advantage;
+5. exploit that advantage before the opponent adapts;
+6. preserve enough force and infrastructure to repeat the cycle;
+7. convert operational advantage into objectives rather than relying on total annihilation alone.
 
-## Doctrine invariants
+Every faction must be able to:
 
-1. **Information has different value.** Ukraine converts precise information into efficient local action. Russia converts adequate information into prepared mass and sustained pressure.
-2. **Tempo has different sources.** Ukraine creates tempo through mobility, distributed command, and rapid retasking. Russia creates tempo through preparation, reserves, and successive echelons.
-3. **Losses have different consequences.** Ukrainian losses are individually expensive and reduce option density. Russian losses are more replaceable, but repeated logistical or command disruption collapses operational continuity.
-4. **Fires have different shapes.** Ukrainian fires are selective, responsive, and dependent on observation quality. Russian fires are broader, persistent, and dependent on supply and setup.
-5. **Durability is not a palette swap.** Ukraine survives through avoidance, recovery, repair, and repositioning. Russia survives through redundancy, armor concentration, field fortification, and replacement depth.
-6. **Command is gameplay.** Ukrainian command improves coordination and responsiveness across dispersed groups. Russian command improves preparation, cohesion, reserve commitment, and sustained operations.
-7. **Every strength creates a targetable dependency.** Strong reconnaissance depends on relay and spectrum access; strong fires depend on observers and ammunition; strong mass depends on routes, depots, and command nodes.
+- gather, construct, produce, research, repair, reinforce, and recover;
+- field credible infantry, anti-armor, reconnaissance, indirect-fire, air-defense, engineering, logistics, and command capabilities;
+- contest every target domain in the combat schema;
+- detect and answer every major threat class, although not with the same cost, timing, or method;
+- recover from local losses without receiving an automatic comeback victory;
+- win through more than one army composition;
+- lose because of understandable decisions rather than hidden hard counters.
 
-# Ukrainian faction — Networked Maneuver
+Asymmetry changes **how** a faction solves a problem, not whether it is allowed to participate in the core game loop.
 
-## Strategic identity
+## Asymmetry guardrails
 
-Ukraine is a high-agency combined-arms faction built around information advantage, distributed initiative, mobile defense, and precise concentration of limited force. It should reward players who maintain multiple small task groups, preserve veteran crews, establish reconnaissance coverage, and create short windows of local superiority.
+### No palette mirroring
 
-The faction's preferred victory pattern is:
+A faction distinction is insufficient when it only changes names, colors, silhouettes, or small stat percentages. A valid asymmetric difference changes at least two of the following:
 
-1. reveal a vulnerable sector;
-2. isolate or suppress the relevant enemy support layer;
-3. concentrate a mobile force for a short engagement;
-4. disengage before a larger response arrives;
-5. repair, rearm, and repeat from a new axis.
+- information required before commitment;
+- production or research timing;
+- preferred force concentration;
+- movement and deployment pattern;
+- command burden;
+- sustainment pattern;
+- risk taken when using the capability;
+- counterplay window exposed to the opponent.
 
-Ukraine should feel responsive and flexible, but never effortless. Its strongest tools require coordination, attention, and intact information links.
+### No unilateral superiority
 
-## Economy rhythm
+Neither faction may be globally superior in economy, reconnaissance, fires, mobility, durability, and command at the same time. A strength must create at least one of:
 
-The Ukrainian economy emphasizes efficiency, flexible allocation, and preservation rather than raw extraction volume.
+- a resource opportunity cost;
+- a command-capacity burden;
+- a setup, exposure, or recovery window;
+- a dependency on information, logistics, or infrastructure;
+- a predictable countermeasure;
+- reduced flexibility elsewhere.
 
-- Workers and support vehicles have strong task flexibility but higher replacement opportunity cost.
-- Expansion sites should become productive quickly once secured, but exposed expansions are difficult to defend through mass alone.
-- Resource conversion favors smaller production batches, upgrades with broad utility, repair, recovery, and intelligence services.
-- Idle stockpiles should be less valuable than maintaining operational readiness across reconnaissance, repair, ammunition, and mobility.
-- The faction should reach useful mixed-force capability earlier than its opponent, while taking longer to replace a destroyed high-end formation.
-- Capacity pressure should encourage deliberate force composition rather than unrestricted accumulation of elite units.
+### No deterministic opening trap
 
-### Economic failure mode
+No standard opening should become unwinnable because the player did not guess one hidden faction-specific option. Early threats must have:
 
-Ukraine loses economic momentum when it trades premium units inefficiently, neglects repair and recovery, or spreads support infrastructure so thinly that every task group lacks a complete support chain.
+- a visible tell;
+- at least one baseline response;
+- enough reaction time for an attentive player;
+- a more efficient specialized response that rewards scouting and preparation.
 
-## Reconnaissance and electronic warfare
+### No faction-wide stereotype bonuses
 
-Reconnaissance is Ukraine's primary force multiplier.
+Do not encode national, ethnic, or political stereotypes as morale, intelligence, bravery, accuracy, discipline, or competence modifiers. Doctrine is expressed through systems, organization, production choices, and battlefield tools.
 
-- Reconnaissance should come from layered sources: scouts, drones, observation posts, electronic support, and temporary ability windows.
-- High-quality contact information should improve targeting, response time, or ability access rather than simply reveal more map area.
-- Relay, spotting, and targeting links should be interruptible through jamming, air defense, terrain, smoke, or destruction of forward observers.
-- Ukrainian players should be able to shift reconnaissance assets quickly and create temporary local information dominance.
-- Counter-reconnaissance should favor deception, emission control, rapid relocation, and selective destruction of enemy sensors.
+### Competent opposition
 
-### Reconnaissance failure mode
+The Russian faction is an opposing force, not a joke faction. Its strengths must be credible, its internal logic must be learnable, and its AI must use its doctrine competently. The Ukrainian faction is the campaign lead, not an all-purpose superior faction. Its advantages require player attention and can fail under pressure.
 
-Without current contact quality, Ukrainian fires become less efficient, mobile groups risk ambush, and expensive units are forced into unfavorable direct searches.
+## Doctrine at a glance
 
-## Fires
-
-Ukrainian fires prioritize responsiveness, precision, and combined-arms enablement.
-
-- Mortars and artillery should respond quickly to valid observers but have lower sustained volume than the Russian equivalent.
-- Precision or guided attacks should be scarce, telegraphed, and valuable against command, logistics, air-defense, and artillery targets.
-- Counter-battery play should reward rapid detection and short decision cycles.
-- Fire missions should create maneuver opportunities through suppression, smoke, route denial, or temporary neutralization—not replace maneuver entirely.
-- Ammunition and spotting constraints must prevent indefinite high-accuracy bombardment.
-
-### Fires failure mode
-
-If observers are removed, ammunition links are disrupted, or targets disperse, Ukrainian fires lose their efficiency advantage and cannot win an extended volume contest.
-
-## Mobility and logistics
-
-Ukraine uses mobility to choose engagements and preserve force.
-
-- Protected mobility, transports, recovery vehicles, and engineers should support frequent repositioning.
-- Small formations should retain cohesion and respond well to rally-point changes, alternate routes, and mission retasking.
-- Logistics should be distributed enough to support multiple axes but vulnerable to being overwhelmed in detail.
-- Bridging, breaching, and recovery should open temporary maneuver options rather than create permanent immunity to terrain.
-- Mobile units should pay for flexibility through cost, maintenance burden, limited armor mass, or capacity pressure.
-
-### Mobility failure mode
-
-Ukraine becomes strategically weak when pinned into static attrition, denied safe withdrawal routes, or forced to defend too many fixed locations simultaneously.
-
-## Durability and recovery
-
-Ukrainian durability comes from avoiding catastrophic damage and returning damaged assets to service.
-
-- Smoke, cover, suppression management, spacing, and withdrawal should matter more than raw hit-point superiority.
-- Repair and recovery systems should preserve expensive platforms when the player disengages in time.
-- Disabled or damaged vehicles should create urgent rescue decisions rather than automatically disappear or recover.
-- Infantry survivability should depend on cover, medical support, transport, and local command—not inflated health pools.
-- Veteran units should be worth preserving, but veterancy must not erase counter relationships.
-
-### Durability failure mode
-
-Once trapped, surrounded, or denied repair access, Ukrainian units should be less able to absorb repeated frontal exchanges than Russian massed formations.
-
-## Command model
-
-Ukrainian command is distributed and coordination-oriented.
-
-- Command units should improve responsiveness, shared spotting, ability coordination, reinforcement routing, or recovery tempo.
-- Benefits should be useful across dispersed groups rather than require one large command aura.
-- Local groups should remain functional after losing a commander, but lose synchronization, information sharing, or rapid support access.
-- Player skill should be expressed through concurrent task groups and timely concentration, not constant global passive bonuses.
-
-### Command failure mode
-
-When command and relay links are disrupted, separate Ukrainian groups still fight but lose the ability to combine effects efficiently or react at full speed.
-
-## Intended strengths
-
-- superior local information quality;
-- rapid retasking and multi-axis maneuver;
-- efficient precision fires and counter-battery response;
-- strong repair, recovery, and force preservation;
-- flexible combined-arms task groups;
-- high payoff from player attention and coordination.
-
-## Intended weaknesses and counterplay
-
-- premium losses are slow and expensive to replace;
-- sustained area denial and massed pressure can overload distributed groups;
-- air defense, jamming, smoke, and deception can break information-to-fire chains;
-- static defense across a broad frontage strains limited force density;
-- command, relay, repair, and logistics assets are high-value dependencies;
-- repeated forced retreats concede map control and resource access.
-
-# Russian faction — Echeloned Pressure
-
-## Strategic identity
-
-Russia is a preparation-and-pressure faction built around force depth, sustained fires, layered air defense, deliberate breakthroughs, and replacement capacity. It should reward players who establish secure logistics, shape the battlefield before committing, maintain reserves, and rotate successive formations through contested sectors.
-
-The faction's preferred victory pattern is:
-
-1. establish reconnaissance sufficient for a chosen sector;
-2. build supply, air-defense, and fire-support depth;
-3. suppress or isolate the sector;
-4. commit a first echelon to fix defenders;
-5. commit reserves through the opening;
-6. fortify gains and continue pressure before the opponent resets.
-
-Russia should feel powerful when prepared, but cumbersome when surprised, dispersed, or forced to change plans repeatedly.
-
-## Economy rhythm
-
-The Russian economy emphasizes throughput, redundancy, and sustained replacement.
-
-- Core combat units should be producible in larger batches or through stronger queue throughput than Ukrainian premium equivalents.
-- Expansion should favor secured logistics corridors, depots, and production depth rather than rapid isolated outposts.
-- Resource demand should be heavy and continuous, especially for ammunition, armored forces, air defense, and replacement waves.
-- Redundant production and supply structures should reduce the impact of one loss, while increasing the number of routes and depots that must be protected.
-- The faction should recover fielded numbers faster, but pivot slowly between very different technology or force-composition plans.
-- Overextension should create supply inefficiency and delayed reinforcement rather than merely lower income.
-
-### Economic failure mode
-
-Russia loses momentum when routes, depots, and production depth are repeatedly disrupted, forcing large formations to operate without replacement, ammunition, or reserve timing.
-
-## Reconnaissance and electronic warfare
-
-Russian reconnaissance is sufficient-for-action rather than precision-first.
-
-- Reconnaissance should combine forward scouts, drones, electronic detection, artillery observation, and probing attacks.
-- Contact quality may be broader and less exact, but should support area fires, route planning, and reserve commitment.
-- Electronic warfare should deny or degrade enemy coordination as much as it reveals targets.
-- Reconnaissance assets should be more expendable or replaceable, but less individually capable of sustaining perfect contact.
-- Deception and false pressure should help conceal the true breakthrough sector.
-
-### Reconnaissance failure mode
-
-If reconnaissance is destroyed or deceived, Russian preparation becomes inefficient: fires strike empty space, reserves commit late, and deliberate attacks become vulnerable to flanking.
-
-## Fires
-
-Russian fires prioritize volume, persistence, and battlefield shaping.
-
-- Artillery and rocket systems should sustain larger areas of suppression or denial when supplied and deployed.
-- Setup, ammunition consumption, minimum ranges, relocation time, and counter-battery exposure must constrain this strength.
-- Fires should support breach, isolation, and reserve movement rather than automatically destroy dispersed targets.
-- Counter-battery should depend on layered detection and prepared response rather than instant precision.
-- Air defense should be a meaningful part of the fire-support network, protecting artillery and logistics while creating exploitable positional commitments.
-
-### Fires failure mode
-
-When ammunition routes are cut, launchers are forced to relocate, or observers are denied, Russian firepower loses continuity and the maneuver force becomes predictable.
-
-## Mobility and logistics
-
-Russia uses mobility to sustain operational pressure and reinforce prepared axes.
-
-- Armored and mechanized groups should be effective when routes, bridges, engineers, and supply are secured.
-- Strategic redeployment should be strong along prepared corridors but weaker across improvised or frequently changing axes.
-- Engineering should support obstacle reduction, route clearance, fortification, and crossing preparation for large formations.
-- Reserves should be a core mechanic: units held behind the line gain value through timed commitment rather than immediate contact.
-- Logistics should be robust through redundancy but visible and targetable through depots, routes, and staging areas.
-
-### Mobility failure mode
-
-Russia becomes slow and fragmented when forced off prepared routes, denied crossings, compelled to react across multiple distant sectors, or pressured before reserves assemble.
-
-## Durability and replacement
-
-Russian durability comes from layered protection, redundancy, fortification, and replacement depth.
-
-- Armor concentrations and defensive belts should withstand short periods of heavy contact when properly supported.
-- Damaged units may be less individually efficient to recover than Ukrainian premium platforms, but formations should replace losses more readily.
-- Fortifications, obstacles, air defense, and reserve positions should create depth rather than one invulnerable front line.
-- Infantry durability should come from numbers, suppression support, entrenchment, and reinforcement—not inflated universal health.
-- Losses to unsupported frontal attacks should remain punishing; mass is not immunity to counters.
-
-### Durability failure mode
-
-Repeated defeat in detail, deep interdiction, and loss of support layers should convert nominal numerical strength into isolated formations that cannot sustain contact.
-
-## Command model
-
-Russian command is echeloned and preparation-oriented.
-
-- Command units and structures should improve cohesion, reserve timing, fire-plan efficiency, reinforcement flow, or prepared defensive posture.
-- Strong benefits may require proximity to designated groups, sectors, or command nodes.
-- Lower echelons should continue basic orders after command loss, but coordinated fires, reserve release, and rapid plan changes should degrade.
-- Command should reward deliberate sequencing rather than one global passive aura.
-
-### Command failure mode
-
-When command nodes are disrupted, Russian formations retain combat power but become slower to redirect, less synchronized, and more likely to continue an obsolete plan.
-
-## Intended strengths
-
-- sustained production and replacement depth;
-- powerful prepared fires and area denial;
-- layered air defense and support protection;
-- strong deliberate attacks and fortified gains;
-- useful reserves and successive echelons;
-- redundancy across production, reconnaissance, and logistics.
-
-## Intended weaknesses and counterplay
-
-- preparation is visible and creates high-value staging targets;
-- large formations depend on routes, depots, engineers, and command timing;
-- rapid multi-axis threats can force inefficient plan changes;
-- precision attacks against support layers reduce the value of mass;
-- dispersion and relocation reduce artillery efficiency;
-- overextension turns replacement depth into long reinforcement delays.
-
-# Asymmetry matrix
-
-Every row is a required design distinction for UFR-070 and later roster tasks.
-
-| Dimension | Ukraine — Networked Maneuver | Russia — Echeloned Pressure |
-| --- | --- | --- |
-| Primary advantage | Information-to-action speed | Preparation-to-pressure continuity |
-| Preferred force shape | Several flexible combined-arms task groups | Main effort, support depth, and timed reserves |
-| Economy | Efficient allocation and preservation | Throughput, redundancy, and replacement |
-| Expansion | Fast but exposed distributed sites | Slower secured corridors and logistics hubs |
-| Reconnaissance | High-quality contacts and rapid retasking | Broad sufficient contacts and probing |
-| Electronic warfare | Protect and extend coordination; create local windows | Degrade enemy coordination; cover preparation |
-| Fires | Responsive, selective, observation-dependent | Persistent, area-oriented, supply-dependent |
-| Mobility | Frequent axis changes and protected disengagement | Strong movement on prepared routes and axes |
-| Durability | Avoidance, repair, recovery, veteran preservation | Armor concentration, fortification, redundancy |
-| Command | Distributed synchronization and initiative | Echeloned cohesion, planning, and reserve timing |
-| Production | Smaller high-utility batches | Larger batches and stronger replacement flow |
-| Failure pressure | Premium attrition and support overload | Disrupted logistics and obsolete plans |
-| Typical win | Repeated local superiority and force preservation | Breakthrough, reserve exploitation, fortified gains |
-| Typical loss | Pinned into broad static attrition | Defeated in detail before preparation completes |
-
-# Counter matrix
-
-The matrix defines strategic counter relationships, not exact unit statistics.
-
-| Strategy | Strong against | Vulnerable to | Required readable tell |
+| Dimension | Ukrainian doctrine | Russian doctrine | Primary counterplay |
 | --- | --- | --- | --- |
-| Ukrainian distributed reconnaissance | Static support networks and uncovered flanks | Layered air defense, jamming, deception, mobile counter-recon | Relay/drone emissions and active observation zones |
-| Ukrainian precision strike chain | Command, logistics, artillery, isolated armor | Contact denial, dispersion, smoke, decoys, rapid relocation | Targeting link, limited munition count, warning interval |
-| Ukrainian mobile task groups | Slow redeployment and exposed side sectors | Mines, route denial, massed reserves, persistent area fires | Concentration of transports, repair, and command support |
-| Ukrainian recovery loop | Intermittent low-intensity exchanges | Encirclement, deep interdiction, damaged-unit pursuit | Recovery routes, workshops, disabled assets |
-| Russian sustained fires | Fixed defenses, dense formations, predictable routes | Counter-battery, relocation, dispersion, supply interdiction | Setup state, ammunition flow, observer coverage |
-| Russian armored breakthrough | Thin fronts and unsupported infantry | Obstacles, mines, anti-armor ambush, flank attacks, bridge denial | Engineer preparation, route concentration, reserve staging |
-| Russian layered air defense | Drone-heavy reconnaissance-strike play | Ground raids, saturation, artillery suppression, forced relocation | Radar/emission zones and protected support cluster |
-| Russian replacement pressure | Premium-unit attrition and prolonged fronts | Depot raids, route interdiction, production disruption, containment | Reinforcement corridors, queues, staging areas |
+| Strategic identity | Networked initiative and adaptive combined arms | Prepared mass and layered operational pressure | Disrupt the enabling network or prevent concentration |
+| Economy rhythm | Distributed, flexible, efficient at redirecting scarce resources | Throughput-oriented, infrastructure-heavy, efficient when production lines remain stable | Raid flexible nodes versus sever major logistics hubs |
+| Reconnaissance | High-value, precise, rapidly shared information | Broad, persistent, layered observation with greater footprint | Jam, deceive, screen, relocate, and destroy sensor links |
+| Fires | Precision, responsive targeting, shorter exploitation windows | Volume, preparation, area denial, and sustained pressure | Disperse and relocate versus penetrate the fire-support chain |
+| Mobility | Route flexibility, protected repositioning, rapid task-organizing | Deliberate corridors, echelon movement, reserves, and breakthrough follow-up | Deny maneuver space versus force premature deployment |
+| Durability | Preservation through repair, recovery, concealment, and avoidance | Preservation through armor, redundancy, reserves, and replacement depth | Overload recovery versus isolate and defeat layers |
+| Command | Local initiative inside a shared information network | Strong planned coordination and command-supported concentration | Create uncertainty versus overload the plan and command nodes |
+| Power curve | Earlier flexibility; strength rises with information quality and force preservation | Slower setup; strength rises with infrastructure, reserves, and sustained tempo | Deny scouting and attrit specialists versus prevent stable buildup |
+| Failure mode | Fragmentation, attention overload, specialist losses, interrupted links | Rigidity, congestion, exposed logistics, delayed adaptation | Force simultaneous crises versus create multiple unexpected axes |
 
-# Roster and tech-tree constraints for UFR-070
+## Ukrainian faction doctrine
 
-## Shared-role rule
+### Strategic identity: networked initiative
 
-Both factions may have units in the same broad role, but at least two of the following must differ for every mirrored role:
+The Ukrainian faction wins by seeing an opportunity sooner, assembling the right local combination, acting quickly, and preserving the force after the engagement. Its army should feel responsive and modular rather than universally faster or stronger.
 
-- acquisition method;
-- deployment or setup requirement;
-- production structure or prerequisite;
-- resource/capacity profile;
-- mobility or transport relationship;
-- command or observer dependency;
-- durability/recovery model;
-- ammunition or cooldown rhythm;
-- preferred target domain;
-- primary counter and failure condition.
+The core decision loop is:
 
-A simple cost, damage, or health adjustment does not satisfy this rule by itself.
+1. acquire specific information;
+2. select a limited objective;
+3. compose a task group for that objective;
+4. create a local information or precision advantage;
+5. strike, breach, rescue, defend, or disengage;
+6. recover damaged units and reassign specialists;
+7. repeat from a new direction before the opponent stabilizes.
 
-## Ukrainian roster constraints
+The faction rewards:
 
-- Infantry branches should emphasize specialist teams, combined-arms support, and protected mobility rather than cheap mass.
-- Vehicle branches should emphasize mobility, recovery, and role flexibility while limiting heavy concentration.
-- Drone and EW branches should provide layered reconnaissance, relay, strike support, and counter-UAS choices with explicit spectrum and air-defense counters.
-- Fires branches should require observation quality and reward relocation, smoke, and counter-battery timing.
-- Logistics and command branches should support dispersed operations, repair, recovery, and rapid retasking.
-- Technology choices should improve coordination or option quality, but force tradeoffs between information, mobility, fires, and survivability.
+- control groups and mixed-unit coordination;
+- reconnaissance-to-fires links;
+- terrain use and route changes;
+- timely repair, recovery, smoke, engineering, and withdrawal;
+- preserving experienced or specialized units;
+- redirecting production when new information appears.
 
-## Russian roster constraints
+It punishes:
 
-- Infantry branches should support assault mass, reconnaissance-in-force, engineering, and defensive depth rather than copy Ukrainian specialists one-for-one.
-- Vehicle branches should support armored concentration, reserve waves, and route-dependent protected mobility.
-- Drone, EW, and fires branches should create reconnaissance-strike depth, persistent suppression, and support-layer protection.
-- Air defense should be layered and positionally meaningful, with costs in mobility, setup, or concentration risk.
-- Logistics and command branches should improve throughput, fire continuity, reserve release, and prepared operations.
-- Technology choices should strengthen a chosen operational plan but increase the cost of rapidly pivoting to a different one.
+- unsupported specialists;
+- fighting broad frontal battles without information;
+- leaving damaged high-value units in attritional exchanges;
+- excessive simultaneous micro demands;
+- losing command, relay, recovery, or reconnaissance assets.
 
-## Mutually exclusive choice guidance
+### Economy rhythm: distributed adaptation
 
-UFR-070 should include meaningful doctrine choices rather than a linear tree with all upgrades eventually purchased.
+The Ukrainian economy should support flexible redirection rather than effortless abundance.
 
-Candidate Ukrainian choices:
+Doctrine requirements:
 
-- deeper reconnaissance network versus stronger protected mobility;
-- precision fires versus broader defensive air-defense coverage;
-- premium recovery capability versus additional fielded capacity.
+- smaller or distributed economic nodes should remain useful longer than one monolithic base cluster;
+- production should permit meaningful reprioritization when scouting reveals a new threat;
+- advanced capabilities should compete for scarce research, production, command, or specialist capacity;
+- repair and recovery should often be more efficient than replacement, but must consume time, access, and resources;
+- expansion should improve route options and resilience, not merely increase income;
+- the faction must not receive a blanket resource-income bonus simply for being Ukrainian.
 
-Candidate Russian choices:
+Preferred economic decisions:
 
-- artillery depth versus armored reserve depth;
-- stronger layered air defense versus faster operational mobility;
-- centralized fire-plan efficiency versus more autonomous lower-echelon response.
+- whether to invest in information, precision, mobility, sustainment, or immediate line strength;
+- whether to establish another flexible node or harden an existing one;
+- whether to repair an experienced force or replace it with cheaper baseline units;
+- whether to preserve a specialist slot or broaden the army.
 
-These are design directions, not final upgrade names or balance values.
+Counterplay:
 
-# AI doctrine hooks
+- force repeated defensive reactions that consume attention and repositioning time;
+- raid exposed distributed nodes and recovery routes;
+- pressure multiple resource types to make flexible production choices costly;
+- destroy specialist production or relay infrastructure rather than only attacking the headquarters.
 
-UFR-079 and later AI tasks should consume the same doctrine contract used by the player factions.
+### Reconnaissance: precise and shareable
 
-## Ukrainian AI priorities
+Ukrainian reconnaissance should provide high-quality, actionable information but depend on links, survivable platforms, and player attention.
 
-- maintain current information on at least one actionable sector;
-- avoid unsupported premium-unit trades;
-- form complete small task groups with reconnaissance, maneuver, and recovery support;
-- attack exposed dependencies, then disengage before reserve concentration;
-- relocate observers and fires after use;
-- prefer repair and recovery when map pressure allows;
-- create simultaneous threats when the opponent is overcommitted.
+Doctrine requirements:
 
-## Russian AI priorities
+- reconnaissance tools should differ by persistence, risk, precision, and link dependency;
+- identifying a target must not automatically destroy it;
+- precision fires and strike systems should gain substantial value from current spotting;
+- relays and command assets should improve information sharing without granting omniscience;
+- stale contacts, jamming, concealment, and line-of-sight loss must remain meaningful;
+- reconnaissance assets should be valuable enough that careless losses alter the player's plan.
 
-- select and prepare a main effort rather than distribute all forces evenly;
-- secure routes, ammunition, air defense, and reserve staging before major attacks;
-- use fires to shape movement and suppress support layers;
-- preserve a reserve until a breach, counterattack, or emergency threshold;
-- fortify gains and restore logistics before extending again;
-- react strongly to depot, command, and artillery threats without abandoning the entire plan prematurely.
+Player expression:
 
-Difficulty must change reaction delay, planning horizon, risk tolerance, and coordination quality—not grant hidden information or universal stat bonuses by default.
+- use scouts, observation posts, drones, terrain, and probing attacks to resolve uncertainty;
+- hand off information from a risky forward sensor to a safer strike or command element;
+- create temporary information superiority over one sector rather than permanent map-wide vision.
 
-# Campaign and skirmish guardrails
+Counterplay:
 
-- Mission design must expose each faction's dependencies and counterplay, not script one side to ignore its own doctrine.
-- Campaign scenarios may temporarily restrict a branch, but should explain the operational constraint through objectives and available information.
-- Skirmish maps must provide multiple viable expansion routes, flank paths, fire positions, and support-layer attack options.
-- Map layouts must not guarantee one faction's preferred engagement geometry on every battlefield.
-- Starting forces and scripted reinforcements must respect production and capacity logic unless explicitly presented as a scenario exception.
-- Tutorial text must describe observable game rules rather than claim real-world authenticity.
+- layered air defense, counter-recon patrols, camouflage, smoke, decoys, and jamming;
+- rapid relocation after firing or detection;
+- attacks on relay and command links;
+- feints that consume precision weapons or reposition the task group.
 
-# Anti-mirroring acceptance checklist
+### Fires: responsive precision
 
-UFR-070 and each roster PR must answer all of the following before completion:
+Ukrainian fires should be strongest when linked to current information and used to create a short exploitation window.
 
-- What distinct strategic problem does this faction branch solve?
-- What dependency enables its strongest outcome?
-- What opposing action interrupts that dependency?
-- What visible or audible tell communicates the threat?
-- What tradeoff prevents the branch from being universally optimal?
-- How does its production or technology path differ from the opposing analogue?
-- How does the AI use and counter it without hidden information?
-- How does the unit or upgrade preserve the faction's economy and command rhythm?
+Doctrine requirements:
 
-A roster branch fails this doctrine contract when its answer is only “the same role with different numbers.”
+- precision and responsiveness are strengths, not unlimited range or perfect accuracy;
+- artillery, drones, missiles, and attack-ground tools should have different spotting, setup, ammunition, exposure, and counter-battery profiles;
+- high-value strikes should require target confirmation, limited availability, or meaningful opportunity cost;
+- fires should support maneuver and objectives rather than replace the need for ground forces;
+- repeated firing from one location must create detectable risk.
 
-# Acceptance mapping
+Preferred use:
 
-| UFR-069 requirement | Doctrine location |
-| --- | --- |
-| Strategic identity | Faction strategic identity sections |
-| Economy rhythm | Faction economy rhythm sections |
-| Reconnaissance | Reconnaissance and electronic warfare sections |
-| Fires | Faction fires sections |
-| Mobility | Mobility and logistics sections |
-| Durability | Durability and recovery/replacement sections |
-| Command | Faction command model sections |
-| Counterplay | Weaknesses, failure modes, and counter matrix |
-| No palette mirroring | Doctrine invariants, asymmetry matrix, roster constraints, anti-mirroring checklist |
+- suppress or disable one critical defense;
+- break a logistics or command link;
+- isolate a local group;
+- cover a withdrawal or breach;
+- punish an exposed reserve or firing position;
+- immediately exploit before the target recovers or relocates.
+
+Counterplay:
+
+- dispersion, concealment, layered air defense, jamming, rapid movement, decoys, hardened positions, and counter-battery fire;
+- accepting minor losses while denying a decisive target;
+- forcing the player to spend precision assets on low-value emergencies.
+
+### Mobility: route flexibility
+
+Ukrainian mobility should emphasize changing axes, protected repositioning, and task-group modularity.
+
+Doctrine requirements:
+
+- the faction should have multiple ways to move infantry, specialists, reconnaissance, and support assets;
+- route choice, bridges, roads, mud, obstacles, mines, and damaged vehicles must matter;
+- mobility should not mean every Ukrainian unit has superior base speed;
+- transport and protected mobility should trade firepower, capacity, protection, and availability;
+- withdrawal and recovery should be valid decisions, not automatic failure states.
+
+Preferred use:
+
+- reposition before a prepared response arrives;
+- bypass a strongpoint and attack its support;
+- reinforce one sector with a tailored group;
+- extract damaged or valuable units;
+- exploit an information gap.
+
+Counterplay:
+
+- mines, obstacles, chokepoints, artillery interdiction, route surveillance, reserve forces, and pressure on transport capacity;
+- forcing the Ukrainian player to commit on several separated axes;
+- destroying recovery and bridging assets.
+
+### Durability: preserve the force
+
+Ukrainian durability should come from avoiding unfavorable damage, repairing promptly, recovering disabled equipment, and maintaining experienced specialists.
+
+Doctrine requirements:
+
+- strong repair and recovery options must require access, time, resources, and vulnerable support assets;
+- smoke, concealment, movement, cover, and information are part of durability;
+- veterancy and specialist preservation should matter without making elite units unkillable;
+- damaged units should present a real choice between continued risk and operational withdrawal;
+- a lost high-value platform must not be instantly replaced at trivial cost.
+
+Counterplay:
+
+- finish disabled or isolated targets;
+- attack repair sites, routes, and recovery vehicles;
+- maintain pressure so damaged units cannot cycle safely;
+- use area denial to separate support from the fighting line.
+
+### Command: delegated initiative
+
+Ukrainian command should improve responsiveness, information distribution, and coordination of small mixed groups.
+
+Doctrine requirements:
+
+- command assets should reduce friction or enable coordination, not apply invisible global stat superiority;
+- local groups should continue basic behavior after losing command support, but lose efficiency, information quality, or special coordination;
+- command-capacity choices should force tradeoffs between many baseline units and more specialized task groups;
+- the player should be able to understand which command or relay asset enables a capability.
+
+Counterplay:
+
+- disrupt command or relay nodes;
+- force simultaneous crises that exceed player attention;
+- separate task groups from their support;
+- create false or stale information;
+- compel premature commitment before the network is assembled.
+
+### Power curve and failure state
+
+Opening: flexible baseline forces and early reconnaissance create options, but the faction lacks depth for wasteful exchanges.
+
+Midgame: combined reconnaissance, mobility, engineers, fires, and recovery create the strongest expression of doctrine. The player should feel able to solve different problems, but not all at once.
+
+Late game: preserved specialists and modernization create a capable networked force. The faction must still respect mass, prepared defenses, logistics, and attrition. Late-game power should come from a functioning system, not a roster of individually superior units.
+
+Systemic failure occurs when the player has units but loses the network that makes them effective: scouts are gone, relays are disrupted, specialists are isolated, repair capacity is overloaded, and too many local emergencies compete for attention.
+
+## Russian faction doctrine
+
+### Strategic identity: layered operational pressure
+
+The Russian faction wins by preparing a stable base of production and logistics, building layered information and fire support, concentrating sufficient force, and sustaining pressure longer than the opponent can adapt.
+
+The core decision loop is:
+
+1. establish infrastructure and broad observation;
+2. define a main effort and supporting sectors;
+3. assemble line forces, fires, air defense, engineers, logistics, and reserves;
+4. prepare the target area through reconnaissance and denial;
+5. advance in echelons or force a defensive commitment;
+6. reinforce success or rotate a depleted layer;
+7. maintain pressure until an objective, route, or economy collapses.
+
+The faction rewards:
+
+- planned production and reserve management;
+- layered combined-arms groups;
+- broad reconnaissance coverage;
+- sustained fires and area denial;
+- deliberate route preparation;
+- maintaining logistics and command continuity;
+- using depth rather than relying on one irreplaceable unit.
+
+It punishes:
+
+- congested deployment;
+- exposed infrastructure;
+- committing reserves too early;
+- rigidly repeating an identified plan;
+- outrunning air defense, engineers, logistics, or command;
+- allowing the opponent to defeat layers separately.
+
+### Economy rhythm: stable throughput
+
+The Russian economy should reward protected infrastructure, planned queues, and sustained production.
+
+Doctrine requirements:
+
+- major production and logistics investments should become efficient when kept active;
+- switching a mature production plan should carry more friction than Ukrainian redirection;
+- reserves and replacement depth should be available through preparation, not free unit generation;
+- large infrastructure should create strategic targets and route dependencies;
+- economy strength should be vulnerable to disruption, congestion, and loss of key hubs;
+- the faction must not receive hidden income or free units as a default AI crutch.
+
+Preferred economic decisions:
+
+- which production line supports the main effort;
+- when to bank reserves versus reinforce immediately;
+- whether to invest in broad support layers or accelerate the assault mass;
+- where to establish logistics hubs and protected routes;
+- when to accept temporary over-cap or infrastructure risk.
+
+Counterplay:
+
+- raid logistics hubs, rally routes, bridges, and production exits;
+- force costly production switches;
+- threaten multiple sectors so concentration becomes risky;
+- destroy enabling support rather than trading directly into the main force.
+
+### Reconnaissance: broad and persistent
+
+Russian reconnaissance should create a wide operational picture through layered sensors, patrols, observation, and reconnaissance-strike integration.
+
+Doctrine requirements:
+
+- broad coverage should require more footprint, infrastructure, or visible assets;
+- persistence should trade against precision, concealment, or rapid redeployment;
+- reconnaissance must support fires and route security but remain vulnerable to destruction, deception, and jamming;
+- the faction should be good at maintaining contact with a known front, not omniscient about hidden flanks;
+- observation gaps should appear when the force advances faster than its sensor layers.
+
+Player expression:
+
+- maintain overlapping observation zones;
+- use reconnaissance to screen routes and protect the main effort;
+- identify general concentrations, then refine targets for fires;
+- use patrols and forward observation to prevent surprise.
+
+Counterplay:
+
+- decoys, smoke, jamming, concealed routes, sudden axis changes, and attacks on observation infrastructure;
+- presenting several plausible threats;
+- exploiting the delay between broad detection and precise engagement.
+
+### Fires: volume and preparation
+
+Russian fires should shape terrain, suppress areas, isolate routes, and sustain pressure.
+
+Doctrine requirements:
+
+- volume must consume ammunition, setup time, logistics, exposure, or command attention;
+- artillery and rockets should create visible preparation and counter-battery signatures;
+- area denial should influence movement without becoming unavoidable map-wide damage;
+- fires should be strongest against fixed, concentrated, or predictable targets;
+- direct assault still requires ground forces and engineers.
+
+Preferred use:
+
+- suppress a defensive belt;
+- close a bridge, road, or reinforcement route;
+- force dispersion;
+- cover deliberate movement;
+- exhaust repair and recovery capacity;
+- punish predictable firing positions or static economy.
+
+Counterplay:
+
+- relocate, disperse, harden, infiltrate, jam, counter-battery, and attack ammunition or command links;
+- create false concentrations;
+- move during gaps in the fire cycle;
+- force close engagements where broad fires are dangerous or inefficient.
+
+### Mobility: deliberate corridors and reserves
+
+Russian mobility should emphasize prepared routes, echelon movement, protected follow-up, and reserves rather than universal speed.
+
+Doctrine requirements:
+
+- engineers, bridging, route clearance, and traffic management should materially enable movement;
+- the main force should be powerful when its layers remain connected;
+- congestion and blocked exits must be real planning risks;
+- reserve units should exploit or stabilize after the first layer commits;
+- off-road shortcuts should carry terrain, formation, or sustainment costs.
+
+Preferred use:
+
+- secure a corridor and move multiple layers through it;
+- rotate depleted units while maintaining pressure;
+- hold a reserve behind the main effort;
+- widen a breach after engineers and fires create access;
+- use protected mobility to sustain a deliberate advance.
+
+Counterplay:
+
+- mine, obstruct, interdict, destroy bridges, attack exits, and create traffic conflicts;
+- threaten rear routes;
+- force the reserve to deploy defensively;
+- open a second axis after the main force commits.
+
+### Durability: layers, redundancy, and depth
+
+Russian durability should come from armor, formation depth, support layers, redundancy, and replacement planning.
+
+Doctrine requirements:
+
+- individual durable units must still have explicit anti-armor, mobility, air, engineering, and sustainment counters;
+- redundancy should cost resources, capacity, and deployment space;
+- reserve and replacement strength should depend on production and logistics;
+- air defense, infantry screens, engineers, repair, and command should protect armor without making a death ball invulnerable;
+- losses to support layers should progressively expose the force.
+
+Counterplay:
+
+- isolate the leading layer from support;
+- attack logistics, air defense, engineers, command, or recovery;
+- use terrain and obstacles to prevent mass from applying simultaneously;
+- force repeated redeployment and production switching;
+- avoid symmetric attrition when the opponent's throughput is intact.
+
+### Command: planned concentration
+
+Russian command should improve coordination of layered groups, prepared fires, reserves, and sustained operations.
+
+Doctrine requirements:
+
+- command assets should enable synchronized actions and clear main-effort bonuses or permissions;
+- changing the main effort should be possible but slower or more expensive than local Ukrainian retasking;
+- subordinate groups should retain baseline function after command loss, while planned coordination and response quality degrade;
+- the player and AI must receive visible warnings for overloaded routes, unsupported advances, and missing layers;
+- command strength must not become a hidden global accuracy or damage bonus.
+
+Counterplay:
+
+- create unexpected threats after the plan commits;
+- strike command posts or communications;
+- force the main effort to split;
+- trigger reserve deployment away from the decisive sector;
+- maintain uncertainty so preparation targets the wrong place.
+
+### Power curve and failure state
+
+Opening: baseline line forces and broad scouting can secure space, but advanced pressure requires infrastructure and support layers.
+
+Midgame: stable production, fires, engineers, air defense, and reserves allow deliberate concentration. The faction becomes dangerous when it controls routes and can repeat attacks.
+
+Late game: infrastructure and replacement depth support sustained operations. The faction must remain vulnerable to logistics disruption, congestion, command loss, and attacks across multiple axes.
+
+Systemic failure occurs when the faction still owns a large force but loses coherence: routes are blocked, support layers are separated, logistics hubs are exposed, reserves are committed piecemeal, and the main effort cannot adapt to a new axis.
+
+## Explicit cross-faction counterplay
+
+### Information contest
+
+Ukrainian advantage:
+
+- precise, rapidly shared contacts;
+- fast conversion of current information into local action.
+
+Russian answer:
+
+- broad observation, layered air defense, jamming, decoys, and persistent route screening.
+
+Russian advantage:
+
+- persistent coverage of known fronts and prepared sectors;
+- stronger ability to maintain contact during sustained pressure.
+
+Ukrainian answer:
+
+- route changes, concealment, relay redundancy, deception, precision attacks on observation nodes, and short exposure windows.
+
+### Precision versus volume fires
+
+Ukrainian fires should remove or disable a critical element when information and timing are correct.
+
+Russian counterplay is to provide redundant layers, decoys, concealment, and enough depth that one precision success does not collapse the whole force.
+
+Russian fires should shape areas and exhaust static defenders over time.
+
+Ukrainian counterplay is to disperse, reposition, maintain alternate routes, use counter-battery reconnaissance, and avoid presenting fixed concentrations.
+
+### Flexible task groups versus prepared mass
+
+Ukrainian task groups should defeat isolated elements and exploit gaps.
+
+Russian counterplay is to maintain connected layers, reserve coverage, protected routes, and enough observation to prevent local defeat in detail.
+
+Russian mass should dominate a prepared axis when support remains intact.
+
+Ukrainian counterplay is to deny concentration, attack support, create simultaneous threats, and disengage from the strongest sector.
+
+### Recovery versus replacement depth
+
+Ukrainian force preservation should reward extracting and repairing valuable units.
+
+Russian counterplay is to maintain pressure, interdict recovery routes, and finish disabled targets.
+
+Russian replacement depth should sustain operations after ordinary losses.
+
+Ukrainian counterplay is to destroy infrastructure, logistics, and specialist layers so replacement throughput cannot restore the full combined-arms system.
+
+### Initiative versus plan
+
+Ukrainian command should excel at local adaptation.
+
+Russian counterplay is to create broad pressure that generates more crises than the player can solve with limited specialists and attention.
+
+Russian command should excel at synchronized preparation.
+
+Ukrainian counterplay is to introduce uncertainty, change axes, strike command links, and force premature reserve commitment.
+
+## Match pacing contract
+
+### Opening phase
+
+The first meaningful decision must occur within two minutes.
+
+Ukrainian opening questions:
+
+- which information source or route should reveal the opponent's plan;
+- whether to protect economy flexibility or contest forward terrain;
+- which baseline specialist prevents an early trap.
+
+Russian opening questions:
+
+- where to place the first durable economic and observation layer;
+- which corridor or objective will become the main effort;
+- how much line strength to field before investing in support depth.
+
+Both factions must have baseline answers to early infantry, light vehicle, reconnaissance, and static-defense pressure.
+
+### Midgame phase
+
+The midgame is the primary asymmetry showcase.
+
+Ukrainian play should involve task-group composition, scouting updates, precision windows, recovery, and axis changes.
+
+Russian play should involve production commitment, layered support, fires preparation, route control, reserves, and sustained pressure.
+
+A player who ignores the opponent's doctrine should suffer inefficient trades, but retain a visible path to adapt.
+
+### Late-game phase
+
+Late-game armies should become broader systems, not collections of uncapped super-units.
+
+Ukrainian late game:
+
+- stronger network effects from preserved specialists and modernization;
+- greater risk of attention overload and expensive specialist loss.
+
+Russian late game:
+
+- stronger throughput, reserves, and layered concentration;
+- greater risk from infrastructure targets, congestion, and strategic rigidity.
+
+No late-game technology may erase an entire counter class. Upgrades may improve efficiency, unlock a new method, or reduce a vulnerability, but must preserve opponent agency.
+
+## Anti-snowball and recovery constraints
+
+The doctrine supports advantage without making the first lost engagement decisive.
+
+Required constraints:
+
+- core counter capability remains reachable after losing one production structure;
+- repair, recovery, reserves, and reconstruction consume resources and time;
+- destroying advanced infrastructure creates advantage but not permanent tech deletion unless a mission explicitly says so;
+- expansion increases exposure and route burden as well as income;
+- command-capacity loss creates visible over-cap pressure rather than silently deleting units;
+- veterancy rewards preservation but remains bounded;
+- artillery, drones, and advanced support require replenishment, cooldown, setup, or limited production capacity;
+- objectives, terrain, and alternate routes provide ways to trade space for time;
+- AI difficulty changes planning quality, information limits, reaction delay, risk tolerance, and economy efficiency rather than granting unexplained combat multipliers.
+
+A losing player should be able to choose between:
+
+- stabilizing a smaller defensible area;
+- raiding the opponent's enabling infrastructure;
+- changing production toward a cost-efficient counter;
+- preserving a core force while rebuilding;
+- contesting an alternate objective;
+- forcing the leading player to split attention.
+
+Recovery must not become automatic. The leading player should be rewarded for scouting the recovery, protecting logistics, and converting advantage into objectives.
+
+## Technology and roster implications
+
+UFR-070 must translate this doctrine into complete technology trees and roster slots.
+
+Required technology-tree properties:
+
+- each faction has distinct roots, branches, prerequisites, and opportunity costs;
+- both factions reach all required battlefield roles;
+- faction-exclusive nodes express doctrine through capabilities and constraints, not only numeric bonuses;
+- mutually exclusive choices represent meaningful operational commitments;
+- campaign locks and availability overrides remain explicit in the technology graph;
+- no branch is mandatory in every standard match;
+- every advanced branch has a visible counter path available to the opponent.
+
+Required roster properties:
+
+- every unit has a primary role, secondary utility, explicit weakness, production source, command cost, and expected support relationship;
+- similar real-world categories may occupy different gameplay roles across factions;
+- baseline units remain relevant through positioning, support, veterancy, or economical efficiency;
+- specialist density is bounded by cost, production access, capacity, or command burden;
+- units do not receive faction identity from color and names alone.
+
+## AI doctrine requirements
+
+UFR-079 through UFR-082 must encode doctrine as inspectable planning policy.
+
+Ukrainian AI should:
+
+- value current reconnaissance and uncertainty reduction;
+- assemble objective-specific task groups;
+- redirect production when high-confidence threats appear;
+- preserve damaged high-value or veteran units;
+- use alternate routes and limited local concentration;
+- attack enabling infrastructure when direct combat is inefficient;
+- avoid dividing specialists across too many simultaneous operations.
+
+Russian AI should:
+
+- define and expose a main effort;
+- construct production, logistics, observation, air-defense, engineer, and fire-support layers;
+- maintain a reserve until a trigger justifies commitment;
+- prepare routes and target areas before major attacks;
+- rotate or reinforce layers rather than sending isolated units continuously;
+- adapt when the main effort is repeatedly denied;
+- protect infrastructure and relieve congestion.
+
+Debug inspection must explain:
+
+- current doctrine profile;
+- main objective or effort;
+- known and uncertain threats;
+- resource and capacity budgets;
+- requested unit roles;
+- reason for attack, delay, retreat, reserve commitment, or production switch.
+
+Difficulty must not invalidate doctrine through omniscience or free-force injection by default.
+
+## Campaign and mission implications
+
+Campaign missions should teach and test doctrine through geography and objectives.
+
+Ukrainian-led missions should create decisions involving:
+
+- incomplete information;
+- limited specialist availability;
+- reconnaissance and precision timing;
+- route changes and extraction;
+- repair, recovery, and force preservation;
+- defending several needs with a flexible but finite force.
+
+Russian opposition should create:
+
+- layered defenses and observation;
+- prepared fires and route denial;
+- infrastructure and logistics targets;
+- reserve counterattacks;
+- sustained pressure that can be disrupted through intelligent objectives.
+
+Mission scripts must avoid claiming that fictional doctrine, dialogue, unit behavior, or outcomes document real events. Briefings may describe the fictional operation's game logic in clear terms.
+
+Skirmish maps must provide:
+
+- more than one viable axis;
+- meaningful infrastructure and logistics locations;
+- room for concealment, observation, fires, and maneuver;
+- chokepoints that can be contested but not permanently sealed without counterplay;
+- objectives that reward both flexible raids and deliberate concentration.
+
+## Art, audio, and interface implications
+
+Faction readability must survive grayscale, motion, combat effects, and ordinary play zoom.
+
+Ukrainian presentation should emphasize:
+
+- compact, modular task groups;
+- clear reconnaissance, relay, recovery, and precision-support silhouettes;
+- concise acknowledgements and information updates;
+- visual cues for links, current spotting, specialist state, and extraction readiness.
+
+Russian presentation should emphasize:
+
+- formation depth, support layers, prepared positions, logistics, and reserves;
+- readable silhouettes for artillery, air defense, engineers, command, and route-support assets;
+- clear preparation, salvo, deployment, and reinforcement cues;
+- visible distinction between the leading layer and enabling rear elements.
+
+These are readability directions, not mandates for copied uniforms, insignia, vehicles, audio, or interface conventions. Asset tasks must use original, traceable sources and avoid documentary-looking presentation.
+
+The interface must communicate:
+
+- why a capability is available or unavailable;
+- which sensor, command, logistics, or production dependency enables it;
+- the countermeasure suggested by observed enemy behavior;
+- whether information is current, stale, jammed, or uncertain;
+- whether a force is unsupported, over capacity, blocked, or at recovery risk.
+
+## Balance review questions
+
+Before approving a faction capability, reviewers must answer:
+
+1. What decision does this add?
+2. Which doctrine pillar does it express?
+3. What information tells the opponent it exists?
+4. What baseline response prevents an opening trap?
+5. What efficient specialized counter rewards preparation?
+6. What cost, dependency, setup, exposure, or command burden pays for the strength?
+7. Can the AI use it and explain its decision?
+8. Does it preserve the economy-to-victory loop?
+9. Does it create a new role or merely duplicate another unit?
+10. Does it remain understandable at ordinary play zoom?
+11. Does it serialize and restore without hidden state?
+12. Does it avoid factual, national, or political claims outside the fictional game contract?
+
+A capability that cannot answer these questions is not ready for roster or balance implementation.
+
+## Ownership map for downstream tasks
+
+- UFR-070 owns technology-tree, production-structure, roster-slot, prerequisite, unique-mechanic, and counter-matrix translation.
+- UFR-071 through UFR-077 own faction unit-family data and system integrations.
+- UFR-078 owns logistics, resupply, transport, command, recovery, bridging, and off-map support mechanics.
+- UFR-079 owns AI architecture and the inspectable doctrine profile.
+- UFR-080 and UFR-081 own economy and tactical planning implementations.
+- UFR-082 owns difficulty profiles without default hidden-stat cheating.
+- UFR-083 owns skirmish setup and map-level integration.
+- UFR-091 owns campaign modernization choices and respec policy.
+- UFR-094 through UFR-103 own mission-specific application and campaign balance.
+- UFR-106 and later production tasks own art-direction translation, original assets, audio, and presentation.
+- UFR-066 owns final numeric economy and timing balance.
+- UFR-068 and later integration tasks own end-to-end scenario proof.
+
+Later tasks may refine implementation details, but changing the strategic identities, global guardrails, or cross-faction counterplay in this document requires an explicit doctrine or product-scope decision.
