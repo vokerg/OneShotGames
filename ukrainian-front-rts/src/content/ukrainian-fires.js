@@ -54,7 +54,8 @@ function validateArtillery(errors, path, record) {
   }
   for (const field of ['ammo', 'salvoSize']) if (!Number.isInteger(config[field]) || config[field] <= 0) errors.push(`${path}: artilleryConfig.${field} must be a positive integer`);
   if (config.salvoSize > config.ammo) errors.push(`${path}: artillery salvoSize cannot exceed ammo`);
-  for (const field of ['setupTime', 'packTime', 'minimumRange', 'shotCadence', 'signatureDecay', 'scatterRadius']) if (!finiteInRange(config[field], 0)) errors.push(`${path}: artilleryConfig.${field} must be non-negative`);
+  for (const field of ['setupTime', 'packTime', 'minimumRange', 'signatureDecay', 'scatterRadius']) if (!finiteInRange(config[field], 0)) errors.push(`${path}: artilleryConfig.${field} must be non-negative`);
+  if (!finiteInRange(config.shotCadence, Number.EPSILON)) errors.push(`${path}: artilleryConfig.shotCadence must be positive`);
   if (!finiteInRange(config.signaturePerShot, 0, 1)) errors.push(`${path}: artilleryConfig.signaturePerShot must be within [0, 1]`);
   if (!record.spotting || !finiteInRange(record.spotting.requiredBeyondRange, record.weapon.minimumRange) || record.spotting.requiredBeyondRange > record.weapon.maximumRange) errors.push(`${path}: invalid spotting range distinction`);
   if (!finiteInRange(record.spotting?.minimumContactQuality, 0, 1)) errors.push(`${path}: spotting.minimumContactQuality must be within [0, 1]`);
