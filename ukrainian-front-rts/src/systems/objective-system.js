@@ -1,4 +1,5 @@
 import { TEAM } from '../config.js';
+import { unitsIncludingPassengers } from './transport-system.js';
 
 function hasCompletedBuilding(game, type) {
   return game.buildings.some(
@@ -15,21 +16,23 @@ function updateDonbasObjectives(game) {
 }
 
 function updateZaporizhzhiaObjectives(game) {
+  const roster = unitsIncludingPassengers(game);
   game.player.objectives[0] = game.player.intel >= 250;
   game.player.objectives[1] =
-    game.units.filter((unit) => unit.team === TEAM.UA && unit.type === 'uaDrone').length >= 4;
+    roster.filter((unit) => unit.team === TEAM.UA && unit.type === 'uaDrone').length >= 4;
   game.player.objectives[2] =
     game.wave >= 4 &&
-    !game.units.some((unit) => unit.team === TEAM.RU && unit.type === 'ruArtillery');
+    !roster.some((unit) => unit.team === TEAM.RU && unit.type === 'ruArtillery');
 }
 
 function updateKhersonObjectives(game) {
+  const roster = unitsIncludingPassengers(game);
   game.player.objectives[0] = ['uaZelenskyy', 'uaZaluzhnyi'].every((heroType) =>
-    game.units.some((unit) => unit.team === TEAM.UA && unit.type === heroType),
+    roster.some((unit) => unit.team === TEAM.UA && unit.type === heroType),
   );
   game.player.objectives[1] =
     game.wave >= game.mission.waves.maxWaves &&
-    !game.units.some((unit) => unit.team === TEAM.RU && unit.waveSpawned);
+    !roster.some((unit) => unit.team === TEAM.RU && unit.waveSpawned);
   game.player.objectives[2] = !game.buildings.includes(game.ruHQ);
 }
 

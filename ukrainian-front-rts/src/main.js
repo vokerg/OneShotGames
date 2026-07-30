@@ -7,10 +7,12 @@ import { installBattlefieldInput } from './input/battlefield-input.js';
 import { installConstructionPlacementInput } from './input/construction-placement-input.js';
 import { installDoubleClickSelection } from './input/double-click-selection.js';
 import { createQueuedOrderController } from './input/queued-orders.js';
+import { installTransportInput } from './input/transport-input.js';
 import { synchronizeNavigationGrid } from './systems/navigation-movement-system.js';
 import { Renderer } from './render.js';
 import { installConstructionPreview } from './render/construction-preview.js';
 import { createConstructionPlacementController } from './systems/construction-placement-system.js';
+import { createTransportController } from './systems/transport-system.js';
 import { createWorkerGatherController } from './systems/worker-gather-system.js';
 import { UI } from './ui.js';
 
@@ -31,6 +33,10 @@ const renderer = new Renderer(game, canvas, minimap, portrait);
 const runtime = createGameRuntime({ game, renderer, ui });
 const disposeAttackGround = createAttackGroundController(game);
 const disposeQueuedOrders = createQueuedOrderController(game, window);
+const disposeTransport = createTransportController(game, {
+  synchronizeNavigation: synchronizeNavigationGrid,
+});
+const disposeTransportInput = installTransportInput({ game, ui, windowTarget: window });
 const disposeConstructionPlacement = createConstructionPlacementController(game, {
   synchronizeNavigation: synchronizeNavigationGrid,
 });
@@ -62,6 +68,8 @@ addEventListener(
     disposeConstructionPreview();
     disposeWorkerGather();
     disposeConstructionPlacement();
+    disposeTransportInput();
+    disposeTransport();
     disposeQueuedOrders();
     disposeAttackGround();
     runtime.stop();
