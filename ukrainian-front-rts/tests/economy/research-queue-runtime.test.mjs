@@ -42,6 +42,11 @@ function fixture() {
   return game;
 }
 
+function advance(game, stepSeconds) {
+  game.updateResearch(stepSeconds);
+  game.update(stepSeconds);
+}
+
 test('queues, charges, advances, and completes modernization deterministically', () => {
   const game = fixture();
   createResearchQueueRuntime(game);
@@ -52,9 +57,9 @@ test('queues, charges, advances, and completes modernization deterministically',
   assert.equal(game.player.intel, 960);
   const workshop = game.selectedEntities()[0];
   assert.equal(workshop.researchQueueState.queue.length, 1);
-  game.update(10);
+  advance(game, 10);
   assert.equal(workshop.researchQueueState.queue[0].remaining, 10);
-  game.update(10);
+  advance(game, 10);
   assert.equal(workshop.researchQueueState.queue.length, 0);
   assert.equal(game.player.upgrades.has('cageArmor'), true);
   assert.equal(game.units[0].maxHp, 118);
@@ -70,14 +75,14 @@ test('enforces prerequisites and pauses research while production uses the works
   assert.equal(game.research('cageArmor'), true);
   const workshop = game.selectedEntities()[0];
   workshop.queue.push({ type: 'uaTank' });
-  game.update(5);
+  advance(game, 5);
   assert.equal(workshop.researchQueueState.queue[0].remaining, 20);
   workshop.queue.length = 0;
   assert.equal(game.setResearchPaused(workshop.researchQueueState.facilityId, true), true);
-  game.update(5);
+  advance(game, 5);
   assert.equal(workshop.researchQueueState.queue[0].remaining, 20);
   assert.equal(game.setResearchPaused(workshop.researchQueueState.facilityId, false), true);
-  game.update(5);
+  advance(game, 5);
   assert.equal(workshop.researchQueueState.queue[0].remaining, 15);
 });
 
@@ -88,7 +93,7 @@ test('shares completed prerequisites across multiple research facilities', () =>
   const first = game.selectedEntities()[0];
   const second = game.addBuilding('workshop', TEAM.UA);
   assert.equal(game.research('cageArmor'), true);
-  game.update(20);
+  advance(game, 20);
   game.selected = new Set([second.id]);
   assert.equal(game.research('activeProtection'), true);
   assert.equal(second.researchQueueState.completedTechIds.includes('cageArmor'), true);
@@ -101,7 +106,7 @@ test('cancels with remaining-value refunds and refunds a lost facility', () => {
   game.start();
   const workshop = game.selectedEntities()[0];
   assert.equal(game.research('thermal'), true);
-  game.update(10);
+  advance(game, 10);
   const item = workshop.researchQueueState.queue[0];
   assert.equal(game.cancelResearch(workshop.researchQueueState.facilityId, item.id), true);
   assert.equal(game.player.metal, 945);
@@ -110,7 +115,7 @@ test('cancels with remaining-value refunds and refunds a lost facility', () => {
   assert.equal(game.research('natoAmmo'), true);
   const beforeLoss = { metal: game.player.metal, fuel: game.player.fuel, intel: game.player.intel };
   game.buildings = [];
-  game.update(1);
+  advance(game, 1);
   assert.equal(game.player.metal, beforeLoss.metal + UPGRADES.natoAmmo.cost.metal);
   assert.equal(game.player.fuel, beforeLoss.fuel + UPGRADES.natoAmmo.cost.fuel);
   assert.equal(game.player.intel, beforeLoss.intel + UPGRADES.natoAmmo.cost.intel);
@@ -122,7 +127,7 @@ test('mission restart clears queues, events, and completed modernization', () =>
   createResearchQueueRuntime(game);
   game.start();
   game.research('cageArmor');
-  game.update(20);
+  advance(game, 20);
   assert.equal(game.player.upgrades.has('cageArmor'), true);
   game.start();
   assert.equal(game.player.upgrades.size, 0);
