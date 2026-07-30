@@ -94,6 +94,7 @@ test('summarizes task-group doctrine without hidden global bonuses', () => {
   assert.equal(complete.doctrine.contactToAction, true);
   assert.equal(complete.doctrine.casualtyPreservation, true);
   assert.equal(complete.doctrine.combinedArmsReady, true);
+  assert.equal(Number.isInteger(complete.doctrine.supportLinkPairs), true);
   assert.ok(complete.doctrine.supportLinkPairs >= 4);
   assert.deepEqual(complete.missingCoreRoles, []);
   assert.equal(Object.isFrozen(complete), true);
@@ -124,4 +125,5 @@ test('lookup and input boundaries fail explicitly', () => {
   assert.throws(() => availableUkrainianInfantryUnits('ua.command-post'), /must be an array/);
   assert.throws(() => summarizeUkrainianInfantryTaskGroup('ua.line-infantry'), /must be an array/);
   assert.throws(() => summarizeUkrainianInfantryTaskGroup(['ua.unknown']), /Unknown Ukrainian infantry unit/);
+  assert.throws(() => summarizeUkrainianInfantryTaskGroup(['ua.line-infantry', 'ua.line-infantry']), /duplicate unit id/);
 });
