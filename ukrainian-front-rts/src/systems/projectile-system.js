@@ -1,4 +1,5 @@
 import { prepareProjectile } from '../combat/projectile-accuracy.js';
+import { recordDamageSource } from '../core/veterancy.js';
 import { randomBetween } from '../core/math.js';
 import { sampleSmokeLineDensity } from './smoke-system.js';
 
@@ -38,7 +39,10 @@ export function updateProjectiles(game, dt) {
     const remainingDistance = Math.hypot(dx, dy);
 
     if (remainingDistance < projectile.speed * dt + 7) {
-      if (projectile.hit && target.hp > 0) target.hp -= rollImpactDamage(projectile.damage);
+      if (projectile.hit && target.hp > 0) {
+        recordDamageSource(target, projectile.source);
+        target.hp -= rollImpactDamage(projectile.damage);
+      }
       projectile.life = 0;
       game.effects.push({
         kind: 'blast',
