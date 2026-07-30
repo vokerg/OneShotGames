@@ -1,4 +1,8 @@
+import { UNIT_TYPES } from '../config.js';
+import { createFormationAssignments } from '../core/formation.js';
+
 const PLAYER_ORDER_KINDS = new Set(['move', 'attackMove', 'attack', 'attackGround']);
+const FORMATION_ORDER_KINDS = new Set(['move', 'attackMove']);
 
 function cloneOrder(order) {
   if (!order) return null;
@@ -7,6 +11,34 @@ function cloneOrder(order) {
 
 function isPlayerOrder(order) {
   return Boolean(order && PLAYER_ORDER_KINDS.has(order.kind));
+}
+
+function formationSpacing(units) {
+  const largestDiameter = units.reduce((largest, unit) => {
+    const size = UNIT_TYPES[unit.type]?.size ?? 12;
+    return Math.max(largest, size * 2);
+  }, 0);
+  return Math.max(34, largestDiameter + 10);
+}
+
+function applyFormationOrders(units, x, y, target) {
+  if (target || units.length === 0) return;
+  const assignments = createFormationAssignments(units, { x, y }, {
+    spacing: formationSpacing(units),
+  });
+  const assignmentsByUnit = new Map(assignments.map((assignment) => [assignment.unitId, assignment]));
+
+  for (const unit of units) {
+    if (!FORMATION_ORDER_KINDS.has(unit.order?.kind)) continue;
+    const assignment = assignmentsByUnit.get(unit.id);
+    if (!assignment) continue;
+    unit.order = {
+      ...unit.order,
+      x: assignment.destination.x,
+      y: assignment.destination.y,
+      formation: assignment.formation,
+    };
+  }
 }
 
 export function ensureOrderQueue(unit) {
@@ -85,6 +117,7 @@ export function createQueuedOrderController(game, keyTarget = globalThis) {
     const previous = new Map(units.map((unit) => [unit.id, cloneOrder(unit.order)]));
     const accepted = originalIssue(x, y, target);
     if (!accepted) return false;
+    applyFormationOrders(units, x, y, target);
     for (const unit of units) {
       const issued = cloneOrder(unit.order);
       if (append) {
