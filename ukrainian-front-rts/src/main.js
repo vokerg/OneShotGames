@@ -21,6 +21,7 @@ import { createConstructionPlacementController } from './systems/construction-pl
 import { createConstructionProgressController } from './systems/construction-progress-runtime.js';
 import { createProductionExitController } from './systems/production-exit-system.js';
 import { createProductionQueueController } from './systems/production-queue-system.js';
+import { createResearchQueueRuntime } from './systems/research-queue-runtime.js';
 import { createResourceDropOffController } from './systems/resource-dropoff-system.js';
 import { createResourceIncomeTelemetryController } from './systems/resource-income-telemetry.js';
 import { createStanceController } from './systems/stance-system.js';
@@ -75,6 +76,7 @@ const disposeConstructionProgress = createConstructionProgressController(game);
 const disposeStances = createStanceController(game);
 const disposeTacticalCommands = createTacticalCommandController(game);
 const disposeVeterancy = createVeterancyController(game);
+const disposeResearchQueue = createResearchQueueRuntime(game);
 const disposeCommandCapacity = createCommandCapacityController(game);
 const disposeCombatReadability = createCombatReadabilityController(game, {
   storage: window.localStorage,
@@ -130,6 +132,7 @@ addEventListener(
     disposeProductionQueueControls();
     disposeCombatReadability();
     disposeCommandCapacity();
+    disposeResearchQueue();
     disposeVeterancy();
     disposeTacticalCommands();
     disposeStances();
