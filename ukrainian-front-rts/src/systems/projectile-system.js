@@ -1,6 +1,7 @@
 import { prepareProjectile } from '../combat/projectile-accuracy.js';
-import { recordDamageSource } from '../core/veterancy.js';
+import { DOMAIN_EVENT_TYPES } from '../core/events.js';
 import { randomBetween } from '../core/math.js';
+import { recordDamageSource } from '../core/veterancy.js';
 import { sampleSmokeLineDensity } from './smoke-system.js';
 import { recordStanceRetaliation } from './stance-system.js';
 
@@ -12,6 +13,13 @@ function activeSmokeClouds(game) {
     ...(game.smokeClouds || []),
     ...(game.effects || []).filter((effect) => effect.kind === 'smoke'),
   ];
+}
+
+function impactOutcome(projectile) {
+  if (projectile.impactOutcome) return projectile.impactOutcome;
+  if (projectile.deflected === true || projectile.penetrated === false) return 'deflect';
+  if (projectile.penetrated === true) return 'penetrate';
+  return projectile.hit ? 'hit' : 'miss';
 }
 
 export function updateProjectiles(game, dt) {
@@ -40,10 +48,14 @@ export function updateProjectiles(game, dt) {
     const remainingDistance = Math.hypot(dx, dy);
 
     if (remainingDistance < projectile.speed * dt + 7) {
+      let resolvedDamage = 0;
       if (projectile.hit && target.hp > 0) {
         recordStanceRetaliation(target, projectile.source, game.time);
         recordDamageSource(target, projectile.source);
-        target.hp -= rollImpactDamage(projectile.damage);
+        const damage = rollImpactDamage(projectile.damage);
+        const hpBefore = Math.max(0, target.hp);
+        target.hp -= damage;
+        resolvedDamage = Math.min(hpBefore, damage);
       }
       projectile.life = 0;
       game.effects.push({
@@ -58,6 +70,19 @@ export function updateProjectiles(game, dt) {
         smokeDensity: projectile.smokeDensity || 0,
         adjustedAccuracy: projectile.adjustedAccuracy,
       });
+      game.events?.emit?.(DOMAIN_EVENT_TYPES.IMPACT, {
+        sourceId: projectile.source?.id ?? null,
+        targetId: target.id ?? null,
+        sourceTeam: projectile.source?.team ?? projectile.team ?? null,
+        targetTeam: target.team ?? null,
+        position: { x: projectile.aimX, y: projectile.aimY },
+        targetPosition: { x: target.x, y: target.y },
+        projectileKind: projectile.kind ?? null,
+        impact: projectile.impact ?? 'kinetic',
+        hit: Boolean(projectile.hit),
+        outcome: impactOutcome(projectile),
+        damage: resolvedDamage,
+      }, { source: 'projectile-system' });
       continue;
     }
 
