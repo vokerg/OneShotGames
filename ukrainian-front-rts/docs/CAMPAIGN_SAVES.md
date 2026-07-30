@@ -29,6 +29,21 @@ Mission state may only reference an operation already unlocked in the campaign p
 
 Storage values use a namespaced key per slot. Manual saves and the fixed autosave slot share the same envelope contract. Replacing a slot preserves `createdAt` and changes `updatedAt`; autosave replacement never creates duplicate autosave entries.
 
+## Runtime composition
+
+`src/app/campaign-save-runtime.js` composes the pure service with application state without teaching the serializer about `Game`, campaign UI, or browser globals.
+
+`createCampaignSaveRuntime()` receives two authoritative callbacks:
+
+- `captureState()` returns `{ profile, missionState }` for a manual save or autosave;
+- `restoreState()` receives one frozen restoration record containing the validated profile, optional mission state, source slot, and save envelope.
+
+Using one restoration callback makes campaign and mission replacement a single application-level transaction. Missing, corrupt, unsupported, or storage-error results never call the restorer and therefore cannot partially mutate live state.
+
+`createBrowserCampaignSaveRuntime()` is the browser composition entry point. It accepts an injected `windowTarget`, reads that target's localStorage-compatible object, and otherwise delegates to the same runtime contract. This keeps browser access in `src/app/` and allows identical headless fixtures.
+
+The mission-state producer remains explicit. UFR-085 stores and returns a deterministic reference-free snapshot, while UFR-090 will define checkpoint capture and trigger-safe application of that snapshot to the live mission runtime.
+
 ## Operations
 
 The service exposes:
@@ -40,6 +55,8 @@ The service exposes:
 - `listSlots()` for deterministic metadata ordering;
 - `continueCampaign()` for the newest valid save;
 - `deleteSlot()` for idempotent removal.
+
+The runtime wrapper exposes the same user-facing save, autosave, load, Continue, list, and delete operations while automatically obtaining and applying application state through its callbacks.
 
 Valid slots are ordered by newest `updatedAt`, then newest `createdAt`, then stable slot ID. Corrupt or unsupported saves are listed after valid saves and are ignored by Continue rather than blocking healthy slots.
 
@@ -64,7 +81,7 @@ Campaign-profile migrations remain owned by the UFR-084/UFR-085 boundary. Save-e
 ## Ownership boundaries
 
 - UFR-084 owns campaign profile shape and mutation rules.
-- UFR-085 owns envelopes, storage-slot policy, autosave replacement, migration dispatch, corruption classification, and deterministic restoration payloads.
+- UFR-085 owns envelopes, storage-slot policy, autosave replacement, migration dispatch, corruption classification, application composition, and deterministic restoration payloads.
 - UFR-086 owns mission scripting and trigger/action state.
 - UFR-089 owns save/load/continue presentation and user interaction.
 - UFR-090 owns checkpoint capture and trigger-safe checkpoint restoration.
@@ -76,9 +93,11 @@ Run from `ukrainian-front-rts/`:
 
 ```bash
 node --check src/core/campaign-save-service.js
+node --check src/app/campaign-save-runtime.js
 node --check tests/campaign/campaign-save-service.test.mjs
-node --test tests/campaign/campaign-save-service.test.mjs
+node --check tests/campaign/campaign-save-runtime.test.mjs
+node --test tests/campaign/campaign-save-service.test.mjs tests/campaign/campaign-save-runtime.test.mjs
 bash verify.sh
 ```
 
-The focused fixtures cover canonical round trips, deterministic profile/mission restoration, overwrite metadata, autosave replacement, stable slot ordering, Continue selection, missing/corrupt/future-version classification, sequential migration, deletion, locked-operation rejection, and invalid snapshot rejection.
+The focused fixtures cover canonical round trips, deterministic profile/mission restoration, overwrite metadata, autosave replacement, stable slot ordering, Continue selection, missing/corrupt/future-version classification, sequential migration, deletion, locked-operation rejection, invalid snapshot rejection, atomic application callbacks, and localStorage-compatible browser composition.
