@@ -34,11 +34,13 @@ index.html
       ├─ src/art-pass.js                 additive visual override
       └─ src/game.js                     authoritative simulation facade
           ├─ src/config.js               content and balance instances
+          ├─ src/content/                focused declarative content modules
           ├─ src/content-schema.js       versioned content contracts/defaults
           ├─ src/core/
           │   ├─ random.js               seeded simulation random stream
           │   ├─ fixed-step-clock.js     fixed-tick accumulator
           │   └─ events.js               domain-event taxonomy and stream
+          ├─ src/ai/                     deterministic AI planning contracts
           └─ src/systems/
               ├─ simulation-phases.js    authoritative phase order
               ├─ research-queue-system.js pure research queue contract
@@ -48,7 +50,9 @@ index.html
               └─ wave-system.js
 ```
 
-`src/content-schema.js` is not a second content database. It describes the stable shape, defaults, identities, and references of content held in `src/config.js` and later focused content modules.
+`src/content-schema.js` is not a second content database. It describes the stable shape, defaults, identities, and references of content held in `src/config.js` and focused declarative modules under `src/content/`.
+
+`src/ai/` is a planning boundary, not an alternate simulation. It owns deterministic doctrine, knowledge, goal, budget, cadence, and inspection contracts. Later systems adapt its proposals into ordinary validated game commands.
 
 ### Headless composition
 
@@ -62,7 +66,7 @@ src/app/simulation-harness.js
   └─ emits reference-free snapshots
 ```
 
-The harness is a deterministic driver, not a second implementation of combat, economy, objectives, waves, production, commands, or simulation phases.
+The harness is a deterministic driver, not a second implementation of combat, economy, objectives, waves, production, commands, AI, or simulation phases.
 
 ### Verification composition
 
@@ -88,23 +92,24 @@ The ordered stage list has one owner: `scripts/lib/verification-runner.mjs`. CI 
 Dependencies point inward toward declarative data, pure contracts, and focused policies:
 
 ```text
-main → app/input/ui/render/game
+main → app/input/ui/render/game/ai
 runtime → injected Game/UI/Renderer interfaces + core fixed-step clock
 simulation harness → Game/core only
 ui/render → config + read-only game state + public game commands
-Game → config/schema/core/systems
-systems → config/schema/core/sibling systems
-config → schema/core only when needed
+Game → config/schema/core/ai/systems
+systems → config/schema/core/ai/sibling systems
+ai → config/schema/core/sibling ai modules
+config (including src/content/) → schema/core only when needed
 schema → core only when needed
 core → sibling core modules only
 production → never tests
 ```
 
-The architecture verifier enforces the declared production layers: `core`, `schema`, `config`, `systems`, `game`, `app`, `input`, `ui`, `render`, `audio`, and `main`. A new top-level source directory is an architecture change: add its ownership and allowed imports to the verifier, add accepted/rejected tooling fixtures, and update this document.
+The architecture verifier enforces the declared production layers: `core`, `schema`, `config`, `ai`, `systems`, `game`, `app`, `input`, `ui`, `render`, `audio`, and `main`. Focused modules under `src/content/` are classified as the declarative `config` layer. A new top-level source directory is an architecture change: add its ownership and allowed imports to the verifier, add accepted/rejected tooling fixtures, and update this document.
 
 ### Browser ownership
 
-Direct DOM access is restricted to browser-owned modules such as composition, runtime, input, UI, rendering, and dedicated audio adapters. Simulation, schema, config, core, and headless code must remain browser-independent.
+Direct DOM access is restricted to browser-owned modules such as composition, runtime, input, UI, rendering, and dedicated audio adapters. Simulation, AI, schema, config, core, and headless code must remain browser-independent.
 
 Direct `Audio`, `AudioContext`, media-source construction, and decoding belong in `src/audio/`. Other layers request sound through domain events or a dedicated injected service; they do not construct browser audio objects.
 
@@ -130,6 +135,18 @@ Translates browser gestures and configurable key bindings into public commands a
 
 Owns authoritative state and provides the public gameplay facade. Existing callers may use small public methods, but independently testable policies should be delegated to focused systems. `Game.update(stepSeconds)` is the only public simulation-tick boundary.
 
+### `src/ai/`
+
+Owns deterministic, browser-independent AI planning contracts. UFR-079 establishes:
+
+- immutable doctrine profiles with observed-only information policy;
+- blackboard state for scouting knowledge, ordered goals, exact budgets, cadence, and bounded history;
+- explicit contact observations and deterministic stale/forget aging;
+- fixed-tick decision scheduling that is independent of render-frame chunking;
+- deeply frozen, reference-free inspection snapshots.
+
+AI may import core, schema, declarative config/content, and sibling AI modules. It must not import `Game`, simulation systems, input, UI, rendering, app/runtime, or audio. Later `Game` or system adapters may consume AI proposals, but authoritative command validation, state mutation, simulation phase order, resource charging, and combat outcomes stay with their existing owners. See `docs/AI_ARCHITECTURE.md`.
+
 ### `src/systems/simulation-phases.js`
 
 Owns the fixed-step order:
@@ -139,7 +156,7 @@ clock → camera → units → projectiles → production → research → waves
       → destroyed-entity cleanup → objectives → outcome
 ```
 
-A phase may call a focused owner, but runtime, UI, renderer, input, and tests must not create alternate phase orders.
+A phase may call a focused owner, but runtime, UI, renderer, input, AI modules, and tests must not create alternate phase orders. A later task that installs AI decisions must name the owning phase and preserve deterministic command order.
 
 ### `src/systems/research-queue-system.js` and `research-queue-runtime.js`
 
@@ -157,11 +174,11 @@ Owns the default 30 Hz step, frame accumulator, maximum accepted frame delta, ti
 
 Owns the stable domain-event taxonomy and deterministic stream semantics: type, tick, monotonic sequence, source, immutable payload snapshot, subscriptions, peek, and drain.
 
-Simulation producers emit only after the authoritative mutation succeeds. UI, audio, telemetry, and replay code may consume events, but gameplay outcomes must not depend on a presentation consumer being attached. Event payloads contain stable IDs and values—not DOM nodes, renderer objects, or mutable entity references. See `docs/DOMAIN_EVENTS.md`.
+Simulation producers emit only after the authoritative mutation succeeds. UI, audio, telemetry, replay, and AI observation adapters may consume events, but gameplay outcomes must not depend on a presentation consumer being attached. Event payloads contain stable IDs and values—not DOM nodes, renderer objects, or mutable entity references. See `docs/DOMAIN_EVENTS.md`.
 
-### `src/config.js`
+### `src/config.js` and `src/content/`
 
-Owns declarative content and balance instances: factions, units, buildings, missions, abilities, upgrades, costs, and statistics. A content addition should remain data-only until it requires a genuinely new rule.
+Own declarative content and balance instances: factions, units, buildings, missions, abilities, upgrades, costs, statistics, and focused content contracts assigned by queue tasks. A content addition should remain data-only until it requires a genuinely new rule.
 
 ### `src/content-schema.js`
 
@@ -171,7 +188,7 @@ New required fields, identity changes, renames, type changes, and semantic chang
 
 ### Rendering and UI
 
-`render.js` and visual-pass modules translate state into pixels. `ui.js` and focused UI modules translate state into information and invoke public commands. Neither layer owns combat outcomes, resources, objectives, path decisions, production completion, or research completion.
+`render.js` and visual-pass modules translate state into pixels. `ui.js` and focused UI modules translate state into information and invoke public commands. Neither layer owns combat outcomes, resources, objectives, path decisions, production completion, research completion, or AI planning decisions.
 
 ## State, command, and event flow
 
@@ -180,7 +197,13 @@ browser input
   → named action / public Game command
   → authoritative state mutation during command handling or fixed phase
   → optional domain event after successful mutation
-  → read-only consumers (UI/audio/telemetry/replay)
+  → read-only consumers (UI/audio/telemetry/replay/AI observation adapter)
+
+permitted AI observations + own-side state
+  → AI blackboard
+  → fixed-cadence planner proposal
+  → public Game command or focused-system validation
+  → authoritative mutation and normal domain event flow
 
 animation frame
   → fixed-step accumulator
@@ -189,7 +212,7 @@ animation frame
   → one UI refresh
 ```
 
-Events are observation and integration records. They do not replace authoritative state, command validation, or fixed-step ordering.
+Events are observation and integration records. They do not replace authoritative state, command validation, fixed-step ordering, or fog-of-war restrictions. AI must produce the same plan from the same permitted observations, doctrine, seed, and tick sequence regardless of render-frame chunking.
 
 ## Browser update lifecycle
 
@@ -201,17 +224,24 @@ Events are observation and integration records. They do not replace authoritativ
 6. Each animation frame contributes a capped elapsed duration.
 7. The clock invokes `Game.update(FIXED_SIMULATION_STEP_SECONDS)` once per complete tick.
 8. `Game.update` runs the documented phase order, including production before research contention/progress.
-9. Seeded random draws and domain-event sequence order follow authoritative execution order.
-10. The renderer draws the latest completed state once.
-11. The UI refreshes from that same state.
+9. Any installed AI adapter evaluates only due fixed-tick cadence points and submits ordinary validated commands in a documented order.
+10. Seeded random draws and domain-event sequence order follow authoritative execution order.
+11. The renderer draws the latest completed state once.
+12. The UI refreshes from that same state.
 
-Changing tick duration, phase order, random draw order, event ordering, or command validation is deterministic-behavior work and requires corresponding tests and documentation.
+UFR-079 does not install an AI controller in the current runtime. UFR-080 and UFR-081 must document the concrete phase/command integration when they add economy and tactical behavior.
+
+Changing tick duration, phase order, random draw order, event ordering, AI decision cadence, or command validation is deterministic-behavior work and requires corresponding tests and documentation.
 
 ## Test layers
 
 ### `tests/unit/`
 
 Fast deterministic tests for pure functions, focused systems, and public state transitions. They use `node:test` and `node:assert`, construct explicit fixtures, and avoid DOM/canvas/network/wall-clock dependencies.
+
+### `tests/ai/`
+
+Deterministic tests for doctrine, knowledge, goals, budgets, cadence, inspection, and later planner policies. They must use explicit observations, stable IDs, exact ticks, and reference-free snapshots. Frame-chunking equivalence belongs here whenever a planner cadence changes.
 
 ### `tests/sim/`
 
@@ -235,15 +265,16 @@ bash verify.sh
 
 The command is fail-fast and preserves the first non-zero stage status. It runs shell syntax, stable recursive JavaScript syntax checks, all unit/simulation/tooling tests, queue fixtures and queue validation, schema/content/technology validation, seeded-random checks, and architecture checks. See `docs/VERIFICATION.md`.
 
-Browser playtesting remains required for affected player-visible flows; the Node verifier does not simulate canvas rendering, browser event delivery, autoplay policy, accessibility, or visual readability.
+Browser playtesting remains required for affected player-visible flows; the Node verifier does not simulate canvas rendering, browser event delivery, autoplay policy, accessibility, or visual readability. Pure AI-contract work has no browser flow until an AI controller is composed into a mission or skirmish.
 
 ## Extension rules
 
 Use `docs/CHANGE_GUIDE.md` for task-oriented routing. The non-negotiable rules are:
 
 - identify one authoritative owner before editing;
-- keep data, simulation, input, presentation, and verification concerns separate;
+- keep data, simulation, AI planning, input, presentation, and verification concerns separate;
 - preserve the public command and fixed-step boundaries;
+- keep AI information observed-only unless an authored mission explicitly grants stable intelligence;
 - add same-seed deterministic coverage for replay-relevant behavior;
 - update schema code and human-readable schema docs together;
 - add new domain-event types to the central taxonomy rather than using ad-hoc strings;
@@ -261,4 +292,4 @@ Gate A is closed when the following remain true on `main`:
 - the domain-event contract is dependency-free and one-directional;
 - architecture boundaries and browser ownership are executable checks;
 - one verification command owns syntax, tests, and repository contracts;
-- this architecture document and `docs/CHANGE_GUIDE.md` match those owners.
+- this architecture document and `docs/CHANGE_GUIDE.md` match those owners and new focused layers.

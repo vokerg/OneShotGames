@@ -70,6 +70,21 @@ test('accepts the documented production dependency direction', () => {
   }
 });
 
+test('accepts focused content and AI modules with inward-only imports', () => {
+  const root = validProject();
+  try {
+    write(root, 'src/content/faction-tech-trees.js', "import { TEAM } from '../config.js'; export { TEAM };");
+    write(root, 'src/ai/ai-contracts.js', "import { TEAM } from '../content/faction-tech-trees.js'; export { TEAM };");
+    write(root, 'src/systems/ai-runtime.js', "import { TEAM } from '../ai/ai-contracts.js'; export { TEAM };");
+    assert.deepEqual(verifyArchitectureProject({ projectRoot: root }), {
+      filesChecked: 18,
+      failures: [],
+    });
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('accepts dedicated UI modules as the UI layer and permits UI-owned DOM adapters', () => {
   const root = validProject();
   try {
@@ -95,6 +110,10 @@ test('rejects forbidden layer imports and imports outside src', () => {
     .some((failure) => failure.includes('cannot import outside src')));
   assert.ok(verifyMutation('src/ui/ui-state.js', "import { Game } from '../game.js'; export { Game };")
     .some((failure) => failure.includes('ui layer cannot import game layer')));
+  assert.ok(verifyMutation('src/ai/planner.js', "import { Game } from '../game.js'; export { Game };")
+    .some((failure) => failure.includes('ai layer cannot import game layer')));
+  assert.ok(verifyMutation('src/ai/planner.js', "import { TEAM } from '../systems/wave-system.js'; export { TEAM };")
+    .some((failure) => failure.includes('ai layer cannot import systems layer')));
 });
 
 test('rejects unclassified source modules instead of allowing a boundary bypass', () => {
@@ -109,6 +128,8 @@ test('rejects direct DOM access outside browser-owned modules', () => {
   );
   assert.ok(failures.some((failure) => failure.includes('direct DOM access is forbidden here (document)')));
   assert.ok(failures.some((failure) => failure.includes('direct DOM access is forbidden here (DOM query/mutation)')));
+  assert.ok(verifyMutation('src/ai/debug.js', 'export const inspect = () => document.body;')
+    .some((failure) => failure.includes('direct DOM access is forbidden here (document)')));
 });
 
 test('rejects direct audio calls outside the audio service boundary', () => {
