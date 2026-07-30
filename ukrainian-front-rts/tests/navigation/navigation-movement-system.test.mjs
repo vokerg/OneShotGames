@@ -30,9 +30,15 @@ function makeUnit({
   };
 }
 
-function makeGame({ buildings = [], unitType = 'uaInfantry', order = null, units = null } = {}) {
+function makeGame({
+  buildings = [],
+  unitType = 'uaInfantry',
+  order = null,
+  units = null,
+  updateUnit = null,
+} = {}) {
   const gameUnits = units ?? [makeUnit({ type: unitType, order })];
-  return {
+  const game = {
     missionIndex: 0,
     terrain: Array((WORLD.w / WORLD.tile) * (WORLD.h / WORLD.tile)).fill(0),
     buildings,
@@ -49,6 +55,8 @@ function makeGame({ buildings = [], unitType = 'uaInfantry', order = null, units
       }
     },
   };
+  if (updateUnit) game.updateUnit = updateUnit;
+  return game;
 }
 
 function depot(id = 10) {
@@ -178,4 +186,65 @@ test('produces identical fixed-step collision results for reversed unit arrays',
   updateUnitsWithNavigation(second, 1 / 30);
 
   assert.deepEqual(normalizedPositions(first.units), normalizedPositions(second.units));
+});
+
+test('uses a local detour and then resumes a stalled waypoint route', () => {
+  const destination = cellCenter(5, 1);
+  const routeY = cellCenter(0, 1).y;
+  let detourReached = false;
+  let stalledTicks = 0;
+  const detourTargets = [];
+  const game = makeGame({
+    order: { kind: 'move', ...destination },
+    updateUnit(subject) {
+      if (!subject.order) return;
+      if (subject.order.y !== routeY) {
+        detourTargets.push({ x: subject.order.x, y: subject.order.y });
+        subject.x = subject.order.x;
+        subject.y = subject.order.y;
+        subject.order = null;
+        detourReached = true;
+        return;
+      }
+      if (!detourReached) {
+        stalledTicks += 1;
+        return;
+      }
+      subject.x = subject.order.x;
+      subject.y = subject.order.y;
+      subject.order = null;
+    },
+  });
+  const unit = game.units[0];
+
+  for (let step = 0; step < 120 && unit.order; step += 1) {
+    updateUnitWithNavigation(game, unit, 1 / 30);
+  }
+
+  assert.equal(stalledTicks >= 22, true);
+  assert.equal(detourTargets.length, 1);
+  assert.notEqual(detourTargets[0].y, routeY);
+  assert.deepEqual({ x: unit.x, y: unit.y }, destination);
+  assert.equal(unit.order, null);
+  assert.equal(game.lastError, '');
+});
+
+test('safely cancels a permanently stuck order after bounded detour attempts', () => {
+  const order = { kind: 'move', ...cellCenter(5, 1) };
+  const game = makeGame({
+    order,
+    updateUnit() {},
+  });
+  const unit = game.units[0];
+
+  let steps = 0;
+  for (; steps < 180 && unit.order; steps += 1) {
+    updateUnitWithNavigation(game, unit, 1 / 30);
+  }
+
+  assert.equal(steps < 180, true);
+  assert.equal(unit.order, null);
+  assert.equal(unit.target, null);
+  assert.equal(game.lastError, 'Unit is blocked and cannot reach the destination.');
+  assert.equal(Object.hasOwn(order, 'navigationRecovery'), false);
 });

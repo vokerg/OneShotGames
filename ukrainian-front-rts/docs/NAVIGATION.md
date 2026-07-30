@@ -1,6 +1,6 @@
 # Navigation contracts
 
-`src/navigation/navigation-grid.js` owns deterministic, browser-independent passability data. `src/navigation/pathfinder.js` owns pure path search over that data. `src/navigation/waypoint-route.js` translates path results into runtime-ready world-space waypoints. `src/systems/navigation-movement-system.js` synchronizes runtime map/building state, delegates fixed-step unit movement through those routes, and invokes `src/systems/unit-collision-system.js` after all units have advanced for the step.
+`src/navigation/navigation-grid.js` owns deterministic, browser-independent passability data. `src/navigation/pathfinder.js` owns pure path search over that data. `src/navigation/waypoint-route.js` translates path results into runtime-ready world-space waypoints. `src/navigation/movement-recovery.js` owns deterministic stuck detection and bounded local-detour selection. `src/systems/navigation-movement-system.js` synchronizes runtime map/building state, delegates fixed-step unit movement through those routes, applies the recovery policy, and invokes `src/systems/unit-collision-system.js` after all units have advanced for the step.
 
 ## Coordinate model
 
@@ -94,7 +94,19 @@ Pairs are evaluated in stable unit-ID order. Exact coordinate overlaps use an ID
 
 Displacement is mass weighted using radius squared. Larger vehicles therefore move less than lighter infantry when they overlap. The collision system changes positions only: it does not rewrite orders, paths, facing, combat targets, or authored unit statistics.
 
-The resolver requires unique stable unit IDs and returns frozen diagnostics containing considered-unit count, resolved-pair count, and maximum observed overlap. UFR-022 may expose those counters through the path service; formation preservation and stuck recovery remain UFR-023 and UFR-024.
+The resolver requires unique stable unit IDs and returns frozen diagnostics containing considered-unit count, resolved-pair count, and maximum observed overlap. UFR-022 may expose those counters through the path service; formation preservation remains independently owned.
+
+## Stuck recovery and local detours
+
+Each active ground waypoint keeps fixed-step recovery state on its order. Progress is measured against the best distance reached toward the current movement target, not raw displacement. Side-to-side oscillation therefore continues accumulating stalled time unless the unit establishes a new best distance.
+
+After 0.75 seconds without at least one world-unit of progress, the recovery policy selects one adjacent passable cell as a temporary detour. Candidates use the unit movement layer, reject diagonal corner cutting, exclude cells already attempted for the current waypoint, prefer lateral forward progress, and use row/column ordering to break ties deterministically.
+
+Reaching a detour does not advance the route. The movement system restores the original formation-aware waypoint and resumes normal following. Recovery state resets when the waypoint advances, the route is invalidated, or the order changes.
+
+A waypoint permits at most three distinct local detours. If no valid candidate exists or all attempts are exhausted, the movement order and target are cleared safely. Player-owned Ukrainian units receive `Unit is blocked and cannot reach the destination.` feedback instead of remaining indefinitely stalled or oscillating.
+
+The recovery policy uses no wall clock, randomness, path-cache mutation, collision rewrite, or command-type expansion. It is a bounded local fallback above the existing path and collision contracts.
 
 ## Determinism and ownership
 
@@ -102,8 +114,9 @@ The resolver requires unique stable unit IDs and returns frozen diagnostics cont
 - Blocker queries and snapshots sort IDs.
 - Snapshot arrays, path results, path cells, and waypoint arrays are frozen.
 - Navigation modules import no game, renderer, UI, DOM, or browser service.
-- `src/systems/navigation-movement-system.js` owns runtime synchronization and fixed-step movement sequencing.
+- `src/navigation/movement-recovery.js` owns pure progress tracking and local-detour candidate ordering.
+- `src/systems/navigation-movement-system.js` owns runtime synchronization, fixed-step movement sequencing, recovery-state application, and safe order cancellation.
 - `src/systems/unit-collision-system.js` owns unit-to-unit footprint separation only.
 - `Game` remains authoritative for speed, facing, buffs, combat acquisition, and physical movement before separation.
-- Path caching, formations, stuck recovery, transports, and additional command types remain later queue tasks.
-- Renderer feedback may mirror passability, route, and collision results but must not become authoritative.
+- Path caching, transports, and additional command types remain separate queue tasks.
+- Renderer feedback may mirror passability, route, collision, and recovery results but must not become authoritative.

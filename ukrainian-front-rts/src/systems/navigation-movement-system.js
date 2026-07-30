@@ -4,6 +4,17 @@ import {
   resolveFormationWaypoint,
 } from '../core/formation.js';
 import {
+  MOVEMENT_RECOVERY_DEFAULTS,
+  MOVEMENT_RECOVERY_STATUSES,
+  activateLocalDetour,
+  chooseLocalDetour,
+  clearMovementRecoveryState,
+  ensureMovementRecoveryState,
+  finishLocalDetour,
+  recordMovementProgress,
+  retargetMovementRecoveryState,
+} from '../navigation/movement-recovery.js';
+import {
   MOVEMENT_LAYERS,
   TERRAIN_TYPES,
   createNavigationGridFromMapData,
@@ -22,6 +33,7 @@ import {
 import { resolveUnitOverlaps } from './unit-collision-system.js';
 
 const NAVIGATION_ORDER_KINDS = new Set(['move', 'attackMove']);
+const STUCK_ORDER_MESSAGE = 'Unit is blocked and cannot reach the destination.';
 
 function placementSignature(building) {
   const placement = building.placement;
@@ -100,6 +112,13 @@ function routeFailureMessage(status) {
   return 'Destination is unreachable.';
 }
 
+function cancelNavigationOrder(game, unit, order, message) {
+  if (unit.team === TEAM.UA) game.lastError = message;
+  if (unit.order === order) unit.order = null;
+  unit.target = null;
+  clearMovementRecoveryState(order);
+}
+
 function ensureNavigationRoute(game, unit, order, state) {
   if (order.navigationRoute && order.navigationRevision === state.revision) return order.navigationRoute;
 
@@ -112,13 +131,52 @@ function ensureNavigationRoute(game, unit, order, state) {
     { layer: unitNavigationLayer(UNIT_TYPES[unit.type]) },
   );
   order.navigationRevision = state.revision;
+  clearMovementRecoveryState(order);
 
   if (order.navigationRoute.status !== PATH_STATUSES.FOUND) {
-    if (unit.team === TEAM.UA) game.lastError = routeFailureMessage(order.navigationRoute.status);
-    unit.order = null;
-    unit.target = null;
+    cancelNavigationOrder(game, unit, order, routeFailureMessage(order.navigationRoute.status));
   }
   return order.navigationRoute;
+}
+
+function applyFormationState(order, formationWaypoint) {
+  if (!order.formation) return;
+  order.formationCompression = formationWaypoint.compression;
+  order.formationState = formationWaypoint.state;
+}
+
+function restoreRouteTarget(order, route, state, stats) {
+  const next = currentWaypoint(route);
+  if (!next) return false;
+  const nextFormationWaypoint = resolveFormationWaypoint(state.grid, next, order, {
+    layer: unitNavigationLayer(stats),
+  });
+  order.x = nextFormationWaypoint.x;
+  order.y = nextFormationWaypoint.y;
+  applyFormationState(order, nextFormationWaypoint);
+  return true;
+}
+
+function attemptMovementRecovery(game, unit, order, state, stats, formationWaypoint) {
+  const recovery = order.navigationRecovery;
+  if (recovery.detourAttempts >= MOVEMENT_RECOVERY_DEFAULTS.maxDetours) {
+    cancelNavigationOrder(game, unit, order, STUCK_ORDER_MESSAGE);
+    return false;
+  }
+
+  const detour = chooseLocalDetour(state.grid, unit, formationWaypoint, {
+    layer: unitNavigationLayer(stats),
+    attemptedCellKeys: recovery.attemptedCellKeys,
+  });
+  if (!detour) {
+    cancelNavigationOrder(game, unit, order, STUCK_ORDER_MESSAGE);
+    return false;
+  }
+
+  activateLocalDetour(recovery, detour, unit);
+  order.x = detour.point.x;
+  order.y = detour.point.y;
+  return true;
 }
 
 export function updateUnitWithNavigation(game, unit, stepSeconds, state = synchronizeNavigationGrid(game)) {
@@ -134,6 +192,7 @@ export function updateUnitWithNavigation(game, unit, stepSeconds, state = synchr
 
   const waypoint = currentWaypoint(route);
   if (!waypoint) {
+    clearMovementRecoveryState(order);
     unit.order = null;
     return;
   }
@@ -141,29 +200,33 @@ export function updateUnitWithNavigation(game, unit, stepSeconds, state = synchr
   const formationWaypoint = resolveFormationWaypoint(state.grid, waypoint, order, {
     layer: unitNavigationLayer(stats),
   });
-  order.x = formationWaypoint.x;
-  order.y = formationWaypoint.y;
-  if (order.formation) {
-    order.formationCompression = formationWaypoint.compression;
-    order.formationState = formationWaypoint.state;
-  }
+  const recovery = ensureMovementRecoveryState(order, route, unit, formationWaypoint);
+  retargetMovementRecoveryState(recovery, unit, formationWaypoint);
+  const movementTarget = recovery.detour?.point ?? formationWaypoint;
+  order.x = movementTarget.x;
+  order.y = movementTarget.y;
+  applyFormationState(order, formationWaypoint);
+  const wasFollowingDetour = Boolean(recovery.detour);
   updateUnitWithTerrainMovement(game, unit, stepSeconds, state.grid);
 
   if (unit.order === null) {
-    route.nextIndex += 1;
-    const next = currentWaypoint(route);
-    if (next) {
-      const nextFormationWaypoint = resolveFormationWaypoint(state.grid, next, order, {
-        layer: unitNavigationLayer(stats),
-      });
-      order.x = nextFormationWaypoint.x;
-      order.y = nextFormationWaypoint.y;
-      if (order.formation) {
-        order.formationCompression = nextFormationWaypoint.compression;
-        order.formationState = nextFormationWaypoint.state;
-      }
+    if (wasFollowingDetour) {
+      finishLocalDetour(recovery, unit, formationWaypoint);
+      order.x = formationWaypoint.x;
+      order.y = formationWaypoint.y;
       unit.order = order;
+      return;
     }
+
+    route.nextIndex += 1;
+    clearMovementRecoveryState(order);
+    if (restoreRouteTarget(order, route, state, stats)) unit.order = order;
+    return;
+  }
+
+  const progress = recordMovementProgress(recovery, unit, stepSeconds);
+  if (progress.status === MOVEMENT_RECOVERY_STATUSES.STUCK) {
+    attemptMovementRecovery(game, unit, order, state, stats, formationWaypoint);
   }
 }
 
