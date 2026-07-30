@@ -194,15 +194,15 @@ export function updateResearchQueues(game, stepSeconds) {
 }
 
 export function createResearchQueueRuntime(game) {
-  for (const method of ['start', 'update', 'addBuilding', 'selectedEntities', 'unitStats', 'fail']) {
+  for (const method of ['start', 'addBuilding', 'selectedEntities', 'unitStats', 'fail']) {
     if (typeof game?.[method] !== 'function') throw new TypeError(`Research runtime requires game.${method}().`);
   }
   const originalStart = game.start.bind(game);
-  const originalUpdate = game.update.bind(game);
   const originalAddBuilding = game.addBuilding.bind(game);
   const originalResearch = game.research?.bind(game);
   const previousCancelResearch = game.cancelResearch;
   const previousSetResearchPaused = game.setResearchPaused;
+  const previousUpdateResearch = game.updateResearch;
   const previousStates = game.researchQueueStates;
   const previousEvents = game.researchQueueEvents;
 
@@ -221,10 +221,7 @@ export function createResearchQueueRuntime(game) {
   game.research = (techId) => queueUpgradeResearch(game, techId);
   game.cancelResearch = (facilityId, itemId) => cancelQueuedResearch(game, facilityId, itemId);
   game.setResearchPaused = (facilityId, paused) => setQueuedResearchPaused(game, facilityId, paused);
-  game.update = (stepSeconds) => {
-    if (!game.gameOver) updateResearchQueues(game, stepSeconds);
-    return originalUpdate(stepSeconds);
-  };
+  game.updateResearch = (stepSeconds) => updateResearchQueues(game, stepSeconds);
 
   if (game.player) {
     game.researchQueueStates = {};
@@ -234,7 +231,6 @@ export function createResearchQueueRuntime(game) {
 
   return () => {
     game.start = originalStart;
-    game.update = originalUpdate;
     game.addBuilding = originalAddBuilding;
     if (originalResearch) game.research = originalResearch;
     else delete game.research;
@@ -242,6 +238,8 @@ export function createResearchQueueRuntime(game) {
     else game.cancelResearch = previousCancelResearch;
     if (previousSetResearchPaused === undefined) delete game.setResearchPaused;
     else game.setResearchPaused = previousSetResearchPaused;
+    if (previousUpdateResearch === undefined) delete game.updateResearch;
+    else game.updateResearch = previousUpdateResearch;
     for (const building of game.buildings || []) delete building.researchQueueState;
     if (previousStates === undefined) delete game.researchQueueStates;
     else game.researchQueueStates = previousStates;
