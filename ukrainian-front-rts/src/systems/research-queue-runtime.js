@@ -112,6 +112,12 @@ function selectedResearchFacility(game) {
   return game.selectedEntities().find(isResearchFacility) || null;
 }
 
+function productionBusyForResearch(game, building) {
+  const snapshot = game.researchProductionBusyBuildingIds;
+  if (snapshot instanceof Set) return snapshot.has(building.id);
+  return Boolean(building.queue?.length && !building.productionPaused);
+}
+
 export function queueUpgradeResearch(game, techId) {
   game.lastError = '';
   if (game.gameOver) return false;
@@ -185,7 +191,7 @@ export function updateResearchQueues(game, stepSeconds) {
   for (const building of researchFacilities(game)) {
     if (building.hp <= 0 || building.underConstruction) continue;
     const result = updateResearchQueue(ensureFacilityState(game, building), stepSeconds, {
-      productionBusy: Boolean(building.queue?.length && !building.productionPaused),
+      productionBusy: productionBusyForResearch(game, building),
     });
     installFacilityState(game, building, result.state);
     result.events.forEach((event) => record(game, event));
