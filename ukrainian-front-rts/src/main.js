@@ -22,6 +22,7 @@ import { createConstructionProgressController } from './systems/construction-pro
 import { createProductionExitController } from './systems/production-exit-system.js';
 import { createProductionQueueController } from './systems/production-queue-system.js';
 import { createResourceDropOffController } from './systems/resource-dropoff-system.js';
+import { createResourceIncomeTelemetryController } from './systems/resource-income-telemetry.js';
 import { createStanceController } from './systems/stance-system.js';
 import { createTacticalCommandController } from './systems/tactical-command-system.js';
 import { createTransportController } from './systems/transport-system.js';
@@ -31,6 +32,7 @@ import { UI } from './ui.js';
 import { installCombatReadabilityFeedback } from './ui/combat-readability-feedback.js';
 import { createCombatReadabilityController } from './ui/combat-readability-runtime.js';
 import { installCommandCapacityFeedback } from './ui/command-capacity-feedback.js';
+import { installEconomyHudOverview } from './ui/economy-hud-overview.js';
 import { installProductionExitFeedback } from './ui/production-exit-feedback.js';
 import { installStanceCommandCard } from './ui/stance-command-card.js';
 import { installTacticalCommandCard } from './ui/tactical-command-card.js';
@@ -65,6 +67,7 @@ const disposeConstructionPlacement = createConstructionPlacementController(game,
   synchronizeNavigation: synchronizeNavigationGrid,
 });
 const disposeWorkerGather = createWorkerGatherController(game);
+const disposeResourceIncomeTelemetry = createResourceIncomeTelemetryController(game);
 const disposeResourceDropOff = createResourceDropOffController(game, {
   synchronizeNavigation: synchronizeNavigationGrid,
 });
@@ -84,6 +87,7 @@ const disposeProductionExitFeedback = installProductionExitFeedback({ game, ui }
 const disposeWorkerOverview = installWorkerOverview({ game, ui, windowTarget: window });
 const disposeCommandCapacityFeedback = installCommandCapacityFeedback({ game, ui });
 const disposeCombatReadabilityFeedback = installCombatReadabilityFeedback({ game, ui });
+const disposeEconomyHudOverview = installEconomyHudOverview({ game, ui });
 const disposeConstructionPreview = installConstructionPreview({ game, renderer });
 const disposeCombatReadabilityOverlay = installCombatReadabilityOverlay({ game, renderer });
 const disposeConstructionPlacementInput = installConstructionPlacementInput({ game, ui });
@@ -115,6 +119,7 @@ addEventListener(
     disposeConstructionPlacementInput();
     disposeCombatReadabilityOverlay();
     disposeConstructionPreview();
+    disposeEconomyHudOverview();
     disposeCombatReadabilityFeedback();
     disposeCommandCapacityFeedback();
     disposeWorkerOverview();
@@ -130,6 +135,7 @@ addEventListener(
     disposeStances();
     disposeConstructionProgress();
     disposeResourceDropOff();
+    disposeResourceIncomeTelemetry();
     disposeWorkerGather();
     disposeConstructionPlacement();
     disposeTransportInput();
