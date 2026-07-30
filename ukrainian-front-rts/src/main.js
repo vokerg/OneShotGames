@@ -6,12 +6,14 @@ import { createAttackGroundController, installAttackGroundInput } from './input/
 import { installBattlefieldInput } from './input/battlefield-input.js';
 import { installConstructionPlacementInput } from './input/construction-placement-input.js';
 import { installDoubleClickSelection } from './input/double-click-selection.js';
+import { installProductionQueueControls } from './input/production-queue-controls.js';
 import { createQueuedOrderController } from './input/queued-orders.js';
 import { installTransportInput } from './input/transport-input.js';
 import { synchronizeNavigationGrid } from './systems/navigation-movement-system.js';
 import { Renderer } from './render.js';
 import { installConstructionPreview } from './render/construction-preview.js';
 import { createConstructionPlacementController } from './systems/construction-placement-system.js';
+import { createProductionQueueController } from './systems/production-queue-system.js';
 import { createTransportController } from './systems/transport-system.js';
 import { createWorkerGatherController } from './systems/worker-gather-system.js';
 import { UI } from './ui.js';
@@ -33,6 +35,7 @@ const renderer = new Renderer(game, canvas, minimap, portrait);
 const runtime = createGameRuntime({ game, renderer, ui });
 const disposeAttackGround = createAttackGroundController(game);
 const disposeQueuedOrders = createQueuedOrderController(game, window);
+const disposeProductionQueue = createProductionQueueController(game);
 const disposeTransport = createTransportController(game, {
   synchronizeNavigation: synchronizeNavigationGrid,
 });
@@ -41,6 +44,7 @@ const disposeConstructionPlacement = createConstructionPlacementController(game,
   synchronizeNavigation: synchronizeNavigationGrid,
 });
 const disposeWorkerGather = createWorkerGatherController(game);
+const disposeProductionQueueControls = installProductionQueueControls({ game, ui });
 const disposeConstructionPreview = installConstructionPreview({ game, renderer });
 const disposeConstructionPlacementInput = installConstructionPlacementInput({ game, ui });
 const disposeAttackGroundInput = installAttackGroundInput({ game, canvas, ui });
@@ -66,10 +70,12 @@ addEventListener(
     disposeAttackGroundInput();
     disposeConstructionPlacementInput();
     disposeConstructionPreview();
+    disposeProductionQueueControls();
     disposeWorkerGather();
     disposeConstructionPlacement();
     disposeTransportInput();
     disposeTransport();
+    disposeProductionQueue();
     disposeQueuedOrders();
     disposeAttackGround();
     runtime.stop();
