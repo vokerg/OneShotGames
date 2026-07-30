@@ -1,13 +1,47 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createEconomyHudModel, createEconomyHudCommands } from '../../src/core/economy-hud-model.js';
+import { createEconomyHudModel, economyHudSignature, productionQueueCommands } from '../../src/core/economy-hud-model.js';
 
-test('builds stable economy overview and commands', () => {
-  const model = createEconomyHudModel({ productionQueues: [{ id: 'q', items: [{ id: 'a', progress: 2 }, { id: 'b', progress: -1 }], paused: false }], researchQueues: [{ id: 'r', researchId: 'tech', progress: 0.5 }], incomeRates: { metal: 3, energy: 2 }, capacity: { used: 8, reserved: 2, limit: 10, forecast: 12 } });
-  assert.deepEqual(Object.keys(model.income), ['energy', 'metal']);
-  assert.equal(model.queues[0].items[0].progress, 1);
-  assert.equal(model.queues[0].items[1].progress, 0);
-  assert.equal(model.capacity.forecast, 12);
-  assert.ok(createEconomyHudCommands(model).some((command) => command.type === 'move-production'));
+function fixture() {
+  return createEconomyHudModel({
+    resources: { metal: 320, fuel: 90, intel: 40 },
+    incomeRates: { metal: 80, fuel: 40, intel: 0 },
+    production: [{
+      buildingId: 7,
+      name: 'Workshop',
+      paused: false,
+      repeat: true,
+      queue: [
+        { id: 'a', type: 'uaIfv', name: 'Bradley', duration: 10, left: 5, pop: 4 },
+        { id: 'b', type: 'uaTank', name: 'T-64BV', duration: 8, left: 8, pop: 5 },
+      ],
+      rally: { waypoints: [{ x: 100, y: 200 }] },
+    }],
+    research: [{ facilityId: 'workshop:7', items: [{ id: 'r', techId: 'thermal', progress: 0.25, percent: 25 }] }],
+    prerequisites: [{ id: 'thermal', kind: 'research', label: 'Thermal', available: false, reasons: ['Needs intel'] }],
+    capacity: { fielded: 8, reserved: 9, used: 17, capacity: 20, forecastLimit: 28 },
+  });
+}
+
+test('normalizes and deeply freezes the complete economy overview', () => {
+  const model = fixture();
+  assert.deepEqual(model.resources.map(({ id, incomePerMinute }) => [id, incomePerMinute]), [['metal', 80], ['fuel', 40], ['intel', 0]]);
+  assert.equal(model.production[0].queue[0].percent, 50);
+  assert.equal(model.production[0].queue[1].canMoveUp, true);
+  assert.equal(model.capacity.forecastAvailable, 11);
   assert.ok(Object.isFrozen(model));
+  assert.ok(Object.isFrozen(model.production[0].queue[0]));
+  assert.throws(() => { model.capacity.used = 0; }, TypeError);
+});
+
+test('emits facility-scoped queue and rally commands', () => {
+  const commands = productionQueueCommands(fixture().production[0]);
+  assert.ok(commands.some((command) => command.action === 'cancel-production' && command.index === 0));
+  assert.ok(commands.some((command) => command.action === 'move-production' && command.fromIndex === 1 && command.toIndex === 0));
+  assert.ok(commands.some((command) => command.action === 'set-production-repeat' && command.repeat === false));
+  assert.ok(commands.some((command) => command.action === 'clear-production-rally'));
+});
+
+test('produces a stable render signature for equivalent snapshots', () => {
+  assert.equal(economyHudSignature(fixture()), economyHudSignature(fixture()));
 });
