@@ -1,6 +1,7 @@
 import { TEAM, WORLD } from '../config.js';
 import { clamp } from '../core/math.js';
 import { updateUnitsWithNavigation } from './navigation-movement-system.js';
+import { updateProductionQueues } from './production-queue-system.js';
 
 function requirePositiveStep(stepSeconds) {
   if (!Number.isFinite(stepSeconds) || stepSeconds <= 0) {
@@ -31,7 +32,7 @@ function updateProjectiles(game, stepSeconds) {
 }
 
 function updateProduction(game, stepSeconds) {
-  game.updateProduction(stepSeconds);
+  updateProductionQueues(game, stepSeconds);
 }
 
 function updateWaves(game, stepSeconds) {
