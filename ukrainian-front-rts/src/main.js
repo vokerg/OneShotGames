@@ -17,6 +17,7 @@ import { installConstructionPreview } from './render/construction-preview.js';
 import { createConstructionPlacementController } from './systems/construction-placement-system.js';
 import { createProductionExitController } from './systems/production-exit-system.js';
 import { createProductionQueueController } from './systems/production-queue-system.js';
+import { createResourceDropOffController } from './systems/resource-dropoff-system.js';
 import { createTacticalCommandController } from './systems/tactical-command-system.js';
 import { createTransportController } from './systems/transport-system.js';
 import { createVeterancyController } from './systems/veterancy-system.js';
@@ -55,6 +56,9 @@ const disposeConstructionPlacement = createConstructionPlacementController(game,
   synchronizeNavigation: synchronizeNavigationGrid,
 });
 const disposeWorkerGather = createWorkerGatherController(game);
+const disposeResourceDropOff = createResourceDropOffController(game, {
+  synchronizeNavigation: synchronizeNavigationGrid,
+});
 const disposeTacticalCommands = createTacticalCommandController(game);
 const disposeVeterancy = createVeterancyController(game);
 const disposeProductionQueueControls = installProductionQueueControls({ game, ui });
@@ -96,6 +100,7 @@ addEventListener(
     disposeProductionQueueControls();
     disposeVeterancy();
     disposeTacticalCommands();
+    disposeResourceDropOff();
     disposeWorkerGather();
     disposeConstructionPlacement();
     disposeTransportInput();
