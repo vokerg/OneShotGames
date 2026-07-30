@@ -1,22 +1,29 @@
 # Economy HUD overview
 
-UFR-067 adds an operational ledger that exposes the economy systems already owned by production, research, rally, worker, and command-capacity modules. The HUD is a consumer: simulation mutation continues through public game commands.
+UFR-067 adds an operational ledger over the production, research, rally, worker, and command-capacity systems. Presentation remains a consumer: simulation mutations occur through public game commands and the authoritative fixed-step phase order.
 
 ## Player-facing coverage
 
 - all Ukrainian production facilities, active progress, ordered queue contents, pause/repeat state, blocked exits, and facility focus;
 - cancellation and deterministic reordering through the existing production queue commands;
 - rally waypoint coordinates and rally clearing;
-- timed research descriptors when a facility exposes UFR-061 research queue state, plus current modernization availability and exact prerequisite/resource explanations;
-- resource stockpiles and delivered income during the trailing 60 simulation seconds;
-- fielded, reserved, used, and available command capacity, including capacity sources still under construction.
+- live timed modernization queues, progress, production contention, pause/resume, cancellation, proportional refunds, and completed-upgrade application;
+- exact production and research availability explanations for resources, prerequisites, capacity, queue limits, facility construction, already-completed work, and already-queued work;
+- resource stockpiles and normalized delivered income per minute over the trailing 60 simulation seconds;
+- fielded, reserved, used, available, and forecast command capacity, including capacity sources still under construction.
 
 ## Ownership
 
-`src/core/economy-hud-model.js` normalizes and freezes presentation data. `src/ui/economy-hud-overview.js` adapts live game state and owns DOM rendering/event delegation. `src/systems/resource-income-telemetry.js` records positive resource deliveries without changing gather rates, worker orders, resource balances, or spending.
+`src/core/economy-hud-model.js` normalizes and deeply freezes presentation data. `src/ui/economy-hud-overview.js` adapts live state, renders the browser panel, and delegates player actions to public commands. `src/systems/resource-income-telemetry.js` observes positive worker-delivery deltas without changing gather rates, worker orders, balances, or spending.
+
+`src/systems/research-queue-runtime.js` consumes the immutable UFR-061 queue contract. It owns facility-scoped live state, resource charges/refunds, cross-facility prerequisite synchronization, facility-loss refunds, and completion application. It exposes public queue commands and a narrow update delegate. `src/systems/simulation-phases.js` invokes that delegate only in the authoritative `production → research → waves` order.
 
 Queue buttons focus the relevant facility and invoke public `Game` commands. The HUD never edits production arrays, research state, rally arrays, resources, upgrades, or capacity fields directly.
 
-## Compatibility
+## Research timing and contention
 
-Timed research is rendered from either `building.researchQueueState` or `game.researchQueueStates`. Missions that have not yet composed the UFR-061 queue contract still receive modernization availability and prerequisite explanations through the existing upgrade data. Research cancellation is offered only when the composition layer exposes a public `game.cancelResearch(facilityId, itemId)` command.
+Upgrade records may provide an explicit positive `researchTime`. Existing upgrade records without that field use the deterministic fallback `12 + tier × 8` seconds. Repair workshops use UFR-061's `researchPauses` contention policy: an active production queue owns the facility for that tick, while paused or empty production permits research progress. Completion is synchronized across every Ukrainian research facility before later prerequisite validation.
+
+## Verification focus
+
+Automated coverage includes immutable HUD normalization, queue command descriptors, normalized delivered-income telemetry, research charging/progress/contention/pause/cancellation/refunds/facility loss/restarts, multi-facility prerequisite synchronization, and the fixed-step phase-order assertion. Browser verification must additionally exercise panel opening/closing, facility focus, every queue control, rally visibility, prerequisite text, responsive layout, and mission continuity.
