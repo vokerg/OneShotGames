@@ -42,3 +42,16 @@ test('miss impacts do not damage the target', () => {
   assert.equal(target.hp, 100);
   assert.equal(game.effects[0].hit, false);
 });
+
+test('projectile update samples active smoke along the firing lane', () => {
+  const target = { x: 100, y: 0, hp: 100 };
+  const game = {
+    projectiles: [{ x: 0, y: 0, target, damage: 10, life: 2, kind: 'bullet' }],
+    effects: [],
+    nextProjectileSeed: 6,
+    smokeClouds: [{ x: 50, y: 0, radius: 60, density: 1, duration: 8, remaining: 8 }],
+  };
+  updateProjectiles(game, 0.001);
+  assert.ok(game.projectiles[0].smokeDensity > 0.8);
+  assert.equal(game.projectiles[0].hit, false);
+});
