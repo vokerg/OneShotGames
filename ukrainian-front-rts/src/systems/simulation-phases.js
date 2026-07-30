@@ -4,6 +4,7 @@ import { updateConstructionProgress } from './construction-progress-runtime.js';
 import { updateUnitsWithNavigation } from './navigation-movement-system.js';
 import { updateMissionScriptObjectivePhase } from './mission-script-system.js';
 import { updateProductionQueues } from './production-queue-system.js';
+import { updateResearchQueues } from './research-queue-runtime.js';
 
 function requirePositiveStep(stepSeconds) {
   if (!Number.isFinite(stepSeconds) || stepSeconds <= 0) {
@@ -38,6 +39,11 @@ function updateProduction(game, stepSeconds) {
   updateProductionQueues(game, stepSeconds);
 }
 
+function updateResearch(game, stepSeconds) {
+  if (typeof game.updateResearch === 'function') game.updateResearch(stepSeconds);
+  else updateResearchQueues(game, stepSeconds);
+}
+
 function updateWaves(game, stepSeconds) {
   game.updateWaves(stepSeconds);
 }
@@ -69,6 +75,7 @@ const PHASES = Object.freeze([
   Object.freeze({ id: 'units', run: updateUnits }),
   Object.freeze({ id: 'projectiles', run: updateProjectiles }),
   Object.freeze({ id: 'production', run: updateProduction }),
+  Object.freeze({ id: 'research', run: updateResearch }),
   Object.freeze({ id: 'waves', run: updateWaves }),
   Object.freeze({ id: 'cleanup', run: removeDestroyedEntities }),
   Object.freeze({ id: 'objectives', run: updateObjectives }),
