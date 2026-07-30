@@ -9,6 +9,7 @@ export const INPUT_ACTIONS = Object.freeze({
   STOP: 'stop',
   TOGGLE_AUTO_FIRE: 'toggleAutoFire',
   CYCLE_SELECTION_SUBGROUP: 'cycleSelectionSubgroup',
+  DISEMBARK: 'disembark',
 });
 
 export const DEFAULT_KEY_BINDINGS = Object.freeze({
@@ -26,6 +27,7 @@ export const DEFAULT_KEY_BINDINGS = Object.freeze({
   x: INPUT_ACTIONS.STOP,
   t: INPUT_ACTIONS.TOGGLE_AUTO_FIRE,
   tab: INPUT_ACTIONS.CYCLE_SELECTION_SUBGROUP,
+  e: INPUT_ACTIONS.DISEMBARK,
 });
 
 const HELD_ACTIONS = new Set([
