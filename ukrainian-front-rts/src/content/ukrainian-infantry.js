@@ -431,6 +431,7 @@ export function availableUkrainianInfantryUnits(completedNodeIds = []) {
 
 export function summarizeUkrainianInfantryTaskGroup(unitIds = []) {
   if (!Array.isArray(unitIds)) throw new TypeError('unitIds must be an array');
+  for (const duplicate of duplicateValues(unitIds)) throw new TypeError(`unitIds contains duplicate unit id: ${duplicate}`);
   const records = unitIds.map(getUkrainianInfantryUnit);
   const roles = [...new Set(records.map((record) => record.roleId))].sort();
   const counters = [...new Set(records.flatMap((record) => record.counters))].sort();
@@ -439,7 +440,9 @@ export function summarizeUkrainianInfantryTaskGroup(unitIds = []) {
   const hasRecon = roles.includes('reconnaissance');
   const hasMedical = roles.includes('medical');
   const hasScreen = roles.includes('line-infantry');
-  const linkedPairs = records.reduce((total, record) => total + record.supportLinks.filter((id) => unitIds.includes(id)).length, 0) / 2;
+  const linkedPairs = new Set(records.flatMap((record) => record.supportLinks
+    .filter((id) => unitIds.includes(id))
+    .map((id) => [record.id, id].sort().join('|')))).size;
   return deepFreeze({
     unitIds: [...unitIds],
     roles,
