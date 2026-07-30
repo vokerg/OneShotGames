@@ -8,15 +8,18 @@ import { installConstructionPlacementInput } from './input/construction-placemen
 import { installDoubleClickSelection } from './input/double-click-selection.js';
 import { installProductionQueueControls } from './input/production-queue-controls.js';
 import { createQueuedOrderController } from './input/queued-orders.js';
+import { installTacticalCommandInput } from './input/tactical-command-input.js';
 import { installTransportInput } from './input/transport-input.js';
 import { synchronizeNavigationGrid } from './systems/navigation-movement-system.js';
 import { Renderer } from './render.js';
 import { installConstructionPreview } from './render/construction-preview.js';
 import { createConstructionPlacementController } from './systems/construction-placement-system.js';
 import { createProductionQueueController } from './systems/production-queue-system.js';
+import { createTacticalCommandController } from './systems/tactical-command-system.js';
 import { createTransportController } from './systems/transport-system.js';
 import { createWorkerGatherController } from './systems/worker-gather-system.js';
 import { UI } from './ui.js';
+import { installTacticalCommandCard } from './ui/tactical-command-card.js';
 
 function requiredElement(selector) {
   const element = document.querySelector(selector);
@@ -44,10 +47,13 @@ const disposeConstructionPlacement = createConstructionPlacementController(game,
   synchronizeNavigation: synchronizeNavigationGrid,
 });
 const disposeWorkerGather = createWorkerGatherController(game);
+const disposeTacticalCommands = createTacticalCommandController(game);
 const disposeProductionQueueControls = installProductionQueueControls({ game, ui });
+const disposeTacticalCommandCard = installTacticalCommandCard(ui);
 const disposeConstructionPreview = installConstructionPreview({ game, renderer });
 const disposeConstructionPlacementInput = installConstructionPlacementInput({ game, ui });
 const disposeAttackGroundInput = installAttackGroundInput({ game, canvas, ui });
+const disposeTacticalCommandInput = installTacticalCommandInput({ game, ui, canvas });
 const disposeInput = installBattlefieldInput({ game, ui, canvas, minimap });
 const disposeDoubleClickSelection = installDoubleClickSelection({ game, ui, canvas });
 
@@ -67,10 +73,13 @@ addEventListener(
   () => {
     disposeDoubleClickSelection();
     disposeInput();
+    disposeTacticalCommandInput();
     disposeAttackGroundInput();
     disposeConstructionPlacementInput();
     disposeConstructionPreview();
+    disposeTacticalCommandCard();
     disposeProductionQueueControls();
+    disposeTacticalCommands();
     disposeWorkerGather();
     disposeConstructionPlacement();
     disposeTransportInput();
