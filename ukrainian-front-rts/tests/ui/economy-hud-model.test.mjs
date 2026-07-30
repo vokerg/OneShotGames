@@ -17,7 +17,7 @@ function fixture() {
       ],
       rally: { waypoints: [{ x: 100, y: 200 }] },
     }],
-    research: [{ facilityId: 'workshop:7', items: [{ id: 'r', techId: 'thermal', progress: 0.25, percent: 25 }] }],
+    research: [{ buildingId: 7, facilityId: 'building:7', items: [{ id: 'r', techId: 'thermal', progress: 0.25, percent: 25 }] }],
     prerequisites: [{ id: 'thermal', kind: 'research', label: 'Thermal', available: false, reasons: ['Needs intel'] }],
     capacity: { fielded: 8, reserved: 9, used: 17, capacity: 20, forecastLimit: 28 },
   });
@@ -28,6 +28,7 @@ test('normalizes and deeply freezes the complete economy overview', () => {
   assert.deepEqual(model.resources.map(({ id, incomePerMinute }) => [id, incomePerMinute]), [['metal', 80], ['fuel', 40], ['intel', 0]]);
   assert.equal(model.production[0].queue[0].percent, 50);
   assert.equal(model.production[0].queue[1].canMoveUp, true);
+  assert.equal(model.research[0].buildingId, '7');
   assert.equal(model.capacity.forecastAvailable, 11);
   assert.ok(Object.isFrozen(model));
   assert.ok(Object.isFrozen(model.production[0].queue[0]));
