@@ -10,6 +10,11 @@ export const INPUT_ACTIONS = Object.freeze({
   TOGGLE_AUTO_FIRE: 'toggleAutoFire',
   CYCLE_SELECTION_SUBGROUP: 'cycleSelectionSubgroup',
   DISEMBARK: 'disembark',
+  PATROL: 'patrol',
+  GUARD: 'guard',
+  FOLLOW: 'follow',
+  HOLD_POSITION: 'holdPosition',
+  RETURN_FOR_REPAIR: 'returnForRepair',
 });
 
 export const DEFAULT_KEY_BINDINGS = Object.freeze({
@@ -28,6 +33,11 @@ export const DEFAULT_KEY_BINDINGS = Object.freeze({
   t: INPUT_ACTIONS.TOGGLE_AUTO_FIRE,
   tab: INPUT_ACTIONS.CYCLE_SELECTION_SUBGROUP,
   e: INPUT_ACTIONS.DISEMBARK,
+  p: INPUT_ACTIONS.PATROL,
+  g: INPUT_ACTIONS.GUARD,
+  y: INPUT_ACTIONS.FOLLOW,
+  h: INPUT_ACTIONS.HOLD_POSITION,
+  r: INPUT_ACTIONS.RETURN_FOR_REPAIR,
 });
 
 const HELD_ACTIONS = new Set([
