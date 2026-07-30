@@ -7,6 +7,7 @@ import { installBattlefieldInput } from './input/battlefield-input.js';
 import { installConstructionPlacementInput } from './input/construction-placement-input.js';
 import { installDoubleClickSelection } from './input/double-click-selection.js';
 import { installProductionQueueControls } from './input/production-queue-controls.js';
+import { installProductionRallyInput } from './input/production-rally-input.js';
 import { createQueuedOrderController } from './input/queued-orders.js';
 import { installTacticalCommandInput } from './input/tactical-command-input.js';
 import { installTransportInput } from './input/transport-input.js';
@@ -14,12 +15,14 @@ import { synchronizeNavigationGrid } from './systems/navigation-movement-system.
 import { Renderer } from './render.js';
 import { installConstructionPreview } from './render/construction-preview.js';
 import { createConstructionPlacementController } from './systems/construction-placement-system.js';
+import { createProductionExitController } from './systems/production-exit-system.js';
 import { createProductionQueueController } from './systems/production-queue-system.js';
 import { createTacticalCommandController } from './systems/tactical-command-system.js';
 import { createTransportController } from './systems/transport-system.js';
 import { createVeterancyController } from './systems/veterancy-system.js';
 import { createWorkerGatherController } from './systems/worker-gather-system.js';
 import { UI } from './ui.js';
+import { installProductionExitFeedback } from './ui/production-exit-feedback.js';
 import { installTacticalCommandCard } from './ui/tactical-command-card.js';
 import { installVeterancyIndicator } from './ui/veterancy-indicator.js';
 
@@ -41,6 +44,9 @@ const runtime = createGameRuntime({ game, renderer, ui });
 const disposeAttackGround = createAttackGroundController(game);
 const disposeQueuedOrders = createQueuedOrderController(game, window);
 const disposeProductionQueue = createProductionQueueController(game);
+const disposeProductionExits = createProductionExitController(game, {
+  synchronizeNavigation: synchronizeNavigationGrid,
+});
 const disposeTransport = createTransportController(game, {
   synchronizeNavigation: synchronizeNavigationGrid,
 });
@@ -54,10 +60,12 @@ const disposeVeterancy = createVeterancyController(game);
 const disposeProductionQueueControls = installProductionQueueControls({ game, ui });
 const disposeTacticalCommandCard = installTacticalCommandCard(ui);
 const disposeVeterancyIndicator = installVeterancyIndicator({ game, ui });
+const disposeProductionExitFeedback = installProductionExitFeedback({ game, ui });
 const disposeConstructionPreview = installConstructionPreview({ game, renderer });
 const disposeConstructionPlacementInput = installConstructionPlacementInput({ game, ui });
 const disposeAttackGroundInput = installAttackGroundInput({ game, canvas, ui });
 const disposeTacticalCommandInput = installTacticalCommandInput({ game, ui, canvas });
+const disposeProductionRallyInput = installProductionRallyInput({ game, ui, canvas });
 const disposeInput = installBattlefieldInput({ game, ui, canvas, minimap });
 const disposeDoubleClickSelection = installDoubleClickSelection({ game, ui, canvas });
 
@@ -77,10 +85,12 @@ addEventListener(
   () => {
     disposeDoubleClickSelection();
     disposeInput();
+    disposeProductionRallyInput();
     disposeTacticalCommandInput();
     disposeAttackGroundInput();
     disposeConstructionPlacementInput();
     disposeConstructionPreview();
+    disposeProductionExitFeedback();
     disposeVeterancyIndicator();
     disposeTacticalCommandCard();
     disposeProductionQueueControls();
@@ -90,6 +100,7 @@ addEventListener(
     disposeConstructionPlacement();
     disposeTransportInput();
     disposeTransport();
+    disposeProductionExits();
     disposeProductionQueue();
     disposeQueuedOrders();
     disposeAttackGround();

@@ -260,14 +260,20 @@ function tryRepeat(game, building) {
 }
 
 function completeItem(game, building, item) {
-  game.addUnit(
-    item.type,
-    building.team,
-    building.x + randomBetween(-70, 70),
-    building.y + 85,
-  );
+  const unit = typeof game.spawnProducedUnit === 'function'
+    ? game.spawnProducedUnit(building, item)
+    : game.addUnit(
+      item.type,
+      building.team,
+      building.x + randomBetween(-70, 70),
+      building.y + 85,
+    );
+  if (!unit) return false;
+  const completed = building.queue.shift();
+  if (completed !== item) throw new Error('Production completion order changed unexpectedly.');
   releaseReservation(game, item);
   if (building.productionRepeat && building.productionRepeatType === item.type) tryRepeat(game, building);
+  return true;
 }
 
 export function updateProductionQueues(game, stepSeconds) {
@@ -289,8 +295,7 @@ export function updateProductionQueues(game, stepSeconds) {
       item.left = Math.max(0, item.left - consumed);
       remaining -= consumed;
       if (item.left > EPSILON) break;
-      building.queue.shift();
-      completeItem(game, building, item);
+      if (!completeItem(game, building, item)) break;
     }
   }
 }
