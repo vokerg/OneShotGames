@@ -4,7 +4,7 @@ import { updateMissionObjectives } from '../../src/systems/objective-system.js';
 
 test('mission objective phase delegates authored objective definitions to the library', () => {
   const game = {
-    time: 5,
+    time: 0,
     mission: {
       id: 'authored-objective-test',
       objectiveDefinitions: [
@@ -22,6 +22,8 @@ test('mission objective phase delegates authored objective definitions to the li
     },
   };
 
+  updateMissionObjectives(game);
+  game.time = 5;
   const summary = updateMissionObjectives(game);
   assert.equal(summary.allRequiredComplete, true);
   assert.equal(game.outcome, 'victory');
