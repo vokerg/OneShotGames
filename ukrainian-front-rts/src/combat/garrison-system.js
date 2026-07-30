@@ -128,10 +128,11 @@ function occupantRecord(unit, sequence, sourceTransportId = null) {
 }
 
 function copyState(state, overrides = {}) {
+  const occupants = overrides.occupants ?? state.occupants;
   return Object.freeze({
     ...state,
-    occupants: Object.freeze([...(overrides.occupants ?? state.occupants)]),
     ...overrides,
+    occupants: Object.freeze([...occupants]),
   });
 }
 
@@ -260,7 +261,9 @@ export function enterGarrison(state, units, context = {}, config = {}) {
 }
 
 function candidateKey(candidate) {
-  return `${candidate.id ?? ''}|${candidate.x.toFixed(4)}|${candidate.y.toFixed(4)}`;
+  const x = Number.isFinite(candidate?.x) ? candidate.x.toFixed(4) : 'invalid-x';
+  const y = Number.isFinite(candidate?.y) ? candidate.y.toFixed(4) : 'invalid-y';
+  return `${candidate?.id ?? ''}|${x}|${y}`;
 }
 
 function eligibleExitCandidates(state, candidates, options = {}, config = {}) {
