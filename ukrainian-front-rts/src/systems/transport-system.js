@@ -74,6 +74,13 @@ export function transportSnapshot(game, transport) {
   });
 }
 
+export function unitsIncludingPassengers(game) {
+  requireGameCollections(game);
+  const active = [...game.units];
+  const cargo = active.flatMap((unit) => (Array.isArray(unit.passengers) ? unit.passengers : []));
+  return Object.freeze([...active, ...cargo].sort((left, right) => left.id - right.id));
+}
+
 function passengerEligibility(game, transport, passenger, range) {
   if (!passenger || !game.units.includes(passenger) || passenger.hp <= 0 || passenger.id === transport.id) {
     return frozenResult(false, TRANSPORT_RESULTS.INELIGIBLE_PASSENGER, 'Only active living squads can embark.');
@@ -302,6 +309,7 @@ export function createTransportController(game, { synchronizeNavigation } = {}) 
   const originalCleanup = game.removeDestroyedEntities;
   const previousDisembark = game.disembarkSelected;
   const previousSnapshot = game.transportSnapshot;
+  const originalHeroAlreadyFieldedOrQueued = game.heroAlreadyFieldedOrQueued;
 
   game.units.forEach((unit) => initializeTransport(game, unit));
 
@@ -349,6 +357,13 @@ export function createTransportController(game, { synchronizeNavigation } = {}) 
     return transportSnapshot(this, transport);
   };
 
+  if (typeof originalHeroAlreadyFieldedOrQueued === 'function') {
+    game.heroAlreadyFieldedOrQueued = function transportAwareHeroPresence(type) {
+      if (originalHeroAlreadyFieldedOrQueued.call(this, type)) return true;
+      return unitsIncludingPassengers(this).some((unit) => !this.units.includes(unit) && unit.type === type);
+    };
+  }
+
   game.removeDestroyedEntities = function removeTransportAwareDestroyedEntities(...args) {
     const result = resolveDestroyedTransportPassengers(this);
     if (result.casualties.length) {
@@ -365,5 +380,7 @@ export function createTransportController(game, { synchronizeNavigation } = {}) 
     else game.disembarkSelected = previousDisembark;
     if (previousSnapshot === undefined) delete game.transportSnapshot;
     else game.transportSnapshot = previousSnapshot;
+    if (originalHeroAlreadyFieldedOrQueued === undefined) delete game.heroAlreadyFieldedOrQueued;
+    else game.heroAlreadyFieldedOrQueued = originalHeroAlreadyFieldedOrQueued;
   };
 }
