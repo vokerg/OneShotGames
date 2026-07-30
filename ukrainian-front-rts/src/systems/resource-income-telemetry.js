@@ -29,10 +29,16 @@ function recordPositiveDeltas(game, before, after) {
 
 export function resourceIncomeRates(game) {
   if (!game.resourceIncomeTelemetry) reset(game);
-  prune(game);
+  const now = Number(game.time) || 0;
+  prune(game, now);
   const totals = Object.fromEntries(RESOURCE_INCOME_KINDS.map((resource) => [resource, 0]));
   for (const event of game.resourceIncomeTelemetry.events) totals[event.resource] += event.amount;
-  return Object.freeze(totals);
+  const elapsed = Math.max(0, now - game.resourceIncomeTelemetry.missionStartedAt);
+  const observedSeconds = Math.min(RESOURCE_INCOME_WINDOW_SECONDS, elapsed);
+  if (observedSeconds <= 0) return Object.freeze(totals);
+  return Object.freeze(Object.fromEntries(
+    RESOURCE_INCOME_KINDS.map((resource) => [resource, totals[resource] * RESOURCE_INCOME_WINDOW_SECONDS / observedSeconds]),
+  ));
 }
 
 export function createResourceIncomeTelemetryController(game) {
