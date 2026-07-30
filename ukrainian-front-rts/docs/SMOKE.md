@@ -6,10 +6,10 @@
 
 - Smoke state uses deterministic monotonic IDs and contains active cloud records.
 - A cloud records position, radius, base density, duration, remaining time, fixed drift vector, team, source, and kind.
-- The fixed-step simulation advances smoke after units and before projectile resolution, so movement, drift, expiry, and shot accuracy have a stable order.
+- `updateSmokeState` advances drift, fade, duration, and expiry deterministically when called by the owning fixed-step command, mission, or AI integration.
 - Drift is fixed at deployment and capped at 24 world units per second; no random wind changes occur inside the simulation.
 - Clouds fade during the final 25% of their duration and are removed when remaining time reaches zero.
-- The compatibility adapter also accepts the existing renderer effect shape (`life` and `max`) so the current `smokeLaunchers` ability uses the authoritative policy without changing the active `game.js` hotspot.
+- The compatibility adapter also accepts the existing renderer effect shape (`life` and `max`) so the current `smokeLaunchers` ability uses the authoritative policy without changing the active production PR's simulation hotspot.
 
 ## Shared combat policy
 
