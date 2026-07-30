@@ -1,3 +1,5 @@
+import { combineSmokeDensity, smokeBlocksVision } from '../core/smoke-policy.js';
+
 export const VISIBILITY_BLOCKERS = Object.freeze({
   TERRAIN: 'terrain',
   ELEVATION: 'elevation',
@@ -52,18 +54,29 @@ export function createVisibilityField({ width, height, tileSize = 32, terrain = 
     throw new TypeError('Visibility field width and height must be positive integers.');
   }
   const size = width * height;
+  const smokeDensity = new Map();
+  for (const cell of smoke) {
+    const key = cellKey(cell.x, cell.y);
+    smokeDensity.set(key, combineSmokeDensity(smokeDensity.get(key) || 0, cell.density ?? 1));
+  }
   return Object.freeze({
     width,
     height,
     tileSize,
     terrainSet: new Set(terrain.map((cell) => cellKey(cell.x, cell.y))),
     blockerSet: new Set(blockers.map((cell) => cellKey(cell.x, cell.y))),
-    smokeSet: new Set(smoke.map((cell) => cellKey(cell.x, cell.y))),
+    smokeSet: new Set(smokeDensity.keys()),
+    smokeDensity,
     heights: Array.from({ length: size }, (_, index) => Number(elevation[index] || 0)),
   });
 }
 
-export function resolveLineOfSight(field, origin, target, { observerHeight = 1, targetHeight = 1, smokeBlocks = true } = {}) {
+export function resolveLineOfSight(
+  field,
+  origin,
+  target,
+  { observerHeight = 1, targetHeight = 1, smokeBlocks = true, smokeThreshold } = {},
+) {
   if (!field) throw new TypeError('Visibility field is required.');
   assertPoint(origin, 'Origin');
   assertPoint(target, 'Target');
@@ -83,7 +96,10 @@ export function resolveLineOfSight(field, origin, target, { observerHeight = 1, 
     const key = cellKey(cell.x, cell.y);
     if (field.terrainSet.has(key)) return Object.freeze({ visible: false, reason: VISIBILITY_BLOCKERS.TERRAIN, cell });
     if (field.blockerSet.has(key)) return Object.freeze({ visible: false, reason: VISIBILITY_BLOCKERS.BUILDING, cell });
-    if (smokeBlocks && field.smokeSet.has(key)) return Object.freeze({ visible: false, reason: VISIBILITY_BLOCKERS.SMOKE, cell });
+    const density = field.smokeDensity?.get(key) ?? (field.smokeSet.has(key) ? 1 : 0);
+    if (smokeBlocks && smokeBlocksVision(density, smokeThreshold)) {
+      return Object.freeze({ visible: false, reason: VISIBILITY_BLOCKERS.SMOKE, cell, smokeDensity: density });
+    }
 
     const progress = index / (cells.length - 1);
     const sightHeight = startElevation + (endElevation - startElevation) * progress;
