@@ -2,6 +2,7 @@ import { prepareProjectile } from '../combat/projectile-accuracy.js';
 import { recordDamageSource } from '../core/veterancy.js';
 import { randomBetween } from '../core/math.js';
 import { sampleSmokeLineDensity } from './smoke-system.js';
+import { recordStanceRetaliation } from './stance-system.js';
 
 export const rollImpactDamage = (baseDamage) => baseDamage * randomBetween(0.95, 1.05);
 
@@ -40,6 +41,7 @@ export function updateProjectiles(game, dt) {
 
     if (remainingDistance < projectile.speed * dt + 7) {
       if (projectile.hit && target.hp > 0) {
+        recordStanceRetaliation(target, projectile.source, game.time);
         recordDamageSource(target, projectile.source);
         target.hp -= rollImpactDamage(projectile.damage);
       }

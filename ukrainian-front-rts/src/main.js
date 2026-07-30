@@ -18,12 +18,14 @@ import { createConstructionPlacementController } from './systems/construction-pl
 import { createProductionExitController } from './systems/production-exit-system.js';
 import { createProductionQueueController } from './systems/production-queue-system.js';
 import { createResourceDropOffController } from './systems/resource-dropoff-system.js';
+import { createStanceController } from './systems/stance-system.js';
 import { createTacticalCommandController } from './systems/tactical-command-system.js';
 import { createTransportController } from './systems/transport-system.js';
 import { createVeterancyController } from './systems/veterancy-system.js';
 import { createWorkerGatherController } from './systems/worker-gather-system.js';
 import { UI } from './ui.js';
 import { installProductionExitFeedback } from './ui/production-exit-feedback.js';
+import { installStanceCommandCard } from './ui/stance-command-card.js';
 import { installTacticalCommandCard } from './ui/tactical-command-card.js';
 import { installVeterancyIndicator } from './ui/veterancy-indicator.js';
 
@@ -59,10 +61,12 @@ const disposeWorkerGather = createWorkerGatherController(game);
 const disposeResourceDropOff = createResourceDropOffController(game, {
   synchronizeNavigation: synchronizeNavigationGrid,
 });
+const disposeStances = createStanceController(game);
 const disposeTacticalCommands = createTacticalCommandController(game);
 const disposeVeterancy = createVeterancyController(game);
 const disposeProductionQueueControls = installProductionQueueControls({ game, ui });
 const disposeTacticalCommandCard = installTacticalCommandCard(ui);
+const disposeStanceCommandCard = installStanceCommandCard(ui);
 const disposeVeterancyIndicator = installVeterancyIndicator({ game, ui });
 const disposeProductionExitFeedback = installProductionExitFeedback({ game, ui });
 const disposeConstructionPreview = installConstructionPreview({ game, renderer });
@@ -96,10 +100,12 @@ addEventListener(
     disposeConstructionPreview();
     disposeProductionExitFeedback();
     disposeVeterancyIndicator();
+    disposeStanceCommandCard();
     disposeTacticalCommandCard();
     disposeProductionQueueControls();
     disposeVeterancy();
     disposeTacticalCommands();
+    disposeStances();
     disposeResourceDropOff();
     disposeWorkerGather();
     disposeConstructionPlacement();
