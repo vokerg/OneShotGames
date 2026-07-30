@@ -15,6 +15,7 @@ export const INPUT_ACTIONS = Object.freeze({
   FOLLOW: 'follow',
   HOLD_POSITION: 'holdPosition',
   RETURN_FOR_REPAIR: 'returnForRepair',
+  SELECT_IDLE_WORKER: 'selectIdleWorker',
 });
 
 export const DEFAULT_KEY_BINDINGS = Object.freeze({
@@ -38,6 +39,7 @@ export const DEFAULT_KEY_BINDINGS = Object.freeze({
   y: INPUT_ACTIONS.FOLLOW,
   h: INPUT_ACTIONS.HOLD_POSITION,
   r: INPUT_ACTIONS.RETURN_FOR_REPAIR,
+  i: INPUT_ACTIONS.SELECT_IDLE_WORKER,
 });
 
 const HELD_ACTIONS = new Set([
