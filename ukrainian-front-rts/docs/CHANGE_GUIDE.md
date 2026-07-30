@@ -7,29 +7,30 @@ Use this guide to route work to one authoritative owner, keep dependency directi
 1. Read the task row in `TASKS.md` and its dependency/parallel rules.
 2. Resolve the current owner in `docs/ARCHITECTURE.md`.
 3. Reproduce or describe the state transition being changed.
-4. Separate data, simulation, input, presentation, and verification concerns.
+4. Separate data, simulation, AI planning, input, presentation, and verification concerns.
 5. Change the smallest authoritative module.
 6. Add focused deterministic coverage.
 7. Run the focused command, then `bash verify.sh`.
 8. Perform browser, visual, audio, or performance checks required by the affected flow.
 
-Do not fix authoritative-state defects in UI or renderer code. Do not add gameplay rules to `main.js`, runtime scheduling, input listeners, or domain-event consumers.
+Do not fix authoritative-state defects in UI or renderer code. Do not add gameplay rules to `main.js`, runtime scheduling, input listeners, AI inspection consumers, or domain-event consumers.
 
 ## Change routing
 
 | Change | Primary owner | Usually coordinate | Avoid |
 | --- | --- | --- | --- |
-| Balance or content instance | `src/config.js` | schema/content docs and validators | renderer branches for gameplay values |
+| Balance or content instance | `src/config.js` or focused `src/content/` module | schema/content docs and validators | renderer branches for gameplay values |
 | Content field or identity | `src/content-schema.js` | `docs/CONTENT_SCHEMA.md`, validators, migrations | silent shape changes in consumers |
 | Simulation rule | focused `src/systems/` module + small `Game` delegate | phase order, random/event implications | UI, renderer, runtime |
+| AI knowledge/planning contract | `src/ai/` | doctrine/content data, fixed-step system adapter, public commands | hidden-state reads, direct `Game`/system imports, UI-owned decisions |
 | Fixed-step order or timing | `src/systems/simulation-phases.js`, `src/core/fixed-step-clock.js` | runtime, harness, deterministic scenarios | animation-frame delta in rules |
-| Random authoritative decision | `src/core/random.js` service or core helpers | same-seed/different-seed tests | `Math.random` in simulation |
+| Random authoritative decision | `src/core/random.js` service or core helpers | same-seed/different-seed tests | `Math.random` in simulation or AI |
 | Domain-event type/stream | `src/core/events.js` | producer and read-only consumer docs/tests | ad-hoc strings or event-driven gameplay authority |
 | Browser input/commands | `src/input/` | public `Game` commands and UI feedback | literal-key logic in simulation |
 | Mission startup/frame loop | `src/app/runtime.js` | fixed-step clock and runtime tests | gameplay rules in frame callbacks |
 | Headless scenario support | `src/app/simulation-harness.js` | public `Game` commands and snapshots | fake DOM/renderer implementations |
 | Rendering or art | renderer/art module | `art-lab.html`, zoom/grayscale checks | combat or movement mutations |
-| HUD/presentation | `src/ui.js` | public commands and domain events | owning objective/economy/combat rules |
+| HUD/presentation | `src/ui.js` | public commands and domain events | owning objective/economy/combat/AI rules |
 | Browser audio | `src/audio/` | domain-event mapping, mute/volume lifecycle | direct `Audio` calls elsewhere |
 | New production layer | focused `src/<layer>/` | architecture verifier + docs + tooling fixtures | unclassified modules |
 | Verification stage | `scripts/lib/verification-runner.mjs` | focused tooling fixtures and `docs/VERIFICATION.md` | duplicated shell/CI stage lists |
@@ -47,6 +48,7 @@ Examples:
 - Wrong damage: content or combat policy, not the renderer.
 - Drag selection misses units: input adapter, not `Game.update`.
 - Objective completes early: objective system, not HUD text.
+- AI reacts to an unseen target: observation/knowledge adapter, not difficulty numbers.
 - Slow displays change outcomes: fixed-step runtime/phase contract, not unit speed values.
 - Sound plays twice: audio consumer/event mapping, not combat state.
 - Contract violation is not caught: focused verifier and tooling fixtures, not CI-only logic.
@@ -54,7 +56,7 @@ Examples:
 ## Content and schema workflow
 
 1. Read `docs/CONTENT_SCHEMA.md`.
-2. Keep content instances declarative in `src/config.js` or the focused content module assigned by the queue.
+2. Keep content instances declarative in `src/config.js` or the focused `src/content/` module assigned by the queue.
 3. Use the family identity source exactly as specified.
 4. Prefer optional fields with explicit defaults for compatible additions.
 5. Treat new required fields, identity changes, renames, type changes, and semantic changes as schema-version decisions.
@@ -75,15 +77,31 @@ Examples:
 8. Add unit coverage and a headless scenario when cross-system order matters.
 9. Document changes to tick order, random draw order, event order, serialization, or replay behavior.
 
+## AI planning workflow
+
+1. Define which own-side state and enemy observations are permitted inputs.
+2. Express doctrine, cadence, risk, and weighting as immutable data.
+3. Store contacts, goals, budgets, and decision history in the `src/ai/` blackboard contract.
+4. Add knowledge only from explicit line-of-sight, domain-event, or authored mission-intelligence observations.
+5. Evaluate planners at exact fixed simulation ticks; never use animation-frame time or wall-clock timers.
+6. Have planners return reference-free proposals or command descriptors rather than mutating `Game` or system state.
+7. Validate and execute proposals through the same public `Game` commands or focused system policies used by player actions.
+8. Use stable iteration/tie-breaking and the seeded random service for every replay-relevant draw.
+9. Expose frozen inspection snapshots for debug UI, telemetry, replay, and tests.
+10. Compare incremental and chunked tick advancement and assert identical decisions.
+11. Never grant hidden map knowledge or stat cheats by default; difficulty changes reaction delay, planning quality, risk, and economy efficiency.
+
+See `docs/AI_ARCHITECTURE.md` for the UFR-079 contracts and UFR-080 through UFR-083 ownership boundaries.
+
 ## Fixed-step or deterministic-behavior workflow
 
-A change is deterministic-behavior work when it modifies tick duration, phase order, command execution order, entity iteration order, random draw order, event sequence order, or snapshot shape.
+A change is deterministic-behavior work when it modifies tick duration, phase order, command execution order, entity iteration order, random draw order, event sequence order, AI decision cadence, or snapshot shape.
 
 1. Update the authoritative owner only.
 2. Preserve one `Game.update(fixedStep)` call per simulation tick.
-3. Never use animation-frame elapsed time inside a simulation rule.
-4. Update phase/unit tests.
-5. Run identical command streams under different render-frame chunking.
+3. Never use animation-frame elapsed time inside a simulation or AI rule.
+4. Update phase/unit/AI tests.
+5. Run identical command and observation streams under different render-frame chunking.
 6. Compare reference-free snapshots with the same seed.
 7. Add a different-seed divergence assertion when randomness is involved.
 8. Record replay/save compatibility implications.
@@ -99,7 +117,7 @@ A change is deterministic-behavior work when it modifies tick duration, phase or
 7. Test type validation, tick/sequence order, payload shape, and relevant consumer mapping.
 8. Update `docs/DOMAIN_EVENTS.md` for taxonomy or lifecycle changes.
 
-An event stream is not a command bus. Gameplay must produce the same result when presentation, audio, telemetry, and replay consumers are absent.
+An event stream is not a command bus. Gameplay must produce the same result when presentation, audio, telemetry, replay, and AI observation consumers are absent.
 
 ## Input and command workflow
 
@@ -115,7 +133,7 @@ An event stream is not a command bus. Gameplay must produce the same result when
 ## Unit-test workflow
 
 1. Identify the smallest public owner.
-2. Add a deterministic `*.test.mjs` under `tests/unit/` or the focused existing test directory.
+2. Add a deterministic `*.test.mjs` under `tests/unit/` or the focused existing test directory such as `tests/ai/`.
 3. Use `node:test` and `node:assert`; do not add a third-party framework.
 4. Build the smallest explicit fixture.
 5. Cover success, rejection, and no-mutation-on-failure behavior.
@@ -150,13 +168,15 @@ Use `tests/tooling/` for architecture, verification, queue, or similar executabl
 
 Create a module when the concern has its own vocabulary, independently testable policy, and a single reason to change.
 
-A focused simulation/core module should:
+A focused simulation/core/AI module should:
 
 - accept required state explicitly;
 - avoid DOM and direct browser audio APIs;
 - avoid importing higher layers;
-- return a result or deliberately mutate supplied authoritative state;
+- return a result or deliberately mutate supplied authoritative state owned by that layer;
 - expose stable public contracts rather than mutable internal references.
+
+Focused declarative modules under `src/content/` use the existing `config` architecture layer. The `src/ai/` directory is a distinct inward-facing planning layer and may import only core, schema, config/content, and sibling AI modules.
 
 A new top-level source layer additionally requires:
 
@@ -186,7 +206,7 @@ Never leave a new `src/` directory unclassified.
 3. Validate in `art-lab.html` at supported zoom levels and both facings.
 4. Check motion paused/unpaused, selection rings, health bars, fog, effects, and grayscale readability.
 5. Check all affected mission terrain palettes.
-6. Keep combat, movement, and content values unchanged unless balance is explicit scope.
+6. Keep combat, movement, AI, and content values unchanged unless balance is explicit scope.
 7. Follow `ART_PIPELINE.md` before converting procedural art to atlas assets.
 
 ## Review and completion checklist
@@ -195,9 +215,10 @@ Never leave a new `src/` directory unclassified.
 - Is there one authoritative implementation of each rule?
 - Does dependency direction still point inward?
 - Does `main.js` remain composition only?
-- Are fixed-step, random, event, and command ordering implications explicit?
+- Are fixed-step, random, event, AI-cadence, and command ordering implications explicit?
+- Does AI use only permitted observations and ordinary validated command paths?
 - Do schema code, content data, and human-readable docs agree?
-- Do tests use the correct unit, simulation, or tooling layer?
+- Do tests use the correct unit, AI, simulation, or tooling layer?
 - Is a new source layer registered in architecture verification?
 - Does `bash verify.sh` remain the only top-level verification command?
 - Were required browser, visual, audio, and performance checks performed?
