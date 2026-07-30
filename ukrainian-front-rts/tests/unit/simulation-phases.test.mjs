@@ -35,10 +35,6 @@ function createPhaseFixture() {
     ],
     buildings: [{ id: 3, team: TEAM.UA }],
     player: { objectives: [false, false, false] },
-    smokeState: {
-      nextId: 2,
-      clouds: [{ id: 'smoke-1', x: 0, y: 0, radius: 40, density: 1, duration: 2, remaining: 2, driftX: 4, driftY: 0 }],
-    },
     updateUnit(unit, dt) {
       calls.push(`unit:${unit.id}:${dt}`);
     },
@@ -70,7 +66,6 @@ test('simulation phase contract is explicit and ordered', () => {
     'clock',
     'camera',
     'units',
-    'smoke',
     'projectiles',
     'production',
     'waves',
@@ -84,8 +79,6 @@ test('simulation phase contract is explicit and ordered', () => {
 
   assert.equal(advanced, true);
   assert.equal(game.time, 0.25);
-  assert.equal(game.smokeState.clouds[0].x, 1);
-  assert.equal(game.smokeState.clouds[0].remaining, 1.75);
   assert.deepEqual(calls, [
     'unit:1:0.25',
     'unit:2:0.25',
