@@ -46,7 +46,7 @@ The mutable blackboard is private to its owner. Other systems consume `inspectAi
 
 ## Scouting knowledge
 
-Knowledge enters only through explicit observations from line of sight, a domain event, or authored mission intelligence. Each contact records stable IDs, first/last observed tick, source, confidence, position, classification, and reference-free details.
+Knowledge enters only through explicit observations from line of sight, a domain event, or authored mission intelligence. Each contact records stable IDs, first/last observed tick, source, position, classification, strength, observation count, and reference-free details.
 
 Contacts age deterministically:
 
@@ -58,7 +58,7 @@ No API derives contacts by reading every authoritative enemy entity. This preser
 
 ## Goals
 
-Goals are immutable records with a stable ID, supported goal kind, integer priority, creation tick, optional deadline, status, and reference-free parameters. Ordering is deterministic:
+Goals are immutable records with a stable ID, supported goal kind, numeric priority, creation tick, optional reference-free target, and reason. Ordering is deterministic:
 
 1. higher priority first;
 2. earlier creation tick first;
@@ -73,7 +73,7 @@ Budget plans operate on explicit resource maps rather than one aggregate score. 
 - available resources by resource ID;
 - allocations by known category;
 - exact unallocated remainder;
-- the tick and revision of the plan.
+- the tick of the plan.
 
 Allocations cannot overspend any resource. Categories cover economy, construction, production, research, repair, reserves, and operations. UFR-080 may add policy for producing allocations; authoritative resource charging remains in economy and production systems.
 
