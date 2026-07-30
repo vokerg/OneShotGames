@@ -9,6 +9,7 @@
 - The fixed-step simulation advances smoke after units and before projectile resolution, so movement, drift, expiry, and shot accuracy have a stable order.
 - Drift is fixed at deployment and capped at 24 world units per second; no random wind changes occur inside the simulation.
 - Clouds fade during the final 25% of their duration and are removed when remaining time reaches zero.
+- The compatibility adapter also accepts the existing renderer effect shape (`life` and `max`) so the current `smokeLaunchers` ability uses the authoritative policy without changing the active `game.js` hotspot.
 
 ## Shared combat policy
 
@@ -21,6 +22,8 @@
 - projectile effects expose sampled density and adjusted accuracy for UI or renderer feedback.
 
 `smokeCellsForVisibility` samples active clouds into the visibility grid. `sampleSmokeLineDensity` samples the firing lane for projectile resolution. Consumers must not create separate smoke thresholds or accuracy formulas.
+
+The prototype previously reduced projectile damage when the target carried the temporary smoke buff. Projectile initialization now normalizes that legacy reduction once and applies smoke through accuracy instead, preserving the current ability while removing double mitigation.
 
 ## Deployment and AI
 
