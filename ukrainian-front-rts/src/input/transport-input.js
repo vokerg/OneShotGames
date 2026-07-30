@@ -22,9 +22,10 @@ export function installTransportInput({
       ui?.toast?.(message);
       ui?.refresh?.();
       game.lastCommandMessage = '';
-      return;
+      return true;
     }
     if (!accepted && game.lastError) ui?.toast?.(game.lastError);
+    return false;
   };
 
   game.issue = function issueWithTransportFeedback(...args) {
@@ -38,8 +39,7 @@ export function installTransportInput({
     if (resolveInputAction(keyBindings, event.key) !== INPUT_ACTIONS.DISEMBARK) return;
     event.preventDefault?.();
     const accepted = game.disembarkSelected?.() ?? false;
-    showCommandResult(accepted);
-    ui?.refresh?.();
+    if (!showCommandResult(accepted)) ui?.refresh?.();
   };
 
   windowTarget?.addEventListener?.('keydown', onKeyDown);
