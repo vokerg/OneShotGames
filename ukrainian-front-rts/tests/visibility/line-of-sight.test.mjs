@@ -48,6 +48,17 @@ test('smoke blocks unless explicitly ignored', () => {
   assert.equal(resolveLineOfSight(field, point(0, 0), point(4, 0), { smokeBlocks: false }).visible, true);
 });
 
+test('sub-threshold smoke does not block sight but stacked smoke does', () => {
+  const light = createVisibilityField({ width: 5, height: 1, smoke: [{ x: 2, y: 0, density: 0.3 }] });
+  assert.equal(resolveLineOfSight(light, point(0, 0), point(4, 0)).visible, true);
+  const stacked = createVisibilityField({
+    width: 5,
+    height: 1,
+    smoke: [{ x: 2, y: 0, density: 0.35 }, { x: 2, y: 0, density: 0.35 }],
+  });
+  assert.equal(resolveLineOfSight(stacked, point(0, 0), point(4, 0)).reason, VISIBILITY_BLOCKERS.SMOKE);
+});
+
 test('elevation above the interpolated sight ray occludes', () => {
   const field = createVisibilityField({ width: 3, height: 1, elevation: [0, 3, 0] });
   assert.equal(resolveLineOfSight(field, point(0, 0), point(2, 0)).reason, VISIBILITY_BLOCKERS.ELEVATION);
