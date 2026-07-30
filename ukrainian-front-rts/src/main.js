@@ -1,9 +1,11 @@
 import { createGameRuntime } from './app/runtime.js';
 import './art-pass.js';
 import './environment-art-pass.js';
+import { createDestructionState, materializeWreck } from './combat/destruction-system.js';
 import { Game } from './game.js';
 import { createAttackGroundController, installAttackGroundInput } from './input/attack-ground.js';
 import { installBattlefieldInput } from './input/battlefield-input.js';
+import { installBuildingLifecycleControls } from './input/building-lifecycle-controls.js';
 import { installConstructionPlacementInput } from './input/construction-placement-input.js';
 import { installDoubleClickSelection } from './input/double-click-selection.js';
 import { installProductionQueueControls } from './input/production-queue-controls.js';
@@ -16,6 +18,7 @@ import { synchronizeNavigationGrid } from './systems/navigation-movement-system.
 import { Renderer } from './render.js';
 import { installCombatReadabilityOverlay } from './render/combat-readability-overlay.js';
 import { installConstructionPreview } from './render/construction-preview.js';
+import { createBuildingLifecycleController } from './systems/building-lifecycle-system.js';
 import { createCommandCapacityController } from './systems/command-capacity-system.js';
 import { createConstructionPlacementController } from './systems/construction-placement-system.js';
 import { createConstructionProgressController } from './systems/construction-progress-runtime.js';
@@ -73,6 +76,9 @@ const disposeResourceDropOff = createResourceDropOffController(game, {
   synchronizeNavigation: synchronizeNavigationGrid,
 });
 const disposeConstructionProgress = createConstructionProgressController(game);
+const disposeBuildingLifecycle = createBuildingLifecycleController(game, {
+  destructionApi: { createDestructionState, materializeWreck },
+});
 const disposeStances = createStanceController(game);
 const disposeTacticalCommands = createTacticalCommandController(game);
 const disposeVeterancy = createVeterancyController(game);
@@ -88,6 +94,7 @@ const disposeVeterancyIndicator = installVeterancyIndicator({ game, ui });
 const disposeProductionExitFeedback = installProductionExitFeedback({ game, ui });
 const disposeWorkerOverview = installWorkerOverview({ game, ui, windowTarget: window });
 const disposeCommandCapacityFeedback = installCommandCapacityFeedback({ game, ui });
+const disposeBuildingLifecycleControls = installBuildingLifecycleControls({ game, ui });
 const disposeCombatReadabilityFeedback = installCombatReadabilityFeedback({ game, ui });
 const disposeEconomyHudOverview = installEconomyHudOverview({ game, ui });
 const disposeConstructionPreview = installConstructionPreview({ game, renderer });
@@ -123,6 +130,7 @@ addEventListener(
     disposeConstructionPreview();
     disposeEconomyHudOverview();
     disposeCombatReadabilityFeedback();
+    disposeBuildingLifecycleControls();
     disposeCommandCapacityFeedback();
     disposeWorkerOverview();
     disposeProductionExitFeedback();
@@ -136,6 +144,7 @@ addEventListener(
     disposeVeterancy();
     disposeTacticalCommands();
     disposeStances();
+    disposeBuildingLifecycle();
     disposeConstructionProgress();
     disposeResourceDropOff();
     disposeResourceIncomeTelemetry();
