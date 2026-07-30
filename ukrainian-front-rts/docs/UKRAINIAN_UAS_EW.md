@@ -1,39 +1,51 @@
 # Ukrainian UAS/EW branch
 
-UFR-073 defines the Ukrainian unmanned-aircraft and electronic-warfare content contract for the **Networked Maneuver** doctrine established by UFR-069 and the stable technology-tree identities established by UFR-070.
+## Purpose and audit correction
 
-## Design boundary
+UFR-073 completes the Ukrainian reconnaissance, FPV strike, relay, jamming, counter-UAS, and targeting-support branch for the UFR-069 **Networked Maneuver** doctrine. The executable contract is `src/content/ukrainian-uas-ew.js`.
 
-This task supplies immutable roster profiles and deterministic composition/validation helpers. It does not replace the authoritative drone lifecycle, link-loss, strike, interception, or air-defense rules owned by UFR-038 and UFR-039. Runtime integration should translate these profiles into those public systems rather than duplicate their mechanics.
+The schema is version `2`. This revision corrects the original post-merge implementation, which was internally consistent but did not prove compatibility with its dependencies. Version 2 imports the UFR-070 faction tree, uses the established `metal`/`fuel`/`intel` economy vocabulary, and exports configuration objects in the exact public field vocabulary consumed by UFR-038 and UFR-039.
 
-## Capability chain
+## Stable roster ownership and variants
 
-The branch covers six explicit capabilities:
+UFR-070 owns two Ukrainian roster nodes in this family:
 
-1. **Reconnaissance** — `ua.recon-drone` provides persistent contact quality and observation.
-2. **FPV strike** — `ua.fpv-strike-team` converts reconnaissance and shared targeting into a short-endurance precision attack.
-3. **Relay** — `ua.relay-drone` extends control and targeting links but is a visible, high-value dependency.
-4. **Jamming** — `ua.ew-team` protects friendly links and disrupts hostile unmanned systems while exposing an emissions signature.
-5. **Counter-UAS** — `ua.mobile-counter-uas` combines limited interceptors and local electronic attack; saturation and ammunition exhaustion remain valid counters.
-6. **Targeting support** — `ua.targeting-cell` coordinates sensors and fires but is vulnerable while deployed and to network disruption.
+| Stable roster node | Variant profile | Tactical role |
+| --- | --- | --- |
+| `ua.recon-drone` | `ua.recon-drone` | recoverable reconnaissance and observation |
+| `ua.recon-drone` | `ua.recon-drone.fpv-strike` | one-way, spotted-target FPV strike |
+| `ua.recon-drone` | `ua.recon-drone.relay` | recoverable airborne relay |
+| `ua.ew-team` | `ua.ew-team` | vehicle-mounted jamming and link protection |
+| `ua.ew-team` | `ua.ew-team.counter-uas` | local electronic attack plus limited interceptors |
+| `ua.ew-team` | `ua.ew-team.targeting` | bounded shared-targeting and relay support |
 
-## Counterplay rules
+Every profile carries a `rosterNodeId`. Its tier, producer, and base prerequisites are copied from and validated against the corresponding UFR-070 node. Additional specialization requirements live in `variantRequires`; they do not rewrite the stable technology-tree contract.
 
-The family must not become a self-contained answer to every threat. Every profile declares at least three counters and three vulnerabilities. The intended failure modes are link loss, relay loss, emissions detection, air-defense interception, ammunition exhaustion, weather, and disruption of the shared targeting network.
+Legacy identifiers from the first implementation are accepted by lookup and composition helpers and resolve to the canonical variant IDs. New consumers should store canonical IDs.
 
-The branch therefore rewards combined arms:
+## Authoritative runtime adapters
 
-- reconnaissance without fires or strike assets produces information rather than damage;
-- FPV teams without relay or spectrum protection have constrained reach and resilience;
-- jammers and counter-UAS teams require protection from artillery, armor, and flanking;
-- targeting cells improve coordination but create a command-and-control dependency the opponent can attack.
+The content branch does not duplicate simulation logic.
 
-## Stable identities
+- Airborne profiles expose `droneConfig` through `getUkrainianDroneRuntimeConfig()`. The fields map directly to UFR-038: launch, loiter, return, recovery, payload, link range, hardening, link-loss policy, strike consumption, spotting requirement, cooldown, signature, and evasion.
+- The counter-UAS variant exposes `airDefenseConfig` through `getUkrainianAirDefenseRuntimeConfig()`. Its target priorities use the canonical UFR-039 target classes, and its configuration uses UFR-039 detection, envelope, reload, ammunition, missile, reservation, and overkill fields.
+- Relay, jammer, targeting, and counter-UAS records expose bounded `ewEffect` telemetry through `getUkrainianEwEffect()`. Runtime composition may translate those values into UFR-038/UFR-039 context inputs; the content module does not update simulation state itself.
 
-`ua.recon-drone` and `ua.ew-team` remain the UFR-070 roster anchors. Additional focused profiles use stable Ukrainian-prefixed IDs and reference UFR-070 production structures and technologies. Future runtime, AI, campaign, art, and audio work should consume these IDs instead of creating parallel aliases.
+## Counterplay and doctrine
 
-## Verification contract
+The branch is a dependency network, not six independent bonuses:
 
-`validateUkrainianUasEw` checks schema ownership, tiers, prerequisites, capability coverage, link parameters, payloads, counters, vulnerabilities, support links, costs, and the UFR-070 anchor IDs.
+- reconnaissance creates contact quality but no damage;
+- FPV strike requires a valid spotted target and is consumed on attack;
+- relay extends reach while becoming a high-value air-defense target;
+- jamming is bounded, emits, and remains vulnerable to fires and direct attack;
+- counter-UAS has finite ammunition and can be saturated;
+- targeting support cannot create information without reconnaissance.
 
-`resolveUasEwTaskGroup` preserves request order, rejects unknown or locked profiles with reason-specific evidence, totals costs, reports capability coverage, and computes a deterministic average link-hardening value for planning/debug presentation.
+`resolveUasEwTaskGroup()` reports accepted and rejected profiles, costs, capacity, roles, counters, missing capabilities, and four explicit doctrine descriptors: reconnaissance-strike chain, resilient relay, layered counter-UAS, and complete network. These are inspection data, not hidden faction-wide modifiers.
+
+## Validation and verification
+
+`validateUkrainianUasEw()` rejects drift from UFR-070, unknown or duplicate variants, invalid economy values, malformed UFR-038/UFR-039 configuration, non-canonical target classes, broken support links, incomplete role coverage, and weak player guidance. The module validates itself at import time.
+
+Focused tests cover exact tech-tree mapping, runtime-adapter execution with UFR-038/UFR-039 APIs, variant unlocks, aliases, composition, immutability, malformed inputs, and cross-link failures.
