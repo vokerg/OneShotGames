@@ -11,6 +11,7 @@ import { installProductionRallyInput } from './input/production-rally-input.js';
 import { createQueuedOrderController } from './input/queued-orders.js';
 import { installTacticalCommandInput } from './input/tactical-command-input.js';
 import { installTransportInput } from './input/transport-input.js';
+import { installWorkerOverview } from './input/worker-overview.js';
 import { synchronizeNavigationGrid } from './systems/navigation-movement-system.js';
 import { Renderer } from './render.js';
 import { installConstructionPreview } from './render/construction-preview.js';
@@ -65,6 +66,7 @@ const disposeProductionQueueControls = installProductionQueueControls({ game, ui
 const disposeTacticalCommandCard = installTacticalCommandCard(ui);
 const disposeVeterancyIndicator = installVeterancyIndicator({ game, ui });
 const disposeProductionExitFeedback = installProductionExitFeedback({ game, ui });
+const disposeWorkerOverview = installWorkerOverview({ game, ui, windowTarget: window });
 const disposeConstructionPreview = installConstructionPreview({ game, renderer });
 const disposeConstructionPlacementInput = installConstructionPlacementInput({ game, ui });
 const disposeAttackGroundInput = installAttackGroundInput({ game, canvas, ui });
@@ -94,6 +96,7 @@ addEventListener(
     disposeAttackGroundInput();
     disposeConstructionPlacementInput();
     disposeConstructionPreview();
+    disposeWorkerOverview();
     disposeProductionExitFeedback();
     disposeVeterancyIndicator();
     disposeTacticalCommandCard();
