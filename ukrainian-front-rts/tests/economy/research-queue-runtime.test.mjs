@@ -81,6 +81,20 @@ test('enforces prerequisites and pauses research while production uses the works
   assert.equal(workshop.researchQueueState.queue[0].remaining, 15);
 });
 
+test('shares completed prerequisites across multiple research facilities', () => {
+  const game = fixture();
+  createResearchQueueRuntime(game);
+  game.start();
+  const first = game.selectedEntities()[0];
+  const second = game.addBuilding('workshop', TEAM.UA);
+  assert.equal(game.research('cageArmor'), true);
+  game.update(20);
+  game.selected = new Set([second.id]);
+  assert.equal(game.research('activeProtection'), true);
+  assert.equal(second.researchQueueState.completedTechIds.includes('cageArmor'), true);
+  assert.equal(first.researchQueueState.completedTechIds.includes('cageArmor'), true);
+});
+
 test('cancels with remaining-value refunds and refunds a lost facility', () => {
   const game = fixture();
   createResearchQueueRuntime(game);
