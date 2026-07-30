@@ -2,7 +2,7 @@ import { BUILDING_TYPES, TEAM, UNIT_TYPES, UPGRADES } from '../config.js';
 import { createEconomyHudModel, economyHudSignature } from '../core/economy-hud-model.js';
 import { describeResearchQueue } from '../systems/research-queue-system.js';
 
-const LABELS = Object.freeze({ metal: 'Metal', fuel: 'Fuel', intel: 'Intel' });
+const RESOURCE_LABELS = Object.freeze({ metal: 'Metal', fuel: 'Fuel', intel: 'Intel' });
 
 function productionFacilities(game) {
   return (game.buildings || []).filter((building) =>
@@ -28,7 +28,10 @@ function productionSnapshot(game, building) {
       remaining: item.left,
       reservedCapacity: item.pop ?? UNIT_TYPES[item.type]?.pop ?? 0,
     })),
-    rally: { waypoints: building.rallyWaypoints || [], blockedReason: building.productionExitBlocked || '' },
+    rally: {
+      waypoints: building.rallyWaypoints || [],
+      blockedReason: building.productionExitBlocked || '',
+    },
   };
 }
 
@@ -37,21 +40,30 @@ function researchSnapshots(game) {
   for (const building of game.buildings || []) {
     if (building.team !== TEAM.UA || !building.researchQueueState) continue;
     result.push({
-      ...describeResearchQueue(building.researchQueueState, { productionBusy: Boolean(building.queue?.length) }),
+      ...describeResearchQueue(building.researchQueueState, {
+        productionBusy: Boolean(building.queue?.length && !building.productionPaused),
+      }),
       name: BUILDING_TYPES[building.type]?.name || building.type,
+      buildingId: building.id,
     });
   }
   for (const [facilityId, state] of Object.entries(game.researchQueueStates || {})) {
     if (!state || result.some((entry) => entry.facilityId === facilityId)) continue;
-    result.push({ ...describeResearchQueue(state), name: facilityId });
+    result.push({ ...describeResearchQueue(state), name: facilityId, buildingId: null });
   }
-  return result;
+  return result.sort((left, right) => left.facilityId.localeCompare(right.facilityId));
 }
 
 function affordability(game, cost = {}) {
   return Object.entries(cost)
     .filter(([resource, amount]) => (game.player?.[resource] || 0) < amount)
     .map(([resource, amount]) => `Needs ${amount} ${resource}`);
+}
+
+function queuedTechIds(game) {
+  return new Set(Object.values(game.researchQueueStates || {})
+    .flatMap((state) => state?.queue || [])
+    .map((item) => item.techId));
 }
 
 function prerequisiteSnapshots(game) {
@@ -75,15 +87,28 @@ function prerequisiteSnapshots(game) {
       });
     }
   }
+
+  const queued = queuedTechIds(game);
+  const operationalWorkshop = (game.buildings || []).some((building) =>
+    building.team === TEAM.UA && building.type === 'workshop' && building.hp > 0 && !building.underConstruction,
+  );
   for (const [upgradeId, upgrade] of Object.entries(UPGRADES)) {
     const reasons = [];
     const done = game.player?.upgrades?.has(upgradeId);
     if (done) reasons.push('Research complete');
+    else if (queued.has(upgradeId)) reasons.push('Research queued');
+    if (!operationalWorkshop) reasons.push('Requires an operational repair workshop');
     if (upgrade.requires && !game.player?.upgrades?.has(upgrade.requires)) {
       reasons.push(`Requires ${UPGRADES[upgrade.requires]?.name || upgrade.requires}`);
     }
     reasons.push(...affordability(game, upgrade.cost));
-    rows.push({ id: upgradeId, kind: 'research', label: upgrade.name, available: !done && !reasons.length, reasons });
+    rows.push({
+      id: upgradeId,
+      kind: 'research',
+      label: upgrade.name,
+      available: !done && !queued.has(upgradeId) && reasons.length === 0,
+      reasons,
+    });
   }
   return rows;
 }
@@ -151,7 +176,7 @@ function renderResources(documentTarget, model) {
   for (const resource of model.resources) {
     const row = node(documentTarget, 'div', 'economyHudResource');
     row.append(
-      node(documentTarget, 'strong', '', LABELS[resource.id] || resource.id),
+      node(documentTarget, 'strong', '', RESOURCE_LABELS[resource.id] || resource.id),
       node(documentTarget, 'span', '', String(Math.floor(resource.amount))),
       node(documentTarget, 'small', '', `+${Math.floor(resource.incomePerMinute)}/min delivered`),
     );
@@ -168,7 +193,10 @@ function renderProduction(documentTarget, entries) {
   for (const entry of entries) {
     const card = node(documentTarget, 'article', `economyHudCard${entry.selected ? ' selected' : ''}`);
     const header = node(documentTarget, 'div', 'economyHudCardHeader');
-    header.append(node(documentTarget, 'strong', '', entry.name), action(documentTarget, 'Focus', 'focus-building', { buildingId: entry.buildingId }));
+    header.append(
+      node(documentTarget, 'strong', '', entry.name),
+      action(documentTarget, 'Focus', 'focus-building', { buildingId: entry.buildingId }),
+    );
     card.append(header, node(documentTarget, 'small', '', `${entry.paused ? 'PAUSED' : 'RUNNING'} · ${entry.repeat ? 'REPEAT' : 'SINGLE'}`));
     const warning = entry.repeatBlockedReason || entry.exitBlockedReason;
     if (warning) card.append(node(documentTarget, 'p', 'economyHudWarning', warning));
@@ -176,7 +204,10 @@ function renderProduction(documentTarget, entries) {
     for (const item of entry.queue) {
       const row = node(documentTarget, 'div', 'economyHudQueueItem');
       const label = node(documentTarget, 'div', 'economyHudQueueLabel');
-      label.append(node(documentTarget, 'span', '', `${item.index + 1}. ${item.name}`), node(documentTarget, 'small', '', `${item.percent}% · ${Math.ceil(item.remaining)}s`));
+      label.append(
+        node(documentTarget, 'span', '', `${item.index + 1}. ${item.name}`),
+        node(documentTarget, 'small', '', `${item.percent}% · ${Math.ceil(item.remaining)}s`),
+      );
       const controls = node(documentTarget, 'div', 'economyHudQueueControls');
       controls.append(
         action(documentTarget, '↑', 'move-production', { buildingId: entry.buildingId, fromIndex: item.index, toIndex: item.index - 1 }, !item.canMoveUp),
@@ -207,23 +238,48 @@ function renderProduction(documentTarget, entries) {
 function renderResearch(documentTarget, model) {
   const section = node(documentTarget, 'section', 'economyHudSection');
   section.append(node(documentTarget, 'h3', '', 'Research overview'));
-  if (!model.research.length) section.append(node(documentTarget, 'p', 'economyHudEmpty', 'No timed research queued.'));
+  if (!model.research.length) section.append(node(documentTarget, 'p', 'economyHudEmpty', 'Construct a repair workshop to host modernization research.'));
   for (const facility of model.research) {
     const card = node(documentTarget, 'article', 'economyHudCard');
-    card.append(node(documentTarget, 'strong', '', facility.name));
+    const header = node(documentTarget, 'div', 'economyHudCardHeader');
+    header.append(
+      node(documentTarget, 'strong', '', facility.name),
+      facility.buildingId == null ? node(documentTarget, 'span') : action(documentTarget, 'Focus', 'focus-building', { buildingId: facility.buildingId }),
+    );
+    card.append(header);
     if (facility.blockedReason) card.append(node(documentTarget, 'p', 'economyHudWarning', facility.blockedReason));
+    if (!facility.items.length) card.append(node(documentTarget, 'p', 'economyHudEmpty', 'Research queue empty'));
     for (const item of facility.items) {
       const row = node(documentTarget, 'div', 'economyHudQueueItem');
-      row.append(node(documentTarget, 'span', '', `${item.name} · ${item.status}`), meter(documentTarget, item.percent));
-      if (item.cancellable) row.append(action(documentTarget, 'Cancel', 'cancel-research', { facilityId: facility.facilityId, itemId: item.id }));
+      row.append(
+        node(documentTarget, 'span', '', `${item.name} · ${item.status}`),
+        meter(documentTarget, item.percent),
+        action(documentTarget, 'Cancel', 'cancel-research', { facilityId: facility.facilityId, itemId: item.id }, !item.cancellable),
+      );
       card.append(row);
+    }
+    if (facility.items.length) {
+      card.append(action(
+        documentTarget,
+        facility.paused ? 'Resume research' : 'Pause research',
+        'set-research-paused',
+        { facilityId: facility.facilityId, paused: !facility.paused },
+      ));
     }
     section.append(card);
   }
-  const available = model.prerequisites.filter((entry) => entry.kind === 'research' && entry.available);
-  if (available.length) section.append(node(documentTarget, 'p', 'economyHudAvailable', `Available: ${available.map((entry) => entry.label).join(', ')}`));
-  for (const entry of model.prerequisites.filter((candidate) => candidate.kind === 'research' && !candidate.available)) {
-    section.append(node(documentTarget, 'p', 'economyHudPrerequisite', `${entry.label}: ${entry.reasons.join(' · ')}`));
+  return section;
+}
+
+function renderAvailability(documentTarget, prerequisites) {
+  const section = node(documentTarget, 'section', 'economyHudSection');
+  section.append(node(documentTarget, 'h3', '', 'Availability and prerequisites'));
+  const available = prerequisites.filter((entry) => entry.available);
+  if (available.length) {
+    section.append(node(documentTarget, 'p', 'economyHudAvailable', `Available now: ${available.map((entry) => entry.label).join(', ')}`));
+  }
+  for (const entry of prerequisites.filter((candidate) => !candidate.available)) {
+    section.append(node(documentTarget, 'p', 'economyHudPrerequisite', `${entry.label}: ${entry.reasons.join(' · ') || 'Unavailable'}`));
   }
   return section;
 }
@@ -235,7 +291,13 @@ export function renderEconomyHud(root, model, { documentTarget = document } = {}
     node(documentTarget, 'p', '', `${model.capacity.used}/${model.capacity.limit} used · ${model.capacity.fielded} fielded · ${model.capacity.reserved} reserved`),
     node(documentTarget, 'small', '', `Forecast: ${model.capacity.forecastLimit} limit · ${model.capacity.forecastAvailable} available`),
   );
-  root.replaceChildren(renderResources(documentTarget, model), capacity, renderProduction(documentTarget, model.production), renderResearch(documentTarget, model));
+  root.replaceChildren(
+    renderResources(documentTarget, model),
+    capacity,
+    renderProduction(documentTarget, model.production),
+    renderResearch(documentTarget, model),
+    renderAvailability(documentTarget, model.prerequisites),
+  );
 }
 
 function buildingById(game, id) {
@@ -246,8 +308,10 @@ function selectFacility(game, building) {
   if (!building) return false;
   game.select(building);
   if (game.camera && Number.isFinite(building.x) && Number.isFinite(building.y)) {
-    game.camera.x = innerWidth / 2 - building.x * game.camera.z;
-    game.camera.y = innerHeight / 2 - building.y * game.camera.z;
+    const width = Number(globalThis.innerWidth) || 0;
+    const height = Number(globalThis.innerHeight) || 0;
+    game.camera.x = width / 2 - building.x * game.camera.z;
+    game.camera.y = height / 2 - building.y * game.camera.z;
   }
   return true;
 }
@@ -299,6 +363,7 @@ export function installEconomyHudOverview({ game, ui, documentTarget = document 
     else if (name === 'set-production-repeat') ok = selectFacility(game, building) && game.setProductionRepeat(target.dataset.repeat === 'true');
     else if (name === 'clear-production-rally') ok = game.clearProductionRally?.(building) ?? false;
     else if (name === 'cancel-research') ok = game.cancelResearch?.(target.dataset.facilityId, target.dataset.itemId) ?? false;
+    else if (name === 'set-research-paused') ok = game.setResearchPaused?.(target.dataset.facilityId, target.dataset.paused === 'true') ?? false;
     if (!ok && game.lastError) ui.toast(game.lastError);
     signature = '';
     ui.refresh();
