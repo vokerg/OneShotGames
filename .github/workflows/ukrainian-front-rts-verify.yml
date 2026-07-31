@@ -1,0 +1,49 @@
+name: Ukrainian Front RTS verification
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ukrainian-front-rts/**'
+      - '.github/workflows/ukrainian-front-rts-verify.yml'
+  pull_request:
+    paths:
+      - 'ukrainian-front-rts/**'
+      - '.github/workflows/ukrainian-front-rts-verify.yml'
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: ukrainian-front-rts
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Full assembled verifier
+        run: bash verify.sh
+      - name: Active claim diagnostics
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: node scripts/verify-active-claims.mjs
+      - name: Browser startup and mission smoke
+        run: node scripts/browser-startup-smoke.mjs
+      - name: Generate completion evidence audit
+        run: node scripts/generate-completion-audit.mjs --output artifacts/completion-evidence-audit.md
+      - name: Upload failure and audit artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ukrainian-front-rts-verification-${{ github.run_id }}
+          path: |
+            ukrainian-front-rts/artifacts/
+          if-no-files-found: error
+          retention-days: 14
