@@ -22,8 +22,9 @@ const ALLOWED_IMPORTS = Object.freeze({
   core: new Set(['core']),
   schema: new Set(['core', 'schema']),
   config: new Set(['core', 'schema', 'config']),
+  navigation: new Set(['core', 'navigation']),
   ai: new Set(['core', 'schema', 'config', 'ai']),
-  systems: new Set(['core', 'schema', 'config', 'ai', 'systems']),
+  systems: new Set(['core', 'schema', 'config', 'navigation', 'ai', 'systems']),
   game: new Set(['core', 'schema', 'config', 'ai', 'systems', 'game']),
   app: new Set(['core', 'schema', 'config', 'game', 'app']),
   input: new Set(['core', 'schema', 'config', 'input']),
@@ -121,7 +122,7 @@ function layerOf(path) {
   if (path === 'src/content-schema.js') return 'schema';
   if (path === 'src/ui.js' || path.startsWith('src/ui/')) return 'ui';
   if (['src/render.js', 'src/art-pass.js', 'src/environment-art-pass.js'].includes(path) || path.startsWith('src/render/')) return 'render';
-  for (const layer of ['core', 'systems', 'ai', 'app', 'input', 'audio']) {
+  for (const layer of ['core', 'navigation', 'systems', 'ai', 'app', 'input', 'audio']) {
     if (path.startsWith(`src/${layer}/`)) return layer;
   }
   return 'other';
