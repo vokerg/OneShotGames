@@ -189,3 +189,24 @@ test('rejects malformed cache and cadence request options', () => {
     /force must be a boolean/,
   );
 });
+
+test('does not create cadence state for absent request ids', () => {
+  const grid = new NavigationGrid({ width: 4, height: 2 });
+  const service = new NavigationPathService({ minRepathTicks: 10 });
+  service.setGrid(grid, 1);
+  const start = center(grid, 0, 0);
+  const destination = center(grid, 3, 0);
+
+  const first = service.requestRoute(start, destination, {}, {
+    requestId: undefined,
+    tick: 1,
+  });
+  const second = service.requestRoute(start, destination, {}, {
+    requestId: undefined,
+    tick: 2,
+  });
+
+  assert.equal(first.status, PATH_REQUEST_RESULTS.READY);
+  assert.equal(second.status, PATH_REQUEST_RESULTS.READY);
+  assert.equal(service.metrics().trackedRequests, 0);
+});
