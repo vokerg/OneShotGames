@@ -85,6 +85,17 @@ python3 tremendous-peace-prize-run/run.py
 
 See [`tremendous-peace-prize-run/README.md`](tremendous-peace-prize-run/README.md) for controls, scope and the satire disclaimer.
 
+### Way of the Ninja: Momentum Trial
+
+Run an original minimalist momentum platformer with wall slides, wall jumps, switches, exits, optional gold, mines, tracking turrets, patrol drones, five sectors, touch controls, and generated audio. Run it with:
+
+```bash
+cd the-way-of-the-ninja
+python3 run.py
+```
+
+See [`the-way-of-the-ninja/README.md`](the-way-of-the-ninja/README.md) for controls, verification, and the originality disclaimer.
+
 ### Fields of Resolve
 
 Command Ukrainian and Russian faction rosters in an original browser RTS with campaign missions, construction, production, upgrades, fog of war, artillery, drones, heroes, and a dedicated unit-art lab. Run it with:
