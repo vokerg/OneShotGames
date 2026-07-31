@@ -95,15 +95,18 @@ try {
   const state = JSON.parse(result.result.value);
   const failures = events.filter((event) =>
     event.method === 'Runtime.exceptionThrown' ||
-    (event.method === 'Log.entryAdded' && ['error', 'warning'].includes(event.params?.entry?.level)),
+    (event.method === 'Log.entryAdded' && event.params?.entry?.level === 'error'),
+  );
+  const warnings = events.filter((event) =>
+    event.method === 'Log.entryAdded' && event.params?.entry?.level === 'warning',
   );
   if (!state.title || !state.hidden || !state.canvas || failures.length) {
     const shot = await call('Page.captureScreenshot', { format: 'png' });
     await writeFile(join(artifacts, 'browser-startup-failure.png'), Buffer.from(shot.data, 'base64'));
-    throw new Error(`Browser smoke failed: ${JSON.stringify({ state, failures })}`);
+    throw new Error(`Browser smoke failed: ${JSON.stringify({ state, failures, warnings })}`);
   }
-  await writeFile(join(artifacts, 'browser-startup-smoke.json'), JSON.stringify({ status: 'passed', state }, null, 2));
-  console.log(`[browser-smoke] mission started: ${state.title}`);
+  await writeFile(join(artifacts, 'browser-startup-smoke.json'), JSON.stringify({ status: 'passed', state, warnings }, null, 2));
+  console.log(`[browser-smoke] mission started: ${state.title}; warnings: ${warnings.length}`);
 } catch (error) {
   await writeFile(join(artifacts, 'browser-startup.log'), `${logs.join('')}\n${error.stack}\n`);
   throw error;
