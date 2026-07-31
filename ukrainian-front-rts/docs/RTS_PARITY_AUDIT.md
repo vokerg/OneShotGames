@@ -4,95 +4,154 @@
 
 This document defines what still separates `ukrainian-front-rts` from the completeness, clarity, pacing, and production quality expected of a polished classic RTS. “Warcraft II quality” is used as a quality bar, not as a request to reproduce copyrighted assets, maps, fiction, UI, code, or exact mechanics.
 
-The corresponding executable backlog is `../TASKS.md`. Task IDs in this document are stable references into that queue.
+The permanent executable backlog is `../TASKS.md`. The temporary integration-recovery priority is defined in `INTEGRATION_RECOVERY_PLAN.md`.
+
+## Audit status — July 31, 2026
+
+The project has made substantial architectural and subsystem progress. The original queue direction remains sound, but execution has drifted toward isolated contract breadth faster than assembled-runtime verification and playable release-gate closure.
+
+The immediate project risk is no longer absence of foundational systems. It is the gap between:
+
+- permanent task markers and focused subsystem tests;
+- actual runtime composition;
+- browser/player verification;
+- complete economy-to-victory and campaign loops.
+
+The active recovery program is tracked by:
+
+- issue #109 — authoritative CI, integrated verification, and honest DONE semantics;
+- issue #110 — stale UFR-022/UFR-071 critical-path recovery;
+- issue #111 — explicit simulation ownership and deterministic application composition;
+- issue #112 — active runtime content, dependency contracts, and fictional framing.
 
 ## Current baseline
 
-The project already has a credible prototype foundation:
+### Credible assembled foundations
 
-- a dependency-free browser runtime with separated composition, input, simulation, systems, rendering, and UI modules;
-- three missions with objectives, enemy assault timing, explicit victory/defeat, and endgame reports;
-- Ukraine and Russia rosters covering engineer, infantry, drone, medic, IFV, tank, artillery, and command heroes;
-- resource recovery, three resources, command capacity, building placement, construction, production queues, and upgrades;
-- selection, formation destinations, move, attack, attack-move, stop, auto-fire, minimap navigation, fog, active abilities, healing, buffs, and projectiles;
-- procedural unit, building, terrain, portrait, and effect rendering plus an art laboratory;
-- a small syntax and architecture verifier.
+The current repository contains:
 
-This is enough to demonstrate the concept. It is not yet enough to sustain a complete campaign, a skirmish match, serious balance work, a production asset pipeline, or a release-quality player experience.
+- a dependency-free browser runtime;
+- fixed-step simulation and seeded randomness;
+- explicit core simulation phases;
+- a headless simulation harness;
+- task, architecture, schema, content, technology, and deterministic verification tools;
+- named actions, control groups, camera controls, queued orders, and tactical commands;
+- navigation grids, deterministic A*, waypoint following, collision, formations, terrain modifiers, transports, and stuck recovery;
+- combat contracts for damage classes, projectiles, sight, cover, suppression, target policy, artillery, drones/EW, air defense, smoke, abilities, repair, destruction, veterancy, stances, garrisons, engineering, and readability;
+- worker gathering, drop-offs, extraction policy, construction placement/progress, production/research queues, rally/exit behavior, capacity, defenses, building lifecycle, and economy HUD work;
+- faction doctrine and technology-tree contracts;
+- campaign state, saves, scripting, objectives, authored-map format, checkpoints, modernization, briefing/debrief, and narrative contracts;
+- early art, audio, and semantic-UI architecture.
 
-## Highest-impact gaps found in the implementation
+This is materially beyond the original prototype baseline.
 
-### 1. The missions are variants of one hard-coded battlefield
+### What is actually player-visible
 
-`Game.start` currently creates one terrain field, one road, one resource layout, one set of bases, and one initial roster, then swaps mission data, heroes, objectives, and wave timing. The three operations therefore lack authored geography, mission-specific encounter structure, scripted events, alternate starts, reinforcements, checkpoints, and scenario identity.
+A meaningful subset is integrated into the active browser application, including movement, commands, economy, construction, production, research, capacity, stances, veterancy, transports, and combat-readability adapters.
 
-**Required response:** data-driven maps, scenario scripting, campaign state, objective libraries, mission-specific AI, authored mission rebuilds, and a longer campaign. See UFR-084 through UFR-105.
+However, many merged modules remain contract-only or partially integrated. Examples include parts of the complete faction roster, AI planning, authored maps, campaign presentation, checkpoints, modernization, narrative presentation, centralized audio, and semantic UI architecture.
 
-### 2. Movement is direct steering, not RTS navigation
+Nominal task completion must therefore not be treated as equivalent to release-gate completion.
 
-Units move in straight lines toward destinations. There is no navigation grid, path search, footprint-aware blocking, local avoidance, choke-point handling, formation preservation, stuck recovery, passability, bridge logic, or terrain movement cost.
+## Immediate recovery findings
 
-This prevents meaningful base layouts, defensive lines, bridges, urban obstacles, mines, and tactical terrain.
+### 1. Main lacks authoritative assembled verification
 
-**Required response:** UFR-018 through UFR-030.
+Focused tests and reconstructed fixtures exist, but the latest assembled `main` does not have required CI evidence covering the full verifier and browser startup.
 
-### 3. Combat lacks a complete counter and terrain model
+**Required response:** issue #109.
 
-Current combat is mostly hit points, range, damage, reload, sight, nearest-target acquisition, and simple projectile travel. It lacks damage/armor classes, accuracy, evasion, line-of-sight occlusion, elevation, cover, suppression, morale, target priorities, minimum ranges, meaningful ammunition/spotting rules, area-damage policy, friendly fire policy, damage states, wrecks, veterancy, and consistent ability targeting.
+### 2. Critical path is blocked by stale branches
 
-**Required response:** UFR-031 through UFR-050.
+UFR-022 and UFR-071 have old branches that no longer represent current-main integration state. Their work blocks navigation closure, tactical AI, faction completion, skirmish, art, and campaign dependencies.
 
-### 4. Economy and production are prototype-level
+**Required response:** issue #110.
 
-Engineers automatically choose nearby resources. Production has a short fixed queue, but no cancel/reorder/refund, rally point, exit blocking, tech prerequisites, research time, build grid, builder cooperation, repair economics, multiple drop-off behavior, neutral capture, defenses, or robust resource assignment UI.
+### 3. Documented simulation ownership and actual runtime order have diverged
 
-**Required response:** UFR-051 through UFR-068.
+Some controllers wrap authoritative `Game` methods and create behavior before or after the declared simulation phases. `src/main.js` manually installs and disposes a growing adapter graph.
 
-### 5. The opposing side is a wave spawner, not an RTS opponent
+**Required response:** issue #111.
 
-Russian forces do not scout, gather, build, expand, research, compose armies, defend, retreat, flank, raid, or react to the player. There is no skirmish mode or authored AI doctrine.
+### 4. Active runtime content is behind canonical contracts
 
-**Required response:** UFR-075 through UFR-083.
+The browser still consumes prototype-era configuration while newer faction/content contracts exist separately. Real public figures also remain directly controllable combat heroes despite the fictionalized product framing.
 
-### 6. Faction identity is visually stronger than mechanically distinct
+**Required response:** issue #112.
 
-The current roster is intentionally mirrored. That is useful for a first balance pass, but it does not yet create strategic faction identity, distinct production choices, reconnaissance warfare, electronic warfare, air defense, logistics, transport, river-crossing play, specialized counters, or meaningful doctrine.
+### 5. Contract tests have not always tested dependency compatibility
 
-**Required response:** UFR-069 through UFR-074 and the faction/roster work in UFR-071 through UFR-077.
+The UFR-073/UFR-074 audit found locally passing implementations with incompatible producers, prerequisites, resources, public adapter fields, clamps, and ownership.
 
-### 7. Campaign persistence and player learning are absent
+**Required response:** issues #109 and #112; dependency-contract execution becomes part of normal acceptance.
 
-There is no campaign map, unlock state, save/load, checkpoints, tutorial, difficulty selection, briefing/debriefing sequence, persistent modernization, medals, branching choice, mission scoring, or narrative presentation system.
+## Remaining product gaps
 
-**Required response:** UFR-084 through UFR-105 and UFR-132 through UFR-140.
+### Gate A — stable RTS foundation
 
-### 8. Visuals are an advanced prototype, not a shippable asset set
+**Status: provisionally implemented, not closed.**
 
-The procedural art pass establishes silhouettes and palette language, but units do not yet have complete directional sprite sets and production animation coverage for idle, movement, attack, ability, hit, damaged, death, and wreck states. Terrain is not an authored tile set with transitions, cliffs, water, bridges, roads, structures, destructibles, seasonal variants, and mission illustrations. Asset provenance and repeatable export/packing are not yet automated.
+Most control and movement systems exist. Closure is blocked by UFR-022 recovery, navigation torture scenarios, the 150-unit integration/performance gate, and authoritative assembled verification.
 
-**Required response:** UFR-106 through UFR-123.
+Critical path:
 
-### 9. Audio is effectively a missing product layer
+```text
+UFR-022 → UFR-029 → UFR-030
+```
 
-There is no central audio engine, mixer, spatial policy, event taxonomy, unit acknowledgements, combat effects, UI sounds, ambient beds, adaptive score, voice pipeline, subtitles, or audio options.
+### Gate B1 — complete combat model
 
-**Required response:** UFR-124 through UFR-132.
+**Status: broad contract coverage, provisional runtime coverage.**
 
-### 10. The interface communicates state but lacks mature RTS ergonomics
+The combat model has substantial policy and integration work. The combat integration gate must be rerun in the assembled checkout through issue #109 before it can be treated as proven.
 
-The command panel is useful, but the game still needs configurable hotkeys, control groups, subgroup selection, idle-worker selection, production tabs, queue manipulation, rally points, tech tree presentation, tactical alerts, minimap pings, pause/settings/save flows, richer tooltips, accessibility, resolution scaling, localization, and post-mission analytics.
+### Gate B2 — economy, construction, production, and technology
 
-**Required response:** UFR-013 through UFR-017 and UFR-133 through UFR-145.
+**Status: substantial runtime integration, incomplete gate.**
 
-### 11. Quality engineering is too small for a growing RTS
+The primary economy systems are live enough to form a serious prototype loop. Remaining major work is opening/balance policy and complete recovery scenarios:
 
-The verifier checks syntax and architecture boundaries, but there is no unit/integration/browser test suite, deterministic random seed, simulation harness, replay format, content schema validator, balance simulator, visual regression set, performance budget, save migration suite, crash diagnostics, or release pipeline.
+```text
+UFR-066 → UFR-068
+```
 
-**Required response:** UFR-001 through UFR-012 and UFR-146 through UFR-160.
+### Gate B3 — factions, AI, and skirmish
+
+**Status: content and architecture ahead of playable opponent behavior.**
+
+Faction contracts are broad, but UFR-071 must be recovered and runtime content reconciled. AI currently lacks the economy and tactical implementation required for a full RTS opponent.
+
+Critical path:
+
+```text
+UFR-030 + UFR-050 + UFR-079 → UFR-081
+UFR-068 + UFR-079 → UFR-080
+UFR-080 + UFR-081 → UFR-082 → UFR-083
+```
+
+### Gate C — campaign-complete alpha
+
+**Status: infrastructure-rich, authored-campaign poor.**
+
+Campaign contracts for state, saves, scripting, objectives, maps, flow, checkpoints, modernization, and narrative exist. The tutorial and authored operation sequence should not accelerate until skirmish/economy/navigation integration is stable and issue #112 resolves active content/framing.
+
+### Gate D — production audiovisual and interface beta
+
+**Status: early architecture and standards only.**
+
+The art bible, audio mixer contract, and semantic UI architecture are useful foundations. Production asset families, runtime audio mapping, HUD migration, accessibility, localization, and visual/audio integration remain largely ahead.
+
+Do not prioritize later Gate D breadth while the P0 recovery override is active.
+
+### Gate E — release candidate
+
+**Status: not started as an assembled release program.**
+
+Release-level browser compatibility, performance, replay, save migration, crash diagnostics, provenance, packaging, and sign-off remain future work.
 
 ## Target product definition
 
-A release candidate should provide the following player-visible experience:
+A release candidate should provide:
 
 1. **Immediate control clarity.** Selection, movement, attack, production, construction, abilities, and camera controls respond consistently and have visible/audio acknowledgement.
 2. **Tactical terrain.** Roads, shelterbelts, settlements, rivers, bridges, obstacles, cover, sight lines, and elevation affect decisions.
@@ -105,9 +164,27 @@ A release candidate should provide the following player-visible experience:
 9. **Balance confidence.** Matchups and mission difficulty are supported by deterministic tests, telemetry, batch simulations, and repeatable playtest scenarios.
 10. **Release discipline.** Versioned saves, browser compatibility, performance budgets, source manifests, licensing records, changelogs, and release checklists exist.
 
-## Quality gates
+## Recovery quality gate
 
-### Gate A — Stable RTS foundation
+The recovery gate temporarily precedes ordinary Gates A–E.
+
+Pass criteria:
+
+- latest `main` passes required `bash verify.sh` CI;
+- browser startup and mission-start smoke pass;
+- completion markers expose actual evidence level;
+- UFR-022 and UFR-071 are recovered from current `main`;
+- stale claims are closed or superseded accurately;
+- the authoritative simulation order is explicit and contains no hidden controller phases;
+- application installation/disposal is deterministic and failure-safe;
+- merged-but-unwired high-impact contracts have named integration owners;
+- no unresolved P0 defect is found by the assembled baseline.
+
+See `INTEGRATION_RECOVERY_PLAN.md` for sequencing and exit rules.
+
+## Permanent quality gates
+
+### Gate A — stable RTS foundation
 
 Required: UFR-001 through UFR-030.
 
@@ -117,9 +194,10 @@ Pass criteria:
 - repeatable headless scenarios;
 - action mapping and control groups;
 - footprint-aware navigation, collision, formations, and stuck recovery;
-- no architecture regression from new systems.
+- no architecture regression from new systems;
+- assembled integration and browser checks pass.
 
-### Gate B — Complete core match loop
+### Gate B — complete core match loop
 
 Required: UFR-031 through UFR-083.
 
@@ -127,10 +205,11 @@ Pass criteria:
 
 - counter-based combat with line of sight, cover, suppression, repair, and targeted abilities;
 - manageable economy, construction, production, research, rally points, and defenses;
-- distinct faction doctrines and a full playable roster;
-- skirmish AI that can complete an economy-to-victory loop.
+- distinct faction doctrines and a full runtime-integrated playable roster;
+- skirmish AI completes an economy-to-victory loop;
+- combat/economy/faction contracts are exercised through their runtime owners.
 
-### Gate C — Campaign-complete alpha
+### Gate C — campaign-complete alpha
 
 Required: UFR-084 through UFR-105.
 
@@ -139,9 +218,10 @@ Pass criteria:
 - tutorial and at least eight authored missions;
 - campaign progression, save/load, checkpoint, briefing, debriefing, and scoring;
 - objective variety and mission-specific scripting;
-- complete content review for fictional framing and sensitivity.
+- complete content review for fictional framing and sensitivity;
+- no real public figure is used as a directly controllable combat hero.
 
-### Gate D — Production audiovisual beta
+### Gate D — production audiovisual beta
 
 Required: UFR-106 through UFR-145.
 
@@ -152,7 +232,7 @@ Pass criteria:
 - central audio system, effects, ambience, score, acknowledgements, subtitles, and options;
 - full HUD, settings, accessibility, localization, and post-mission UX.
 
-### Gate E — Release candidate
+### Gate E — release candidate
 
 Required: UFR-146 through UFR-160.
 
@@ -162,21 +242,24 @@ Pass criteria:
 - performance, compatibility, save migration, asset provenance, packaging, and release gates;
 - no P0/P1 defects in the release checklist.
 
-### Gate F — Optional multiplayer expansion
+### Gate F — optional multiplayer expansion
 
 Required only if multiplayer is approved: UFR-161 through UFR-168.
 
-Multiplayer is deliberately isolated behind an architecture decision. It must not destabilize the single-player release path.
+Multiplayer remains isolated behind an architecture decision and must not destabilize the single-player release path.
 
 ## Scope controls
 
 - Do not copy Warcraft II assets, text, maps, sounds, music, UI layouts, story, or source code.
 - Use classic RTS design principles as references: responsiveness, legibility, counter structure, economy rhythm, campaign pacing, and production completeness.
-- Keep the current dependency-free goal unless a task explicitly changes that decision and documents the cost.
-- Prefer data-driven systems that can support campaign, skirmish, tests, and future editors.
-- Treat real people and events as stylized fiction. Add content notes, avoid defamatory invented factual claims, and separate dramatic scenario text from historical documentation.
-- Do not add a new mechanic without player feedback, AI support, serialization support, and test coverage appropriate to its release gate.
+- Keep the dependency-free goal unless a task explicitly changes that decision and documents the cost.
+- Prefer data-driven systems that support campaign, skirmish, tests, and future editors.
+- Treat real people and events as stylized fiction. Do not use real public figures as directly controllable combat heroes; add content notes and avoid defamatory invented factual claims.
+- Do not add a mechanic without player feedback, AI support, serialization support, and test coverage appropriate to its release gate.
+- Prefer closing incomplete playable loops over adding isolated contract or content breadth.
 
 ## Audit maintenance
 
-Update this audit only when a merged task materially changes the assessed baseline or release gates. Do not use this file as a claim board; task state is resolved through `TASKS.md`, open PRs, and completion markers as defined in `FEATURE_CONVEYOR.md`.
+Update this audit when a merged task or recovery issue materially changes the assessed baseline or release gates.
+
+Do not use this file as a claim board. Permanent task state is resolved through `TASKS.md`, open PRs, and completion markers. Recovery priority is resolved through `INTEGRATION_RECOVERY_PLAN.md` and its linked issues.
