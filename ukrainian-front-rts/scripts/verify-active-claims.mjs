@@ -30,7 +30,9 @@ for (const [id, numbers] of claims) {
 
 for (const pull of pulls) {
   if (!/\b(?:0|zero)\s+behind\b/i.test(pull.body || '')) continue;
-  const comparison = await github(`/compare/${encodeURIComponent(pull.base.ref)}...${encodeURIComponent(pull.head.label)}`);
+  const sameRepository = pull.head.repo?.full_name === repository;
+  const head = sameRepository ? pull.head.ref : `${pull.head.repo?.owner?.login}:${pull.head.ref}`;
+  const comparison = await github(`/compare/${encodeURIComponent(pull.base.ref)}...${encodeURIComponent(head)}`);
   if (comparison.behind_by > 0) failures.push(`PR #${pull.number} claims zero behind but is ${comparison.behind_by} commit(s) behind ${pull.base.ref}`);
 }
 
