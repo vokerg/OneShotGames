@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, extname, join, normalize, resolve } from 'node:path';
@@ -12,9 +13,9 @@ const browserPort = 9222;
 const mime = { '.css': 'text/css', '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml' };
 
 await mkdir(artifacts, { recursive: true });
-const browser = process.env.CHROME_BIN || ['google-chrome', 'chromium', 'chromium-browser'].find((name) => {
-  try { return process.env.PATH.split(':').some((dir) => require('node:fs').existsSync(join(dir, name))); } catch { return false; }
-});
+const browser = process.env.CHROME_BIN || ['google-chrome', 'chromium', 'chromium-browser'].find((name) =>
+  (process.env.PATH || '').split(':').some((directory) => existsSync(join(directory, name))),
+);
 if (!browser) throw new Error('No Chrome/Chromium executable found. Set CHROME_BIN.');
 
 const server = createServer(async (request, response) => {
@@ -82,6 +83,7 @@ function call(method, params = {}) {
 try {
   await connect();
   await call('Runtime.enable');
+  await call('Log.enable');
   await call('Page.enable');
   await delay(1500);
   await call('Runtime.evaluate', { expression: `document.querySelector('.missionCard button')?.click()` });
@@ -91,7 +93,10 @@ try {
     returnByValue: true,
   });
   const state = JSON.parse(result.result.value);
-  const failures = events.filter((event) => ['Runtime.exceptionThrown', 'Log.entryAdded'].includes(event.method));
+  const failures = events.filter((event) =>
+    event.method === 'Runtime.exceptionThrown' ||
+    (event.method === 'Log.entryAdded' && ['error', 'warning'].includes(event.params?.entry?.level)),
+  );
   if (!state.title || !state.hidden || !state.canvas || failures.length) {
     const shot = await call('Page.captureScreenshot', { format: 'png' });
     await writeFile(join(artifacts, 'browser-startup-failure.png'), Buffer.from(shot.data, 'base64'));
