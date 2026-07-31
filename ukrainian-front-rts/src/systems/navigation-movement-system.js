@@ -285,6 +285,7 @@ export function updateUnitWithNavigation(
 
 export function updateUnitsWithNavigation(game, stepSeconds) {
   const state = synchronizeNavigationGrid(game);
+  state.pathService.retainRequests(game.units.map(navigationRequestId));
   state.tick += 1;
   for (const unit of game.units) {
     updateUnitWithNavigation(game, unit, stepSeconds, state);
