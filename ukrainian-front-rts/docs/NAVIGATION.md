@@ -94,13 +94,15 @@ Successful and failed bounded searches are both reusable. Cache entries contain 
 
 The cache holds at most 256 templates by default. When full, it evicts the oldest inserted entry deterministically. Cache hits do not reorder entries.
 
-Runtime requests use stable unit request IDs and fixed-step tick numbers. A new order forces an immediate plan. When a structure revision invalidates an existing route, repeated replans for the same unit are limited to one every six simulation ticks by default. A throttled request returns a deterministic `retryTick` and no route; the movement owner pauses the order rather than following stale waypoints. `releaseRequest()` removes cadence state when an order completes, fails, or changes to a non-navigation action.
+Runtime requests use stable unit request IDs and fixed-step tick numbers. A new order forces an immediate plan. When a structure revision invalidates an existing route, repeated replans for the same unit are limited to one every six simulation ticks by default. A throttled request returns a deterministic `retryTick` and no route; the movement owner pauses the order rather than following stale waypoints. `releaseRequest()` removes cadence state when an order completes, fails, or changes to a non-navigation action. `retainRequests()` deterministically prunes cadence entries whose owners are no longer present, preventing removed or destroyed units from accumulating orphaned request state.
 
 `metrics()` returns a frozen deterministic snapshot containing request, search, cache hit/miss, throttle, invalidation, eviction, visited-cell, cache-entry, tracked-request, and active-revision values. The metrics intentionally exclude wall-clock timing so diagnostics cannot create platform-dependent replay behavior or test assertions.
 
 ## Runtime integration
 
 The fixed-step `units` phase calls `updateUnitsWithNavigation()`. The movement system lazily creates an 80×52 grid from `WORLD`, maps the current runtime terrain values to open/mud/rubble costs, and registers every live building as a ground/amphibious dynamic blocker using its authored width and height.
+
+Before advancing units, the runtime retains request IDs for the current unit roster. Cadence entries for units removed by destruction, transport/lifecycle replacement, or mission reset are pruned before the next fixed-step movement pass. Units that remain present but no longer own a ground navigation order release their request state during their own update.
 
 A stable building signature controls invalidation. Construction, destruction, or relocation increments the navigation revision, installs the replacement grid in the persistent path service, and invalidates cached templates. Existing move/attack-move orders retain their original destination but stop using the stale route. They resume after the bounded cadence permits a new request from the unit's current position. New order objects force immediate planning and are not delayed by cadence state from a replaced order.
 
@@ -139,10 +141,11 @@ The recovery policy uses no wall clock, randomness, path-cache mutation, collisi
 - Snapshot arrays, path results, path cells, waypoint arrays, cache templates, and metrics snapshots are frozen.
 - Cache eviction follows insertion order; cache hits do not reorder entries.
 - Repath cadence uses fixed-step ticks, never animation time or wall-clock time.
+- Cadence pruning iterates stable request insertion order and depends only on the current roster's stable IDs.
 - Navigation modules import only core or sibling navigation modules; they do not import game, system, renderer, UI, DOM, or browser services.
-- `src/navigation/path-service.js` owns cache identity, cache invalidation, cadence state, and path-search counters only.
+- `src/navigation/path-service.js` owns cache identity, cache invalidation, cadence state/lifecycle, and path-search counters only.
 - `src/navigation/movement-recovery.js` owns pure progress tracking and local-detour candidate ordering.
-- `src/systems/navigation-movement-system.js` owns runtime synchronization, fixed-step movement sequencing, recovery-state application, and safe order cancellation.
+- `src/systems/navigation-movement-system.js` owns runtime synchronization, fixed-step movement sequencing, request-owner retention, recovery-state application, and safe order cancellation.
 - `src/systems/unit-collision-system.js` owns unit-to-unit footprint separation only.
 - `Game` remains authoritative for speed, facing, buffs, combat acquisition, and physical movement before separation.
 - Transports and additional command types remain separate queue tasks.
