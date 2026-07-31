@@ -18,6 +18,9 @@ function validProject() {
   write(root, 'src/core/events.js', 'export const EVENT = "event";');
   write(root, 'src/config.js', 'export const TEAM = { UA: 0, RU: 1 };');
   write(root, 'src/content-schema.js', 'export const CONTENT_SCHEMA_VERSION = 1; export const CONTENT_SCHEMA_FAMILIES = []; export const CONTENT_SCHEMAS = {};');
+  write(root, 'src/navigation/navigation-grid.js', "import { tick } from '../core/fixed-step-clock.js'; export const cellSize = tick;");
+  write(root, 'src/navigation/path-service.js', "import { cellSize } from './navigation-grid.js'; export const route = cellSize;");
+  write(root, 'src/systems/navigation-movement-system.js', "import { route } from '../navigation/path-service.js'; export { route };");
   write(root, 'src/systems/objective-system.js', "import { TEAM } from '../config.js'; export { TEAM };");
   write(root, 'src/systems/projectile-system.js', "import { tick } from '../core/fixed-step-clock.js'; export { tick };");
   write(root, 'src/systems/simulation-phases.js', "import { TEAM } from '../config.js'; export { TEAM };");
@@ -62,7 +65,7 @@ test('accepts the documented production dependency direction', () => {
   const root = validProject();
   try {
     assert.deepEqual(verifyArchitectureProject({ projectRoot: root }), {
-      filesChecked: 15,
+      filesChecked: 18,
       failures: [],
     });
   } finally {
@@ -77,7 +80,7 @@ test('accepts focused content and AI modules with inward-only imports', () => {
     write(root, 'src/ai/ai-contracts.js', "import { TEAM } from '../content/faction-tech-trees.js'; export { TEAM };");
     write(root, 'src/systems/ai-runtime.js', "import { TEAM } from '../ai/ai-contracts.js'; export { TEAM };");
     assert.deepEqual(verifyArchitectureProject({ projectRoot: root }), {
-      filesChecked: 18,
+      filesChecked: 21,
       failures: [],
     });
   } finally {
@@ -91,7 +94,7 @@ test('accepts dedicated UI modules as the UI layer and permits UI-owned DOM adap
     write(root, 'src/ui/ui-contract.js', 'export const REGIONS = [];');
     write(root, 'src/ui/dom-adapter.js', "import { REGIONS } from './ui-contract.js'; export const mount = () => document.querySelector(REGIONS[0]);");
     assert.deepEqual(verifyArchitectureProject({ projectRoot: root }), {
-      filesChecked: 17,
+      filesChecked: 20,
       failures: [],
     });
   } finally {
@@ -102,6 +105,8 @@ test('accepts dedicated UI modules as the UI layer and permits UI-owned DOM adap
 test('rejects forbidden layer imports and imports outside src', () => {
   assert.ok(verifyMutation('src/core/events.js', "import { Game } from '../game.js'; export { Game };")
     .some((failure) => failure.includes('core layer cannot import game layer')));
+  assert.ok(verifyMutation('src/navigation/path-service.js', "import { route } from '../systems/navigation-movement-system.js'; export { route };")
+    .some((failure) => failure.includes('navigation layer cannot import systems layer')));
   assert.ok(verifyMutation('src/systems/wave-system.js', "import { UI } from '../ui.js'; export { UI };")
     .some((failure) => failure.includes('systems layer cannot import ui layer')));
   assert.ok(verifyMutation('src/app/simulation-harness.js', "import { TEAM } from '../systems/simulation-phases.js'; export { TEAM };")
