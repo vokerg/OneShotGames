@@ -185,7 +185,7 @@ export class NavigationPathService {
     }
 
     const normalized = normalizeOptions(this.#grid, options);
-    const normalizedRequestId = requestId === null ? null : String(requestId);
+    const normalizedRequestId = requestId == null ? null : String(requestId);
     this.#metrics.requests += 1;
 
     if (!force && normalizedRequestId !== null) {
