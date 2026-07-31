@@ -4,6 +4,7 @@ export const DOMAIN_EVENT_TYPES = Object.freeze({
   DEATH: 'entity.death',
   PRODUCTION: 'economy.production',
   RESEARCH: 'economy.research',
+  CAPTURE: 'economy.capture',
   OBJECTIVE: 'mission.objective',
   ALERT: 'ui.alert',
   AUDIO: 'audio.request',
