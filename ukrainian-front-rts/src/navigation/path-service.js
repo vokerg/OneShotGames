@@ -244,6 +244,24 @@ export class NavigationPathService {
     return this.#lastPlanTick.delete(String(requestId));
   }
 
+  retainRequests(requestIds = []) {
+    if (!Array.isArray(requestIds)) {
+      throw new TypeError('Retained path request ids must be an array.');
+    }
+    const retained = new Set(
+      requestIds
+        .filter((requestId) => requestId !== null && requestId !== undefined)
+        .map(String),
+    );
+    let released = 0;
+    for (const requestId of this.#lastPlanTick.keys()) {
+      if (retained.has(requestId)) continue;
+      this.#lastPlanTick.delete(requestId);
+      released += 1;
+    }
+    return released;
+  }
+
   metrics() {
     return Object.freeze({
       ...this.#metrics,
