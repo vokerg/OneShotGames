@@ -6,7 +6,9 @@
 
 Events have a stable `type`, non-negative integer `tick`, monotonic `sequence`, optional `source`, and immutable object `payload`. Producers emit events only after the authoritative state change has occurred. Consumers may observe events but must not use them to mutate simulation state.
 
-The initial taxonomy covers shots, impacts, deaths, production, research, objectives, alerts, audio requests, telemetry samples, and replay records. Additions must extend `DOMAIN_EVENT_TYPES`; ad-hoc string types are rejected.
+The taxonomy covers shots, impacts, deaths, production, research, neutral-site capture, objectives, alerts, audio requests, telemetry samples, and replay records. Additions must extend `DOMAIN_EVENT_TYPES`; ad-hoc string types are rejected.
+
+`economy.capture` records completed or progressing neutral-site ownership transitions through the UFR-065 adapter. Its payload uses stable site IDs, transition names, teams, progress, and contest state. Building and neutral-site capture rules remain authoritative in their systems; consuming the event must never change the result.
 
 ## Ordering and lifecycle
 
