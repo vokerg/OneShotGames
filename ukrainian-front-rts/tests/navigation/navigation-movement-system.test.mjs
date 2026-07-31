@@ -60,8 +60,8 @@ function makeGame({
   return game;
 }
 
-function depot(id = 10) {
-  return { id, type: 'depot', team: TEAM.RU, x: 80, y: 48, hp: 680 };
+function depot(id = 10, x = 80, y = 48) {
+  return { id, type: 'depot', team: TEAM.RU, x, y, hp: 680 };
 }
 
 function normalizedPositions(units) {
@@ -197,7 +197,7 @@ test('bounds structure-triggered replans and resumes at the deterministic retry 
   updateUnitsWithNavigation(game, 1 / 30);
   const firstRevision = game.navigationState.revision;
   const pausedPosition = { x: unit.x, y: unit.y };
-  game.buildings = [depot()];
+  game.buildings = [depot(10, 112, 48)];
 
   updateUnitsWithNavigation(game, 1 / 30);
   assert.equal(game.navigationState.revision, firstRevision + 1);
