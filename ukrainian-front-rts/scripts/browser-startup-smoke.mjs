@@ -36,6 +36,11 @@ if (typeof WebSocket !== 'function') throw new Error('The browser smoke requires
 const server = createServer(async (request, response) => {
   try {
     const pathname = decodeURIComponent(new URL(request.url, pageUrl).pathname);
+    if (pathname === '/favicon.ico') {
+      response.statusCode = 204;
+      response.end();
+      return;
+    }
     const requested = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
     const file = resolve(root, requested);
     const projectRelative = relative(root, file);
