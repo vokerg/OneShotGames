@@ -67,7 +67,7 @@ test('adapts impact outcomes, armor feedback, and damage numbers', () => {
     damage: 27,
   });
   const cues = game.combatReadabilitySnapshot().cues;
-  assert.deepEqual(cues.map((cue) => cue.kind), ['impact', 'armor', 'damage']);
+  assert.deepEqual(cues.map((cue) => cue.kind), ['armor', 'impact', 'damage']);
   assert.equal(cues.at(-1).value, 27);
 });
 
