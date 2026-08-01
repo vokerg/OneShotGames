@@ -55,7 +55,7 @@ test('controller uses Shift state for append and Stop clears pending commands', 
     addEventListener(type, handler) { listeners.set(type, handler); },
     removeEventListener(type) { listeners.delete(type); },
   };
-  const unit = { id: 1, order: null, orderQueue: [], target: null };
+  const unit = { id: 1, x: 0, y: 0, order: null, orderQueue: [], target: null };
   const game = {
     gameOver: false,
     mouse: { attackMove: false },
