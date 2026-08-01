@@ -26,6 +26,7 @@ function freezeMap(map) {
       : undefined,
     transportStart: map.transportStart ? freezePoint(map.transportStart) : undefined,
     transportExit: map.transportExit ? freezePoint(map.transportExit) : undefined,
+    crossing: map.crossing ? freezePoint(map.crossing) : undefined,
   });
 }
 
@@ -91,6 +92,7 @@ export const NAVIGATION_TORTURE_MAPS = Object.freeze({
     bridges: [{ x: 9, y: 6 }],
     transportStart: { x: 4, y: 6 },
     transportExit: { x: 15, y: 6 },
+    crossing: { x: 9, y: 6 },
   }),
   destruction: Object.freeze({
     before: freezeMap({
