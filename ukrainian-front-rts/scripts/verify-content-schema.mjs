@@ -20,6 +20,10 @@ const EXPECTED_FAMILIES = [
   'maps',
   'aiProfiles',
 ];
+const REFERENCE_TARGETS = new Set([
+  ...EXPECTED_FAMILIES,
+  'tech-nodes',
+]);
 
 const hasOwn = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
 
@@ -73,8 +77,8 @@ for (const family of CONTENT_SCHEMA_FAMILIES) {
 
     if (field.reference) {
       assert.ok(
-        EXPECTED_FAMILIES.includes(field.reference),
-        `${family}.${fieldName} references unknown family ${field.reference}.`,
+        REFERENCE_TARGETS.has(field.reference),
+        `${family}.${fieldName} references unknown target ${field.reference}.`,
       );
     }
   }
