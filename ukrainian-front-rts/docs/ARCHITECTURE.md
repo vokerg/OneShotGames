@@ -9,7 +9,7 @@ This document records the Gate A foundation established by UFR-003 through UFR-0
 ## Gate A invariants
 
 1. `src/main.js` is composition only.
-2. `Game` and `src/systems/` own authoritative simulation state and rules.
+2. `Game`, `src/systems/`, and the focused simulation namespaces own authoritative simulation state and rules.
 3. Simulation advances in fixed ticks through one documented phase order.
 4. All authoritative randomness uses the seeded core service.
 5. Content shape is versioned in `src/content-schema.js`; content instances remain declarative.
@@ -42,10 +42,13 @@ index.html
           │   └─ events.js               domain-event taxonomy and stream
           ├─ src/navigation/             grid, path, cache, formation/recovery policies
           ├─ src/ai/                     deterministic AI planning contracts
+          ├─ src/combat/                 focused combat policies and systems
+          ├─ src/status/                 authoritative unit-status policies
+          ├─ src/visibility/             authoritative visibility policies
           └─ src/systems/
               ├─ simulation-phases.js    authoritative phase order
               ├─ navigation-movement-system.js runtime navigation integration
-              ├─ research-queue-system.js pure research queue contract
+              ├─ research-queue-system.js pure shared research contract
               ├─ research-queue-runtime.js live facility research commands/state
               ├─ objective-system.js
               ├─ projectile-system.js
@@ -97,33 +100,45 @@ The ordered stage list has one owner: `scripts/lib/verification-runner.mjs`. CI 
 Dependencies point inward toward declarative data, pure contracts, and focused policies:
 
 ```text
-main → app/input/ui/render/game/ai
+main → app/input/ui/render/game/navigation/ai/systems
 runtime → injected Game/UI/Renderer interfaces + core fixed-step clock
 simulation harness → Game/core only
-ui/render → config + read-only game state + public game commands
-Game → config/schema/core/ai/systems
-systems → config/schema/core/navigation/ai/sibling systems
+ui/render → config + shared contracts + read-only game state + public game commands
+Game → config/schema/contracts/core/ai/systems
+systems, combat, status, visibility → config/schema/contracts/core/navigation/ai/sibling systems
 navigation → core/sibling navigation modules only
-ai → config/schema/core/sibling ai modules
-config (including src/content/) → schema/core only when needed
+ai → config/schema/contracts/core/sibling ai modules
+config (including src/content/) → schema/core/shared contracts only when needed
+shared contracts → schema/core/sibling shared contracts only
 schema → core only when needed
 core → sibling core modules only
 production → never tests
 ```
 
-The architecture verifier enforces the declared production layers: `core`, `schema`, `config`, `navigation`, `ai`, `systems`, `game`, `app`, `input`, `ui`, `render`, `audio`, and `main`. Focused modules under `src/content/` are classified as the declarative `config` layer. A new top-level source directory is an architecture change: add its ownership and allowed imports to the verifier, add accepted/rejected tooling fixtures, and update this document.
+The architecture verifier enforces the declared production layers: `core`, `schema`, `contract`, `config`, `navigation`, `ai`, `systems`, `game`, `app`, `input`, `ui`, `render`, `audio`, and `main`. Focused modules under `src/content/` are classified as the declarative `config` layer. The top-level `src/combat/`, `src/status/`, and `src/visibility/` namespaces are classified as focused `systems` modules. `src/navigation/` remains a distinct inward-only policy layer.
+
+A small set of dependency-free public contracts is classified as `contract` because it is consumed from more than one outward layer without transferring mutation ownership:
+
+- `src/combat/air-defense-system.js`;
+- `src/combat/combat-schema.js`;
+- `src/systems/research-queue-system.js`;
+- `src/ui/combat-readability.js`.
+
+These modules may expose immutable schemas, normalization, deterministic policies, descriptors, and snapshots. Their consumers may not use them to create a second simulation path. All other modules retain their directory layer. A new top-level source directory or shared-contract exemption is an architecture change: add its ownership and allowed imports to the verifier, add accepted and rejected tooling fixtures, and update this document.
 
 ### Browser ownership
 
-Direct DOM access is restricted to browser-owned modules such as composition, runtime, input, UI, rendering, and dedicated audio adapters. Simulation, navigation, AI, schema, config, core, and headless code must remain browser-independent.
+Direct DOM access is restricted to browser-owned modules such as composition, runtime, input, UI, rendering, and dedicated audio adapters. `src/art-lab.js` is a secondary browser composition entry point and is classified with `main`; it may own DOM access but not gameplay rules. Simulation, navigation, AI, schema, contracts, config, core, and headless code must remain browser-independent.
 
 Direct `Audio`, `AudioContext`, media-source construction, and decoding belong in `src/audio/`. Other layers request sound through domain events or a dedicated injected service; they do not construct browser audio objects.
 
 ## Authoritative owners
 
-### `src/main.js`
+### `src/main.js` and `src/art-lab.js`
 
-Resolves DOM elements, constructs top-level objects, installs adapters, and starts the runtime. It must remain readable as wiring and must not contain gameplay rules or complex input handling.
+`src/main.js` resolves DOM elements, constructs top-level objects, installs adapters, and starts the runtime. It must remain readable as wiring and must not contain gameplay rules or complex input handling.
+
+`src/art-lab.js` is a secondary composition-only browser entry point for renderer and roster inspection. It may construct `Game` and `Renderer`, query its own document surface, and export screenshots, but it must consume the same authoritative game and render owners rather than duplicate them.
 
 ### `src/app/runtime.js`
 
@@ -151,7 +166,7 @@ Owns deterministic, browser-independent navigation policy:
 - fixed-tick repath throttling and deterministic path-search counters;
 - pure stuck-progress tracking and bounded local-detour selection.
 
-Navigation modules may import core and sibling navigation modules only. They must not import `Game`, simulation systems, AI, input, UI, rendering, app/runtime, audio, DOM, or browser APIs. `src/systems/navigation-movement-system.js` adapts these policies to live terrain, buildings, orders, formations, unit statistics, collision, and the authoritative units phase. See `docs/NAVIGATION.md`.
+Navigation modules may import core and sibling navigation modules only. They must not import `Game`, simulation systems, AI, shared contracts, config, input, UI, rendering, app/runtime, audio, DOM, or browser APIs. `src/systems/navigation-movement-system.js` adapts these policies to live terrain, buildings, orders, formations, unit statistics, collision, and the authoritative units phase. See `docs/NAVIGATION.md`.
 
 ### `src/ai/`
 
@@ -163,7 +178,13 @@ Owns deterministic, browser-independent AI planning contracts. UFR-079 establish
 - fixed-tick decision scheduling that is independent of render-frame chunking;
 - deeply frozen, reference-free inspection snapshots.
 
-AI may import core, schema, declarative config/content, and sibling AI modules. It must not import `Game`, simulation systems, input, UI, rendering, app/runtime, or audio. Later `Game` or system adapters may consume AI proposals, but authoritative command validation, state mutation, simulation phase order, resource charging, and combat outcomes stay with their existing owners. See `docs/AI_ARCHITECTURE.md`.
+AI may import core, schema, shared contracts, declarative config/content, and sibling AI modules. It must not import `Game`, simulation systems, navigation policy, input, UI, rendering, app/runtime, or audio. Later `Game` or system adapters may consume AI proposals, but authoritative command validation, state mutation, simulation phase order, resource charging, and combat outcomes stay with their existing owners. See `docs/AI_ARCHITECTURE.md`.
+
+### Focused simulation namespaces
+
+`src/combat/`, `src/status/`, and `src/visibility/` are focused simulation namespaces. They are part of the executable `systems` layer even though their directory names are domain-specific. They may import core, schema, shared contracts, declarative config/content, navigation policy, AI planning contracts, and sibling simulation modules. They must not import browser app/runtime, input, UI, rendering, audio, or composition modules.
+
+The exact shared-contract modules listed in the dependency section are deliberately narrower. A content or presentation module may import those public contracts, but it may not import an arbitrary combat, status, visibility, navigation, or systems runtime module.
 
 ### `src/systems/simulation-phases.js`
 
@@ -178,7 +199,7 @@ A phase may call a focused owner, but runtime, UI, renderer, input, AI modules, 
 
 ### `src/systems/research-queue-system.js` and `research-queue-runtime.js`
 
-`research-queue-system.js` owns the immutable UFR-061 queue, contention, progress, cancellation, refund, and completion contracts. `research-queue-runtime.js` adapts those contracts to live Ukrainian workshop facilities, public research commands, player resources, completed upgrades, facility loss, and existing-unit stat reconciliation. It exposes a narrow `updateResearch(stepSeconds)` delegate, and authoritative progress occurs only in the `research` simulation phase immediately after production. UI reads queue descriptors and invokes public commands; it never edits research state directly.
+`research-queue-system.js` owns the immutable UFR-061 queue, contention, progress, cancellation, refund, and completion contracts. It is a shared `contract` module because UI and simulation runtime both consume its immutable descriptors and transition functions. `research-queue-runtime.js` adapts those contracts to live Ukrainian workshop facilities, public research commands, player resources, completed upgrades, facility loss, and existing-unit stat reconciliation. It exposes a narrow `updateResearch(stepSeconds)` delegate, and authoritative progress occurs only in the `research` simulation phase immediately after production. UI reads queue descriptors and invokes public commands; it never edits research state directly.
 
 ### `src/core/random.js`
 
@@ -196,17 +217,17 @@ Simulation producers emit only after the authoritative mutation succeeds. UI, au
 
 ### `src/config.js` and `src/content/`
 
-Own declarative content and balance instances: factions, units, buildings, missions, abilities, upgrades, costs, statistics, and focused content contracts assigned by queue tasks. A content addition should remain data-only until it requires a genuinely new rule.
+Own declarative content and balance instances: factions, units, buildings, missions, abilities, upgrades, costs, statistics, and focused content contracts assigned by queue tasks. A content addition should remain data-only until it requires a genuinely new rule. Content may import only the exact shared-contract modules admitted by the executable architecture registry; importing a simulation or navigation runtime remains forbidden.
 
 ### `src/content-schema.js`
 
 Owns schema version, content families, identity source, required fields, explicit defaults, references, and default materialization. `docs/CONTENT_SCHEMA.md` is the human-readable contract.
 
-New required fields, identity changes, renames, type changes, and semantic changes require a schema-version decision. Cross-record validation remains in focused scripts rather than the schema registry itself.
+New required fields, identity changes, renames, type changes, and semantic changes require a schema-version decision. Cross-record validation remains in focused scripts rather than the schema registry itself. The `tech-nodes` reference target is a polymorphic identity namespace spanning building and upgrade technology nodes; it is a valid reference target without being a standalone content collection family.
 
 ### Rendering and UI
 
-`render.js` and visual-pass modules translate state into pixels. `ui.js` and focused UI modules translate state into information and invoke public commands. Neither layer owns combat outcomes, resources, objectives, path decisions, production completion, research completion, or AI planning decisions.
+`render.js` and visual-pass modules translate state into pixels. `ui.js` and focused UI modules translate state into information and invoke public commands. Neither layer owns combat outcomes, resources, objectives, path decisions, production completion, research completion, or AI planning decisions. Shared read-only contracts such as combat-readability snapshots and research-queue descriptors may cross into these layers without transferring mutation ownership.
 
 ## State, command, and event flow
 
@@ -287,7 +308,9 @@ bash verify.sh
 
 The command is fail-fast and preserves the first non-zero stage status. It runs shell syntax, stable recursive JavaScript syntax checks, all unit/simulation/tooling tests, queue fixtures and queue validation, schema/content/technology validation, seeded-random checks, and architecture checks. See `docs/VERIFICATION.md`.
 
-Browser playtesting remains required for affected player-visible flows; the Node verifier does not simulate canvas rendering, browser event delivery, autoplay policy, accessibility, or visual readability. Pure AI-contract work has no browser flow until an AI controller is composed into a mission or skirmish.
+The authoritative GitHub workflow invokes the same command with `pipefail`, preserves its combined output as `artifacts/assembled-verifier.log`, runs active-claim diagnostics, starts a real mission in headless Chromium, writes browser failure diagnostics, generates the completion-evidence audit, and uploads all diagnostics on every result.
+
+Browser playtesting remains required for affected player-visible flows; the Node verifier does not simulate every canvas interaction, browser event delivery, autoplay policy, accessibility, or visual-readability judgment. The automated startup smoke verifies that the application loads, mission selection becomes interactive, the first mission starts, the game canvas is valid, and no fatal runtime or application-resource failure occurs.
 
 ## Extension rules
 
@@ -300,7 +323,7 @@ Use `docs/CHANGE_GUIDE.md` for task-oriented routing. The non-negotiable rules a
 - add same-seed deterministic coverage for replay-relevant behavior;
 - update schema code and human-readable schema docs together;
 - add new domain-event types to the central taxonomy rather than using ad-hoc strings;
-- register every new production layer in the architecture verifier;
+- register every new production layer and shared-contract exemption in the architecture verifier;
 - extend the unified verification stage list in one place only;
 - run focused tests first and `bash verify.sh` before completion.
 
