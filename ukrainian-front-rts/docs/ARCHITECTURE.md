@@ -40,9 +40,11 @@ index.html
           │   ├─ random.js               seeded simulation random stream
           │   ├─ fixed-step-clock.js     fixed-tick accumulator
           │   └─ events.js               domain-event taxonomy and stream
+          ├─ src/navigation/             grid, path, cache, formation/recovery policies
           ├─ src/ai/                     deterministic AI planning contracts
           └─ src/systems/
               ├─ simulation-phases.js    authoritative phase order
+              ├─ navigation-movement-system.js runtime navigation integration
               ├─ research-queue-system.js pure research queue contract
               ├─ research-queue-runtime.js live facility research commands/state
               ├─ objective-system.js
@@ -51,6 +53,8 @@ index.html
 ```
 
 `src/content-schema.js` is not a second content database. It describes the stable shape, defaults, identities, and references of content held in `src/config.js` and focused declarative modules under `src/content/`.
+
+`src/navigation/` is a pure policy layer. It owns deterministic passability, bounded search, waypoint translation, route-template caching, repath cadence, and local recovery contracts. Runtime state synchronization and physical unit movement remain in `src/systems/` and `Game`.
 
 `src/ai/` is a planning boundary, not an alternate simulation. It owns deterministic doctrine, knowledge, goal, budget, cadence, and inspection contracts. Later systems adapt its proposals into ordinary validated game commands.
 
@@ -77,6 +81,7 @@ bash verify.sh
           ├─ shell and JavaScript syntax checks
           ├─ tests/**/*.test.mjs
           │   ├─ tests/unit/
+          │   ├─ tests/navigation/
           │   ├─ tests/sim/
           │   └─ tests/tooling/
           ├─ task-queue validation
@@ -97,7 +102,8 @@ runtime → injected Game/UI/Renderer interfaces + core fixed-step clock
 simulation harness → Game/core only
 ui/render → config + read-only game state + public game commands
 Game → config/schema/core/ai/systems
-systems → config/schema/core/ai/sibling systems
+systems → config/schema/core/navigation/ai/sibling systems
+navigation → core/sibling navigation modules only
 ai → config/schema/core/sibling ai modules
 config (including src/content/) → schema/core only when needed
 schema → core only when needed
@@ -105,11 +111,11 @@ core → sibling core modules only
 production → never tests
 ```
 
-The architecture verifier enforces the declared production layers: `core`, `schema`, `config`, `ai`, `systems`, `game`, `app`, `input`, `ui`, `render`, `audio`, and `main`. Focused modules under `src/content/` are classified as the declarative `config` layer. A new top-level source directory is an architecture change: add its ownership and allowed imports to the verifier, add accepted/rejected tooling fixtures, and update this document.
+The architecture verifier enforces the declared production layers: `core`, `schema`, `config`, `navigation`, `ai`, `systems`, `game`, `app`, `input`, `ui`, `render`, `audio`, and `main`. Focused modules under `src/content/` are classified as the declarative `config` layer. A new top-level source directory is an architecture change: add its ownership and allowed imports to the verifier, add accepted/rejected tooling fixtures, and update this document.
 
 ### Browser ownership
 
-Direct DOM access is restricted to browser-owned modules such as composition, runtime, input, UI, rendering, and dedicated audio adapters. Simulation, AI, schema, config, core, and headless code must remain browser-independent.
+Direct DOM access is restricted to browser-owned modules such as composition, runtime, input, UI, rendering, and dedicated audio adapters. Simulation, navigation, AI, schema, config, core, and headless code must remain browser-independent.
 
 Direct `Audio`, `AudioContext`, media-source construction, and decoding belong in `src/audio/`. Other layers request sound through domain events or a dedicated injected service; they do not construct browser audio objects.
 
@@ -134,6 +140,18 @@ Translates browser gestures and configurable key bindings into public commands a
 ### `src/game.js`
 
 Owns authoritative state and provides the public gameplay facade. Existing callers may use small public methods, but independently testable policies should be delegated to focused systems. `Game.update(stepSeconds)` is the only public simulation-tick boundary.
+
+### `src/navigation/`
+
+Owns deterministic, browser-independent navigation policy:
+
+- grid coordinates, terrain costs, movement layers, footprints, and blocker queries;
+- bounded deterministic A* and waypoint-route translation;
+- revision-keyed immutable route-template caching;
+- fixed-tick repath throttling and deterministic path-search counters;
+- pure stuck-progress tracking and bounded local-detour selection.
+
+Navigation modules may import core and sibling navigation modules only. They must not import `Game`, simulation systems, AI, input, UI, rendering, app/runtime, audio, DOM, or browser APIs. `src/systems/navigation-movement-system.js` adapts these policies to live terrain, buildings, orders, formations, unit statistics, collision, and the authoritative units phase. See `docs/NAVIGATION.md`.
 
 ### `src/ai/`
 
@@ -231,13 +249,17 @@ Events are observation and integration records. They do not replace authoritativ
 
 UFR-079 does not install an AI controller in the current runtime. UFR-080 and UFR-081 must document the concrete phase/command integration when they add economy and tactical behavior.
 
-Changing tick duration, phase order, random draw order, event ordering, AI decision cadence, or command validation is deterministic-behavior work and requires corresponding tests and documentation.
+Changing tick duration, phase order, random draw order, event ordering, AI decision cadence, navigation revision/cadence behavior, or command validation is deterministic-behavior work and requires corresponding tests and documentation.
 
 ## Test layers
 
 ### `tests/unit/`
 
 Fast deterministic tests for pure functions, focused systems, and public state transitions. They use `node:test` and `node:assert`, construct explicit fixtures, and avoid DOM/canvas/network/wall-clock dependencies.
+
+### `tests/navigation/`
+
+Focused deterministic tests for grid, pathfinding, waypoint, cache, formation, collision, terrain, transport, and movement-recovery contracts. Integration fixtures must exercise current runtime adapters when structure revision, fixed-tick repath cadence, or cross-navigation ownership changes.
 
 ### `tests/ai/`
 
@@ -272,7 +294,7 @@ Browser playtesting remains required for affected player-visible flows; the Node
 Use `docs/CHANGE_GUIDE.md` for task-oriented routing. The non-negotiable rules are:
 
 - identify one authoritative owner before editing;
-- keep data, simulation, AI planning, input, presentation, and verification concerns separate;
+- keep data, simulation, navigation policy, AI planning, input, presentation, and verification concerns separate;
 - preserve the public command and fixed-step boundaries;
 - keep AI information observed-only unless an authored mission explicitly grants stable intelligence;
 - add same-seed deterministic coverage for replay-relevant behavior;
@@ -289,6 +311,7 @@ Gate A is closed when the following remain true on `main`:
 - versioned content contracts and content validation are executable;
 - seeded randomness and the headless harness reproduce deterministic scenarios;
 - the browser runtime uses fixed-step simulation phases;
+- navigation policy remains deterministic, bounded, and isolated from runtime/browser ownership;
 - the domain-event contract is dependency-free and one-directional;
 - architecture boundaries and browser ownership are executable checks;
 - one verification command owns syntax, tests, and repository contracts;
