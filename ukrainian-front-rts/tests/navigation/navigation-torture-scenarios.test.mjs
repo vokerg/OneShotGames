@@ -28,6 +28,11 @@ function routeCells(grid, route) {
   return route.waypoints.map((waypoint) => grid.worldToCell(waypoint.x, waypoint.y));
 }
 
+function assertFound(result) {
+  assert.equal(result.status, PATH_REQUEST_RESULTS.READY);
+  assert.equal(result.route.status, PATH_STATUSES.FOUND);
+}
+
 function routeFor(map, { requestId = map.id, tick = 1, force = true } = {}) {
   const grid = gridFor(map);
   const service = new NavigationPathService();
@@ -38,12 +43,18 @@ function routeFor(map, { requestId = map.id, tick = 1, force = true } = {}) {
     {},
     { requestId, tick, force },
   );
+  assertFound(result);
   return { grid, service, result, cells: routeCells(grid, result.route) };
 }
 
-function assertFound(result) {
-  assert.equal(result.status, PATH_REQUEST_RESULTS.READY);
-  assert.equal(result.route.status, PATH_STATUSES.FOUND);
+function assertBoundedRoute(cells, map) {
+  assert.ok(cells.length > 0);
+  assert.ok(cells.length <= map.width * map.height);
+  assert.equal(
+    new Set(cells.map(({ x, y }) => `${x}:${y}`)).size,
+    cells.length,
+    'route must not oscillate through repeated cells',
+  );
 }
 
 function unit(id, type, x, y, overrides = {}) {
@@ -81,6 +92,21 @@ function runTransportScenario() {
   const grid = gridFor(map);
   const start = center(grid, map.transportStart);
   const exit = center(grid, map.transportExit);
+  const pathService = new NavigationPathService();
+  pathService.setGrid(grid, 1);
+  const crossingRoute = pathService.requestRoute(start, exit, {}, {
+    requestId: 'transport:crossing',
+    tick: 1,
+    force: true,
+  });
+  assertFound(crossingRoute);
+  const crossingCells = routeCells(grid, crossingRoute.route);
+  assertBoundedRoute(crossingCells, map);
+  assert.deepEqual(
+    crossingCells.filter((cell) => cell.x === map.crossing.x),
+    [map.crossing],
+  );
+
   const transport = unit(100, 'uaIfv', start.x, start.y);
   const passengers = [
     unit(3, 'uaInfantry', start.x + 8, start.y),
@@ -107,13 +133,13 @@ function runTransportScenario() {
       return { id: candidate.id, x: candidate.x, y: candidate.y, cell };
     });
   assert.equal(new Set(placements.map(({ x, y }) => `${x}:${y}`)).size, placements.length);
-  return placements;
+  return { crossingCells, placements };
 }
 
 test('bridge torture map forces every ground route through the authored crossing', () => {
   const map = NAVIGATION_TORTURE_MAPS.bridge;
-  const { grid, service, result, cells } = routeFor(map);
-  assertFound(result);
+  const { grid, service, cells } = routeFor(map);
+  assertBoundedRoute(cells, map);
 
   const barrierCells = cells.filter((cell) => cell.x === map.crossing.x);
   assert.deepEqual(barrierCells, [map.crossing]);
@@ -140,8 +166,8 @@ test('base-gate torture map funnels deterministic routes through its only openin
   };
   const reverse = routeFor(reverseMap);
 
-  assertFound(forward.result);
-  assertFound(reverse.result);
+  assertBoundedRoute(forward.cells, map);
+  assertBoundedRoute(reverse.cells, reverseMap);
   assert.deepEqual(
     forward.cells.filter((cell) => cell.x === map.crossing.x),
     [map.crossing],
@@ -167,11 +193,9 @@ test('dense-group torture map produces stable bounded routes independent of requ
         { requestId: `dense:${index}`, tick: 1, force: true },
       );
       assertFound(result);
-      return {
-        id: index,
-        cells: routeCells(grid, result.route),
-        visited: result.route.visited,
-      };
+      const cells = routeCells(grid, result.route);
+      assertBoundedRoute(cells, map);
+      return { id: index, cells };
     });
     return {
       summaries: summaries.sort((left, right) => left.id - right.id),
@@ -187,10 +211,9 @@ test('dense-group torture map produces stable bounded routes independent of requ
   assert.equal(forward.metrics.searches, 36);
   assert.equal(forward.metrics.failures, 0);
   assert.equal(forward.metrics.cacheEntries, 36);
-  assert.ok(forward.metrics.maxVisited <= map.width * map.height);
 });
 
-test('transport torture map keeps embark/disembark atomic and placement deterministic', () => {
+test('transport torture map keeps crossing, embark, and disembark deterministic', () => {
   assert.deepEqual(runTransportScenario(), runTransportScenario());
 });
 
@@ -210,8 +233,10 @@ test('destruction torture map invalidates the detour and recovers on the bounded
     force: true,
   });
   assertFound(blocked);
+  const blockedCells = routeCells(firstGrid, blocked.route);
+  assertBoundedRoute(blockedCells, before);
   assert.equal(
-    routeCells(firstGrid, blocked.route).some((cell) => cell.x === 8 && cell.y === 4),
+    blockedCells.some((cell) => cell.x === 8 && cell.y === 4),
     false,
   );
 
@@ -228,8 +253,10 @@ test('destruction torture map invalidates the detour and recovers on the bounded
   assert.equal(throttled.status, PATH_REQUEST_RESULTS.THROTTLED);
   assert.equal(throttled.retryTick, 14);
   assertFound(recovered);
+  const recoveredCells = routeCells(secondGrid, recovered.route);
+  assertBoundedRoute(recoveredCells, after);
   assert.equal(
-    routeCells(secondGrid, recovered.route).some((cell) => cell.x === 8 && cell.y === 4),
+    recoveredCells.some((cell) => cell.x === 8 && cell.y === 4),
     true,
   );
   assert.equal(service.metrics().invalidations, 1);
@@ -252,8 +279,10 @@ test('dynamic-construction torture map invalidates the direct route and uses the
     force: true,
   });
   assertFound(direct);
+  const directCells = routeCells(firstGrid, direct.route);
+  assertBoundedRoute(directCells, before);
   assert.equal(
-    routeCells(firstGrid, direct.route).some((cell) => cell.x === 8 && cell.y === 2),
+    directCells.some((cell) => cell.x === 8 && cell.y === 2),
     true,
   );
 
@@ -264,6 +293,7 @@ test('dynamic-construction torture map invalidates the direct route and uses the
   });
   assertFound(rebuilt);
   const rebuiltCells = routeCells(secondGrid, rebuilt.route);
+  assertBoundedRoute(rebuiltCells, after);
   assert.equal(rebuiltCells.some((cell) => cell.x === 8 && cell.y === 2), false);
   assert.deepEqual(
     rebuiltCells.filter((cell) => cell.x === after.crossing.x),
