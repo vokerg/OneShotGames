@@ -38,7 +38,26 @@ function walk(directory) {
   });
 }
 
-function scrub(source) {
+function quotedLiteral(source, start, quote) {
+  let index = start + 1;
+  while (index < source.length) {
+    const character = source[index];
+    if (character === '\\') {
+      index += Math.min(2, source.length - index);
+      continue;
+    }
+    if (character === quote) {
+      return Object.freeze({
+        end: index,
+        rawValue: source.slice(start + 1, index),
+      });
+    }
+    index += 1;
+  }
+  return null;
+}
+
+function scrub(source, { preserveUpdateStrings = false } = {}) {
   let output = '';
   let state = 'code';
   let quote = '';
@@ -58,6 +77,14 @@ function scrub(source) {
       continue;
     }
     if (state === 'code' && ['"', "'", '`'].includes(character)) {
+      if (preserveUpdateStrings && character !== '`') {
+        const literal = quotedLiteral(source, index, character);
+        if (literal?.rawValue === 'update') {
+          output += source.slice(index, literal.end + 1);
+          index = literal.end + 1;
+          continue;
+        }
+      }
       output += ' ';
       index += 1;
       quote = character;
@@ -100,12 +127,17 @@ function scrub(source) {
 
 function updateAssignments(source) {
   const clean = scrub(source);
-  const patterns = [
+  const bracketClean = scrub(source, { preserveUpdateStrings: true });
+  const directPatterns = [
     /\bgame\s*\.\s*update\s*=/g,
-    /\bgame\s*\[\s*['"]update['"]\s*\]\s*=/g,
     /\bGame\s*\.\s*prototype\s*\.\s*update\s*=/g,
   ];
-  return patterns.reduce((count, pattern) => count + [...clean.matchAll(pattern)].length, 0);
+  const directCount = directPatterns.reduce(
+    (count, pattern) => count + [...clean.matchAll(pattern)].length,
+    0,
+  );
+  const bracketCount = [...bracketClean.matchAll(/\bgame\s*\[\s*(['"])update\1\s*\]\s*=/g)].length;
+  return directCount + bracketCount;
 }
 
 function requiredTokens(source, tokens, path, failures) {
