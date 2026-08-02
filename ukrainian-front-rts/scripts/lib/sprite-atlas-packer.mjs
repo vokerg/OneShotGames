@@ -25,6 +25,12 @@ function requireInteger(value, label, min = 0) {
   return value;
 }
 
+function compareStableIds(left, right) {
+  if (left.id < right.id) return -1;
+  if (left.id > right.id) return 1;
+  return 0;
+}
+
 function escapeXml(value) {
   return String(value)
     .replaceAll('&', '&amp;')
@@ -90,7 +96,7 @@ function normalizeSourceSpec(value) {
       width: requireInteger(item.width, `Atlas source frame ${id} width`, 1),
       height: requireInteger(item.height, `Atlas source frame ${id} height`, 1),
     };
-  }).sort((left, right) => left.id.localeCompare(right.id));
+  }).sort(compareStableIds);
   return {
     ...input,
     id: requireString(input.id, 'Atlas source id'),
