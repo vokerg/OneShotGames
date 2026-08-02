@@ -1,5 +1,5 @@
 import { MOVEMENT_LAYERS } from './navigation-grid.js';
-import { DIAGONAL_POLICIES } from './pathfinder.js';
+import { DIAGONAL_POLICIES, PATH_STATUSES } from './pathfinder.js';
 import { requestWaypointRoute } from './waypoint-route.js';
 
 export const PATH_REQUEST_RESULTS = Object.freeze({
@@ -136,6 +136,7 @@ export class NavigationPathService {
   #metrics = {
     requests: 0,
     searches: 0,
+    failures: 0,
     cacheHits: 0,
     cacheMisses: 0,
     throttled: 0,
@@ -213,6 +214,7 @@ export class NavigationPathService {
       this.#metrics.cacheMisses += 1;
       this.#metrics.searches += 1;
       const route = requestWaypointRoute(this.#grid, start, destination, normalized);
+      if (route.status !== PATH_STATUSES.FOUND) this.#metrics.failures += 1;
       template = freezeRouteTemplate(route);
 
       if (this.#cache.size >= this.#maxEntries) {
