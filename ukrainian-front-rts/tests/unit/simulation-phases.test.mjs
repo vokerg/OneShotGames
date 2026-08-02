@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { TEAM, UNIT_TYPES } from '../../src/config.js';
+import { TEAM } from '../../src/config.js';
+import {
+  SIMULATION_DELEGATE_PHASES,
+  registerSimulationDelegate,
+} from '../../src/core/simulation-delegates.js';
 import {
   runSimulationStep,
   SIMULATION_PHASES,
@@ -27,45 +31,11 @@ function createPhaseFixture() {
   const game = {
     gameOver: false,
     time: 0,
-    missionIndex: 0,
     keys: new Set(),
     camera: { x: 0, y: 0, z: 1 },
-    terrain: [],
-    road: [],
-    shelterbelts: [],
-    bridges: [],
-    units: [
-      {
-        id: 1,
-        type: 'uaTank',
-        team: TEAM.UA,
-        x: 100,
-        y: 100,
-        hp: 100,
-        maxHp: 100,
-        order: null,
-        target: null,
-      },
-      {
-        id: 2,
-        type: 'uaTank',
-        team: TEAM.UA,
-        x: 220,
-        y: 100,
-        hp: 100,
-        maxHp: 100,
-        order: null,
-        target: null,
-      },
-    ],
-    buildings: [],
+    units: [],
+    buildings: [{ id: 3, type: 'hq', team: TEAM.UA, hp: 100, queue: [] }],
     player: { objectives: [false, false, false] },
-    unitStats(type) {
-      return UNIT_TYPES[type];
-    },
-    updateUnit(unit, dt) {
-      calls.push(`unit:${unit.id}:${dt}`);
-    },
     updateProjectiles(dt) {
       calls.push(`projectiles:${dt}`);
     },
@@ -89,10 +59,21 @@ function createPhaseFixture() {
   return { game, calls };
 }
 
-test('simulation phase contract is explicit and ordered', () => {
+function registerPhaseRecorder(game, calls, phase) {
+  return registerSimulationDelegate(game, {
+    phase,
+    id: `test:${phase}`,
+    run: () => calls.push(phase),
+  });
+}
+
+test('simulation phase contract exposes the complete authoritative order', () => {
   assert.deepEqual(SIMULATION_PHASES, [
     'clock',
     'camera',
+    'step-begin',
+    'tactical-prepare',
+    'stance-prepare',
     'units',
     'projectiles',
     'production',
@@ -101,22 +82,46 @@ test('simulation phase contract is explicit and ordered', () => {
     'cleanup',
     'objectives',
     'outcome',
+    'stance-reconcile',
+    'tactical-reconcile',
+    'command-capacity',
+    'step-end',
   ]);
+});
 
+test('named delegates preserve the previous wrapper order around authoritative phases', () => {
   const { game, calls } = createPhaseFixture();
-  const advanced = withViewport(() => runSimulationStep(game, 0.25));
+  const unregister = [
+    SIMULATION_DELEGATE_PHASES.STEP_BEGIN,
+    SIMULATION_DELEGATE_PHASES.TACTICAL_PREPARE,
+    SIMULATION_DELEGATE_PHASES.STANCE_PREPARE,
+    SIMULATION_DELEGATE_PHASES.STANCE_RECONCILE,
+    SIMULATION_DELEGATE_PHASES.TACTICAL_RECONCILE,
+    SIMULATION_DELEGATE_PHASES.COMMAND_CAPACITY,
+    SIMULATION_DELEGATE_PHASES.STEP_END,
+  ].map((phase) => registerPhaseRecorder(game, calls, phase));
 
-  assert.equal(advanced, true);
-  assert.equal(game.time, 0.25);
-  assert.deepEqual(calls, [
-    'unit:1:0.25',
-    'unit:2:0.25',
-    'projectiles:0.25',
-    'research:0.25',
-    'waves:0.25',
-    'cleanup',
-    'objectives',
-  ]);
+  try {
+    const advanced = withViewport(() => runSimulationStep(game, 0.25));
+    assert.equal(advanced, true);
+    assert.equal(game.time, 0.25);
+    assert.deepEqual(calls, [
+      'step-begin',
+      'tactical-prepare',
+      'stance-prepare',
+      'projectiles:0.25',
+      'research:0.25',
+      'waves:0.25',
+      'cleanup',
+      'objectives',
+      'stance-reconcile',
+      'tactical-reconcile',
+      'command-capacity',
+      'step-end',
+    ]);
+  } finally {
+    unregister.reverse().forEach((remove) => remove());
+  }
 });
 
 test('outcome resolution happens after objective evaluation and prefers victory', () => {
