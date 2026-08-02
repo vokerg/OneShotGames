@@ -13,6 +13,7 @@ export const VERIFICATION_COMMANDS = Object.freeze([
   Object.freeze({ id: 'content', label: 'production content validation', script: 'scripts/verify-content.mjs' }),
   Object.freeze({ id: 'tech-fixtures', label: 'technology graph fixtures', script: 'scripts/verify-tech-graph.test.mjs' }),
   Object.freeze({ id: 'tech-content', label: 'production technology graph', script: 'scripts/verify-tech-content.mjs' }),
+  Object.freeze({ id: 'runtime-content', label: 'runtime content reconciliation', script: 'scripts/verify-runtime-content.mjs' }),
   Object.freeze({ id: 'seeded-random', label: 'seeded simulation randomness', script: 'scripts/verify-seeded-random.mjs' }),
   Object.freeze({
     id: 'runtime-composition',
