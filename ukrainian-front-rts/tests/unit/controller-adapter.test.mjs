@@ -8,7 +8,7 @@ import {
   simulationDelegateSnapshot,
 } from '../../src/core/simulation-delegates.js';
 
-test('removes a legacy update wrapper and preserves its work as named delegates', () => {
+test('neutralizes only update while preserving controller lifecycle behavior', () => {
   const calls = [];
   const authoritativeUpdate = (step) => calls.push(`authoritative:${step}`);
   const authoritativeStart = () => calls.push('authoritative:start');
@@ -17,7 +17,7 @@ test('removes a legacy update wrapper and preserves its work as named delegates'
   const dispose = installControllerWithSimulationDelegates({
     game,
     name: 'legacy-controller',
-    preserve: ['start'],
+    restore: ['start'],
     install() {
       const originalUpdate = game.update.bind(game);
       game.update = (step) => {
@@ -48,11 +48,13 @@ test('removes a legacy update wrapper and preserves its work as named delegates'
   });
 
   assert.equal(game.update, authoritativeUpdate);
-  assert.equal(game.start, authoritativeStart);
+  assert.notEqual(game.start, authoritativeStart);
+  game.start();
   game.update(0.5);
   runSimulationDelegates(game, SIMULATION_DELEGATE_PHASES.STEP_BEGIN, 0.5);
   runSimulationDelegates(game, SIMULATION_DELEGATE_PHASES.STEP_END, 0.5);
   assert.deepEqual(calls, [
+    'legacy:start',
     'authoritative:0.5',
     'delegate-before:0.5',
     'delegate-after:0.5',
@@ -80,7 +82,7 @@ test('restores the complete object shape when controller installation fails', ()
     () => installControllerWithSimulationDelegates({
       game,
       name: 'broken-controller',
-      preserve: ['start'],
+      restore: ['start'],
       install() {
         game.update = () => false;
         game.start = () => false;
@@ -97,7 +99,7 @@ test('restores the complete object shape when controller installation fails', ()
   assert.equal(Object.hasOwn(game, 'partialApi'), false);
 });
 
-test('restores inherited methods by deleting controller-owned shadows', () => {
+test('restores inherited lifecycle methods by deleting controller-owned shadows', () => {
   const prototype = {
     update() { return 'update'; },
     start() { return 'start'; },
@@ -106,7 +108,7 @@ test('restores inherited methods by deleting controller-owned shadows', () => {
   const dispose = installControllerWithSimulationDelegates({
     game,
     name: 'inherited-controller',
-    preserve: ['start'],
+    restore: ['start'],
     install() {
       game.update = () => 'wrapped-update';
       game.start = () => 'wrapped-start';
@@ -115,7 +117,8 @@ test('restores inherited methods by deleting controller-owned shadows', () => {
   });
 
   assert.equal(Object.hasOwn(game, 'update'), false);
-  assert.equal(Object.hasOwn(game, 'start'), false);
+  assert.equal(Object.hasOwn(game, 'start'), true);
+  assert.equal(game.start(), 'wrapped-start');
   assert.equal(dispose(), true);
   assert.equal(Object.hasOwn(game, 'update'), false);
   assert.equal(Object.hasOwn(game, 'start'), false);
