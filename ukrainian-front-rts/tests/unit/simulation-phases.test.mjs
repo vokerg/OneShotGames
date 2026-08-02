@@ -33,6 +33,7 @@ function createPhaseFixture() {
     time: 0,
     keys: new Set(),
     camera: { x: 0, y: 0, z: 1 },
+    terrain: [],
     units: [],
     buildings: [{ id: 3, type: 'hq', team: TEAM.UA, hp: 100, queue: [] }],
     player: { objectives: [false, false, false] },
