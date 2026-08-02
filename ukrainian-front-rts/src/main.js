@@ -105,7 +105,7 @@ const modules = [
   module('stance-controller', () => installControllerWithSimulationDelegates({
     game,
     name: 'stance-controller',
-    preserve: ['addUnit', 'start', 'toggleAutoFire'],
+    restore: ['addUnit', 'start', 'toggleAutoFire'],
     install: () => createStanceController(game),
     delegates: [
       {
@@ -123,7 +123,7 @@ const modules = [
   module('tactical-command-controller', () => installControllerWithSimulationDelegates({
     game,
     name: 'tactical-command-controller',
-    preserve: ['issue', 'stopSelected', 'start'],
+    restore: ['issue', 'stopSelected', 'start'],
     install: () => createTacticalCommandController(game),
     delegates: [
       {
@@ -143,7 +143,7 @@ const modules = [
   module('command-capacity-controller', () => installControllerWithSimulationDelegates({
     game,
     name: 'command-capacity-controller',
-    preserve: ['start'],
+    restore: ['start'],
     install: () => createCommandCapacityController(game),
     delegates: [
       {
