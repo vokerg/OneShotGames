@@ -110,6 +110,10 @@ const PHASES = Object.freeze([
   Object.freeze({ id: 'objectives', run: updateObjectives }),
   Object.freeze({ id: 'outcome', run: resolveOutcome }),
   Object.freeze({
+    id: SIMULATION_DELEGATE_PHASES.BUILDING_LIFECYCLE,
+    run: runDelegatePhase(SIMULATION_DELEGATE_PHASES.BUILDING_LIFECYCLE),
+  }),
+  Object.freeze({
     id: SIMULATION_DELEGATE_PHASES.STANCE_RECONCILE,
     run: runDelegatePhase(SIMULATION_DELEGATE_PHASES.STANCE_RECONCILE),
   }),
