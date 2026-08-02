@@ -88,6 +88,27 @@ test('accepts focused content and AI modules with inward-only imports', () => {
   }
 });
 
+test('accepts navigation, shared contracts, and focused simulation namespaces', () => {
+  const root = validProject();
+  try {
+    write(root, 'src/combat/combat-schema.js', 'export const DAMAGE = "damage";');
+    write(root, 'src/combat/air-defense-system.js', 'export const AIR_TARGET = "air";');
+    write(root, 'src/combat/target-policy.js', "import { DAMAGE } from './combat-schema.js'; export { DAMAGE };");
+    write(root, 'src/status/suppression-morale.js', "import { EVENT } from '../core/events.js'; export { EVENT };");
+    write(root, 'src/visibility/line-of-sight.js', "import { EVENT } from '../core/events.js'; export { EVENT };");
+    write(root, 'src/systems/research-queue-system.js', 'export const QUEUE = [];');
+    write(root, 'src/ui/combat-readability.js', 'export const CUES = [];');
+    write(root, 'src/content/combat-content.js', "import { DAMAGE } from '../combat/combat-schema.js'; import { AIR_TARGET } from '../combat/air-defense-system.js'; export { DAMAGE, AIR_TARGET };");
+    write(root, 'src/systems/combat-runtime.js', "import { DAMAGE } from '../combat/target-policy.js'; import { route } from '../navigation/path-service.js'; export { DAMAGE, route };");
+    write(root, 'src/render/combat-overlay.js', "import { CUES } from '../ui/combat-readability.js'; export { CUES };");
+    write(root, 'src/ui/research-hud.js', "import { QUEUE } from '../systems/research-queue-system.js'; export { QUEUE };");
+    write(root, 'src/art-lab.js', "import { Game } from './game.js'; import './render.js'; export const mount = () => document.querySelector('#game') && new Game();");
+    assert.deepEqual(verifyArchitectureProject({ projectRoot: root }).failures, []);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('accepts dedicated UI modules as the UI layer and permits UI-owned DOM adapters', () => {
   const root = validProject();
   try {
@@ -119,6 +140,8 @@ test('rejects forbidden layer imports and imports outside src', () => {
     .some((failure) => failure.includes('ai layer cannot import game layer')));
   assert.ok(verifyMutation('src/ai/planner.js', "import { TEAM } from '../systems/wave-system.js'; export { TEAM };")
     .some((failure) => failure.includes('ai layer cannot import systems layer')));
+  assert.ok(verifyMutation('src/content/bad-combat-content.js', "import { target } from '../combat/target-policy.js'; export { target };")
+    .some((failure) => failure.includes('config layer cannot import systems layer')));
 });
 
 test('rejects unclassified source modules instead of allowing a boundary bypass', () => {

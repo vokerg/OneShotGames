@@ -31,7 +31,10 @@ jobs:
       - name: Prepare diagnostics directory
         run: mkdir -p artifacts
       - name: Full assembled verifier
-        run: bash verify.sh
+        shell: bash
+        run: |
+          set -o pipefail
+          bash verify.sh 2>&1 | tee artifacts/assembled-verifier.log
       - name: Active claim diagnostics
         if: always()
         env:

@@ -118,6 +118,12 @@ function productionBusyForResearch(game, building) {
   return Boolean(building.queue?.length && !building.productionPaused);
 }
 
+function availableResearchResources(player, cost) {
+  return Object.fromEntries(
+    Object.keys(cost).map((resource) => [resource, player?.[resource] ?? 0]),
+  );
+}
+
 export function queueUpgradeResearch(game, techId) {
   game.lastError = '';
   if (game.gameOver) return false;
@@ -135,7 +141,9 @@ export function queueUpgradeResearch(game, techId) {
     cost: upgrade.cost,
     requires: upgrade.requires ? [upgrade.requires] : [],
   });
-  const result = queueResearch(state, definition, { availableResources: game.player });
+  const result = queueResearch(state, definition, {
+    availableResources: availableResearchResources(game.player, definition.cost),
+  });
   if (!result.ok) {
     const missing = result.missing?.map((id) => UPGRADES[id]?.name || id).join(', ');
     return game.fail(missing ? `${result.reason} Missing: ${missing}.` : result.reason);

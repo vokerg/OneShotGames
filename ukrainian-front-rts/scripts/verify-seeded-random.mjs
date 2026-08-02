@@ -82,7 +82,17 @@ function combatSnapshot(seed) {
   return Array.from({ length: 5 }, () => {
     const target = { hp: 1000, x: 0, y: 0 };
     const game = {
-      projectiles: [{ life: 1, target, x: 0, y: 0, speed: 100, damage: 100 }],
+      projectiles: [{
+        life: 1,
+        target,
+        x: 0,
+        y: 0,
+        aimX: 0,
+        aimY: 0,
+        speed: 100,
+        damage: 100,
+        hit: true,
+      }],
       effects: [],
     };
     updateProjectiles(game, 0.1);

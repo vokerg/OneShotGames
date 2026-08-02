@@ -18,20 +18,34 @@ const REQUIRED_IMPORTS = Object.freeze({
   ],
 });
 
+const CONTRACT_MODULES = new Set([
+  'src/combat/air-defense-system.js',
+  'src/combat/combat-schema.js',
+  'src/systems/research-queue-system.js',
+  'src/ui/combat-readability.js',
+]);
+
+const SYSTEM_NAMESPACES = Object.freeze([
+  'combat',
+  'status',
+  'visibility',
+]);
+
 const ALLOWED_IMPORTS = Object.freeze({
   core: new Set(['core']),
   schema: new Set(['core', 'schema']),
-  config: new Set(['core', 'schema', 'config']),
+  contract: new Set(['core', 'schema', 'contract']),
+  config: new Set(['core', 'schema', 'contract', 'config']),
   navigation: new Set(['core', 'navigation']),
-  ai: new Set(['core', 'schema', 'config', 'ai']),
-  systems: new Set(['core', 'schema', 'config', 'navigation', 'ai', 'systems']),
-  game: new Set(['core', 'schema', 'config', 'ai', 'systems', 'game']),
-  app: new Set(['core', 'schema', 'config', 'game', 'app']),
-  input: new Set(['core', 'schema', 'config', 'input']),
-  ui: new Set(['core', 'schema', 'config', 'ui']),
-  render: new Set(['core', 'schema', 'config', 'render']),
-  audio: new Set(['core', 'schema', 'config', 'audio']),
-  main: new Set(['core', 'schema', 'config', 'ai', 'systems', 'game', 'app', 'input', 'ui', 'render', 'audio', 'main']),
+  ai: new Set(['core', 'schema', 'contract', 'config', 'ai']),
+  systems: new Set(['core', 'schema', 'contract', 'config', 'navigation', 'ai', 'systems']),
+  game: new Set(['core', 'schema', 'contract', 'config', 'ai', 'systems', 'game']),
+  app: new Set(['core', 'schema', 'contract', 'config', 'game', 'app']),
+  input: new Set(['core', 'schema', 'contract', 'config', 'input']),
+  ui: new Set(['core', 'schema', 'contract', 'config', 'ui']),
+  render: new Set(['core', 'schema', 'contract', 'config', 'render']),
+  audio: new Set(['core', 'schema', 'contract', 'config', 'audio']),
+  main: new Set(['core', 'schema', 'contract', 'config', 'navigation', 'ai', 'systems', 'game', 'app', 'input', 'ui', 'render', 'audio', 'main']),
 });
 
 const DOM_CHECKS = Object.freeze([
@@ -116,12 +130,14 @@ function scrub(source) {
 }
 
 function layerOf(path) {
-  if (path === 'src/main.js') return 'main';
+  if (path === 'src/main.js' || path === 'src/art-lab.js') return 'main';
   if (path === 'src/game.js') return 'game';
+  if (CONTRACT_MODULES.has(path)) return 'contract';
   if (path === 'src/config.js' || path.startsWith('src/content/')) return 'config';
   if (path === 'src/content-schema.js') return 'schema';
   if (path === 'src/ui.js' || path.startsWith('src/ui/')) return 'ui';
   if (['src/render.js', 'src/art-pass.js', 'src/environment-art-pass.js'].includes(path) || path.startsWith('src/render/')) return 'render';
+  if (SYSTEM_NAMESPACES.some((namespace) => path.startsWith(`src/${namespace}/`))) return 'systems';
   for (const layer of ['core', 'navigation', 'systems', 'ai', 'app', 'input', 'audio']) {
     if (path.startsWith(`src/${layer}/`)) return layer;
   }
@@ -136,7 +152,7 @@ function resolvedImport(sourcePath, specifier) {
 }
 
 function ownsDom(path) {
-  return path === 'src/main.js' || path === 'src/ui.js' || path.startsWith('src/ui/') || path === 'src/render.js' ||
+  return path === 'src/main.js' || path === 'src/art-lab.js' || path === 'src/ui.js' || path.startsWith('src/ui/') || path === 'src/render.js' ||
     path === 'src/art-pass.js' || path === 'src/environment-art-pass.js' ||
     path === 'src/app/runtime.js' || path.startsWith('src/input/') ||
     path.startsWith('src/render/') || path.startsWith('src/audio/');

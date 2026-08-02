@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import { TEAM } from '../../src/config.js';
 import {
   WORKER_TASKS,
   installWorkerOverview,
@@ -16,7 +17,7 @@ function makeUnit(id, overrides = {}) {
   return {
     id,
     type: overrides.type ?? 'uaEngineer',
-    team: overrides.team ?? 'ua',
+    team: overrides.team ?? TEAM.UA,
     hp: overrides.hp ?? 100,
     selected: false,
     order: overrides.order ?? null,
@@ -158,7 +159,7 @@ test('builds deterministic task, resource, and carried-resource summaries', () =
     makeUnit(3),
     makeUnit(7, { order: { kind: 'gather', resourceKind: 'metal' }, carryKind: 'metal', carry: 8 }),
     makeUnit(2, { type: 'uaInfantry' }),
-    makeUnit(4, { team: 'ru' }),
+    makeUnit(4, { team: TEAM.RU }),
   ]);
   const snapshot = workerOverviewSnapshot(game);
   assert.deepEqual(snapshot.workers.map((worker) => worker.id), [3, 7, 9]);

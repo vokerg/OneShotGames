@@ -101,8 +101,7 @@ function selectedTargetSources(game) {
       if (!targetPosition) return null;
       return {
         id: unit.id,
-        x: unit.x,
-        y: unit.y,
+        position: point(unit),
         selected: true,
         visible: unit.visible !== false,
         targetId: target?.id ?? null,

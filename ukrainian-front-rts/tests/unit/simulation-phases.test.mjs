@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { TEAM } from '../../src/config.js';
+import { TEAM, UNIT_TYPES } from '../../src/config.js';
 import {
   runSimulationStep,
   SIMULATION_PHASES,
@@ -27,22 +27,50 @@ function createPhaseFixture() {
   const game = {
     gameOver: false,
     time: 0,
+    missionIndex: 0,
     keys: new Set(),
     camera: { x: 0, y: 0, z: 1 },
+    terrain: [],
+    road: [],
+    shelterbelts: [],
+    bridges: [],
     units: [
-      { id: 1, team: TEAM.UA },
-      { id: 2, team: TEAM.UA },
+      {
+        id: 1,
+        type: 'uaTank',
+        team: TEAM.UA,
+        x: 100,
+        y: 100,
+        hp: 100,
+        maxHp: 100,
+        order: null,
+        target: null,
+      },
+      {
+        id: 2,
+        type: 'uaTank',
+        team: TEAM.UA,
+        x: 220,
+        y: 100,
+        hp: 100,
+        maxHp: 100,
+        order: null,
+        target: null,
+      },
     ],
-    buildings: [{ id: 3, team: TEAM.UA }],
+    buildings: [],
     player: { objectives: [false, false, false] },
+    unitStats(type) {
+      return UNIT_TYPES[type];
+    },
     updateUnit(unit, dt) {
       calls.push(`unit:${unit.id}:${dt}`);
     },
     updateProjectiles(dt) {
       calls.push(`projectiles:${dt}`);
     },
-    updateProduction(dt) {
-      calls.push(`production:${dt}`);
+    updateResearch(dt) {
+      calls.push(`research:${dt}`);
     },
     updateWaves(dt) {
       calls.push(`waves:${dt}`);
@@ -68,6 +96,7 @@ test('simulation phase contract is explicit and ordered', () => {
     'units',
     'projectiles',
     'production',
+    'research',
     'waves',
     'cleanup',
     'objectives',
@@ -83,7 +112,7 @@ test('simulation phase contract is explicit and ordered', () => {
     'unit:1:0.25',
     'unit:2:0.25',
     'projectiles:0.25',
-    'production:0.25',
+    'research:0.25',
     'waves:0.25',
     'cleanup',
     'objectives',
