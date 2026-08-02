@@ -303,15 +303,15 @@ export function createStanceController(game) {
       throw new TypeError(`Stance controller requires game.${method}().`);
     }
   }
-  const originalAddUnit = game.addUnit.bind(game);
-  const originalUpdate = game.update.bind(game);
-  const originalStart = game.start.bind(game);
-  const originalToggleAutoFire = game.toggleAutoFire.bind(game);
+  const originalAddUnit = game.addUnit;
+  const originalUpdate = game.update;
+  const originalStart = game.start;
+  const originalToggleAutoFire = game.toggleAutoFire;
 
   for (const unit of game.units || []) ensureCombatStance(unit, game.time);
 
   game.addUnit = (...args) => {
-    const unit = originalAddUnit(...args);
+    const unit = originalAddUnit.apply(game, args);
     ensureCombatStance(unit, game.time);
     return unit;
   };
@@ -345,7 +345,7 @@ export function createStanceController(game) {
 
   game.toggleAutoFire = () => {
     const armed = game.selectedUnits().filter((unit) => Number(unitStats(game, unit)?.damage) > 0);
-    if (!armed.length) return originalToggleAutoFire();
+    if (!armed.length) return originalToggleAutoFire.call(game);
     const enable = armed.some((unit) => ensureCombatStance(unit, game.time) === COMBAT_STANCES.HOLD_FIRE);
     const accepted = game.setSelectedCombatStance(
       enable ? COMBAT_STANCES.FIRE_AT_WILL : COMBAT_STANCES.HOLD_FIRE,
@@ -355,13 +355,13 @@ export function createStanceController(game) {
 
   game.update = (stepSeconds) => {
     if (!game.gameOver) prepareStanceOrders(game);
-    const updated = originalUpdate(stepSeconds);
+    const updated = originalUpdate.call(game, stepSeconds);
     reconcileStanceOrders(game);
     return updated;
   };
 
   game.start = (...args) => {
-    const started = originalStart(...args);
+    const started = originalStart.apply(game, args);
     for (const unit of game.units || []) ensureCombatStance(unit, game.time);
     return started;
   };
