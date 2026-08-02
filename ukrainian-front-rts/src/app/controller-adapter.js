@@ -1,10 +1,25 @@
 import { registerSimulationDelegate } from '../core/simulation-delegates.js';
 
+function captureProperties(target, names) {
+  return names.map((property) => Object.freeze({
+    property,
+    descriptor: Object.getOwnPropertyDescriptor(target, property) ?? null,
+  }));
+}
+
+function restoreProperties(target, snapshots) {
+  for (const { property, descriptor } of snapshots) {
+    if (descriptor) Object.defineProperty(target, property, descriptor);
+    else delete target[property];
+  }
+}
+
 export function installControllerWithSimulationDelegates({
   game,
   name,
   install,
   delegates = [],
+  preserve = [],
 }) {
   if (!game || typeof game.update !== 'function') {
     throw new TypeError(`Controller ${name ?? '<unknown>'} requires game.update().`);
@@ -14,22 +29,27 @@ export function installControllerWithSimulationDelegates({
   }
   if (typeof install !== 'function') throw new TypeError(`Controller ${name} requires install().`);
   if (!Array.isArray(delegates)) throw new TypeError(`Controller ${name} delegates must be an array.`);
+  if (!Array.isArray(preserve) || preserve.some((property) => typeof property !== 'string' || !property)) {
+    throw new TypeError(`Controller ${name} preserve must be an array of property names.`);
+  }
 
+  const preservedProperties = [...new Set(['update', ...preserve])];
+  const propertySnapshots = captureProperties(game, preservedProperties);
   const authoritativeUpdate = game.update;
   let disposeController;
   try {
     disposeController = install();
   } catch (error) {
-    game.update = authoritativeUpdate;
+    restoreProperties(game, propertySnapshots);
     throw error;
   }
   if (disposeController != null && typeof disposeController !== 'function') {
-    game.update = authoritativeUpdate;
+    restoreProperties(game, propertySnapshots);
     throw new TypeError(`Controller ${name} must return a disposer or nothing.`);
   }
 
   const installedWrapper = game.update;
-  game.update = authoritativeUpdate;
+  restoreProperties(game, propertySnapshots);
   const unregister = [];
   try {
     for (const delegate of delegates) {
@@ -46,7 +66,7 @@ export function installControllerWithSimulationDelegates({
         disposeController();
       }
     } finally {
-      game.update = authoritativeUpdate;
+      restoreProperties(game, propertySnapshots);
     }
     throw error;
   }
@@ -62,7 +82,7 @@ export function installControllerWithSimulationDelegates({
         disposeController();
       }
     } finally {
-      game.update = authoritativeUpdate;
+      restoreProperties(game, propertySnapshots);
     }
     return true;
   };
