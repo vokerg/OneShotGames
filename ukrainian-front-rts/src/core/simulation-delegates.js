@@ -2,6 +2,7 @@ export const SIMULATION_DELEGATE_PHASES = Object.freeze({
   STEP_BEGIN: 'step-begin',
   TACTICAL_PREPARE: 'tactical-prepare',
   STANCE_PREPARE: 'stance-prepare',
+  BUILDING_LIFECYCLE: 'building-lifecycle',
   STANCE_RECONCILE: 'stance-reconcile',
   TACTICAL_RECONCILE: 'tactical-reconcile',
   COMMAND_CAPACITY: 'command-capacity',
