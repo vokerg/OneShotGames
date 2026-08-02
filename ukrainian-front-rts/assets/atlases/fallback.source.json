@@ -1,0 +1,39 @@
+{
+  "schema": "fields-of-resolve.sprite-atlas-source",
+  "version": 1,
+  "id": "fields-of-resolve.fallback",
+  "padding": 1,
+  "maxWidth": 64,
+  "pixelRatio": 1,
+  "output": {
+    "image": "fallback.svg",
+    "manifest": "fallback.atlas.json"
+  },
+  "directions": {
+    "order": ["n", "ne", "e", "se", "s", "sw", "w", "nw"],
+    "zero": "n",
+    "clockwise": true
+  },
+  "paletteTokens": {
+    "ink": "#111512",
+    "danger": "#ff4fa3"
+  },
+  "frames": [
+    {
+      "id": "missing",
+      "source": "sources/fallback-frame.svg",
+      "anchor": { "x": 8, "y": 16 },
+      "attachments": { "center": { "x": 8, "y": 8 } },
+      "masks": { "selection": { "x": 1, "y": 1, "w": 14, "h": 14 } },
+      "tags": ["fallback", "diagnostic"]
+    }
+  ],
+  "animations": {
+    "missing": {
+      "loop": "hold",
+      "defaultDurationMs": 1000,
+      "frames": ["missing"]
+    }
+  },
+  "fallback": { "frame": "missing" }
+}

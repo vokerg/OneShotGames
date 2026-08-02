@@ -1,0 +1,88 @@
+{
+  "schema": "fields-of-resolve.sprite-atlas",
+  "version": 1,
+  "id": "fields-of-resolve.fallback",
+  "sampling": "nearest",
+  "image": {
+    "src": "fallback.svg",
+    "width": 18,
+    "height": 18,
+    "pixelRatio": 1
+  },
+  "directions": {
+    "order": [
+      "n",
+      "ne",
+      "e",
+      "se",
+      "s",
+      "sw",
+      "w",
+      "nw"
+    ],
+    "zero": "n",
+    "clockwise": true
+  },
+  "paletteTokens": {
+    "danger": "#ff4fa3",
+    "ink": "#111512"
+  },
+  "frames": {
+    "missing": {
+      "id": "missing",
+      "rect": {
+        "x": 1,
+        "y": 1,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 8,
+        "y": 16
+      },
+      "attachments": {
+        "center": {
+          "x": 8,
+          "y": 8
+        }
+      },
+      "masks": {
+        "selection": {
+          "x": 1,
+          "y": 1,
+          "w": 14,
+          "h": 14
+        }
+      },
+      "tags": [
+        "fallback",
+        "diagnostic"
+      ]
+    }
+  },
+  "animations": {
+    "missing": {
+      "id": "missing",
+      "loop": "hold",
+      "defaultDurationMs": 1000,
+      "frames": [
+        {
+          "frame": "missing",
+          "durationMs": 1000
+        }
+      ],
+      "directions": null
+    }
+  },
+  "fallback": {
+    "frame": "missing"
+  }
+}
