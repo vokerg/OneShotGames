@@ -4,6 +4,7 @@ import { installControllerWithSimulationDelegates } from './app/controller-adapt
 import { createGameRuntime } from './app/runtime.js';
 import './art-pass.js';
 import { createDestructionState, materializeWreck } from './combat/destruction-system.js';
+import { reconcileActiveRuntimeContent } from './content/runtime-content-reconciliation.js';
 import {
   SIMULATION_DELEGATE_PHASES,
   simulationDelegateSnapshot,
@@ -76,6 +77,7 @@ const minimap = requiredElement('#minimap');
 const portrait = requiredElement('#portrait');
 const objectivesButton = requiredElement('#objectivesBtn');
 
+const runtimeContent = reconcileActiveRuntimeContent();
 const game = new Game();
 const ui = new UI(game);
 const renderer = new Renderer(game, canvas, minimap, portrait);
@@ -229,6 +231,7 @@ window.__fieldsOfResolveComposition = Object.freeze({
   installedModules: () => composition.installedModules(),
   simulationPhases: () => SIMULATION_PHASES,
   simulationDelegates: () => simulationDelegateSnapshot(game),
+  runtimeContent: () => runtimeContent,
 });
 
 addEventListener(
