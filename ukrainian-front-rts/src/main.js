@@ -4,7 +4,10 @@ import { installControllerWithSimulationDelegates } from './app/controller-adapt
 import { createGameRuntime } from './app/runtime.js';
 import './art-pass.js';
 import { createDestructionState, materializeWreck } from './combat/destruction-system.js';
-import { SIMULATION_DELEGATE_PHASES } from './core/simulation-delegates.js';
+import {
+  SIMULATION_DELEGATE_PHASES,
+  simulationDelegateSnapshot,
+} from './core/simulation-delegates.js';
 import './environment-art-pass.js';
 import { Game } from './game.js';
 import { createAttackGroundController, installAttackGroundInput } from './input/attack-ground.js';
@@ -31,6 +34,7 @@ import { createProductionQueueController } from './systems/production-queue-syst
 import { createResearchQueueRuntime } from './systems/research-queue-runtime.js';
 import { createResourceDropOffController } from './systems/resource-dropoff-system.js';
 import { createResourceIncomeTelemetryController } from './systems/resource-income-telemetry.js';
+import { SIMULATION_PHASES } from './systems/simulation-phases.js';
 import {
   createStanceController,
   prepareStanceOrders,
@@ -101,6 +105,7 @@ const modules = [
   module('stance-controller', () => installControllerWithSimulationDelegates({
     game,
     name: 'stance-controller',
+    preserve: ['addUnit', 'start', 'toggleAutoFire'],
     install: () => createStanceController(game),
     delegates: [
       {
@@ -118,6 +123,7 @@ const modules = [
   module('tactical-command-controller', () => installControllerWithSimulationDelegates({
     game,
     name: 'tactical-command-controller',
+    preserve: ['issue', 'stopSelected', 'start'],
     install: () => createTacticalCommandController(game),
     delegates: [
       {
@@ -137,6 +143,7 @@ const modules = [
   module('command-capacity-controller', () => installControllerWithSimulationDelegates({
     game,
     name: 'command-capacity-controller',
+    preserve: ['start'],
     install: () => createCommandCapacityController(game),
     delegates: [
       {
@@ -205,7 +212,8 @@ composition.install();
 const previousDiagnostic = window.__fieldsOfResolveComposition;
 window.__fieldsOfResolveComposition = Object.freeze({
   installedModules: () => composition.installedModules(),
-  simulationPhases: () => game.simulationPhases?.() ?? null,
+  simulationPhases: () => SIMULATION_PHASES,
+  simulationDelegates: () => simulationDelegateSnapshot(game),
 });
 
 addEventListener(
