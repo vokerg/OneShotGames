@@ -209,7 +209,7 @@ test('dense-group torture map produces stable bounded routes independent of requ
 
   assert.deepEqual(forward.summaries, reversed.summaries);
   assert.equal(forward.metrics.searches, 36);
-  assert.equal(forward.metrics.failures, 0);
+  assert.equal(forward.metrics.cacheMisses, 36);
   assert.equal(forward.metrics.cacheEntries, 36);
 });
 

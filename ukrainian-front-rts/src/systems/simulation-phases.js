@@ -1,5 +1,9 @@
 import { TEAM, WORLD } from '../config.js';
 import { clamp } from '../core/math.js';
+import {
+  SIMULATION_DELEGATE_PHASES,
+  runSimulationDelegates,
+} from '../core/simulation-delegates.js';
 import { updateConstructionProgress } from './construction-progress-runtime.js';
 import { updateUnitsWithNavigation } from './navigation-movement-system.js';
 import { updateMissionScriptObjectivePhase } from './mission-script-system.js';
@@ -24,6 +28,10 @@ function updateCamera(game, stepSeconds) {
   if (game.keys.has('arrowright') || game.keys.has('d')) game.camera.x -= pan;
   game.camera.x = clamp(game.camera.x, innerWidth - WORLD.w * game.camera.z - 100, 100);
   game.camera.y = clamp(game.camera.y, innerHeight - WORLD.h * game.camera.z - 180, 100);
+}
+
+function runDelegatePhase(phase) {
+  return (game, stepSeconds) => runSimulationDelegates(game, phase, stepSeconds);
 }
 
 function updateUnits(game, stepSeconds) {
@@ -81,6 +89,18 @@ function resolveOutcome(game) {
 const PHASES = Object.freeze([
   Object.freeze({ id: 'clock', run: advanceClock }),
   Object.freeze({ id: 'camera', run: updateCamera }),
+  Object.freeze({
+    id: SIMULATION_DELEGATE_PHASES.STEP_BEGIN,
+    run: runDelegatePhase(SIMULATION_DELEGATE_PHASES.STEP_BEGIN),
+  }),
+  Object.freeze({
+    id: SIMULATION_DELEGATE_PHASES.TACTICAL_PREPARE,
+    run: runDelegatePhase(SIMULATION_DELEGATE_PHASES.TACTICAL_PREPARE),
+  }),
+  Object.freeze({
+    id: SIMULATION_DELEGATE_PHASES.STANCE_PREPARE,
+    run: runDelegatePhase(SIMULATION_DELEGATE_PHASES.STANCE_PREPARE),
+  }),
   Object.freeze({ id: 'units', run: updateUnits }),
   Object.freeze({ id: 'projectiles', run: updateProjectiles }),
   Object.freeze({ id: 'production', run: updateProduction }),
@@ -89,6 +109,26 @@ const PHASES = Object.freeze([
   Object.freeze({ id: 'cleanup', run: removeDestroyedEntities }),
   Object.freeze({ id: 'objectives', run: updateObjectives }),
   Object.freeze({ id: 'outcome', run: resolveOutcome }),
+  Object.freeze({
+    id: SIMULATION_DELEGATE_PHASES.BUILDING_LIFECYCLE,
+    run: runDelegatePhase(SIMULATION_DELEGATE_PHASES.BUILDING_LIFECYCLE),
+  }),
+  Object.freeze({
+    id: SIMULATION_DELEGATE_PHASES.STANCE_RECONCILE,
+    run: runDelegatePhase(SIMULATION_DELEGATE_PHASES.STANCE_RECONCILE),
+  }),
+  Object.freeze({
+    id: SIMULATION_DELEGATE_PHASES.TACTICAL_RECONCILE,
+    run: runDelegatePhase(SIMULATION_DELEGATE_PHASES.TACTICAL_RECONCILE),
+  }),
+  Object.freeze({
+    id: SIMULATION_DELEGATE_PHASES.COMMAND_CAPACITY,
+    run: runDelegatePhase(SIMULATION_DELEGATE_PHASES.COMMAND_CAPACITY),
+  }),
+  Object.freeze({
+    id: SIMULATION_DELEGATE_PHASES.STEP_END,
+    run: runDelegatePhase(SIMULATION_DELEGATE_PHASES.STEP_END),
+  }),
 ]);
 
 export const SIMULATION_PHASES = Object.freeze(PHASES.map((phase) => phase.id));

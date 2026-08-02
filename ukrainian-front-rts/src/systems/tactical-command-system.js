@@ -44,10 +44,10 @@ export function createTacticalCommandController(game) {
     }
   }
 
-  const originalIssue = game.issue.bind(game);
-  const originalStopSelected = game.stopSelected.bind(game);
-  const originalUpdate = game.update.bind(game);
-  const originalStart = game.start.bind(game);
+  const originalIssue = game.issue;
+  const originalStopSelected = game.stopSelected;
+  const originalUpdate = game.update;
+  const originalStart = game.start;
 
   const setMessage = (commandResult) => {
     game.lastError = commandResult.ok ? '' : commandResult.message;
@@ -114,19 +114,19 @@ export function createTacticalCommandController(game) {
   game.issue = (...args) => {
     game.pendingTacticalCommand = null;
     selectedPlayerUnits(game).forEach((unit) => clearTacticalCommand(unit));
-    return originalIssue(...args);
+    return originalIssue.apply(game, args);
   };
 
   game.stopSelected = () => {
     game.pendingTacticalCommand = null;
     selectedPlayerUnits(game).forEach((unit) => clearTacticalCommand(unit));
-    return originalStopSelected();
+    return originalStopSelected.call(game);
   };
 
   game.update = (stepSeconds) => {
-    if (game.gameOver) return originalUpdate(stepSeconds);
+    if (game.gameOver) return originalUpdate.call(game, stepSeconds);
     prepareTacticalCommands(game);
-    const updated = originalUpdate(stepSeconds);
+    const updated = originalUpdate.call(game, stepSeconds);
     reconcileTacticalCommands(game);
     return updated;
   };
@@ -135,7 +135,7 @@ export function createTacticalCommandController(game) {
     game.pendingTacticalCommand = null;
     game.tacticalCommandSequence = 1;
     game.lastCommandMessage = '';
-    return originalStart(...args);
+    return originalStart.apply(game, args);
   };
 
   return () => {
