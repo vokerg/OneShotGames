@@ -2,6 +2,7 @@ import {
   CAMPAIGN_SAVE_STATUSES,
   createCampaignSaveService,
 } from '../core/campaign-save-service.js';
+import { migrateRuntimeContentReferences } from '../content/runtime-content-reconciliation.js';
 
 function requiredFunction(value, label) {
   if (typeof value !== 'function') throw new TypeError(`${label} must be a function.`);
@@ -16,15 +17,27 @@ function assertCapturedState(state) {
   return state;
 }
 
+function deepFreeze(value) {
+  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
+  for (const child of Object.values(value)) deepFreeze(child);
+  return Object.freeze(value);
+}
+
 function restorationFrom(result) {
   if (result.status !== CAMPAIGN_SAVE_STATUSES.OK) return null;
   const save = result.save;
   if (!save) throw new Error('Successful campaign save result must include a save envelope.');
+  const missionState = save.missionState === null
+    ? null
+    : deepFreeze(migrateRuntimeContentReferences(save.missionState));
+  const migratedSave = missionState === save.missionState
+    ? save
+    : Object.freeze({ ...save, missionState });
   return Object.freeze({
     slotId: result.slotId,
-    profile: save.profile,
-    missionState: save.missionState,
-    save,
+    profile: migratedSave.profile,
+    missionState,
+    save: migratedSave,
   });
 }
 
@@ -65,6 +78,7 @@ export function createCampaignSaveRuntime({
     restore(restoration);
     return Object.freeze({
       ...result,
+      save: restoration.save,
       profile: restoration.profile,
       missionState: restoration.missionState,
     });
