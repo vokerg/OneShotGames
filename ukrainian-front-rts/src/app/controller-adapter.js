@@ -14,6 +14,22 @@ function restoreProperties(target, snapshots) {
   }
 }
 
+function captureObjectShape(target) {
+  return new Map(Reflect.ownKeys(target).map((property) => [
+    property,
+    Object.getOwnPropertyDescriptor(target, property),
+  ]));
+}
+
+function restoreObjectShape(target, descriptors) {
+  for (const property of Reflect.ownKeys(target)) {
+    if (!descriptors.has(property)) delete target[property];
+  }
+  for (const [property, descriptor] of descriptors) {
+    Object.defineProperty(target, property, descriptor);
+  }
+}
+
 export function installControllerWithSimulationDelegates({
   game,
   name,
@@ -33,18 +49,18 @@ export function installControllerWithSimulationDelegates({
     throw new TypeError(`Controller ${name} preserve must be an array of property names.`);
   }
 
+  const initialShape = captureObjectShape(game);
   const preservedProperties = [...new Set(['update', ...preserve])];
   const propertySnapshots = captureProperties(game, preservedProperties);
-  const authoritativeUpdate = game.update;
   let disposeController;
   try {
     disposeController = install();
   } catch (error) {
-    restoreProperties(game, propertySnapshots);
+    restoreObjectShape(game, initialShape);
     throw error;
   }
   if (disposeController != null && typeof disposeController !== 'function') {
-    restoreProperties(game, propertySnapshots);
+    restoreObjectShape(game, initialShape);
     throw new TypeError(`Controller ${name} must return a disposer or nothing.`);
   }
 
@@ -66,7 +82,7 @@ export function installControllerWithSimulationDelegates({
         disposeController();
       }
     } finally {
-      restoreProperties(game, propertySnapshots);
+      restoreObjectShape(game, initialShape);
     }
     throw error;
   }
