@@ -24,7 +24,10 @@ import { installWorkerOverview } from './input/worker-overview.js';
 import { Renderer } from './render.js';
 import { installCombatReadabilityOverlay } from './render/combat-readability-overlay.js';
 import { installConstructionPreview } from './render/construction-preview.js';
-import { createBuildingLifecycleController } from './systems/building-lifecycle-system.js';
+import {
+  createBuildingLifecycleController,
+  updateBuildingCaptures,
+} from './systems/building-lifecycle-system.js';
 import { createCommandCapacityController } from './systems/command-capacity-system.js';
 import { createConstructionPlacementController } from './systems/construction-placement-system.js';
 import { createConstructionProgressController } from './systems/construction-progress-runtime.js';
@@ -99,8 +102,20 @@ const modules = [
     synchronizeNavigation: synchronizeNavigationGrid,
   })),
   module('construction-progress-controller', () => createConstructionProgressController(game)),
-  module('building-lifecycle-controller', () => createBuildingLifecycleController(game, {
-    destructionApi: { createDestructionState, materializeWreck },
+  module('building-lifecycle-controller', () => installControllerWithSimulationDelegates({
+    game,
+    name: 'building-lifecycle-controller',
+    restore: ['start', 'addBuilding', 'removeDestroyedEntities'],
+    install: () => createBuildingLifecycleController(game, {
+      destructionApi: { createDestructionState, materializeWreck },
+    }),
+    delegates: [
+      {
+        phase: SIMULATION_DELEGATE_PHASES.BUILDING_LIFECYCLE,
+        id: 'capture',
+        run: (_game, stepSeconds) => updateBuildingCaptures(game, stepSeconds),
+      },
+    ],
   })),
   module('stance-controller', () => installControllerWithSimulationDelegates({
     game,
