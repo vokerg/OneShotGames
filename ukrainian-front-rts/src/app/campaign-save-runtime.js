@@ -4,6 +4,10 @@ import {
 } from '../core/campaign-save-service.js';
 import { migrateRuntimeContentReferences } from '../content/runtime-content-reconciliation.js';
 
+export const CAMPAIGN_RUNTIME_SAVE_STATUSES = Object.freeze({
+  UNSUPPORTED_CONTENT: 'unsupported-content',
+});
+
 function requiredFunction(value, label) {
   if (typeof value !== 'function') throw new TypeError(`${label} must be a function.`);
   return value;
@@ -23,21 +27,39 @@ function deepFreeze(value) {
   return Object.freeze(value);
 }
 
-function restorationFrom(result) {
-  if (result.status !== CAMPAIGN_SAVE_STATUSES.OK) return null;
+function normalizeRestoration(result) {
+  if (result.status !== CAMPAIGN_SAVE_STATUSES.OK) {
+    return Object.freeze({ result, restoration: null });
+  }
   const save = result.save;
   if (!save) throw new Error('Successful campaign save result must include a save envelope.');
-  const missionState = save.missionState === null
-    ? null
-    : deepFreeze(migrateRuntimeContentReferences(save.missionState));
-  const migratedSave = missionState === save.missionState
-    ? save
-    : Object.freeze({ ...save, missionState });
+  const migration = save.missionState === null
+    ? Object.freeze({ status: 'current', value: null, errors: [] })
+    : migrateRuntimeContentReferences(save.missionState);
+  if (migration.status === 'unsupported') {
+    return Object.freeze({
+      result: Object.freeze({
+        ...result,
+        status: CAMPAIGN_RUNTIME_SAVE_STATUSES.UNSUPPORTED_CONTENT,
+        save: null,
+        profile: null,
+        missionState: null,
+        error: `Campaign save contains unsupported runtime content: ${migration.errors.join('; ')}`,
+      }),
+      restoration: null,
+    });
+  }
+  const missionState = migration.value === null ? null : deepFreeze(migration.value);
+  const migratedSave = Object.freeze({ ...save, missionState });
   return Object.freeze({
-    slotId: result.slotId,
-    profile: migratedSave.profile,
-    missionState,
-    save: migratedSave,
+    result,
+    restoration: Object.freeze({
+      slotId: result.slotId,
+      profile: migratedSave.profile,
+      missionState,
+      save: migratedSave,
+      contentMigrationStatus: migration.status,
+    }),
   });
 }
 
@@ -54,11 +76,7 @@ export function createCampaignSaveRuntime({
     throw new TypeError('Campaign save service options must be an object.');
   }
 
-  const service = createCampaignSaveService({
-    storage,
-    now,
-    ...saveServiceOptions,
-  });
+  const service = createCampaignSaveService({ storage, now, ...saveServiceOptions });
 
   function capturedSaveOptions(options = {}) {
     if (!options || typeof options !== 'object' || Array.isArray(options)) {
@@ -73,14 +91,15 @@ export function createCampaignSaveRuntime({
   }
 
   function applyResult(result) {
-    const restoration = restorationFrom(result);
-    if (!restoration) return result;
-    restore(restoration);
+    const normalized = normalizeRestoration(result);
+    if (!normalized.restoration) return normalized.result;
+    restore(normalized.restoration);
     return Object.freeze({
       ...result,
-      save: restoration.save,
-      profile: restoration.profile,
-      missionState: restoration.missionState,
+      save: normalized.restoration.save,
+      profile: normalized.restoration.profile,
+      missionState: normalized.restoration.missionState,
+      contentMigrationStatus: normalized.restoration.contentMigrationStatus,
     });
   }
 
