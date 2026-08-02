@@ -52,15 +52,39 @@ test('accepts the explicit wrapper inventory and named composition ownership', (
   }
 });
 
-test('rejects an undeclared gameplay update wrapper', () => {
+test('rejects undeclared dot and bracket gameplay update wrappers', () => {
   const root = validFixture();
   try {
-    write(root, 'src/systems/hidden-phase.js', 'game.update = () => true;\n');
+    write(root, 'src/systems/hidden-phase.js', [
+      'game.update = () => true;',
+      "game['update'] = replacement;",
+      'game["update"] = replacement;',
+    ].join('\n'));
     const result = verifyRuntimeCompositionProject({ projectRoot: root });
+    const assignment = result.assignments.find(({ path }) => path === 'src/systems/hidden-phase.js');
+    assert.equal(assignment?.count, 3);
     assert.equal(
       result.failures.some((failure) => failure.includes('hidden-phase.js: unauthorized assignment')),
       true,
     );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('ignores update-assignment examples in comments and strings', () => {
+  const root = validFixture();
+  try {
+    write(root, 'src/systems/inert-examples.js', [
+      '// game.update = replacement;',
+      "/* game['update'] = replacement; */",
+      "const dotExample = 'game.update = replacement';",
+      'const bracketExample = "game[\'update\'] = replacement";',
+      'const templateExample = `game["update"] = replacement`;',
+    ].join('\n'));
+    const result = verifyRuntimeCompositionProject({ projectRoot: root });
+    assert.equal(result.assignments.some(({ path }) => path === 'src/systems/inert-examples.js'), false);
+    assert.equal(result.failures.some((failure) => failure.includes('inert-examples.js')), false);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
