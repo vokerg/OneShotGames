@@ -1,14 +1,17 @@
 import assert from 'node:assert/strict';
 
 import { BUILDING_TYPES, MISSIONS, UNIT_TYPES } from '../src/config.js';
-import { ACTIVE_RUNTIME_CONTENT } from '../src/content/runtime-content-bootstrap.js';
 import {
   LEGACY_RUNTIME_UNIT_ID_MIGRATIONS,
   migrateRuntimeContentReferences,
+  reconcileActiveRuntimeContent,
   RUNTIME_CANONICAL_ROSTER_MAP,
   validateActiveRuntimeContent,
 } from '../src/content/runtime-content-reconciliation.js';
+import { assertStableContentOwnership } from '../src/content/runtime-content-ownership.js';
 
+const snapshot = reconcileActiveRuntimeContent();
+assertStableContentOwnership();
 const errors = validateActiveRuntimeContent();
 if (errors.length) {
   console.error('Runtime content reconciliation failed:');
@@ -38,6 +41,6 @@ assert.equal(unsupported.status, 'unsupported');
 assert.match(unsupported.errors[0], /Unsupported runtime unit ID/);
 
 console.log(
-  `Runtime content reconciliation passed for ${ACTIVE_RUNTIME_CONTENT.runtimeUnitIds.length} units, ` +
-  `${ACTIVE_RUNTIME_CONTENT.missionIds.length} missions, and ${Object.keys(LEGACY_RUNTIME_UNIT_ID_MIGRATIONS).length} legacy migrations.`,
+  `Runtime content reconciliation passed for ${snapshot.runtimeUnitIds.length} units, ` +
+  `${snapshot.missionIds.length} missions, and ${Object.keys(LEGACY_RUNTIME_UNIT_ID_MIGRATIONS).length} legacy migrations.`,
 );
