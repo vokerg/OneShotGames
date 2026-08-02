@@ -132,11 +132,18 @@ function navigationRequestId(unit) {
   return `unit:${unit.id}`;
 }
 
+function clearRecoveryReplanState(order) {
+  if (order && Object.hasOwn(order, 'navigationRecoveryReplans')) {
+    delete order.navigationRecoveryReplans;
+  }
+}
+
 function cancelNavigationOrder(game, unit, order, message, state) {
   if (unit.team === TEAM.UA) game.lastError = message;
   if (unit.order === order) unit.order = null;
   unit.target = null;
   clearMovementRecoveryState(order);
+  clearRecoveryReplanState(order);
   state.pathService.releaseRequest(navigationRequestId(unit));
 }
 
@@ -195,12 +202,26 @@ function restoreRouteTarget(order, route, state, stats) {
   order.x = nextFormationWaypoint.x;
   order.y = nextFormationWaypoint.y;
   applyFormationState(order, nextFormationWaypoint);
+  clearRecoveryReplanState(order);
+  return true;
+}
+
+function scheduleGlobalRecoveryReplan(unit, order, state) {
+  const attempts = Number(order.navigationRecoveryReplans || 0);
+  if (attempts >= MOVEMENT_RECOVERY_DEFAULTS.maxReplans) return false;
+  order.navigationRecoveryReplans = attempts + 1;
+  delete order.navigationRoute;
+  delete order.navigationRevision;
+  delete order.navigationRepathTick;
+  clearMovementRecoveryState(order);
+  state.pathService.releaseRequest(navigationRequestId(unit));
   return true;
 }
 
 function attemptMovementRecovery(game, unit, order, state, stats, formationWaypoint) {
   const recovery = order.navigationRecovery;
   if (recovery.detourAttempts >= MOVEMENT_RECOVERY_DEFAULTS.maxDetours) {
+    if (scheduleGlobalRecoveryReplan(unit, order, state)) return true;
     cancelNavigationOrder(game, unit, order, STUCK_ORDER_MESSAGE, state);
     return false;
   }
@@ -210,6 +231,7 @@ function attemptMovementRecovery(game, unit, order, state, stats, formationWaypo
     attemptedCellKeys: recovery.attemptedCellKeys,
   });
   if (!detour) {
+    if (scheduleGlobalRecoveryReplan(unit, order, state)) return true;
     cancelNavigationOrder(game, unit, order, STUCK_ORDER_MESSAGE, state);
     return false;
   }
@@ -241,6 +263,7 @@ export function updateUnitWithNavigation(
   const waypoint = currentWaypoint(route);
   if (!waypoint) {
     clearMovementRecoveryState(order);
+    clearRecoveryReplanState(order);
     unit.order = null;
     state.pathService.releaseRequest(requestId);
     return;
@@ -272,13 +295,16 @@ export function updateUnitWithNavigation(
     if (restoreRouteTarget(order, route, state, stats)) {
       unit.order = order;
     } else {
+      clearRecoveryReplanState(order);
       state.pathService.releaseRequest(requestId);
     }
     return;
   }
 
   const progress = recordMovementProgress(recovery, unit, stepSeconds);
-  if (progress.status === MOVEMENT_RECOVERY_STATUSES.STUCK) {
+  if (progress.status === MOVEMENT_RECOVERY_STATUSES.PROGRESSING) {
+    clearRecoveryReplanState(order);
+  } else if (progress.status === MOVEMENT_RECOVERY_STATUSES.STUCK) {
     attemptMovementRecovery(game, unit, order, state, stats, formationWaypoint);
   }
 }
