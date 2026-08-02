@@ -35,7 +35,7 @@ export function installControllerWithSimulationDelegates({
   name,
   install,
   delegates = [],
-  preserve = [],
+  restore = [],
 }) {
   if (!game || typeof game.update !== 'function') {
     throw new TypeError(`Controller ${name ?? '<unknown>'} requires game.update().`);
@@ -45,13 +45,13 @@ export function installControllerWithSimulationDelegates({
   }
   if (typeof install !== 'function') throw new TypeError(`Controller ${name} requires install().`);
   if (!Array.isArray(delegates)) throw new TypeError(`Controller ${name} delegates must be an array.`);
-  if (!Array.isArray(preserve) || preserve.some((property) => typeof property !== 'string' || !property)) {
-    throw new TypeError(`Controller ${name} preserve must be an array of property names.`);
+  if (!Array.isArray(restore) || restore.some((property) => typeof property !== 'string' || !property)) {
+    throw new TypeError(`Controller ${name} restore must be an array of property names.`);
   }
 
   const initialShape = captureObjectShape(game);
-  const preservedProperties = [...new Set(['update', ...preserve])];
-  const propertySnapshots = captureProperties(game, preservedProperties);
+  const updateSnapshot = captureProperties(game, ['update']);
+  const lifecycleSnapshots = captureProperties(game, [...new Set(['update', ...restore])]);
   let disposeController;
   try {
     disposeController = install();
@@ -65,7 +65,7 @@ export function installControllerWithSimulationDelegates({
   }
 
   const installedWrapper = game.update;
-  restoreProperties(game, propertySnapshots);
+  restoreProperties(game, updateSnapshot);
   const unregister = [];
   try {
     for (const delegate of delegates) {
@@ -98,7 +98,7 @@ export function installControllerWithSimulationDelegates({
         disposeController();
       }
     } finally {
-      restoreProperties(game, propertySnapshots);
+      restoreProperties(game, lifecycleSnapshots);
     }
     return true;
   };
