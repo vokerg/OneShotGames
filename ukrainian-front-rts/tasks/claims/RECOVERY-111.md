@@ -1,14 +1,20 @@
-# Recovery #111 — Explicit simulation ownership and deterministic application composition
+# RECOVERY-111 — Runtime composition and simulation ownership
 
-- Base: `65f8d244f6dea897f6822c5a30cd8f2db48a2583`
-- Claimed by: ChatGPT coding agent
-- Intended files: `src/app/`, `src/systems/simulation-phases.js`, focused lifecycle/controller modules, `src/main.js`, architecture verification, tests, and architecture/change-routing documentation
-- Dependencies verified: issue #109 CI scaffolding exists on `main`; issue #111 is open and has no active PR claim
-- Parallel boundary: no edits to navigation recovery files owned by PR #115, Ukrainian infantry content owned by PR #116, or browser-smoke script owned by PR #117
+- Base commit: `7a695040e7b6ced8874cc91b0711361820fae774`
+- Owning issue: #111
+- Pull request: #118
+- Intended files:
+  - `src/main.js`
+  - `src/app/`
+  - `src/core/simulation-delegates.js`
+  - `src/systems/simulation-phases.js`
+  - lifecycle-wrapper owners required for exact restoration
+  - runtime-composition verification, tests, and documentation
+- Parallel boundary: no runtime-content files owned by PR #120 and no new navigation integration gate while this P0 recovery is active.
 
 ## Plan
 
-1. Inventory production wrappers around authoritative `Game` methods and define named ownership for every lifecycle mutation.
-2. Introduce deterministic application composition with reverse-order disposal and atomic rollback, then migrate the composition root and hidden update work to declared owners.
-3. Add architecture and integration coverage for installer order, restoration, startup failure, fixed-step order, repeated determinism, and restricted browser capabilities.
-4. Update architecture and change-routing documentation, run focused tests and `bash verify.sh`, and record only the evidence level actually achieved.
+1. Preserve existing gameplay behavior through named simulation delegates and deterministic application composition.
+2. Guarantee atomic installation rollback, reverse-order teardown, exact lifecycle-method restoration, and safe browser capability acquisition.
+3. Verify the current-main assembled suite, deterministic phase order, repeated mission startup, and browser smoke.
+4. Replace this claim with exact completion evidence before squash merge.
