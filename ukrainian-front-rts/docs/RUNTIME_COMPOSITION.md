@@ -57,6 +57,7 @@ clock
 → destroyed-entity cleanup
 → objectives
 → outcome
+→ building-lifecycle delegates
 → stance-reconcile delegates
 → tactical-reconcile delegates
 → command-capacity delegates
@@ -69,6 +70,7 @@ The order intentionally preserves the previous nested-wrapper behavior:
 tactical prepare
 → stance prepare
 → base simulation
+→ building capture reconciliation
 → stance reconcile
 → tactical reconcile
 → command-capacity reconcile
@@ -95,12 +97,12 @@ Use delegates only for authoritative gameplay work that truly belongs in a fixed
 
 The adapter:
 
-1. records the authoritative `game.update` method;
-2. installs the legacy controller so its non-update public commands remain intact;
-3. captures and removes the installed update wrapper;
+1. records the authoritative `game.update` method and the lifecycle methods the controller owns;
+2. installs the legacy controller so its non-update public commands and lifecycle wrappers remain active;
+3. captures and removes only the installed update wrapper;
 4. registers the controller's before/after work as named delegates;
 5. restores the captured wrapper only while invoking the controller's own disposer;
-6. restores the authoritative update boundary exactly afterward.
+6. restores the authoritative update and lifecycle boundaries exactly afterward.
 
 The adapted gameplay owners are:
 
@@ -108,6 +110,7 @@ The adapted gameplay owners are:
 | --- | --- | --- |
 | `src/systems/tactical-command-system.js` | prepare before update; reconcile after update | `tactical-prepare`, `tactical-reconcile` |
 | `src/systems/stance-system.js` | prepare before update; reconcile after update | `stance-prepare`, `stance-reconcile` |
+| `src/systems/building-lifecycle-system.js` | advance capture state after update | `building-lifecycle` |
 | `src/systems/command-capacity-system.js` | reconcile after update | `command-capacity` |
 
 `src/ui/combat-readability-runtime.js` still observes the public update boundary because it advances presentation/event-consumer state rather than authoritative gameplay. It remains explicitly inventoried and may not mutate combat outcomes through that observer.
@@ -122,7 +125,7 @@ The current composition also installs controllers that wrap public commands or e
 - production, exit, transport, construction, drop-off, and research controllers own their focused public APIs;
 - veterancy owns unit/building initialization, stat projection, damage-source attribution, and death awards;
 - resource-income telemetry observes worker deposits without changing resource rules;
-- building lifecycle owns building transition commands and cleanup adaptation;
+- building lifecycle owns building transition commands, initialization, and cleanup adaptation; capture progression is the named `building-lifecycle` delegate;
 - UI/input installers own presentation and browser listeners only.
 
 A wrapper around `start`, `issue`, `addUnit`, `addBuilding`, `removeDestroyedEntities`, or another public method must restore the exact previous method on disposal. It must not create an undeclared simulation phase. New wrappers require an explicit entry in this inventory, integration tests, and verifier coverage.
