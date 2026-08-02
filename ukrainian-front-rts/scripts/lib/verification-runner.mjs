@@ -15,6 +15,7 @@ export const VERIFICATION_COMMANDS = Object.freeze([
   Object.freeze({ id: 'tech-content', label: 'production technology graph', script: 'scripts/verify-tech-content.mjs' }),
   Object.freeze({ id: 'runtime-content', label: 'runtime content reconciliation', script: 'scripts/verify-runtime-content.mjs' }),
   Object.freeze({ id: 'seeded-random', label: 'seeded simulation randomness', script: 'scripts/verify-seeded-random.mjs' }),
+  Object.freeze({ id: 'sprite-atlases', label: 'sprite atlas sources and manifests', script: 'scripts/verify-sprite-atlases.mjs' }),
   Object.freeze({
     id: 'runtime-composition',
     label: 'runtime composition ownership',
