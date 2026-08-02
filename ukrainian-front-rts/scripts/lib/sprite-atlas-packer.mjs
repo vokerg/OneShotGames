@@ -38,7 +38,6 @@ function sourceMime(path) {
   switch (extname(path).toLowerCase()) {
     case '.png': return 'image/png';
     case '.svg': return 'image/svg+xml';
-    case '.webp': return 'image/webp';
     default: throw new TypeError(`Unsupported atlas source image type: ${path}`);
   }
 }
