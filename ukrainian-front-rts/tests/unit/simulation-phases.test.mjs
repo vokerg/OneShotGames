@@ -3,6 +3,10 @@ import test from 'node:test';
 
 import { TEAM, UNIT_TYPES } from '../../src/config.js';
 import {
+  SIMULATION_DELEGATE_PHASES,
+  registerSimulationDelegate,
+} from '../../src/core/simulation-delegates.js';
+import {
   runSimulationStep,
   SIMULATION_PHASES,
 } from '../../src/systems/simulation-phases.js';
@@ -89,10 +93,21 @@ function createPhaseFixture() {
   return { game, calls };
 }
 
-test('simulation phase contract is explicit and ordered', () => {
+function registerPhaseRecorder(game, calls, phase) {
+  return registerSimulationDelegate(game, {
+    phase,
+    id: `test:${phase}`,
+    run: () => calls.push(phase),
+  });
+}
+
+test('simulation phase contract exposes the complete authoritative order', () => {
   assert.deepEqual(SIMULATION_PHASES, [
     'clock',
     'camera',
+    'step-begin',
+    'tactical-prepare',
+    'stance-prepare',
     'units',
     'projectiles',
     'production',
@@ -101,6 +116,11 @@ test('simulation phase contract is explicit and ordered', () => {
     'cleanup',
     'objectives',
     'outcome',
+    'building-lifecycle',
+    'stance-reconcile',
+    'tactical-reconcile',
+    'command-capacity',
+    'step-end',
   ]);
 
   const { game, calls } = createPhaseFixture();
@@ -117,6 +137,45 @@ test('simulation phase contract is explicit and ordered', () => {
     'cleanup',
     'objectives',
   ]);
+});
+
+test('named delegates preserve the previous wrapper order around authoritative phases', () => {
+  const { game, calls } = createPhaseFixture();
+  const unregister = [
+    SIMULATION_DELEGATE_PHASES.STEP_BEGIN,
+    SIMULATION_DELEGATE_PHASES.TACTICAL_PREPARE,
+    SIMULATION_DELEGATE_PHASES.STANCE_PREPARE,
+    SIMULATION_DELEGATE_PHASES.BUILDING_LIFECYCLE,
+    SIMULATION_DELEGATE_PHASES.STANCE_RECONCILE,
+    SIMULATION_DELEGATE_PHASES.TACTICAL_RECONCILE,
+    SIMULATION_DELEGATE_PHASES.COMMAND_CAPACITY,
+    SIMULATION_DELEGATE_PHASES.STEP_END,
+  ].map((phase) => registerPhaseRecorder(game, calls, phase));
+
+  try {
+    const advanced = withViewport(() => runSimulationStep(game, 0.25));
+    assert.equal(advanced, true);
+    assert.equal(game.time, 0.25);
+    assert.deepEqual(calls, [
+      'step-begin',
+      'tactical-prepare',
+      'stance-prepare',
+      'unit:1:0.25',
+      'unit:2:0.25',
+      'projectiles:0.25',
+      'research:0.25',
+      'waves:0.25',
+      'cleanup',
+      'objectives',
+      'building-lifecycle',
+      'stance-reconcile',
+      'tactical-reconcile',
+      'command-capacity',
+      'step-end',
+    ]);
+  } finally {
+    unregister.reverse().forEach((remove) => remove());
+  }
 });
 
 test('outcome resolution happens after objective evaluation and prefers victory', () => {

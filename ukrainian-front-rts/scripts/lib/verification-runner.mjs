@@ -14,6 +14,11 @@ export const VERIFICATION_COMMANDS = Object.freeze([
   Object.freeze({ id: 'tech-fixtures', label: 'technology graph fixtures', script: 'scripts/verify-tech-graph.test.mjs' }),
   Object.freeze({ id: 'tech-content', label: 'production technology graph', script: 'scripts/verify-tech-content.mjs' }),
   Object.freeze({ id: 'seeded-random', label: 'seeded simulation randomness', script: 'scripts/verify-seeded-random.mjs' }),
+  Object.freeze({
+    id: 'runtime-composition',
+    label: 'runtime composition ownership',
+    script: 'scripts/verify-runtime-composition.mjs',
+  }),
   Object.freeze({ id: 'architecture', label: 'architecture boundaries', script: 'scripts/verify-architecture.mjs' }),
 ]);
 

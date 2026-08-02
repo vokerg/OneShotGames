@@ -1,7 +1,14 @@
+import { acquireBrowserStorage } from './app/browser-capabilities.js';
+import { createApplicationComposition } from './app/composition-registry.js';
+import { installControllerWithSimulationDelegates } from './app/controller-adapter.js';
 import { createGameRuntime } from './app/runtime.js';
 import './art-pass.js';
-import './environment-art-pass.js';
 import { createDestructionState, materializeWreck } from './combat/destruction-system.js';
+import {
+  SIMULATION_DELEGATE_PHASES,
+  simulationDelegateSnapshot,
+} from './core/simulation-delegates.js';
+import './environment-art-pass.js';
 import { Game } from './game.js';
 import { createAttackGroundController, installAttackGroundInput } from './input/attack-ground.js';
 import { installBattlefieldInput } from './input/battlefield-input.js';
@@ -14,21 +21,33 @@ import { createQueuedOrderController } from './input/queued-orders.js';
 import { installTacticalCommandInput } from './input/tactical-command-input.js';
 import { installTransportInput } from './input/transport-input.js';
 import { installWorkerOverview } from './input/worker-overview.js';
-import { synchronizeNavigationGrid } from './systems/navigation-movement-system.js';
 import { Renderer } from './render.js';
 import { installCombatReadabilityOverlay } from './render/combat-readability-overlay.js';
 import { installConstructionPreview } from './render/construction-preview.js';
-import { createBuildingLifecycleController } from './systems/building-lifecycle-system.js';
+import {
+  createBuildingLifecycleController,
+  updateBuildingCaptures,
+} from './systems/building-lifecycle-system.js';
 import { createCommandCapacityController } from './systems/command-capacity-system.js';
 import { createConstructionPlacementController } from './systems/construction-placement-system.js';
 import { createConstructionProgressController } from './systems/construction-progress-runtime.js';
+import { synchronizeNavigationGrid } from './systems/navigation-movement-system.js';
 import { createProductionExitController } from './systems/production-exit-system.js';
 import { createProductionQueueController } from './systems/production-queue-system.js';
 import { createResearchQueueRuntime } from './systems/research-queue-runtime.js';
 import { createResourceDropOffController } from './systems/resource-dropoff-system.js';
 import { createResourceIncomeTelemetryController } from './systems/resource-income-telemetry.js';
-import { createStanceController } from './systems/stance-system.js';
-import { createTacticalCommandController } from './systems/tactical-command-system.js';
+import { SIMULATION_PHASES } from './systems/simulation-phases.js';
+import {
+  createStanceController,
+  prepareStanceOrders,
+  reconcileStanceOrders,
+} from './systems/stance-system.js';
+import {
+  createTacticalCommandController,
+  prepareTacticalCommands,
+  reconcileTacticalCommands,
+} from './systems/tactical-command-system.js';
 import { createTransportController } from './systems/transport-system.js';
 import { createVeterancyController } from './systems/veterancy-system.js';
 import { createWorkerGatherController } from './systems/worker-gather-system.js';
@@ -48,6 +67,10 @@ function requiredElement(selector) {
   return element;
 }
 
+function module(name, install) {
+  return Object.freeze({ name, install });
+}
+
 const canvas = requiredElement('#game');
 const minimap = requiredElement('#minimap');
 const portrait = requiredElement('#portrait');
@@ -57,106 +80,166 @@ const game = new Game();
 const ui = new UI(game);
 const renderer = new Renderer(game, canvas, minimap, portrait);
 const runtime = createGameRuntime({ game, renderer, ui });
-const disposeAttackGround = createAttackGroundController(game);
-const disposeQueuedOrders = createQueuedOrderController(game, window);
-const disposeProductionQueue = createProductionQueueController(game);
-const disposeProductionExits = createProductionExitController(game, {
-  synchronizeNavigation: synchronizeNavigationGrid,
-});
-const disposeTransport = createTransportController(game, {
-  synchronizeNavigation: synchronizeNavigationGrid,
-});
-const disposeTransportInput = installTransportInput({ game, ui, windowTarget: window });
-const disposeConstructionPlacement = createConstructionPlacementController(game, {
-  synchronizeNavigation: synchronizeNavigationGrid,
-});
-const disposeWorkerGather = createWorkerGatherController(game);
-const disposeResourceIncomeTelemetry = createResourceIncomeTelemetryController(game);
-const disposeResourceDropOff = createResourceDropOffController(game, {
-  synchronizeNavigation: synchronizeNavigationGrid,
-});
-const disposeConstructionProgress = createConstructionProgressController(game);
-const disposeBuildingLifecycle = createBuildingLifecycleController(game, {
-  destructionApi: { createDestructionState, materializeWreck },
-});
-const disposeStances = createStanceController(game);
-const disposeTacticalCommands = createTacticalCommandController(game);
-const disposeVeterancy = createVeterancyController(game);
-const disposeResearchQueue = createResearchQueueRuntime(game);
-const disposeCommandCapacity = createCommandCapacityController(game);
-const disposeCombatReadability = createCombatReadabilityController(game, {
-  storage: window.localStorage,
-});
-const disposeProductionQueueControls = installProductionQueueControls({ game, ui });
-const disposeTacticalCommandCard = installTacticalCommandCard(ui);
-const disposeStanceCommandCard = installStanceCommandCard(ui);
-const disposeVeterancyIndicator = installVeterancyIndicator({ game, ui });
-const disposeProductionExitFeedback = installProductionExitFeedback({ game, ui });
-const disposeWorkerOverview = installWorkerOverview({ game, ui, windowTarget: window });
-const disposeCommandCapacityFeedback = installCommandCapacityFeedback({ game, ui });
-const disposeBuildingLifecycleControls = installBuildingLifecycleControls({ game, ui });
-const disposeCombatReadabilityFeedback = installCombatReadabilityFeedback({ game, ui });
-const disposeEconomyHudOverview = installEconomyHudOverview({ game, ui });
-const disposeConstructionPreview = installConstructionPreview({ game, renderer });
-const disposeCombatReadabilityOverlay = installCombatReadabilityOverlay({ game, renderer });
-const disposeConstructionPlacementInput = installConstructionPlacementInput({ game, ui });
-const disposeAttackGroundInput = installAttackGroundInput({ game, canvas, ui });
-const disposeTacticalCommandInput = installTacticalCommandInput({ game, ui, canvas });
-const disposeProductionRallyInput = installProductionRallyInput({ game, ui, canvas });
-const disposeInput = installBattlefieldInput({ game, ui, canvas, minimap });
-const disposeDoubleClickSelection = installDoubleClickSelection({ game, ui, canvas });
+const browserStorage = acquireBrowserStorage(window);
 
-ui.buildMissionCards(runtime.startMission);
-ui.setEndgameActions({
-  retry: () => runtime.startMission(game.missionIndex),
-  operations: () => {
-    game.mission = null;
-    ui.showMissionSelect();
-  },
+const modules = [
+  module('attack-ground-controller', () => createAttackGroundController(game)),
+  module('queued-orders-controller', () => createQueuedOrderController(game, window)),
+  module('production-queue-controller', () => createProductionQueueController(game)),
+  module('production-exit-controller', () => createProductionExitController(game, {
+    synchronizeNavigation: synchronizeNavigationGrid,
+  })),
+  module('transport-controller', () => createTransportController(game, {
+    synchronizeNavigation: synchronizeNavigationGrid,
+  })),
+  module('transport-input', () => installTransportInput({ game, ui, windowTarget: window })),
+  module('construction-placement-controller', () => createConstructionPlacementController(game, {
+    synchronizeNavigation: synchronizeNavigationGrid,
+  })),
+  module('worker-gather-controller', () => createWorkerGatherController(game)),
+  module('resource-income-telemetry', () => createResourceIncomeTelemetryController(game)),
+  module('resource-dropoff-controller', () => createResourceDropOffController(game, {
+    synchronizeNavigation: synchronizeNavigationGrid,
+  })),
+  module('construction-progress-controller', () => createConstructionProgressController(game)),
+  module('building-lifecycle-controller', () => installControllerWithSimulationDelegates({
+    game,
+    name: 'building-lifecycle-controller',
+    restore: ['start', 'addBuilding', 'removeDestroyedEntities'],
+    install: () => createBuildingLifecycleController(game, {
+      destructionApi: { createDestructionState, materializeWreck },
+    }),
+    delegates: [
+      {
+        phase: SIMULATION_DELEGATE_PHASES.BUILDING_LIFECYCLE,
+        id: 'capture',
+        run: (_game, stepSeconds) => updateBuildingCaptures(game, stepSeconds),
+      },
+    ],
+  })),
+  module('stance-controller', () => installControllerWithSimulationDelegates({
+    game,
+    name: 'stance-controller',
+    restore: ['addUnit', 'start', 'toggleAutoFire'],
+    install: () => createStanceController(game),
+    delegates: [
+      {
+        phase: SIMULATION_DELEGATE_PHASES.STANCE_PREPARE,
+        id: 'prepare',
+        run: () => prepareStanceOrders(game),
+      },
+      {
+        phase: SIMULATION_DELEGATE_PHASES.STANCE_RECONCILE,
+        id: 'reconcile',
+        run: () => reconcileStanceOrders(game),
+      },
+    ],
+  })),
+  module('tactical-command-controller', () => installControllerWithSimulationDelegates({
+    game,
+    name: 'tactical-command-controller',
+    restore: ['issue', 'stopSelected', 'start'],
+    install: () => createTacticalCommandController(game),
+    delegates: [
+      {
+        phase: SIMULATION_DELEGATE_PHASES.TACTICAL_PREPARE,
+        id: 'prepare',
+        run: () => prepareTacticalCommands(game),
+      },
+      {
+        phase: SIMULATION_DELEGATE_PHASES.TACTICAL_RECONCILE,
+        id: 'reconcile',
+        run: () => reconcileTacticalCommands(game),
+      },
+    ],
+  })),
+  module('veterancy-controller', () => createVeterancyController(game)),
+  module('research-queue-controller', () => createResearchQueueRuntime(game)),
+  module('command-capacity-controller', () => installControllerWithSimulationDelegates({
+    game,
+    name: 'command-capacity-controller',
+    restore: ['start'],
+    install: () => createCommandCapacityController(game),
+    delegates: [
+      {
+        phase: SIMULATION_DELEGATE_PHASES.COMMAND_CAPACITY,
+        id: 'reconcile',
+        run: () => game.reconcileCommandCapacity?.('simulation-step'),
+      },
+    ],
+  })),
+  module('combat-readability-controller', () => createCombatReadabilityController(game, {
+    storage: browserStorage,
+  })),
+  module('production-queue-controls', () => installProductionQueueControls({ game, ui })),
+  module('tactical-command-card', () => installTacticalCommandCard(ui)),
+  module('stance-command-card', () => installStanceCommandCard(ui)),
+  module('veterancy-indicator', () => installVeterancyIndicator({ game, ui })),
+  module('production-exit-feedback', () => installProductionExitFeedback({ game, ui })),
+  module('worker-overview', () => installWorkerOverview({ game, ui, windowTarget: window })),
+  module('command-capacity-feedback', () => installCommandCapacityFeedback({ game, ui })),
+  module('building-lifecycle-controls', () => installBuildingLifecycleControls({ game, ui })),
+  module('combat-readability-feedback', () => installCombatReadabilityFeedback({ game, ui })),
+  module('economy-hud-overview', () => installEconomyHudOverview({ game, ui })),
+  module('construction-preview', () => installConstructionPreview({ game, renderer })),
+  module('combat-readability-overlay', () => installCombatReadabilityOverlay({ game, renderer })),
+  module('construction-placement-input', () => installConstructionPlacementInput({ game, ui })),
+  module('attack-ground-input', () => installAttackGroundInput({ game, canvas, ui })),
+  module('tactical-command-input', () => installTacticalCommandInput({ game, ui, canvas })),
+  module('production-rally-input', () => installProductionRallyInput({ game, ui, canvas })),
+  module('battlefield-input', () => installBattlefieldInput({ game, ui, canvas, minimap })),
+  module('double-click-selection', () => installDoubleClickSelection({ game, ui, canvas })),
+  module('mission-ui', () => {
+    const previousCards = ui.e.cards.innerHTML;
+    const previousRetry = ui.e.retry.onclick;
+    const previousOperations = ui.e.operations.onclick;
+    const toggleObjectives = () => ui.e.objectives.classList.toggle('hidden');
+
+    ui.buildMissionCards(runtime.startMission);
+    ui.setEndgameActions({
+      retry: () => runtime.startMission(game.missionIndex),
+      operations: () => {
+        game.mission = null;
+        ui.showMissionSelect();
+      },
+    });
+    objectivesButton.addEventListener('click', toggleObjectives);
+
+    return () => {
+      objectivesButton.removeEventListener('click', toggleObjectives);
+      ui.e.retry.onclick = previousRetry;
+      ui.e.operations.onclick = previousOperations;
+      ui.e.cards.innerHTML = previousCards;
+    };
+  }),
+  module('runtime', () => {
+    runtime.start();
+    return () => runtime.stop();
+  }),
+];
+
+const composition = createApplicationComposition({
+  context: { game, ui, renderer, runtime },
+  modules,
 });
-objectivesButton.addEventListener('click', () => ui.e.objectives.classList.toggle('hidden'));
-runtime.start();
+composition.install();
+
+const previousDiagnostic = window.__fieldsOfResolveComposition;
+window.__fieldsOfResolveComposition = Object.freeze({
+  installedModules: () => composition.installedModules(),
+  simulationPhases: () => SIMULATION_PHASES,
+  simulationDelegates: () => simulationDelegateSnapshot(game),
+});
 
 addEventListener(
   'pagehide',
   () => {
-    disposeDoubleClickSelection();
-    disposeInput();
-    disposeProductionRallyInput();
-    disposeTacticalCommandInput();
-    disposeAttackGroundInput();
-    disposeConstructionPlacementInput();
-    disposeCombatReadabilityOverlay();
-    disposeConstructionPreview();
-    disposeEconomyHudOverview();
-    disposeCombatReadabilityFeedback();
-    disposeBuildingLifecycleControls();
-    disposeCommandCapacityFeedback();
-    disposeWorkerOverview();
-    disposeProductionExitFeedback();
-    disposeVeterancyIndicator();
-    disposeStanceCommandCard();
-    disposeTacticalCommandCard();
-    disposeProductionQueueControls();
-    disposeCombatReadability();
-    disposeCommandCapacity();
-    disposeResearchQueue();
-    disposeVeterancy();
-    disposeTacticalCommands();
-    disposeStances();
-    disposeBuildingLifecycle();
-    disposeConstructionProgress();
-    disposeResourceDropOff();
-    disposeResourceIncomeTelemetry();
-    disposeWorkerGather();
-    disposeConstructionPlacement();
-    disposeTransportInput();
-    disposeTransport();
-    disposeProductionExits();
-    disposeProductionQueue();
-    disposeQueuedOrders();
-    disposeAttackGround();
-    runtime.stop();
+    try {
+      composition.dispose();
+    } finally {
+      if (previousDiagnostic === undefined) delete window.__fieldsOfResolveComposition;
+      else window.__fieldsOfResolveComposition = previousDiagnostic;
+    }
   },
   { once: true },
 );
