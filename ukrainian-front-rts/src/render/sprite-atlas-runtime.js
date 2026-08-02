@@ -1,8 +1,4 @@
-import {
-  spriteAtlasAnimationFrame,
-  spriteAtlasFrame,
-  validateSpriteAtlasManifest,
-} from './sprite-atlas-manifest.js';
+import { validateSpriteAtlasManifest } from './sprite-atlas-manifest.js';
 
 function requireContext(context) {
   const methods = ['drawImage', 'save', 'restore', 'translate', 'scale'];
@@ -17,6 +13,68 @@ function requireImage(image) {
     throw new TypeError('Sprite atlas runtime requires a loaded image.');
   }
   return image;
+}
+
+function frameFor(atlas, frameId) {
+  return atlas.frames[frameId] ?? atlas.frames[atlas.fallback.frame];
+}
+
+function directionFor(atlas, direction) {
+  if (typeof direction === 'string') {
+    return atlas.directions.order.includes(direction) ? direction : atlas.directions.zero;
+  }
+  if (!Number.isFinite(direction)) return atlas.directions.zero;
+  const count = atlas.directions.order.length;
+  const index = ((Math.round(direction) % count) + count) % count;
+  return atlas.directions.order[index];
+}
+
+function animationFrameFor(atlas, animationId, {
+  elapsedMs = 0,
+  direction = null,
+} = {}) {
+  const animation = atlas.animations[animationId];
+  if (!animation) {
+    const frame = frameFor(atlas, atlas.fallback.frame);
+    return Object.freeze({ animationId: null, frameId: frame.id, frame, index: 0, elapsedMs: 0 });
+  }
+  const directionId = directionFor(atlas, direction);
+  const sequence = animation.frames
+    ?? animation.directions[directionId]
+    ?? animation.directions[atlas.directions.zero]
+    ?? animation.directions[Object.keys(animation.directions)[0]];
+  const total = sequence.reduce((sum, entry) => sum + entry.durationMs, 0);
+  const safeElapsed = Number.isFinite(elapsedMs) && elapsedMs > 0 ? elapsedMs : 0;
+  let cursor = animation.loop === 'loop'
+    ? safeElapsed % total
+    : Math.min(safeElapsed, Math.max(0, total - Number.EPSILON));
+  let index = 0;
+  while (index < sequence.length - 1 && cursor >= sequence[index].durationMs) {
+    cursor -= sequence[index].durationMs;
+    index += 1;
+  }
+  const entry = sequence[index];
+  return Object.freeze({
+    animationId,
+    frameId: entry.frame,
+    frame: atlas.frames[entry.frame],
+    index,
+    elapsedMs: cursor,
+    durationMs: entry.durationMs,
+    complete: animation.loop !== 'loop' && safeElapsed >= total,
+  });
+}
+
+function validateLoadedImageDimensions(image, manifest, source) {
+  const width = Number(image.naturalWidth);
+  const height = Number(image.naturalHeight);
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) return;
+  if (width !== manifest.image.width || height !== manifest.image.height) {
+    throw new Error(
+      `Sprite atlas image dimensions do not match manifest for ${source}: ` +
+      `${width}x${height} !== ${manifest.image.width}x${manifest.image.height}.`,
+    );
+  }
 }
 
 export function configureNearestNeighborContext(context) {
@@ -56,8 +114,8 @@ export function createSpriteAtlasRuntime(manifest, image, {
     target.save();
     try {
       if ('globalAlpha' in target) target.globalAlpha *= alpha;
-      if (typeof target.translate === 'function') target.translate(x, y);
-      if (flipX && typeof target.scale === 'function') target.scale(-1, 1);
+      target.translate(x, y);
+      if (flipX) target.scale(-1, 1);
       target.drawImage(
         bitmap,
         frame.rect.x,
@@ -76,17 +134,17 @@ export function createSpriteAtlasRuntime(manifest, image, {
   }
 
   function drawFrame(context, frameId, options) {
-    return drawResolvedFrame(context, spriteAtlasFrame(atlas, frameId), options);
+    return drawResolvedFrame(context, frameFor(atlas, frameId), options);
   }
 
   function drawAnimation(context, animationId, options = {}) {
-    const resolved = spriteAtlasAnimationFrame(atlas, animationId, options);
+    const resolved = animationFrameFor(atlas, animationId, options);
     drawResolvedFrame(context, resolved.frame, options);
     return resolved;
   }
 
   function attachment(frameId, name, { x = 0, y = 0, scale = 1, flipX = false } = {}) {
-    const frame = spriteAtlasFrame(atlas, frameId);
+    const frame = frameFor(atlas, frameId);
     const point = frame.attachments[name];
     if (!point) return null;
     const sourceScale = scale / atlas.image.pixelRatio;
@@ -144,6 +202,7 @@ export async function loadSpriteAtlas(manifestSource, {
     const manifest = validateSpriteAtlasManifest(manifestValue, { source: manifestUrl ?? 'sprite atlas manifest' });
     const imageSource = resolveAtlasImageSource(manifestUrl, manifest.image.src);
     const image = await loadImageElement(imageSource, { imageFactory });
+    validateLoadedImageDimensions(image, manifest, imageSource);
     return createSpriteAtlasRuntime(manifest, image);
   } catch (error) {
     if (fallbackRuntime) {
