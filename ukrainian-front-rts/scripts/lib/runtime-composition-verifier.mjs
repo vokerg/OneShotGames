@@ -3,6 +3,7 @@ import { join, relative, resolve } from 'node:path';
 
 export const AUTHORIZED_UPDATE_ASSIGNMENTS = Object.freeze({
   'src/app/controller-adapter.js': 'composition adapter captures and removes legacy gameplay wrappers',
+  'src/systems/building-lifecycle-system.js': 'legacy wrapper is neutralized and mapped to the building-lifecycle phase',
   'src/systems/stance-system.js': 'legacy wrapper is neutralized and mapped to stance delegate phases',
   'src/systems/tactical-command-system.js': 'legacy wrapper is neutralized and mapped to tactical delegate phases',
   'src/systems/command-capacity-system.js': 'legacy wrapper is neutralized and mapped to command-capacity phase',
@@ -13,6 +14,7 @@ const REQUIRED_MAIN_TOKENS = Object.freeze([
   'createApplicationComposition',
   'installControllerWithSimulationDelegates',
   'acquireBrowserStorage',
+  "name: 'building-lifecycle-controller'",
   "name: 'stance-controller'",
   "name: 'tactical-command-controller'",
   "name: 'command-capacity-controller'",
@@ -22,6 +24,7 @@ const REQUIRED_PHASE_TOKENS = Object.freeze([
   'SIMULATION_DELEGATE_PHASES.STEP_BEGIN',
   'SIMULATION_DELEGATE_PHASES.TACTICAL_PREPARE',
   'SIMULATION_DELEGATE_PHASES.STANCE_PREPARE',
+  'SIMULATION_DELEGATE_PHASES.BUILDING_LIFECYCLE',
   'SIMULATION_DELEGATE_PHASES.STANCE_RECONCILE',
   'SIMULATION_DELEGATE_PHASES.TACTICAL_RECONCILE',
   'SIMULATION_DELEGATE_PHASES.COMMAND_CAPACITY',
