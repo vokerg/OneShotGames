@@ -2,6 +2,7 @@ export const MOVEMENT_RECOVERY_DEFAULTS = Object.freeze({
   minimumProgress: 1,
   stuckSeconds: 0.75,
   maxDetours: 3,
+  maxReplans: 3,
   retargetDistance: 8,
 });
 
