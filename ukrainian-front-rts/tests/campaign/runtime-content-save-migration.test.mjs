@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { createCampaignSaveRuntime } from '../../src/app/campaign-save-runtime.js';
+import {
+  CAMPAIGN_RUNTIME_SAVE_STATUSES,
+  createCampaignSaveRuntime,
+} from '../../src/app/campaign-save-runtime.js';
 import {
   createCampaignProfile,
   unlockCampaignOperation,
@@ -25,7 +28,7 @@ function profile() {
   );
 }
 
-test('campaign restore migrates legacy command-character IDs throughout mission snapshots', () => {
+test('campaign restore migrates legacy command-character unit types throughout mission snapshots', () => {
   const storage = storageFixture();
   let restored = null;
   const runtime = createCampaignSaveRuntime({
@@ -38,10 +41,11 @@ test('campaign restore migrates legacy command-character IDs throughout mission 
         tick: 12,
         simulationSeed: 91,
         snapshot: {
-          selectedUnitId: 'uaZelenskyy',
+          heroes: ['uaZelenskyy', 'uaZaluzhnyi'],
           units: [
             { id: 1, type: 'uaZaluzhnyi' },
-            { id: 2, type: 'ruPutin', targetType: 'ruPrigozhin' },
+            { id: 2, type: 'ruPutin' },
+            { id: 3, type: 'ruPrigozhin' },
           ],
         },
       },
@@ -52,14 +56,41 @@ test('campaign restore migrates legacy command-character IDs throughout mission 
   runtime.saveSlot({ slotId: 'legacy-commanders' });
   const result = runtime.loadSlot('legacy-commanders');
 
+  assert.equal(result.status, 'ok');
+  assert.equal(result.contentMigrationStatus, 'migrated');
   assert.deepEqual(result.missionState.snapshot, {
-    selectedUnitId: 'uaCommandVarta',
+    heroes: ['uaCommandVarta'],
     units: [
-      { id: 1, type: 'uaCommandSapsan' },
-      { id: 2, targetType: 'ruCommandGranit', type: 'ruCommandBastion' },
+      { id: 1, type: 'uaCommandVarta' },
+      { id: 2, type: 'ruCommandBastion' },
+      { id: 3, type: 'ruCommandBastion' },
     ],
   });
   assert.deepEqual(restored.missionState, result.missionState);
   assert.equal(Object.isFrozen(restored.missionState), true);
   assert.equal(Object.isFrozen(restored.missionState.snapshot.units[0]), true);
+});
+
+test('campaign restore rejects unsupported runtime unit types without mutating live state', () => {
+  const storage = storageFixture();
+  let restoreCalls = 0;
+  const runtime = createCampaignSaveRuntime({
+    storage,
+    captureState: () => ({
+      profile: profile(),
+      missionState: {
+        operationId: 'donbas', tick: 0, simulationSeed: 1,
+        snapshot: { units: [{ id: 1, type: 'removedPrototypeUnit' }] },
+      },
+    }),
+    restoreState: () => { restoreCalls += 1; },
+  });
+
+  runtime.saveSlot({ slotId: 'unsupported-content' });
+  const result = runtime.loadSlot('unsupported-content');
+
+  assert.equal(result.status, CAMPAIGN_RUNTIME_SAVE_STATUSES.UNSUPPORTED_CONTENT);
+  assert.match(result.error, /Unsupported runtime unit ID/);
+  assert.equal(result.save, null);
+  assert.equal(restoreCalls, 0);
 });
