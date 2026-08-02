@@ -7,6 +7,7 @@ import test from 'node:test';
 import { packSpriteAtlasFile } from '../../scripts/pack-sprite-atlas.mjs';
 import {
   packSpriteAtlasSource,
+  probeImageDimensions,
   probePngDimensions,
   probeSvgDimensions,
   renderSpriteAtlasSvg,
@@ -49,6 +50,25 @@ test('dimension probes accept PNG headers and SVG view boxes', () => {
   png.writeUInt32BE(24, 20);
   assert.deepEqual(probePngDimensions(png), { width: 48, height: 24 });
   assert.deepEqual(probeSvgDimensions('<svg viewBox="0 0 16 32"></svg>'), { width: 16, height: 32 });
+});
+
+test('unsupported source image formats fail both probing and embedding', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'ufr-atlas-format-'));
+  try {
+    const sourcePath = join(root, 'unsupported.webp');
+    await writeFile(sourcePath, 'not-a-supported-atlas-source');
+    await assert.rejects(probeImageDimensions(sourcePath), /not supported/);
+    await assert.rejects(
+      renderSpriteAtlasSvg({
+        width: 1,
+        height: 1,
+        frames: [{ id: 'unsupported', x: 0, y: 0, width: 1, height: 1, sourcePath }],
+      }),
+      /Unsupported atlas source image type/,
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });
 
 test('SVG atlas embeds source images and generated outputs are reproducibly checkable', async () => {
