@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { TEAM } from '../../src/config.js';
+import { TEAM, UNIT_TYPES } from '../../src/config.js';
 import {
   SIMULATION_DELEGATE_PHASES,
   registerSimulationDelegate,
@@ -31,12 +31,45 @@ function createPhaseFixture() {
   const game = {
     gameOver: false,
     time: 0,
+    missionIndex: 0,
     keys: new Set(),
     camera: { x: 0, y: 0, z: 1 },
     terrain: [],
-    units: [],
-    buildings: [{ id: 3, type: 'hq', team: TEAM.UA, hp: 100, x: 128, y: 128, queue: [] }],
+    road: [],
+    shelterbelts: [],
+    bridges: [],
+    units: [
+      {
+        id: 1,
+        type: 'uaTank',
+        team: TEAM.UA,
+        x: 100,
+        y: 100,
+        hp: 100,
+        maxHp: 100,
+        order: null,
+        target: null,
+      },
+      {
+        id: 2,
+        type: 'uaTank',
+        team: TEAM.UA,
+        x: 220,
+        y: 100,
+        hp: 100,
+        maxHp: 100,
+        order: null,
+        target: null,
+      },
+    ],
+    buildings: [],
     player: { objectives: [false, false, false] },
+    unitStats(type) {
+      return UNIT_TYPES[type];
+    },
+    updateUnit(unit, dt) {
+      calls.push(`unit:${unit.id}:${dt}`);
+    },
     updateProjectiles(dt) {
       calls.push(`projectiles:${dt}`);
     },
@@ -88,6 +121,21 @@ test('simulation phase contract exposes the complete authoritative order', () =>
     'command-capacity',
     'step-end',
   ]);
+
+  const { game, calls } = createPhaseFixture();
+  const advanced = withViewport(() => runSimulationStep(game, 0.25));
+
+  assert.equal(advanced, true);
+  assert.equal(game.time, 0.25);
+  assert.deepEqual(calls, [
+    'unit:1:0.25',
+    'unit:2:0.25',
+    'projectiles:0.25',
+    'research:0.25',
+    'waves:0.25',
+    'cleanup',
+    'objectives',
+  ]);
 });
 
 test('named delegates preserve the previous wrapper order around authoritative phases', () => {
@@ -110,6 +158,8 @@ test('named delegates preserve the previous wrapper order around authoritative p
       'step-begin',
       'tactical-prepare',
       'stance-prepare',
+      'unit:1:0.25',
+      'unit:2:0.25',
       'projectiles:0.25',
       'research:0.25',
       'waves:0.25',
