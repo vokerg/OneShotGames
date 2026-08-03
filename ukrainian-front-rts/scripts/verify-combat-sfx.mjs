@@ -1,15 +1,16 @@
 #!/usr/bin/env node
+import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validateCombatSfxCatalog } from '../src/audio/combat-sfx-catalog.js';
-import { buildCombatSfxOutputs, serializeCombatSfxManifest } from './lib/combat-sfx-generator.mjs';
+import { buildCombatSfxOutputs } from './lib/combat-sfx-generator.mjs';
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const manifestPath = resolve(projectRoot, 'assets/audio/combat/manifest.json');
-const current = await readFile(manifestPath, 'utf8');
-const catalog = validateCombatSfxCatalog(JSON.parse(current), { source: manifestPath });
+const currentValue = JSON.parse(await readFile(manifestPath, 'utf8'));
+const catalog = validateCombatSfxCatalog(currentValue, { source: manifestPath });
 const generated = buildCombatSfxOutputs();
-if (current !== serializeCombatSfxManifest(generated.manifest)) throw new Error('Combat SFX manifest differs from deterministic synthesis.');
+assert.deepEqual(currentValue, generated.manifest, 'Combat SFX manifest differs from deterministic synthesis.');
 for (const bank of generated.banks) {
   const view = new DataView(bank.bytes.buffer, bank.bytes.byteOffset, bank.bytes.byteLength);
   const text = (offset, length) => String.fromCharCode(...bank.bytes.subarray(offset, offset + length));
