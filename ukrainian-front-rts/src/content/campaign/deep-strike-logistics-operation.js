@@ -17,6 +17,7 @@ const SCRIPT_REGIONS = [
   { id: 'logistics-hub', shape: 'rect', x: 1248, y: 320, width: 224, height: 256 },
   { id: 'drone-support-entry', shape: 'rect', x: 96, y: 96, width: 128, height: 128 },
   { id: 'artillery-support-entry', shape: 'rect', x: 96, y: 544, width: 128, height: 128 },
+  { id: 'artillery-support-area', shape: 'rect', x: 96, y: 512, width: 192, height: 192 },
   { id: 'extraction-zone', shape: 'rect', x: 96, y: 672, width: 256, height: 160 },
 ];
 
@@ -73,7 +74,8 @@ export const DEEP_STRIKE_OPERATION_OBJECTIVES = deepFreeze([
     id: 'preserve-fire-support',
     type: 'defend',
     label: 'Preserve the supporting artillery section',
-    target: { collection: 'units', team: 0, tag: 'support-artillery' },
+    target: { collection: 'units', team: 0, scriptId: 'support-artillery-1' },
+    regionId: 'artillery-support-area',
     durationSeconds: 600,
     optional: true,
     failIfTargetLost: true,
@@ -198,7 +200,7 @@ export const DEEP_STRIKE_OPERATION_SCRIPT_SOURCE = deepFreeze({
             count: 1,
             regionId: 'artillery-support-entry',
             scriptIdPrefix: 'counter-battery-support',
-            tag: 'support-artillery',
+            tag: 'counter-battery-support',
           }],
         },
         {
@@ -451,6 +453,7 @@ export const DEEP_STRIKE_OPERATION_MAP_SOURCE = deepFreeze({
     'fuel-depot-sector': { shape: 'rect', origin: { x: 29, y: 17 }, width: 7, height: 7, metadata: { role: 'branch-target' } },
     'artillery-position': { shape: 'rect', origin: { x: 35, y: 2 }, width: 6, height: 6, metadata: { role: 'enemy-fire-support' } },
     'logistics-hub': { shape: 'rect', origin: { x: 39, y: 10 }, width: 7, height: 8, metadata: { role: 'primary-target' } },
+    'artillery-support-area': { shape: 'rect', origin: { x: 3, y: 16 }, width: 6, height: 6, metadata: { role: 'friendly-fire-support' } },
     'extraction-zone': { shape: 'rect', origin: { x: 3, y: 21 }, width: 8, height: 5, metadata: { role: 'friendly-extraction' } },
   },
   triggers: DEEP_STRIKE_OPERATION_SCRIPT_SOURCE.triggers,
@@ -483,7 +486,7 @@ const objectiveDescription = (objective) => {
   if (objective.id === 'extract-strike-package') return 'Move both strike elements to the western extraction zone within ten minutes.';
   if (objective.id === 'recon-logistics-corridor') return 'Use the tagged reconnaissance drone to confirm the target corridor.';
   if (objective.id === 'neutralize-artillery-battery') return 'Optionally silence the enemy artillery battery before withdrawal.';
-  return 'Keep the supporting artillery section operational through extraction.';
+  return 'Keep the original supporting artillery section operational through extraction.';
 };
 
 export const DEEP_STRIKE_OPERATION_BRIEFING_SOURCE = deepFreeze({
