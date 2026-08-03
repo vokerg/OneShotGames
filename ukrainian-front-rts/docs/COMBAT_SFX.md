@@ -14,19 +14,19 @@ The versioned catalog at `assets/audio/combat/manifest.json` contains one-shot c
 - vehicle destruction;
 - field repair and construction work.
 
-Each entry records its stable cue and asset IDs, UFR-125 policy event, family, packed WAV bank, offset/duration, PCM format, peak, SHA-256, loop policy, and complete provenance.
+Each entry records its stable cue and asset IDs, UFR-125 policy event, family, synthesized WAV bank, offset/duration, PCM format, peak, SHA-256, loop policy, and complete provenance.
 
 ## Original synthesis and provenance
 
-All banks are generated from repository-owned deterministic synthesis recipes in `scripts/lib/combat-sfx-generator.mjs`. No recording, sample library, model output, or other external audio input is used. The outputs are three compact mono 16-bit PCM WAV banks at 12 kHz, normalized to a peak ceiling of 0.92, and released as `CC0-1.0` for redistribution with the game.
+All banks are generated from repository-owned deterministic synthesis recipes in `src/audio/combat-sfx-synthesis.js`. No recording, sample library, model output, or other external audio input is used. The outputs are three compact mono 16-bit PCM WAV banks at 12 kHz, normalized to a peak ceiling of 0.92, and released as `CC0-1.0` for redistribution with the game.
 
-Regenerate assets:
+Render review WAVs into `artifacts/combat-sfx/`:
 
 ```bash
 node scripts/build-combat-sfx.mjs
 ```
 
-Check that committed bytes and metadata are reproducible:
+Check that the committed manifest and synthesized bytes are reproducible:
 
 ```bash
 node scripts/build-combat-sfx.mjs --check
@@ -39,8 +39,8 @@ node scripts/verify-combat-sfx.mjs
 
 `src/audio/combat-sfx-runtime.js` owns presentation-only integration:
 
-1. fetch each declared WAV bank relative to the catalog URL;
-2. reject byte-length or SHA-256 drift;
+1. synthesize each declared WAV bank locally from the committed recipes;
+2. reject byte-length or SHA-256 drift against the signed manifest;
 3. decode each bank once through `audioMixer.decodeAudioData()`;
 4. resolve cooldown, concurrency, attenuation, and availability through UFR-125;
 5. admit against current mixer capacity;
