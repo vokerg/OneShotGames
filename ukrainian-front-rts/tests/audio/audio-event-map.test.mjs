@@ -193,6 +193,36 @@ test('ranks successful requests by priority then deterministic sequence without 
   assert.equal(Object.isFrozen(result), true);
 });
 
+test('batch admission rechecks cooldown and concurrency across pending requests', () => {
+  const catalog = createAudioEventMap([{
+    id: AUDIO_EVENT_IDS.UI_CONFIRM,
+    bus: 'sfx',
+    priority: AUDIO_EVENT_PRIORITIES.NORMAL,
+    cooldownTicks: 0,
+    concurrency: { key: 'single-ui-feedback', limit: 1 },
+    assets: { shared: ['sfx.ui.confirm'] },
+  }]);
+  const first = resolveAudioEvent(catalog, { id: AUDIO_EVENT_IDS.UI_CONFIRM, tick: 4, sequence: 1 });
+  const second = resolveAudioEvent(catalog, { id: AUDIO_EVENT_IDS.UI_CONFIRM, tick: 4, sequence: 2 });
+  const concurrency = selectAudioAdmissions([first, second], { availableVoiceSlots: 2 });
+  assert.equal(concurrency.accepted.length, 1);
+  assert.equal(concurrency.rejected[0].reason, 'concurrency-limit');
+
+  const cooldownCatalog = createAudioEventMap([{
+    id: AUDIO_EVENT_IDS.UI_ALERT,
+    bus: 'sfx',
+    cooldownTicks: 3,
+    concurrency: { key: 'alerts', limit: 2 },
+    assets: { shared: ['sfx.ui.alert'] },
+  }]);
+  const early = resolveAudioEvent(cooldownCatalog, { id: AUDIO_EVENT_IDS.UI_ALERT, tick: 10, sequence: 1 });
+  const repeated = resolveAudioEvent(cooldownCatalog, { id: AUDIO_EVENT_IDS.UI_ALERT, tick: 11, sequence: 2 });
+  const cooldown = selectAudioAdmissions([early, repeated], { availableVoiceSlots: 2 });
+  assert.equal(cooldown.accepted.length, 1);
+  assert.equal(cooldown.rejected[0].reason, 'cooldown');
+  assert.equal(cooldown.rejected[0].retryAtTick, 13);
+});
+
 test('fails closed for unknown mapped events and validates temporal state', () => {
   const catalog = createCatalog();
   assert.equal(resolveAudioEvent(catalog, { id: AUDIO_EVENT_IDS.VICTORY }).reason, 'unknown-event');
