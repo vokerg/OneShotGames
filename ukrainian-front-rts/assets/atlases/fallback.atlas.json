@@ -25,6 +25,7 @@
   },
   "paletteTokens": {
     "danger": "#ff4fa3",
+    "diagnostic-outline": "#ffffff",
     "ink": "#111512"
   },
   "frames": {

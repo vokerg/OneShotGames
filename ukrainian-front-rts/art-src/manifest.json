@@ -1,0 +1,58 @@
+{
+  "schema": "fields-of-resolve.art-source-catalog",
+  "version": 1,
+  "id": "fields-of-resolve.art-sources",
+  "paletteTokens": {
+    "danger": "#ff4fa3",
+    "diagnostic-outline": "#ffffff",
+    "ink": "#111512"
+  },
+  "outputs": {
+    "manifest": "assets/manifests/art-sources.json",
+    "contactSheet": "assets/contact-sheets/art-sources.svg"
+  },
+  "assets": [
+    {
+      "id": "diagnostic.fallback",
+      "kind": "diagnostic",
+      "family": "fallback",
+      "faction": "shared",
+      "sourceDirectory": "diagnostic/fallback",
+      "atlasSource": "assets/atlases/fallback.source.json",
+      "provenance": {
+        "creator": "Fields of Resolve contributors",
+        "createdAt": "2026-08-03",
+        "source": "Original repository diagnostic art",
+        "license": "CC0-1.0",
+        "redistribution": "allowed",
+        "transformations": [
+          "Authored as a crisp-edge SVG",
+          "Packed without resampling by the UFR-107 atlas builder"
+        ],
+        "generatedTools": {
+          "used": false,
+          "details": "No generative image tool was used.",
+          "humanCorrections": "The frame was manually authored and reviewed at source resolution."
+        },
+        "reviewer": "UFR-108 pipeline review",
+        "approval": "diagnostic"
+      },
+      "frames": [
+        {
+          "path": "diagnostic/fallback/diagnostic.fallback__missing__d00__f00.svg",
+          "runtimeId": "missing",
+          "animation": "missing",
+          "direction": 0,
+          "frame": 0,
+          "durationMs": 1000,
+          "canvas": { "width": 16, "height": 16 },
+          "contentBounds": { "x": 1, "y": 1, "w": 14, "h": 14 },
+          "requiredPadding": 1,
+          "paletteTokens": ["danger", "diagnostic-outline", "ink"],
+          "anchor": { "x": 8, "y": 16 },
+          "attachments": { "center": { "x": 8, "y": 8 } }
+        }
+      ]
+    }
+  ]
+}
