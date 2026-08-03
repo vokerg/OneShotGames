@@ -333,24 +333,71 @@ export function resolveAudioEvent(eventMap, request, {
   });
 }
 
-export function selectAudioAdmissions(events, { availableVoiceSlots } = {}) {
+export function selectAudioAdmissions(events, {
+  availableVoiceSlots,
+  activeCounts = null,
+  lastPlayedTicks = null,
+} = {}) {
   if (!Array.isArray(events)) throw new TypeError('Resolved audio events must be an array.');
   const slotCount = integer(availableVoiceSlots, 'Audio availableVoiceSlots');
+  if (activeCounts !== null) plainObject(activeCounts, 'Audio admission activeCounts');
+  if (lastPlayedTicks !== null) plainObject(lastPlayedTicks, 'Audio admission lastPlayedTicks');
   for (const [index, event] of events.entries()) {
     plainObject(event, `Resolved audio event ${index}`);
     if (event.ok !== true) throw new TypeError(`Resolved audio event ${index} must be successful.`);
     integer(event.priority, `Resolved audio event ${index}.priority`);
     integer(event.sequence, `Resolved audio event ${index}.sequence`);
+    integer(event.tick, `Resolved audio event ${index}.tick`);
+    integer(event.cooldownTicks, `Resolved audio event ${index}.cooldownTicks`);
+    integer(event.maxConcurrent, `Resolved audio event ${index}.maxConcurrent`, 1);
     stableId(event.eventId, `Resolved audio event ${index}.eventId`);
     stableId(event.assetId, `Resolved audio event ${index}.assetId`);
+    stableId(event.concurrencyKey, `Resolved audio event ${index}.concurrencyKey`);
   }
   const ranked = [...events].sort((left, right) =>
     right.priority - left.priority
     || left.sequence - right.sequence
     || left.eventId.localeCompare(right.eventId)
     || left.assetId.localeCompare(right.assetId));
-  return deepFreeze({
-    accepted: ranked.slice(0, slotCount),
-    rejected: ranked.slice(slotCount).map((event) => ({ event, reason: 'voice-capacity' })),
-  });
+  const accepted = [];
+  const rejected = [];
+  const admittedCounts = new Map();
+  const admittedTicks = new Map();
+
+  for (const event of ranked) {
+    const priorTick = admittedTicks.has(event.eventId)
+      ? admittedTicks.get(event.eventId)
+      : readCounter(lastPlayedTicks, event.eventId, 'Audio admission lastPlayedTicks');
+    if (priorTick !== null) {
+      if (priorTick > event.tick) throw new RangeError(`Audio admission last-played tick for ${event.eventId} is in the future.`);
+      const retryAtTick = priorTick + event.cooldownTicks;
+      if (event.tick < retryAtTick) {
+        rejected.push({ event, reason: 'cooldown', retryAtTick });
+        continue;
+      }
+    }
+
+    const initiallyActive = readCounter(activeCounts, event.concurrencyKey, 'Audio admission activeCounts') ?? 0;
+    const admitted = admittedCounts.get(event.concurrencyKey) ?? 0;
+    if (initiallyActive + admitted >= event.maxConcurrent) {
+      rejected.push({
+        event,
+        reason: 'concurrency-limit',
+        concurrencyKey: event.concurrencyKey,
+        maxConcurrent: event.maxConcurrent,
+      });
+      continue;
+    }
+
+    if (accepted.length >= slotCount) {
+      rejected.push({ event, reason: 'voice-capacity' });
+      continue;
+    }
+
+    accepted.push(event);
+    admittedCounts.set(event.concurrencyKey, admitted + 1);
+    admittedTicks.set(event.eventId, event.tick);
+  }
+
+  return deepFreeze({ accepted, rejected });
 }
