@@ -10,12 +10,6 @@ function requireMixer(mixer) {
   return mixer;
 }
 
-async function defaultDigest(arrayBuffer) {
-  if (!globalThis.crypto?.subtle) throw new Error('Web Crypto SHA-256 is unavailable.');
-  const digest = await globalThis.crypto.subtle.digest('SHA-256', arrayBuffer);
-  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
-}
-
 function failure(cue, reason) {
   return Object.freeze({ ok: false, cue, reason });
 }
@@ -31,11 +25,13 @@ export async function createCombatSfxRuntime({
   mixer,
   catalogSource,
   fetchImpl = globalThis.fetch?.bind(globalThis),
-  digestImpl = defaultDigest,
+  digestImpl = null,
   bankFactory = buildCombatSfxBanks,
 } = {}) {
   const audioMixer = requireMixer(mixer);
-  if (typeof digestImpl !== 'function') throw new TypeError('Combat SFX runtime digestImpl must be a function.');
+  if (digestImpl !== null && typeof digestImpl !== 'function') {
+    throw new TypeError('Combat SFX runtime digestImpl must be null or a function.');
+  }
   if (typeof bankFactory !== 'function') throw new TypeError('Combat SFX runtime bankFactory must be a function.');
   if (catalogSource === undefined) throw new TypeError('Combat SFX runtime requires catalogSource.');
   const loaded = await loadCombatSfxCatalog(catalogSource, { fetchImpl });
@@ -49,7 +45,9 @@ export async function createCombatSfxRuntime({
     let generatedById;
     try {
       const generated = bankFactory();
-      if (!generated || !Array.isArray(generated.banks)) throw new TypeError('Combat SFX synthesis must return a banks array.');
+      if (!generated || !Array.isArray(generated.banks)) {
+        throw new TypeError('Combat SFX synthesis must return a banks array.');
+      }
       generatedById = new Map(generated.banks.map((bank) => [bank.id, bank]));
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -63,7 +61,9 @@ export async function createCombatSfxRuntime({
       try {
         const output = generatedById.get(bank.id);
         if (!output) throw new Error('synthesis bank missing');
-        if (!(output.bytes instanceof Uint8Array)) throw new TypeError('synthesis bank bytes must be a Uint8Array');
+        if (!(output.bytes instanceof Uint8Array)) {
+          throw new TypeError('synthesis bank bytes must be a Uint8Array');
+        }
         const data = output.bytes.buffer.slice(
           output.bytes.byteOffset,
           output.bytes.byteOffset + output.bytes.byteLength,
@@ -71,9 +71,13 @@ export async function createCombatSfxRuntime({
         if (data.byteLength !== bank.byteLength) {
           throw new Error(`byte length ${data.byteLength} !== ${bank.byteLength}`);
         }
-        if (await digestImpl(data) !== bank.sha256) throw new Error('SHA-256 mismatch');
+        if (digestImpl !== null && await digestImpl(data) !== bank.sha256) {
+          throw new Error('SHA-256 mismatch');
+        }
         const decoded = await audioMixer.decodeAudioData(data);
-        if (!decoded?.ok || !decoded.buffer) throw new Error(`decode failed: ${decoded?.reason ?? 'unknown'}`);
+        if (!decoded?.ok || !decoded.buffer) {
+          throw new Error(`decode failed: ${decoded?.reason ?? 'unknown'}`);
+        }
         buffers.set(bank.id, decoded.buffer);
       } catch (error) {
         failures.set(bank.id, error instanceof Error ? error.message : String(error));
@@ -123,7 +127,9 @@ export async function createCombatSfxRuntime({
         });
       }
       const buffer = buffers.get(asset.bankId);
-      if (!buffer) return Object.freeze({ ok: false, cue, eventId: resolved.eventId, reason: 'missing-buffer' });
+      if (!buffer) {
+        return Object.freeze({ ok: false, cue, eventId: resolved.eventId, reason: 'missing-buffer' });
+      }
       const playback = audioMixer.playBuffer({
         buffer,
         bus: resolved.bus,
