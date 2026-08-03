@@ -18,6 +18,7 @@ export const VERIFICATION_COMMANDS = Object.freeze([
   Object.freeze({ id: 'art-sources', label: 'source art and export manifests', script: 'scripts/verify-art-sources.mjs' }),
   Object.freeze({ id: 'sprite-atlases', label: 'sprite atlas sources and manifests', script: 'scripts/verify-sprite-atlases.mjs' }),
   Object.freeze({ id: 'combat-sfx', label: 'deterministic combat sound effects', script: 'scripts/verify-combat-sfx.mjs' }),
+  Object.freeze({ id: 'ui-sfx', label: 'deterministic UI sound effects', script: 'scripts/verify-ui-sfx.mjs' }),
   Object.freeze({
     id: 'runtime-composition',
     label: 'runtime composition ownership',
