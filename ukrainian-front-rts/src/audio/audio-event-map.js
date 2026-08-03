@@ -248,6 +248,12 @@ function stableHash(value) {
   return hash >>> 0;
 }
 
+function compareStableText(left, right) {
+  if (left < right) return -1;
+  if (left > right) return 1;
+  return 0;
+}
+
 function rejection(request, definition, reason, details = {}) {
   return deepFreeze({
     ok: false,
@@ -357,8 +363,8 @@ export function selectAudioAdmissions(events, {
   const ranked = [...events].sort((left, right) =>
     right.priority - left.priority
     || left.sequence - right.sequence
-    || left.eventId.localeCompare(right.eventId)
-    || left.assetId.localeCompare(right.assetId));
+    || compareStableText(left.eventId, right.eventId)
+    || compareStableText(left.assetId, right.assetId));
   const accepted = [];
   const rejected = [];
   const admittedCounts = new Map();
