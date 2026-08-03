@@ -276,7 +276,8 @@ test('air-defense-first route grants drone support, destroys the hub, and extrac
 test('fuel-first route grants artillery support and simultaneous target loss has a stable tie-break', () => {
   const fuel = runBranch('branch-fuel-depot');
   assert.equal(fuel.missionScriptState.variables.branch, 'fuel-depot');
-  assert.equal(fuel.units.filter((unit) => unit.scriptTag === 'support-artillery').length, 2);
+  assert.equal(fuel.units.filter((unit) => unit.scriptTag === 'support-artillery').length, 1);
+  assert.equal(fuel.units.filter((unit) => unit.scriptTag === 'counter-battery-support').length, 1);
   assert.equal(fuel.units.some((unit) => unit.scriptTag === 'drone-strike-support'), false);
   assert.equal(fuel.outcome, 'victory');
 
@@ -290,8 +291,27 @@ test('fuel-first route grants artillery support and simultaneous target loss has
   assert.equal(tie.missionScriptState.variables.branchTargetsDestroyed, 2);
   assert.equal(tie.missionScriptState.variables.branchCandidate, 'fuel-depot');
   assert.equal(tie.missionScriptState.variables.branch, 'fuel-depot');
-  assert.equal(tie.units.filter((unit) => unit.scriptTag === 'support-artillery').length, 2);
+  assert.equal(tie.units.filter((unit) => unit.scriptTag === 'support-artillery').length, 1);
+  assert.equal(tie.units.filter((unit) => unit.scriptTag === 'counter-battery-support').length, 1);
   assert.equal(tie.units.some((unit) => unit.scriptTag === 'drone-strike-support'), false);
+});
+
+test('fuel-route reinforcement cannot substitute for the original fire-support objective target', () => {
+  const game = createScenario();
+  updateObjectiveLibrary(game);
+  updateMissionScripts(game);
+  destroyBuilding(game, 'branch-fuel-depot');
+  updateMissionScripts(game);
+  updateMissionScripts(game);
+
+  assert.equal(game.units.filter((unit) => unit.scriptTag === 'counter-battery-support').length, 1);
+  game.units = game.units.filter((unit) => unit.scriptId !== 'support-artillery-1');
+  game.time = 1;
+
+  const summary = updateObjectiveLibrary(game);
+  const preservation = summary.results.find((result) => result.id === 'preserve-fire-support');
+  assert.equal(preservation.failed, true);
+  assert.equal(preservation.complete, false);
 });
 
 test('objective-library progress requires reconnaissance, one branch target, the hub, and both extracted elements', () => {
