@@ -1,6 +1,6 @@
 # Audio architecture
 
-UFR-124 establishes `src/audio/audio-mixer.js` as the sole Web Audio lifecycle and routing owner. UFR-125 adds the browser-independent `src/audio/audio-event-map.js` contract for deciding which requested sound may play, which asset variant it resolves to, and how it is routed. Simulation, AI, campaign, UI, and rendering modules must request audio through domain events or later injected adapters instead of constructing `Audio`, `AudioContext`, media sources, or decode calls directly.
+UFR-124 establishes `src/audio/audio-mixer.js` as the sole Web Audio lifecycle and routing owner. UFR-125 adds the browser-independent `src/audio/audio-event-map.js` contract for deciding which requested sound may play, which asset variant it resolves to, and how it is routed. UFR-126 adds the original combat-SFX catalog, deterministic synthesis source, and presentation-only `audio.request` adapter. Simulation, AI, campaign, UI, and rendering modules must request audio through domain events or injected adapters instead of constructing `Audio`, `AudioContext`, media sources, or decode calls directly.
 
 ## Mixer graph
 
@@ -45,7 +45,7 @@ Each definition declares:
 - `fallback`, `silent`, or `reject` behavior when no declared asset is available;
 - a stable mixer tag used by later playback and stop policies.
 
-The contract defines identities and deterministic policy only. UFR-126 through UFR-130 own actual assets and provenance; their manifests supply the available asset-ID set to the resolver.
+The contract defines identities and deterministic policy only. UFR-126 through UFR-130 own actual assets and provenance; their catalogs supply the available asset-ID set to the resolver.
 
 ## Deterministic resolution and admission
 
@@ -63,23 +63,33 @@ Successful results are reference-free playback descriptors containing asset ID, 
 
 `selectAudioAdmissions()` ranks already resolved requests by descending priority and then stable sequence/identity order. It admits only the supplied number of free mixer slots and marks excess requests `voice-capacity`; it never preempts an existing mixer voice. The same request and explicit state therefore produce the same result independently of rendering frame rate.
 
+## Combat-SFX assets and synthesis
+
+`assets/audio/combat/manifest.json` is the versioned UFR-126 catalog for weapon, impact, explosion, vehicle, drone, artillery, air-defense, destruction, repair, and construction cues. Every cue records a stable asset ID, family, event-map ID, packed-bank slice, PCM format, peak ceiling, canonical SHA-256, one-shot policy, and complete provenance.
+
+`src/audio/combat-sfx-synthesis.js` contains the original repository-owned recipes. It generates three compact mono 16-bit PCM WAV banks without external recordings, sample libraries, model output, network access, or package dependencies. `scripts/verify-combat-sfx.mjs` regenerates the canonical Node output in memory and verifies manifest equality, WAV headers, format, hashes, and clipping limits. Reviewable WAV files can be emitted to `artifacts/combat-sfx/` with `scripts/build-combat-sfx.mjs` but are not source-controlled duplicates of the recipes.
+
 ## Runtime integration boundary
 
-A later audio runtime adapter may subscribe to `audio.request` domain events and translate their stable payloads into event-map requests. That adapter owns the read-only availability set, last-played tick table, active concurrency counts, listener/camera distance, accepted-admission bookkeeping, asset-buffer lookup, and the final `audioMixer.playBuffer()` call.
+`src/audio/combat-sfx-catalog.js` validates the combat manifest and creates one exact-asset UFR-125 policy map per declared cue. `src/audio/combat-sfx-runtime.js` synthesizes the banks, optionally checks their digests, decodes each bank once through the mixer, resolves and admits a cue, then plays the declared offset/duration through the `sfx` bus.
 
-The adapter must preserve these constraints:
+`installCombatSfxDomainAdapter()` subscribes to `audio.request` and accepts `{ cue, faction?, distance?, gain?, variantKey? }`. It derives tick and sequence from the immutable domain event. The adapter owns no authoritative state and contains malformed payloads or injected playback exceptions at the presentation boundary.
+
+UFR-126 deliberately does not add combat-system producers or install an assembled application lifecycle. Authoritative systems may emit a declared cue only after their gameplay mutation succeeds. A later composition owner must construct one shared domain stream, mixer, combat-SFX runtime, unlock lifecycle, and exact teardown.
+
+All audio adapters must preserve these constraints:
 
 - simulation results do not depend on whether audio is installed or playback succeeds;
 - cooldowns use the event's fixed simulation tick, not `Date.now()` or audio-context time;
 - event sequence is the deterministic tie-breaker for equal priority;
-- missing, locked, paused, unavailable, or voice-limited audio fails without throwing into gameplay;
+- missing, malformed, locked, paused, unavailable, or voice-limited audio fails without throwing into gameplay;
 - presentation consumers never mutate authoritative simulation state.
 
 ## Safe failure
 
-The mixer returns stable reason codes for locked, unavailable, paused, missing-buffer, voice-limit, start-failed, and decode-failed conditions. Unlock, resume, pause, close, decode, and source-start exceptions are captured in a bounded diagnostic history rather than thrown through gameplay update paths. Invalid API calls still fail fast with type/range errors during development.
+The mixer returns stable reason codes for locked, unavailable, paused, missing-buffer, voice-limit, start-failed, and decode-failed conditions. Unlock, resume, pause, close, decode, and source-start exceptions are captured in a bounded diagnostic history rather than thrown through gameplay update paths. Invalid direct mixer API calls still fail fast with type/range errors during development.
 
-The event resolver separately fails closed for malformed definitions, invalid requests, unavailable variants, cooldown/concurrency rejection, inaudible distance, or capacity rejection. A fallback sound must be explicitly declared and available; fallback is never inferred from an unrelated asset.
+The event resolver separately rejects unavailable variants, cooldown/concurrency conflicts, inaudible distance, and capacity exhaustion. The UFR-126 runtime translates malformed request validation into `invalid-request`, records bank preload failures in its frozen snapshot, permits a later preload retry, and ensures its domain subscriber does not throw through the event stream. A fallback sound must be explicitly declared and available; fallback is never inferred from an unrelated asset.
 
 ## Ownership boundary
 
@@ -103,27 +113,40 @@ UFR-125 owns:
 - faction-specific deterministic variation;
 - explicit missing-asset fallback, silence, and rejection.
 
-Later asset tasks own source files and provenance. A later runtime-integration owner must connect `audio.request` events, asset buffers, the event resolver, and the mixer without moving gameplay authority into audio. UFR-131 owns settings UI and persistence.
+UFR-126 owns:
+
+- original combat-SFX recipes and provenance;
+- the versioned combat asset/slice catalog;
+- canonical synthesis verification and review-bank tooling;
+- exact cue-to-UFR-125 policy mapping;
+- combat-bank preload/decode, availability, and playback adapter behavior;
+- the combat `audio.request` presentation subscriber.
+
+Later asset tasks own UI SFX, ambience, music, and voice assets and their provenance. A later runtime-integration owner must compose all selected asset families with the event resolver and mixer without moving gameplay authority into audio. UFR-131 owns settings UI and persistence.
 
 ## Verification
 
 ```bash
 node --check src/audio/audio-mixer.js
 node --check src/audio/audio-event-map.js
-node --check tests/audio/audio-mixer.test.mjs
-node --check tests/audio/audio-event-map.test.mjs
-node --test tests/audio/audio-mixer.test.mjs tests/audio/audio-event-map.test.mjs
+node --check src/audio/combat-sfx-synthesis.js
+node --check src/audio/combat-sfx-catalog.js
+node --check src/audio/combat-sfx-runtime.js
+node --test tests/audio/audio-mixer.test.mjs tests/audio/audio-event-map.test.mjs tests/audio/combat-sfx.test.mjs
+node scripts/build-combat-sfx.mjs --check
+node scripts/verify-combat-sfx.mjs
 bash verify.sh
 ```
 
-Focused event-map tests cover frozen/versioned descriptors, taxonomy and bus validation, duplicate rejection, deterministic faction variants, shared fallback, fixed-tick cooldowns, concurrency groups, linear attenuation, missing-asset policies, priority admission, and malformed temporal state. Mixer fake-context tests cover lazy unlock, graph routing, user-gesture listener removal, volume/mute, bounded voice slots, slot reuse, filtered stop, pause/resume, decoding, unavailable/failed contexts, diagnostics, and disposal.
+Focused combat-SFX tests cover catalog/provenance validation, duplicate and unsafe-reference rejection, stable PCM generation, peak bounds, exact cue mapping, synthesis preload/decode/playback, optional digest rejection, transient preload recovery, malformed request containment, and exact event-adapter disposal.
 
-Browser completion checklist for a later runtime/asset integration:
+Browser completion checklist for a later assembled audio integration:
 
 1. unlock from pointer, keyboard, and touch without console/autoplay errors;
-2. verify each bus and master mute/volume independently;
-3. pause/resume while looping and one-shot sounds are active;
-4. exceed event concurrency and mixer voice limits without crashes or leaked nodes;
-5. verify faction variants, spatial attenuation, cooldown throttling, and missing-asset behavior;
-6. switch tabs and resume according to later settings policy;
-7. confirm unsupported/blocked Web Audio leaves gameplay functional.
+2. audibly review every combat cue at intended listener distances and representative concurrency;
+3. verify each bus and master mute/volume independently;
+4. pause/resume while looping and one-shot sounds are active;
+5. exceed event concurrency and mixer voice limits without crashes or leaked nodes;
+6. verify spatial attenuation, cooldown throttling, and missing-asset behavior;
+7. switch tabs and resume according to later settings policy;
+8. confirm unsupported/blocked Web Audio leaves gameplay functional.
