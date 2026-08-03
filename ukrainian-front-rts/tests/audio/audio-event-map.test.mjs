@@ -193,6 +193,28 @@ test('ranks successful requests by priority then deterministic sequence without 
   assert.equal(Object.isFrozen(result), true);
 });
 
+test('uses locale-independent binary ordering for exact admission ties', () => {
+  const base = {
+    ok: true,
+    version: AUDIO_EVENT_MAP_VERSION,
+    tick: 5,
+    sequence: 7,
+    faction: null,
+    fallbackUsed: false,
+    bus: 'sfx',
+    priority: AUDIO_EVENT_PRIORITIES.NORMAL,
+    gain: 1,
+    tag: 'tie',
+    cooldownTicks: 0,
+    concurrencyKey: 'tie-group',
+    maxConcurrent: 4,
+  };
+  const upper = { ...base, eventId: 'A.event', assetId: 'sfx.A' };
+  const lower = { ...base, eventId: 'a.event', assetId: 'sfx.a' };
+  const result = selectAudioAdmissions([lower, upper], { availableVoiceSlots: 2 });
+  assert.deepEqual(result.accepted.map((event) => event.eventId), ['A.event', 'a.event']);
+});
+
 test('batch admission rechecks cooldown and concurrency across pending requests', () => {
   const catalog = createAudioEventMap([{
     id: AUDIO_EVENT_IDS.UI_CONFIRM,
