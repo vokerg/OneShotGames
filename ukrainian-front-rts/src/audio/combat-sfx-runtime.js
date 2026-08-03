@@ -1,13 +1,14 @@
 import { DOMAIN_EVENT_TYPES } from '../core/events.js';
+import { buildCombatSfxBanks } from './combat-sfx-synthesis.js';
 import { createCombatSfxResolver, loadCombatSfxCatalog, validateCombatSfxCatalog } from './combat-sfx-catalog.js';
 
 function requireMixer(mixer) { const methods = ['decodeAudioData', 'playBuffer', 'snapshot']; if (!mixer || methods.some((method) => typeof mixer[method] !== 'function')) throw new TypeError('Combat SFX runtime requires a compatible audio mixer.'); return mixer; }
-function relativeAssetUrl(sourceUrl, path, baseUrl) { if (sourceUrl) return new URL(path, sourceUrl).href; if (baseUrl) return new URL(path, baseUrl).href; return path; }
 async function defaultDigest(arrayBuffer) { if (!globalThis.crypto?.subtle) throw new Error('Web Crypto SHA-256 is unavailable.'); const digest = await globalThis.crypto.subtle.digest('SHA-256', arrayBuffer); return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join(''); }
 
-export async function createCombatSfxRuntime({ mixer, catalogSource, fetchImpl = globalThis.fetch?.bind(globalThis), baseUrl = null, digestImpl = defaultDigest } = {}) {
+export async function createCombatSfxRuntime({ mixer, catalogSource, fetchImpl = globalThis.fetch?.bind(globalThis), digestImpl = defaultDigest, bankFactory = buildCombatSfxBanks } = {}) {
   const audioMixer = requireMixer(mixer);
   if (typeof digestImpl !== 'function') throw new TypeError('Combat SFX runtime digestImpl must be a function.');
+  if (typeof bankFactory !== 'function') throw new TypeError('Combat SFX runtime bankFactory must be a function.');
   if (catalogSource === undefined) throw new TypeError('Combat SFX runtime requires catalogSource.');
   const loaded = await loadCombatSfxCatalog(catalogSource, { fetchImpl });
   const catalog = validateCombatSfxCatalog(loaded.catalog);
@@ -15,13 +16,14 @@ export async function createCombatSfxRuntime({ mixer, catalogSource, fetchImpl =
   const buffers = new Map(); const failures = new Map(); const lastPlayedTicks = {};
 
   async function preload() {
-    if (typeof fetchImpl !== 'function') throw new Error('No fetch implementation is available for combat SFX assets.');
+    const generated = bankFactory();
+    const generatedById = new Map(generated.banks.map((bank) => [bank.id, bank]));
     for (const bank of catalog.banks) {
       if (buffers.has(bank.id) || failures.has(bank.id)) continue;
       try {
-        const url = relativeAssetUrl(loaded.sourceUrl, bank.path, baseUrl); const response = await fetchImpl(url);
-        if (!response?.ok) throw new Error(`HTTP ${response?.status ?? 'unknown'}`);
-        const data = await response.arrayBuffer();
+        const output = generatedById.get(bank.id);
+        if (!output) throw new Error('synthesis bank missing');
+        const data = output.bytes.buffer.slice(output.bytes.byteOffset, output.bytes.byteOffset + output.bytes.byteLength);
         if (data.byteLength !== bank.byteLength) throw new Error(`byte length ${data.byteLength} !== ${bank.byteLength}`);
         if (await digestImpl(data) !== bank.sha256) throw new Error('SHA-256 mismatch');
         const decoded = await audioMixer.decodeAudioData(data);
