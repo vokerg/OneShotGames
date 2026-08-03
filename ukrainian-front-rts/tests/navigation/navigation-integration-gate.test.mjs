@@ -191,6 +191,7 @@ function runScenario(seed = 'ufr-030-navigation-gate') {
 
     let movement = 0;
     let arrived = 0;
+    const completedBeforeTick = completionTicks.size;
     for (const unit of game.units) {
       const previous = previousPositions.get(unit.id);
       movement += Math.hypot(unit.x - previous.x, unit.y - previous.y);
@@ -202,7 +203,7 @@ function runScenario(seed = 'ufr-030-navigation-gate') {
       }
     }
 
-    if (movement > 0.1 || arrived > completionTicks.size) lastProgressTick = tick;
+    if (movement > 0.1 || completionTicks.size > completedBeforeTick) lastProgressTick = tick;
     maxStallTicks = Math.max(maxStallTicks, tick - lastProgressTick);
     assert.ok(
       tick - lastProgressTick <= MAX_STALL_TICKS,
