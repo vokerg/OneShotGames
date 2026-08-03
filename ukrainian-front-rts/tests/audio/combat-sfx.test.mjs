@@ -12,11 +12,8 @@ import {
   createCombatSfxRuntime,
   installCombatSfxDomainAdapter,
 } from '../../src/audio/combat-sfx-runtime.js';
-import {
-  buildCombatSfxOutputs,
-  COMBAT_SFX_RECIPES,
-  renderCombatSfxRecipe,
-} from '../../scripts/lib/combat-sfx-generator.mjs';
+import { buildCombatSfxOutputs, COMBAT_SFX_RECIPES } from '../../scripts/lib/combat-sfx-generator.mjs';
+import { buildCombatSfxBanks, renderCombatSfxRecipe } from '../../src/audio/combat-sfx-synthesis.js';
 
 const catalogPath = new URL('../../assets/audio/combat/manifest.json', import.meta.url);
 const catalogValue = JSON.parse(await readFile(catalogPath, 'utf8'));
@@ -89,8 +86,8 @@ test('renders stable PCM WAV bytes with a bounded peak ceiling', () => {
   }
   for (let index = 0; index < first.banks.length; index += 1) {
     assert.equal(first.banks[index].sha256, second.banks[index].sha256);
-    assert.equal(first.banks[index].wav.equals(second.banks[index].wav), true);
-    assert.equal(first.banks[index].wav.subarray(0, 4).toString('ascii'), 'RIFF');
+    assert.deepEqual(first.banks[index].bytes, second.banks[index].bytes);
+    assert.equal(String.fromCharCode(...first.banks[index].bytes.subarray(0, 4)), 'RIFF');
   }
   assert.ok(renderCombatSfxRecipe(COMBAT_SFX_RECIPES[0]).sampleCount > 0);
 });
@@ -108,23 +105,13 @@ test('resolves each cue through an exact one-asset UFR-125 policy map', () => {
   assert.deepEqual(resolver.resolve('missing.cue'), { ok: false, cue: 'missing.cue', reason: 'unknown-cue' });
 });
 
-test('preloads hash-verified WAVs and plays decoded cues through the mixer', async () => {
+test('preloads hash-verified synthesized WAVs and plays decoded cues through the mixer', async () => {
   const catalog = validateCombatSfxCatalog(catalogValue);
-  const fileBytes = new Map();
-  for (const bank of catalog.banks) fileBytes.set(bank.path, await readFile(new URL(`../../assets/audio/combat/${bank.path}`, import.meta.url)));
   const mixer = fakeMixer();
   const runtime = await createCombatSfxRuntime({
     mixer,
     catalogSource: catalogValue,
-    baseUrl: 'https://example.test/assets/audio/combat/',
     digestImpl: digest,
-    fetchImpl: async (url) => {
-      const path = new URL(url).pathname.split('/').at(-1);
-      const bytes = fileBytes.get(path);
-      return bytes
-        ? { ok: true, status: 200, arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) }
-        : { ok: false, status: 404 };
-    },
   });
   const preload = await runtime.preload();
   assert.equal(preload.loadedBankIds.length, catalog.banks.length);
@@ -141,14 +128,13 @@ test('preloads hash-verified WAVs and plays decoded cues through the mixer', asy
   assert.equal(mixer.played[0].duration, 0.17);
 });
 
-test('fails closed for corrupted or missing assets without throwing into gameplay', async () => {
+test('fails closed for corrupted synthesis without throwing into gameplay', async () => {
   const mixer = fakeMixer();
   const runtime = await createCombatSfxRuntime({
     mixer,
     catalogSource: catalogValue,
-    baseUrl: 'https://example.test/audio/',
     digestImpl: async () => '0'.repeat(64),
-    fetchImpl: async () => ({ ok: true, status: 200, arrayBuffer: async () => new ArrayBuffer(64) }),
+    bankFactory: buildCombatSfxBanks,
   });
   const preload = await runtime.preload();
   assert.equal(preload.loadedAssetIds.length, 0);
