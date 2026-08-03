@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import assert from 'node:assert/strict';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -11,9 +12,13 @@ const outputRoot = resolve(projectRoot, outputFlag >= 0 ? process.argv[outputFla
 const { manifest, banks } = buildCombatSfxOutputs();
 const serialized = serializeCombatSfxManifest(manifest);
 if (check) {
-  const current = await readFile(manifestPath, 'utf8');
-  if (current !== serialized) { console.error('[combat-sfx] manifest differs from deterministic synthesis.'); process.exitCode = 1; }
-  else console.log(`[combat-sfx] manifest matches ${banks.length} deterministic synthesized banks.`);
+  try {
+    assert.deepEqual(JSON.parse(await readFile(manifestPath, 'utf8')), manifest);
+    console.log(`[combat-sfx] manifest matches ${banks.length} deterministic synthesized banks.`);
+  } catch {
+    console.error('[combat-sfx] manifest differs from deterministic synthesis.');
+    process.exitCode = 1;
+  }
 } else {
   await mkdir(outputRoot, { recursive: true });
   await writeFile(resolve(outputRoot, 'manifest.json'), serialized);
