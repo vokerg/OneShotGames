@@ -16,12 +16,13 @@
   },
   "paletteTokens": {
     "ink": "#111512",
-    "danger": "#ff4fa3"
+    "danger": "#ff4fa3",
+    "diagnostic-outline": "#ffffff"
   },
   "frames": [
     {
       "id": "missing",
-      "source": "sources/fallback-frame.svg",
+      "source": "../../art-src/diagnostic/fallback/diagnostic.fallback__missing__d00__f00.svg",
       "anchor": { "x": 8, "y": 16 },
       "attachments": { "center": { "x": 8, "y": 8 } },
       "masks": { "selection": { "x": 1, "y": 1, "w": 14, "h": 14 } },

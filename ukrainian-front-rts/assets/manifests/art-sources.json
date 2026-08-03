@@ -1,0 +1,76 @@
+{
+  "schema": "fields-of-resolve.art-export-manifest",
+  "version": 1,
+  "sourceCatalog": "art-src/manifest.json",
+  "sourceCatalogId": "fields-of-resolve.art-sources",
+  "paletteTokens": {
+    "danger": "#ff4fa3",
+    "diagnostic-outline": "#ffffff",
+    "ink": "#111512"
+  },
+  "assets": [
+    {
+      "id": "diagnostic.fallback",
+      "kind": "diagnostic",
+      "family": "fallback",
+      "faction": "shared",
+      "atlasSource": "assets/atlases/fallback.source.json",
+      "provenance": {
+        "creator": "Fields of Resolve contributors",
+        "createdAt": "2026-08-03",
+        "source": "Original repository diagnostic art",
+        "license": "CC0-1.0",
+        "redistribution": "allowed",
+        "transformations": [
+          "Authored as a crisp-edge SVG",
+          "Packed without resampling by the UFR-107 atlas builder"
+        ],
+        "generatedTools": {
+          "used": false,
+          "details": "No generative image tool was used.",
+          "humanCorrections": "The frame was manually authored and reviewed at source resolution."
+        },
+        "reviewer": "UFR-108 pipeline review",
+        "approval": "diagnostic"
+      },
+      "frames": [
+        {
+          "path": "diagnostic/fallback/diagnostic.fallback__missing__d00__f00.svg",
+          "runtimeId": "missing",
+          "animation": "missing",
+          "direction": 0,
+          "frame": 0,
+          "durationMs": 1000,
+          "canvas": {
+            "width": 16,
+            "height": 16
+          },
+          "contentBounds": {
+            "x": 1,
+            "y": 1,
+            "w": 14,
+            "h": 14
+          },
+          "requiredPadding": 1,
+          "paletteTokens": [
+            "danger",
+            "diagnostic-outline",
+            "ink"
+          ],
+          "anchor": {
+            "x": 8,
+            "y": 16
+          },
+          "attachments": {
+            "center": {
+              "x": 8,
+              "y": 8
+            }
+          },
+          "sha256": "cdbd4f9047238cecd0156b8c2eb535c229110570e398ea84dc33d261654575e9",
+          "byteLength": 392
+        }
+      ]
+    }
+  ]
+}
