@@ -39,7 +39,7 @@ export function buildCombatSfxOutputs() {
         source: 'Original deterministic repository synthesis',
         license: COMBAT_SFX_LICENSE,
         redistribution: 'allowed',
-        generatedTool: 'src/audio/combat-sfx-synthesis.js',
+        generatedTool: 'scripts/build-combat-sfx.mjs',
         externalInputs: Object.freeze([]),
         synthesis: recipe.synthesis,
         seed: recipe.seed,
