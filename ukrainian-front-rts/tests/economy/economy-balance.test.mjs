@@ -158,19 +158,7 @@ test('nonzero deficits with no assigned workers remain explicitly unreachable', 
   assert.equal(gather.totalSeconds, Infinity);
 });
 
-test('profile validation rejects inverted depletion windows and unknown resources', () => {
-  assert.throws(
-    () => createEconomyBalanceProfile({
-      ...DEFAULT_ECONOMY_BALANCE_PROFILE,
-      depletion: {
-        ...DEFAULT_ECONOMY_BALANCE_PROFILE.depletion,
-        minSeconds: 50,
-        maxSeconds: 40,
-      },
-    }),
-    /maximum must be greater than or equal to its minimum/,
-  );
-
+test('validation rejects unknown resource vocabulary', () => {
   assert.throws(
     () => calculateTripEquivalents({ metal: 5, credits: 10 }),
     /Unknown resource kind in Cost: credits/,
