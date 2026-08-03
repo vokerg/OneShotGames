@@ -61,4 +61,4 @@ export function buildCombatSfxOutputs() {
   });
   return Object.freeze({ manifest, banks: Object.freeze(banks), rendered: built.rendered });
 }
-export function serializeCombatSfxManifest(manifest) { return `${JSON.stringify(manifest, null, 2)}\n`; }
+export function serializeCombatSfxManifest(manifest) { return JSON.stringify(manifest, null, 2); }
