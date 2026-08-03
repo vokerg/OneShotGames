@@ -126,20 +126,31 @@ test('preloads hash-verified synthesized WAVs and plays decoded cues through the
   assert.equal(mixer.played[0].tag, 'combat-weapon-fire');
   assert.equal(mixer.played[0].offset, 0);
   assert.equal(mixer.played[0].duration, 0.17);
+  assert.deepEqual(runtime.play('weapon.rifle', { tick: 13, gain: 2 }), {
+    ok: false,
+    cue: 'weapon.rifle',
+    reason: 'invalid-request',
+  });
 });
 
-test('fails closed for corrupted synthesis without throwing into gameplay', async () => {
+test('fails closed for corrupted synthesis and permits a later successful retry', async () => {
   const mixer = fakeMixer();
+  let corrupted = true;
   const runtime = await createCombatSfxRuntime({
     mixer,
     catalogSource: catalogValue,
-    digestImpl: async () => '0'.repeat(64),
+    digestImpl: async (data) => corrupted ? '0'.repeat(64) : digest(data),
     bankFactory: buildCombatSfxBanks,
   });
-  const preload = await runtime.preload();
-  assert.equal(preload.loadedAssetIds.length, 0);
-  assert.equal(Object.keys(preload.failures).length, catalogValue.banks.length);
+  const failed = await runtime.preload();
+  assert.equal(failed.loadedAssetIds.length, 0);
+  assert.equal(Object.keys(failed.failures).length, catalogValue.banks.length);
   assert.equal(runtime.play('weapon.rifle', { tick: 1 }).reason, 'missing-asset');
+
+  corrupted = false;
+  const recovered = await runtime.preload();
+  assert.equal(recovered.loadedAssetIds.length, catalogValue.assets.length);
+  assert.deepEqual(recovered.failures, {});
 });
 
 test('domain adapter forwards immutable audio.request payloads and disposes exactly', () => {
@@ -162,4 +173,15 @@ test('domain adapter forwards immutable audio.request payloads and disposes exac
   dispose();
   events.emit(DOMAIN_EVENT_TYPES.AUDIO, { cue: 'weapon.rifle' });
   assert.equal(calls.length, 1);
+});
+
+test('domain adapter contains injected runtime errors at the presentation boundary', () => {
+  const events = createDomainEventStream();
+  installCombatSfxDomainAdapter({
+    events,
+    runtime: { play: () => { throw new Error('decoder failure'); } },
+  });
+  assert.doesNotThrow(() => {
+    events.emit(DOMAIN_EVENT_TYPES.AUDIO, { cue: 'weapon.cannon', gain: 2 });
+  });
 });
