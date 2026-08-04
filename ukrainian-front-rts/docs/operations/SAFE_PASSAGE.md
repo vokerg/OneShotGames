@@ -51,10 +51,10 @@ The mission script tracks protected-site losses through `collateralIncidents`:
 ```text
 0 losses → full optional protection remains possible
 1 loss   → operation continues with a warning
-2 losses → deterministic defeat on the next script evaluation
+2 losses → deterministic defeat in the same mission-script update
 ```
 
-The next-evaluation resolution is intentional. UFR-086 prevents same-tick trigger/action cascades, so both the content and tests preserve that deterministic contract rather than creating an alternate script order.
+The defeat trigger checks both protected-site destruction states directly. Its finish action executes after trigger evaluation but before the objective phase, preserving UFR-086's no-same-tick-cascade contract while preventing required objectives from resolving a victory on the second-loss tick.
 
 ## Contract integration
 
@@ -77,7 +77,7 @@ Focused tests are in `tests/campaign/urban-defense-operation.test.mjs`. They ver
 - authored-map, mission-script, objective-library, and briefing validation;
 - canonical current unit, building, and team identifiers;
 - abstracted civilian representation with no civilian entity type;
-- one-loss tolerance and deterministic two-loss defeat;
+- one-loss tolerance and deterministic two-loss defeat before objective victory can resolve;
 - complete required escort/defense flow with independent optional objectives;
 - deep immutability and stable operation identifiers.
 
