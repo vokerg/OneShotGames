@@ -152,6 +152,7 @@ function intermediateWaypointReached(state, unit, formationWaypoint, recovery, s
     formationWaypoint.y - unit.y,
   );
   const unitRadius = Math.max(0, Number(stats?.size) || 0);
+  if (remaining <= WORLD.tile / 2 + unitRadius) return true;
   const clearance = Math.SQRT2 * WORLD.tile + unitRadius;
   return (recovery.madeWaypointProgress || remaining < recovery.bestDistance) && remaining <= clearance;
 }
