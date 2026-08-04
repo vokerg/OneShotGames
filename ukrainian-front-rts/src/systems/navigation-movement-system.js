@@ -36,6 +36,12 @@ import { resolveUnitOverlaps } from './unit-collision-system.js';
 const NAVIGATION_ORDER_KINDS = new Set(['move', 'attackMove']);
 const STUCK_ORDER_MESSAGE = 'Unit is blocked and cannot reach the destination.';
 const BLOCKED_START_ESCAPE_RADIUS = 8;
+const DIRECT_MOVEMENT_ARRIVAL_DISTANCE = 5;
+const MAX_GROUND_UNIT_RADIUS = Math.max(
+  ...Object.values(UNIT_TYPES)
+    .filter((stats) => stats && !stats.air)
+    .map((stats) => Math.max(0, Number(stats.size) || 0)),
+);
 
 function placementSignature(building) {
   const placement = building.placement;
@@ -131,6 +137,16 @@ function routeFailureMessage(status) {
 
 function navigationRequestId(unit) {
   return `unit:${unit.id}`;
+}
+
+function navigationWaypointArrivalDistance(stats) {
+  const radius = Math.max(0, Number(stats?.size) || 0);
+  return DIRECT_MOVEMENT_ARRIVAL_DISTANCE + radius + MAX_GROUND_UNIT_RADIUS;
+}
+
+function reachedNavigationWaypoint(unit, waypoint, stats) {
+  return Math.hypot(waypoint.x - unit.x, waypoint.y - unit.y) <=
+    navigationWaypointArrivalDistance(stats);
 }
 
 function clearRecoveryReplanState(order) {
@@ -433,6 +449,14 @@ export function updateUnitWithNavigation(
   applyFormationState(order, formationWaypoint);
   const wasFollowingDetour = Boolean(recovery.detour);
   updateUnitWithTerrainMovement(game, unit, stepSeconds, state.grid);
+
+  if (
+    !wasFollowingDetour &&
+    unit.order === order &&
+    reachedNavigationWaypoint(unit, formationWaypoint, stats)
+  ) {
+    unit.order = null;
+  }
 
   if (unit.order === null) {
     if (wasFollowingDetour) {
