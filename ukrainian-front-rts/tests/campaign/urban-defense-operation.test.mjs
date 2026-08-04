@@ -24,11 +24,23 @@ import { createMissionBriefingModel } from '../../src/ui/campaign-flow.js';
 
 const aliveBuilding = (scriptId) => ({ id: scriptId, scriptId, type: 'depot', team: TEAM.UA, hp: 100, maxHp: 100, x: 400, y: 300, underConstruction: false });
 const aliveUnit = (scriptId, type, x, y) => ({ id: scriptId, scriptId, type, team: TEAM.UA, hp: 100, maxHp: 100, x, y });
+const COLLATERAL_TRIGGER_IDS = new Set(['clinic-lost', 'waterworks-lost', 'collateral-limit-reached']);
 
-function scriptedGame() {
+function collateralMission() {
+  return {
+    ...URBAN_DEFENSE_OPERATION.mission,
+    script: {
+      ...URBAN_DEFENSE_MISSION_SCRIPT,
+      id: `${URBAN_DEFENSE_MISSION_SCRIPT.id}.collateral-test`,
+      triggers: URBAN_DEFENSE_MISSION_SCRIPT.triggers.filter((trigger) => COLLATERAL_TRIGGER_IDS.has(trigger.id)),
+    },
+  };
+}
+
+function scriptedGame({ mission = URBAN_DEFENSE_OPERATION.mission } = {}) {
   return {
     time: 0,
-    mission: URBAN_DEFENSE_OPERATION.mission,
+    mission,
     player: { objectives: Array(URBAN_DEFENSE_OBJECTIVES.length).fill(false) },
     units: [],
     buildings: [
@@ -100,7 +112,7 @@ test('civilian handling is abstracted and protected-site collateral is bounded',
 });
 
 test('second protected-site loss defeats before objective victory can resolve', () => {
-  const game = scriptedGame();
+  const game = scriptedGame({ mission: collateralMission() });
   initializeMissionScripts(game);
 
   game.buildings = game.buildings.filter((building) => building.scriptId !== 'protected-clinic');
