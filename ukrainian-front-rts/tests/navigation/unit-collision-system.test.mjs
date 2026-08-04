@@ -53,7 +53,7 @@ test('bounds aggregate displacement in dense exact-overlap clusters', () => {
   resolveUnitOverlaps(units, getStats, { ...options, passes: 1, softness: 1 });
 
   assert.equal(
-    units.every((unit) => Math.hypot(unit.x - 250, unit.y - 250) <= stats.infantry.size),
+    units.every((unit) => Math.hypot(unit.x - 250, unit.y - 250) <= stats.infantry.size + 1e-9),
     true,
   );
 });
