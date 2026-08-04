@@ -5,7 +5,7 @@
   "authority": "src/ui/ui-skin.js",
   "generator": "scripts/build-ui-skin.mjs",
   "runtime": {
-    "assetStylesheet": "ui-skin-assets.css",
+    "assetDirectory": "assets/ui/skin",
     "skinStylesheet": "ui-skin.css",
     "entrypoint": "index.html"
   },
