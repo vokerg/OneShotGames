@@ -87,12 +87,20 @@ test('source catalog and deterministic source generator cover the complete atlas
 });
 
 test('effect presentation adapter maps public simulation records without mutating them', () => {
-  const shell = Object.freeze({ kind: 'shell', x: 1, y: 2, aimX: 8, aimY: 2, life: 0.5, max: 1 });
+  const target = Object.freeze({ x: 8, y: 2 });
+  const shell = Object.freeze({ kind: 'shell', x: 1, y: 2, target, life: 1 });
   const descriptor = createEffectPresentationDescriptor(shell, { channel: 'projectile' });
   assert.equal(descriptor.family, 'shell');
   assert.equal(descriptor.progress, 0.5);
-  assert.ok(Number.isFinite(descriptor.rotation));
-  assert.deepEqual(shell, { kind: 'shell', x: 1, y: 2, aimX: 8, aimY: 2, life: 0.5, max: 1 });
+  assert.equal(descriptor.rotation, Math.PI / 2);
+  assert.deepEqual(shell, { kind: 'shell', x: 1, y: 2, target, life: 1 });
+
+  const explicitTiming = createEffectPresentationDescriptor(
+    { kind: 'tracer', x: 4, y: 5, aimX: 4, aimY: 9, life: 0.25, max: 1 },
+    { channel: 'projectile' },
+  );
+  assert.equal(explicitTiming.progress, 0.75);
+  assert.equal(explicitTiming.rotation, Math.PI);
 
   assert.equal(effectFamilyForRecord({ kind: 'blast', radius: 80 }), 'explosion');
   assert.equal(effectFamilyForRecord({ kind: 'blast', radius: 24 }), 'impact');
@@ -133,7 +141,7 @@ test('renderer integration replaces procedural effects only after atlas load and
   const game = {
     camera: { z: 1 },
     projectiles: [
-      { kind: 'bullet', x: 10, y: 20, aimX: 20, aimY: 20, life: 0.5, max: 1 },
+      { kind: 'bullet', x: 10, y: 20, target: { x: 20, y: 20 }, life: 1 },
       { kind: 'shell', x: 30, y: 40, aimX: 30, aimY: 50, life: 0.25, max: 1 },
     ],
     effects: [
@@ -172,10 +180,13 @@ test('renderer integration replaces procedural effects only after atlas load and
     'explosion',
     'smoke',
   ]);
+  assert.equal(calls[0].options.elapsedMs, 60);
 
-  assert.equal(renderer.unit({ id: 7, x: 12, y: 14, angle: 0, flash: 0.08 }), 7);
+  assert.equal(renderer.unit({ id: 7, x: 12, y: 14, angle: 0, flash: 0.05 }), 7);
   assert.deepEqual(unitFlashes, [0]);
   assert.equal(calls.at(-1).family, 'muzzle-flash');
+  assert.equal(calls.at(-1).options.elapsedMs, 70);
+  assert.equal(calls.at(-1).options.alpha, 0.5);
   assert.equal(renderer.effectsAtlasState().ready, true);
 
   dispose();
