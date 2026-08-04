@@ -1,6 +1,8 @@
 export const MOVEMENT_RECOVERY_DEFAULTS = Object.freeze({
   minimumProgress: 1,
   stuckSeconds: 0.75,
+  progressWindowSeconds: 3,
+  minimumWindowProgress: 12,
   maxDetours: 3,
   maxReplans: 3,
   retargetDistance: 8,
@@ -43,9 +45,12 @@ function cellKey(cell) {
 }
 
 function resetProgressTarget(state, unit, target) {
+  const remaining = distance(unit, target);
   state.target = freezePoint(target);
-  state.bestDistance = distance(unit, target);
+  state.bestDistance = remaining;
   state.stalledSeconds = 0;
+  state.progressWindowSeconds = 0;
+  state.progressWindowDistance = remaining;
   state.madeProgress = false;
 }
 
@@ -59,12 +64,15 @@ export function ensureMovementRecoveryState(order, route, unit, target) {
   const existing = order.navigationRecovery;
   if (existing?.route === route && existing.waypointIndex === route.nextIndex) return existing;
 
+  const initialDistance = distance(unit, target);
   const state = {
     route,
     waypointIndex: route.nextIndex,
     target: freezePoint(target),
-    bestDistance: distance(unit, target),
+    bestDistance: initialDistance,
     stalledSeconds: 0,
+    progressWindowSeconds: 0,
+    progressWindowDistance: initialDistance,
     madeProgress: false,
     madeWaypointProgress: false,
     detour: null,
@@ -88,8 +96,11 @@ export function retargetMovementRecoveryState(
     throw new TypeError('Recovery retarget distance must be a non-negative finite number.');
   }
   if (state.detour || distance(state.target, target) < retargetDistance) return false;
+  const remaining = distance(unit, target);
   state.target = freezePoint(target);
-  state.bestDistance = distance(unit, target);
+  state.bestDistance = remaining;
+  state.progressWindowSeconds = 0;
+  state.progressWindowDistance = remaining;
   return true;
 }
 
@@ -100,6 +111,8 @@ export function recordMovementProgress(
   {
     minimumProgress = MOVEMENT_RECOVERY_DEFAULTS.minimumProgress,
     stuckSeconds = MOVEMENT_RECOVERY_DEFAULTS.stuckSeconds,
+    progressWindowSeconds = MOVEMENT_RECOVERY_DEFAULTS.progressWindowSeconds,
+    minimumWindowProgress = MOVEMENT_RECOVERY_DEFAULTS.minimumWindowProgress,
   } = {},
 ) {
   assertRecoveryState(state);
@@ -113,25 +126,44 @@ export function recordMovementProgress(
   if (!Number.isFinite(stuckSeconds) || stuckSeconds <= 0) {
     throw new TypeError('Recovery stuck duration must be a positive finite number.');
   }
+  if (!Number.isFinite(progressWindowSeconds) || progressWindowSeconds <= 0) {
+    throw new TypeError('Recovery progress-window duration must be a positive finite number.');
+  }
+  if (!Number.isFinite(minimumWindowProgress) || minimumWindowProgress < 0) {
+    throw new TypeError('Minimum recovery window progress must be a non-negative finite number.');
+  }
 
   const remaining = distance(unit, state.target);
-  if (remaining <= state.bestDistance - minimumProgress) {
+  const progressed = remaining <= state.bestDistance - minimumProgress;
+  if (progressed) {
     state.bestDistance = remaining;
     state.stalledSeconds = 0;
     state.madeProgress = true;
     if (!state.detour) state.madeWaypointProgress = true;
-    return Object.freeze({
-      status: MOVEMENT_RECOVERY_STATUSES.PROGRESSING,
-      remaining,
-      stalledSeconds: state.stalledSeconds,
-    });
+  } else {
+    state.stalledSeconds += stepSeconds;
   }
 
-  state.stalledSeconds += stepSeconds;
+  state.progressWindowSeconds += stepSeconds;
+  if (state.progressWindowSeconds >= progressWindowSeconds) {
+    const windowProgress = state.progressWindowDistance - remaining;
+    if (windowProgress < minimumWindowProgress) {
+      return Object.freeze({
+        status: MOVEMENT_RECOVERY_STATUSES.STUCK,
+        remaining,
+        stalledSeconds: state.stalledSeconds,
+      });
+    }
+    state.progressWindowSeconds = 0;
+    state.progressWindowDistance = remaining;
+  }
+
   return Object.freeze({
-    status: state.stalledSeconds >= stuckSeconds
-      ? MOVEMENT_RECOVERY_STATUSES.STUCK
-      : MOVEMENT_RECOVERY_STATUSES.STALLED,
+    status: progressed
+      ? MOVEMENT_RECOVERY_STATUSES.PROGRESSING
+      : state.stalledSeconds >= stuckSeconds
+        ? MOVEMENT_RECOVERY_STATUSES.STUCK
+        : MOVEMENT_RECOVERY_STATUSES.STALLED,
     remaining,
     stalledSeconds: state.stalledSeconds,
   });
