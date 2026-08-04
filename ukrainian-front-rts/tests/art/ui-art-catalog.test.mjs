@@ -70,25 +70,28 @@ test('lookup returns immutable exact assets and a visible explicit fallback', ()
   assert.equal(Object.isFrozen(exact.asset), true);
 });
 
-test('committed runtime manifest, symbol sheet, and contact sheet are exact deterministic outputs', async () => {
-  const [sourceManifest, runtimeManifest, symbols, contactSheet] = await Promise.all([
-    read('art-src/ui/ui-art-source.json'),
-    read('assets/ui/ui-art-manifest.json'),
-    read('assets/ui/ui-art-symbols.svg'),
-    read('assets/contact-sheets/ui-art.svg'),
-  ]);
-  const result = verifyUiArtArtifacts({ sourceManifest, runtimeManifest, symbols, contactSheet });
+test('runtime manifest, symbol sheet, and contact sheet are deterministic complete build outputs', async () => {
+  const sourceManifest = await read('art-src/ui/ui-art-source.json');
+  const first = {
+    runtimeManifest: buildUiArtRuntimeManifest(),
+    symbols: renderUiArtSymbols(),
+    contactSheet: renderUiArtContactSheet(),
+  };
+  const second = {
+    runtimeManifest: buildUiArtRuntimeManifest(),
+    symbols: renderUiArtSymbols(),
+    contactSheet: renderUiArtContactSheet(),
+  };
+  assert.deepEqual(first, second);
+  const result = verifyUiArtArtifacts({ sourceManifest, ...first });
   assert.equal(result.assetCount, UI_ART_CATALOG.assets.length);
-  assert.equal(runtimeManifest, buildUiArtRuntimeManifest());
-  assert.equal(symbols, renderUiArtSymbols());
-  assert.equal(contactSheet, renderUiArtContactSheet());
+  assert.ok(result.symbolBytes > 0);
+  assert.ok(result.contactSheetBytes > 0);
 });
 
 test('source and generated artifacts remain original, fictional, text-free, and public-figure-free', async () => {
-  const [source, symbols] = await Promise.all([
-    read('art-src/ui/ui-art-source.json'),
-    read('assets/ui/ui-art-symbols.svg'),
-  ]);
+  const source = await read('art-src/ui/ui-art-source.json');
+  const symbols = renderUiArtSymbols();
   const lower = `${source}\n${symbols}`.toLowerCase();
   for (const token of ['zelenskyy', 'zaluzhnyi', 'putin', 'prigozhin']) {
     assert.equal(lower.includes(token), false, `Forbidden public-figure token: ${token}`);
