@@ -46,6 +46,10 @@ import {
   reconcileStanceOrders,
 } from './systems/stance-system.js';
 import {
+  createTacticalAiController,
+  updateTacticalAi,
+} from './systems/tactical-ai-system.js';
+import {
   createTacticalCommandController,
   prepareTacticalCommands,
   reconcileTacticalCommands,
@@ -118,6 +122,20 @@ const modules = [
         phase: SIMULATION_DELEGATE_PHASES.BUILDING_LIFECYCLE,
         id: 'capture',
         run: (_game, stepSeconds) => updateBuildingCaptures(game, stepSeconds),
+      },
+    ],
+  })),
+  module('tactical-ai-controller', () => installControllerWithSimulationDelegates({
+    game,
+    name: 'tactical-ai-controller',
+    restore: ['start'],
+    install: () => createTacticalAiController(game),
+    delegates: [
+      {
+        phase: SIMULATION_DELEGATE_PHASES.TACTICAL_PREPARE,
+        id: 'plan',
+        order: -100,
+        run: () => updateTacticalAi(game),
       },
     ],
   })),
