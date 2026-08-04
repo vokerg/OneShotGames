@@ -1,24 +1,28 @@
 #!/usr/bin/env node
-import { readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import {
-  UI_SKIN_ASSET_CSS_PATH,
-  buildUiSkinAssetCss,
-} from '../src/ui/ui-skin.js';
+import { buildUiSkinArtifacts } from '../src/ui/ui-skin.js';
+
+async function compare(path, expected) {
+  let actual = null;
+  try { actual = await readFile(path, 'utf8'); } catch { /* Missing output is stale. */ }
+  if (actual !== expected) throw new Error(`Generated UI skin asset is stale: ${path}`);
+}
 
 export async function buildUiSkin(projectRoot, { check = false } = {}) {
   const root = resolve(projectRoot);
-  const target = resolve(root, UI_SKIN_ASSET_CSS_PATH);
-  const expected = buildUiSkinAssetCss();
-  if (check) {
-    const actual = await readFile(target, 'utf8');
-    if (actual !== expected) throw new Error(`Generated UI skin assets are stale: ${UI_SKIN_ASSET_CSS_PATH}`);
-  } else {
-    await writeFile(target, expected);
+  const artifacts = buildUiSkinArtifacts();
+  for (const artifact of artifacts) {
+    const target = resolve(root, artifact.path);
+    if (check) await compare(target, artifact.content);
+    else {
+      await mkdir(dirname(target), { recursive: true });
+      await writeFile(target, artifact.content);
+    }
   }
-  return Object.freeze({ target, bytes: expected.length, check });
+  return Object.freeze({ artifactCount: artifacts.length, bytes: artifacts.reduce((sum, artifact) => sum + artifact.content.length, 0), check });
 }
 
 const invokedPath = process.argv[1] ? resolve(process.argv[1]) : null;
@@ -30,7 +34,7 @@ if (invokedPath === fileURLToPath(import.meta.url)) {
   } else {
     const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
     buildUiSkin(root, { check: args.includes('--check') })
-      .then((result) => console.log(`[ui-skin] ${result.check ? 'verified' : 'wrote'} ${result.bytes} bytes`))
+      .then((result) => console.log(`[ui-skin] ${result.check ? 'verified' : 'wrote'} ${result.artifactCount} assets (${result.bytes} bytes)`))
       .catch((error) => {
         console.error(`[ui-skin] ${error.message}`);
         process.exitCode = 1;
