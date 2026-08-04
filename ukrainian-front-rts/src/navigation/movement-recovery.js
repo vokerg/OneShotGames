@@ -46,6 +46,7 @@ function resetProgressTarget(state, unit, target) {
   state.target = freezePoint(target);
   state.bestDistance = distance(unit, target);
   state.stalledSeconds = 0;
+  state.madeProgress = false;
 }
 
 export function ensureMovementRecoveryState(order, route, unit, target) {
@@ -64,6 +65,7 @@ export function ensureMovementRecoveryState(order, route, unit, target) {
     target: freezePoint(target),
     bestDistance: distance(unit, target),
     stalledSeconds: 0,
+    madeProgress: false,
     detour: null,
     detourAttempts: 0,
     attemptedCellKeys: [],
@@ -115,6 +117,7 @@ export function recordMovementProgress(
   if (remaining <= state.bestDistance - minimumProgress) {
     state.bestDistance = remaining;
     state.stalledSeconds = 0;
+    state.madeProgress = true;
     return Object.freeze({
       status: MOVEMENT_RECOVERY_STATUSES.PROGRESSING,
       remaining,
