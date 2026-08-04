@@ -1,0 +1,45 @@
+{
+  "schema": "fields-of-resolve.campaign-art-source",
+  "version": 1,
+  "id": "fields-of-resolve-campaign-art-v1",
+  "authority": "src/ui/campaign-art-catalog.js",
+  "generator": "scripts/build-campaign-art.mjs",
+  "familyCounts": {
+    "operationIllustrations": 5,
+    "mapOverlays": 5,
+    "briefingPanels": 5,
+    "loadingArt": 5,
+    "endingPanels": 3,
+    "creditsVisuals": 2,
+    "debriefMedalFrames": 8,
+    "fallback": 1
+  },
+  "outputs": {
+    "symbols": "assets/campaign/campaign-art-symbols.svg",
+    "runtimeManifest": "assets/campaign/campaign-art-manifest.json",
+    "contactSheet": "assets/contact-sheets/campaign-art.svg"
+  },
+  "provenance": {
+    "creator": "OneShotGames contributors",
+    "createdAt": "2026-08-04",
+    "source": "Original repository-authored deterministic vector recipes",
+    "license": "CC0-1.0",
+    "redistribution": "allowed",
+    "externalInputs": [],
+    "fictionalSubjectsOnly": true,
+    "publicFigures": false,
+    "generatedTools": {
+      "used": true,
+      "details": "scripts/build-campaign-art.mjs renders deterministic SVG geometry from the reviewed campaign-art catalog.",
+      "humanCorrections": "Operation motifs, route readability, safe areas, palette hierarchy, outcome framing, and fallback visibility were manually specified."
+    },
+    "approval": "approved"
+  },
+  "constraints": {
+    "embeddedText": false,
+    "externalReferences": false,
+    "pixelRatios": [1, 2],
+    "mapOverlayBackground": "transparent",
+    "minimumAltCharacters": 24
+  }
+}
