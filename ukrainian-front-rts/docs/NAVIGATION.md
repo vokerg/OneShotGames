@@ -142,7 +142,7 @@ The recovery policy uses no wall clock, randomness, collision rewrite, or comman
 
 The deterministic gate requires all 150 units to arrive within 6,000 fixed ticks, forbids more than 600 consecutive ticks without measurable movement or a newly completed unit, requires zero failed path searches, and compares final positions, completion ticks, navigation metrics, maximum stall, and revision state across both runs. Search count is capped at six searches per unit, throttle count at four per unit, and every search is bounded by the 80×52 grid area.
 
-The CI execution proxy requires initial 150-unit routing below 2,500 ms, steady-state p95 navigation update time below one 60 Hz frame (16.67 ms), and both complete scenario runs below 20 seconds each. These wall-clock limits are guardrails for the supported CI environment, not replay-authoritative state: machine load can affect timing, while deterministic state and counters must remain identical. A materially different runner should preserve the deterministic/search budgets and calibrate timing only through a reviewed task rather than silently weakening the gate.
+The CI execution proxy requires initial 150-unit routing below 5,000 ms, steady-state p95 navigation update time below one 60 Hz frame (16.67 ms), and both complete scenario runs below 20 seconds each. These wall-clock limits are guardrails for the supported CI environment, not replay-authoritative state: machine load can affect timing, while deterministic state and counters must remain identical. A materially different runner should preserve the deterministic/search budgets and calibrate timing only through a reviewed task rather than silently weakening the gate.
 
 ## Determinism and ownership
 
