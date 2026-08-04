@@ -138,25 +138,79 @@ export function formationRouteDestination(order) {
   return destination;
 }
 
-function candidatePassable(grid, candidate, options) {
+function cellPassable(grid, x, y, options) {
   try {
-    const cell = grid.worldToCell(candidate.x, candidate.y);
-    return grid.isPassable(cell.x, cell.y, options);
+    return grid.isPassable(x, y, options);
   } catch (error) {
     if (error instanceof RangeError) return false;
     throw error;
   }
 }
 
+function segmentPassable(grid, origin, destination, options) {
+  let start;
+  let end;
+  try {
+    start = grid.worldToCell(origin.x, origin.y);
+    end = grid.worldToCell(destination.x, destination.y);
+  } catch (error) {
+    if (error instanceof RangeError) return false;
+    throw error;
+  }
+
+  let x = start.x;
+  let y = start.y;
+  const deltaX = Math.abs(end.x - start.x);
+  const deltaY = Math.abs(end.y - start.y);
+  const stepX = start.x < end.x ? 1 : -1;
+  const stepY = start.y < end.y ? 1 : -1;
+  let error = deltaX - deltaY;
+
+  while (true) {
+    if (!cellPassable(grid, x, y, options)) return false;
+    if (x === end.x && y === end.y) return true;
+
+    const doubledError = error * 2;
+    const movesX = doubledError > -deltaY;
+    const movesY = doubledError < deltaX;
+    if (movesX && movesY) {
+      if (!cellPassable(grid, x + stepX, y, options)) return false;
+      if (!cellPassable(grid, x, y + stepY, options)) return false;
+    }
+    if (movesX) {
+      error -= deltaY;
+      x += stepX;
+    }
+    if (movesY) {
+      error += deltaX;
+      y += stepY;
+    }
+  }
+}
+
+function candidatePassable(grid, candidate, options, origin = null) {
+  let cell;
+  try {
+    cell = grid.worldToCell(candidate.x, candidate.y);
+  } catch (error) {
+    if (error instanceof RangeError) return false;
+    throw error;
+  }
+  if (!cellPassable(grid, cell.x, cell.y, options)) return false;
+  return !origin || segmentPassable(grid, origin, candidate, options);
+}
+
 export function resolveFormationWaypoint(grid, anchorWaypoint, order, {
   layer,
   footprint,
   ignoreBlockerIds,
+  origin,
 } = {}) {
   if (!grid || typeof grid.worldToCell !== 'function' || typeof grid.isPassable !== 'function') {
     throw new TypeError('Formation waypoint resolution requires a navigation-grid compatible object.');
   }
   assertPoint(anchorWaypoint, 'Formation anchor waypoint');
+  if (origin !== undefined) assertPoint(origin, 'Formation waypoint origin');
   const formation = order?.formation;
   if (!formation?.slotOffset) {
     return Object.freeze({
@@ -178,7 +232,7 @@ export function resolveFormationWaypoint(grid, anchorWaypoint, order, {
       x: anchorWaypoint.x + formation.slotOffset.x * compression,
       y: anchorWaypoint.y + formation.slotOffset.y * compression,
     };
-    if (!candidatePassable(grid, candidate, options)) continue;
+    if (!candidatePassable(grid, candidate, options, origin ?? null)) continue;
     return Object.freeze({
       ...candidate,
       compression,
