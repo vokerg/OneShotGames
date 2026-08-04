@@ -43,6 +43,13 @@ function clampUnit(entry, worldWidth, worldHeight) {
   entry.unit.y = Math.min(Math.max(entry.unit.y, entry.radius), worldHeight - entry.radius);
 }
 
+function boundDisplacement(delta, maximum) {
+  const magnitude = Math.hypot(delta.x, delta.y);
+  if (magnitude <= maximum || magnitude === 0) return delta;
+  const scale = maximum / magnitude;
+  return { x: delta.x * scale, y: delta.y * scale };
+}
+
 export function resolveUnitOverlaps(units, getStats, options = {}) {
   if (!Array.isArray(units)) throw new TypeError('Collision resolution requires a unit array.');
   if (typeof getStats !== 'function') throw new TypeError('Collision resolution requires a getStats callback.');
@@ -107,7 +114,10 @@ export function resolveUnitOverlaps(units, getStats, options = {}) {
     }
 
     for (const entry of entries) {
-      const delta = displacement.get(entry.unit);
+      const delta = boundDisplacement(
+        displacement.get(entry.unit),
+        entry.radius * settings.softness,
+      );
       entry.unit.x += delta.x;
       entry.unit.y += delta.y;
       clampUnit(entry, settings.worldWidth, settings.worldHeight);
