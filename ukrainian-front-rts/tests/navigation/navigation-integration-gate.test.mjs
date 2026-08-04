@@ -151,6 +151,21 @@ function rounded(value) {
   return Math.round(value * 1_000) / 1_000;
 }
 
+function orderDiagnostic(order) {
+  if (!order) return null;
+  return {
+    kind: order.kind,
+    x: rounded(order.x),
+    y: rounded(order.y),
+    routeStatus: order.navigationRoute?.status ?? null,
+    routeNextIndex: order.navigationRoute?.nextIndex ?? null,
+    routeWaypoints: order.navigationRoute?.waypoints?.length ?? null,
+    recoveryReplans: order.navigationRecoveryReplans ?? null,
+    detourAttempts: order.navigationRecovery?.detourAttempts ?? null,
+    blockedStartAttempts: order.navigationBlockedStartRecovery?.detourAttempts ?? null,
+  };
+}
+
 function runScenario(seed = 'ufr-030-navigation-gate') {
   const game = createGateGame(seed);
   const destinations = new Map();
@@ -185,6 +200,11 @@ function runScenario(seed = 'ufr-030-navigation-gate') {
     }
     if (tick === 900 && blocker) blocker.hp = 0;
 
+    const tickStart = new Map(game.units.map((unit) => [unit.id, {
+      x: rounded(unit.x),
+      y: rounded(unit.y),
+      order: orderDiagnostic(unit.order),
+    }]));
     const stepStartedAt = performance.now();
     updateUnitsWithNavigation(game, FIXED_STEP_SECONDS);
     stepDurations.push(performance.now() - stepStartedAt);
@@ -212,8 +232,22 @@ function runScenario(seed = 'ufr-030-navigation-gate') {
 
     const cancelled = game.units.filter((unit) =>
       unit.order === null && distanceToDestination(unit, destinations) > ARRIVAL_DISTANCE);
+    const cancellationDiagnostics = cancelled.map((unit) => {
+      const destination = destinations.get(unit.id);
+      return {
+        id: unit.id,
+        type: unit.type,
+        tick,
+        hp: rounded(unit.hp),
+        x: rounded(unit.x),
+        y: rounded(unit.y),
+        destination: { x: rounded(destination.x), y: rounded(destination.y) },
+        distance: rounded(distanceToDestination(unit, destinations)),
+        tickStart: tickStart.get(unit.id),
+      };
+    });
     assert.deepEqual(
-      cancelled.map((unit) => unit.id),
+      cancellationDiagnostics,
       [],
       `navigation cancelled units before arrival: ${game.lastError}`,
     );
