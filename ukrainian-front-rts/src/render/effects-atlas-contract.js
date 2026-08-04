@@ -22,6 +22,7 @@ export const EFFECT_ATLAS_FAMILIES = Object.freeze([
 
 const ONCE_FAMILIES = new Set(['muzzle-flash', 'impact', 'explosion', 'dust']);
 const PROJECTILE_FAMILIES = new Set(['tracer', 'shell', 'missile', 'drone']);
+const PROJECTILE_PRESENTATION_LIFETIME_SECONDS = 2;
 const DIRECT_ALIASES = Object.freeze({
   'muzzle': 'muzzle-flash',
   'muzzle-flash': 'muzzle-flash',
@@ -59,7 +60,6 @@ function clamp(value, minimum = 0, maximum = 1) {
 function finite(value, fallback = 0) {
   return Number.isFinite(Number(value)) ? Number(value) : fallback;
 }
-
 
 function requireSourceObject(value, label) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -173,6 +173,22 @@ export function effectProgress(record = {}) {
   return 0;
 }
 
+function presentationProgress(record, { channel, maxLife } = {}) {
+  const explicitMaximum = finite(record.max ?? record.maxLife ?? record.duration, NaN);
+  if (Number.isFinite(explicitMaximum) && explicitMaximum > 0) return effectProgress(record);
+
+  const fallbackMaximum = finite(
+    maxLife,
+    channel === 'projectile' ? PROJECTILE_PRESENTATION_LIFETIME_SECONDS : NaN,
+  );
+  const life = finite(record.life, NaN);
+  if (Number.isFinite(life) && Number.isFinite(fallbackMaximum) && fallbackMaximum > 0) {
+    return clamp(1 - life / fallbackMaximum);
+  }
+
+  return effectProgress(record);
+}
+
 function projectileFamily(record) {
   const kind = String(record?.kind ?? '').toLowerCase();
   if (PROJECTILE_FAMILIES.has(kind)) return kind;
@@ -218,11 +234,13 @@ function baseAlpha(family, progress, record) {
 export function createEffectPresentationDescriptor(record = {}, options = {}) {
   const channel = options.channel ?? 'effect';
   const family = effectFamilyForRecord(record, { channel });
-  const progress = effectProgress(record);
+  const progress = presentationProgress(record, { channel, maxLife: options.maxLife });
   let rotation = 0;
   if (channel === 'projectile') {
-    const dx = finite(record.aimX, finite(record.x)) - finite(record.x);
-    const dy = finite(record.aimY, finite(record.y)) - finite(record.y);
+    const targetX = finite(record.aimX, finite(record.target?.x, finite(record.x)));
+    const targetY = finite(record.aimY, finite(record.target?.y, finite(record.y)));
+    const dx = targetX - finite(record.x);
+    const dy = targetY - finite(record.y);
     if (dx !== 0 || dy !== 0) rotation = Math.atan2(dy, dx) + Math.PI / 2;
   }
 
