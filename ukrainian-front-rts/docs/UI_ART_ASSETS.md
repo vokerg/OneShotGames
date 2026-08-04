@@ -23,11 +23,13 @@ The catalog is deeply immutable, uses stable IDs, declares dimensions and pixel 
 
 `art-src/ui/ui-art-source.json` records provenance, output paths, family counts, production constraints, and the deterministic generator. All geometry is original repository-authored SVG produced by `scripts/build-ui-art.mjs`; there are no recordings, copied commercial-game assets, external image inputs, embedded fonts, public-figure portraits, or generated-person likenesses.
 
-Outputs:
+Reproducible build outputs:
 
 - `assets/ui/ui-art-symbols.svg` — reusable fragment-addressable symbol sheet;
 - `assets/ui/ui-art-manifest.json` — generated runtime/review metadata;
 - `assets/contact-sheets/ui-art.svg` — deterministic review sheet.
+
+These outputs are generated artifacts rather than parallel source databases. The authoritative catalog and source manifest are source-controlled; CI regenerates the outputs in memory and proves exact coverage. Run the build command when a downstream integration owner needs materialized files.
 
 Regenerate with:
 
@@ -71,6 +73,6 @@ UFR-120 owns production UI skin and layout adoption. UFR-121 owns operation-spec
 
 ## Verification and evidence boundary
 
-The authoritative verifier runs catalog tests and `scripts/verify-ui-art.mjs`. Coverage includes canonical ID drift, family dimensions, hotspots, reduced-motion pings, safe areas, lookup/fallback behavior, deep immutability, deterministic generated-output equality, provenance, text-free assets, and public-figure exclusion.
+The authoritative verifier runs catalog tests and `scripts/verify-ui-art.mjs` without mutating the checkout. Coverage includes canonical ID drift, family dimensions, hotspots, reduced-motion pings, safe areas, lookup/fallback behavior, deep immutability, deterministic generated-output equality, provenance, text-free assets, and public-figure exclusion.
 
 This task can reach `CONTRACT_COMPLETE`: the production-ready source/runtime asset family and deterministic pipeline are present. The active prototype UI is not broadly reskinned by this task, so browser startup proves non-regression rather than complete player-visible adoption.
