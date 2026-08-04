@@ -48,6 +48,7 @@ index.html
           └─ src/systems/
               ├─ simulation-phases.js    authoritative phase order
               ├─ navigation-movement-system.js runtime navigation integration
+              ├─ tactical-ai-system.js   observed knowledge + tactical command projection
               ├─ research-queue-system.js pure shared research contract
               ├─ research-queue-runtime.js live facility research commands/state
               ├─ objective-system.js
@@ -59,7 +60,7 @@ index.html
 
 `src/navigation/` is a pure policy layer. It owns deterministic passability, bounded search, waypoint translation, route-template caching, repath cadence, and local recovery contracts. Runtime state synchronization and physical unit movement remain in `src/systems/` and `Game`.
 
-`src/ai/` is a planning boundary, not an alternate simulation. It owns deterministic doctrine, knowledge, goal, budget, cadence, and inspection contracts. Later systems adapt its proposals into ordinary validated game commands.
+`src/ai/` is a planning boundary, not an alternate simulation. It owns deterministic doctrine, knowledge, goal, budget, cadence, inspection, and tactical-plan contracts. `src/systems/tactical-ai-system.js` adapts permitted observations and own-side snapshots into ordinary validated order shapes during the declared tactical-prepare phase.
 
 ### Headless composition
 
@@ -85,6 +86,7 @@ bash verify.sh
           ├─ tests/**/*.test.mjs
           │   ├─ tests/unit/
           │   ├─ tests/navigation/
+          │   ├─ tests/ai/
           │   ├─ tests/sim/
           │   └─ tests/tooling/
           ├─ task-queue validation
@@ -178,7 +180,9 @@ Owns deterministic, browser-independent AI planning contracts. UFR-079 establish
 - fixed-tick decision scheduling that is independent of render-frame chunking;
 - deeply frozen, reference-free inspection snapshots.
 
-AI may import core, schema, shared contracts, declarative config/content, and sibling AI modules. It must not import `Game`, simulation systems, navigation policy, input, UI, rendering, app/runtime, or audio. Later `Game` or system adapters may consume AI proposals, but authoritative command validation, state mutation, simulation phase order, resource charging, and combat outcomes stay with their existing owners. See `docs/AI_ARCHITECTURE.md`.
+UFR-081 adds pure tactical posture and bounded command-plan selection for scouting, defense, assembly, attack, retreat, reinforcement, and flanking. AI modules may import core, schema, shared contracts, declarative config/content, and sibling AI modules. They must not import `Game`, simulation systems, navigation policy, input, UI, rendering, app/runtime, or audio.
+
+`src/systems/tactical-ai-system.js` owns the live adapter: bounded line-of-sight observations, own-side snapshots, blackboard lifecycle, entity validation, and projection into existing `move`, `attackMove`, and `attack` order contracts. It runs as an ordered `TACTICAL_PREPARE` simulation delegate before tactical-command projection and unit movement; it never wraps `game.update`. Navigation, combat, resource charging, and outcome owners remain authoritative. See `docs/AI_ARCHITECTURE.md` and `docs/TACTICAL_AI.md`.
 
 ### Focused simulation namespaces
 
@@ -188,14 +192,17 @@ The exact shared-contract modules listed in the dependency section are deliberat
 
 ### `src/systems/simulation-phases.js`
 
-Owns the fixed-step order:
+Owns the fixed-step order, including the explicit delegate points:
 
 ```text
-clock → camera → units → projectiles → production → research → waves
-      → destroyed-entity cleanup → objectives → outcome
+clock → camera → step-begin delegates → tactical-prepare delegates
+      → stance-prepare delegates → units → projectiles → production
+      → research → waves → destroyed-entity cleanup → objectives → outcome
+      → building-lifecycle delegates → stance-reconcile delegates
+      → tactical-reconcile delegates → command-capacity delegates → step-end delegates
 ```
 
-A phase may call a focused owner, but runtime, UI, renderer, input, AI modules, and tests must not create alternate phase orders. A later task that installs AI decisions must name the owning phase and preserve deterministic command order.
+A phase may call a focused owner, but runtime, UI, renderer, input, AI modules, and tests must not create alternate phase orders. Tactical AI planning is owned by the `TACTICAL_PREPARE` delegate and must complete before the units phase consumes projected orders.
 
 ### `src/systems/research-queue-system.js` and `research-queue-runtime.js`
 
@@ -240,8 +247,9 @@ browser input
 
 permitted AI observations + own-side state
   → AI blackboard
-  → fixed-cadence planner proposal
-  → public Game command or focused-system validation
+  → fixed-cadence tactical planner proposal
+  → tactical-prepare system validation and existing order projection
+  → navigation/combat owners consume the projected orders
   → authoritative mutation and normal domain event flow
 
 animation frame
@@ -257,18 +265,16 @@ Events are observation and integration records. They do not replace authoritativ
 
 1. `runtime.startMission` derives and resets the mission seed.
 2. `Game.start` initializes authoritative mission state.
-3. Installed system adapters initialize facility-scoped research and other feature state.
+3. Installed system adapters initialize facility-scoped research, tactical AI, and other feature state.
 4. The fixed-step accumulator is reset.
 5. Input adapters update held actions or invoke public commands.
 6. Each animation frame contributes a capped elapsed duration.
 7. The clock invokes `Game.update(FIXED_SIMULATION_STEP_SECONDS)` once per complete tick.
-8. `Game.update` runs the documented phase order, including production before research contention/progress.
-9. Any installed AI adapter evaluates only due fixed-tick cadence points and submits ordinary validated commands in a documented order.
+8. `Game.update` runs the documented phase order, including tactical-AI planning before unit movement and production before research contention/progress.
+9. The tactical AI evaluates only due fixed-tick cadence points and projects bounded ordinary orders from observed-only knowledge.
 10. Seeded random draws and domain-event sequence order follow authoritative execution order.
 11. The renderer draws the latest completed state once.
 12. The UI refreshes from that same state.
-
-UFR-079 does not install an AI controller in the current runtime. UFR-080 and UFR-081 must document the concrete phase/command integration when they add economy and tactical behavior.
 
 Changing tick duration, phase order, random draw order, event ordering, AI decision cadence, navigation revision/cadence behavior, or command validation is deterministic-behavior work and requires corresponding tests and documentation.
 
@@ -284,7 +290,7 @@ Focused deterministic tests for grid, pathfinding, waypoint, cache, formation, c
 
 ### `tests/ai/`
 
-Deterministic tests for doctrine, knowledge, goals, budgets, cadence, inspection, and later planner policies. They must use explicit observations, stable IDs, exact ticks, and reference-free snapshots. Frame-chunking equivalence belongs here whenever a planner cadence changes.
+Deterministic tests for doctrine, knowledge, goals, budgets, cadence, inspection, tactical posture, command planning, runtime observation, and command projection. They use explicit observations, stable IDs, exact ticks, and reference-free snapshots. Frame-chunking equivalence and repeated-input equality belong here whenever planner cadence changes. Runtime integration fixtures must verify that projected ground orders flow through authoritative navigation rather than bypassing it.
 
 ### `tests/sim/`
 
