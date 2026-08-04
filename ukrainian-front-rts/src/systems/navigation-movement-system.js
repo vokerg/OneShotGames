@@ -148,7 +148,7 @@ function intermediateWaypointReached(unit, formationWaypoint, recovery, stats) {
   );
   const unitRadius = Math.max(0, Number(stats?.size) || 0);
   const clearance = DIRECT_MOVEMENT_ARRIVAL_DISTANCE + unitRadius + MAX_GROUND_UNIT_RADIUS;
-  return (recovery.madeProgress || remaining < recovery.bestDistance) && remaining <= clearance;
+  return (recovery.madeWaypointProgress || remaining < recovery.bestDistance) && remaining <= clearance;
 }
 
 function clearRecoveryReplanState(order) {
