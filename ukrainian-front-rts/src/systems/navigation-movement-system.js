@@ -138,13 +138,120 @@ function clearRecoveryReplanState(order) {
   }
 }
 
+function clearBlockedStartRecoveryState(order) {
+  if (order && Object.hasOwn(order, 'navigationBlockedStartRecovery')) {
+    delete order.navigationBlockedStartRecovery;
+  }
+}
+
 function cancelNavigationOrder(game, unit, order, message, state) {
   if (unit.team === TEAM.UA) game.lastError = message;
   if (unit.order === order) unit.order = null;
   unit.target = null;
   clearMovementRecoveryState(order);
   clearRecoveryReplanState(order);
+  clearBlockedStartRecoveryState(order);
   state.pathService.releaseRequest(navigationRequestId(unit));
+}
+
+function ensureNavigationDestination(order) {
+  if (!order.navigationDestination) {
+    const destination = formationRouteDestination(order);
+    order.navigationDestination = Object.freeze({ x: destination.x, y: destination.y });
+  }
+  return order.navigationDestination;
+}
+
+function unitStartPassable(state, unit, stats) {
+  try {
+    const cell = state.grid.worldToCell(unit.x, unit.y);
+    return state.grid.isPassable(cell.x, cell.y, {
+      layer: unitNavigationLayer(stats),
+    });
+  } catch (error) {
+    if (error instanceof RangeError) return false;
+    throw error;
+  }
+}
+
+function createBlockedStartRecovery(order, unit, state) {
+  const existing = order.navigationBlockedStartRecovery;
+  if (existing?.revision === state.revision) return existing;
+
+  delete order.navigationRoute;
+  delete order.navigationRevision;
+  delete order.navigationRepathTick;
+  clearMovementRecoveryState(order);
+  state.pathService.releaseRequest(navigationRequestId(unit));
+  const recovery = {
+    revision: state.revision,
+    waypointIndex: 0,
+    attemptedCellKeys: [],
+    detourAttempts: 0,
+    detour: null,
+    target: Object.freeze({ x: unit.x, y: unit.y }),
+    bestDistance: 0,
+    stalledSeconds: 0,
+  };
+  order.navigationBlockedStartRecovery = recovery;
+  return recovery;
+}
+
+function activateBlockedStartDetour(order, recovery, unit, state, stats) {
+  const detour = chooseLocalDetour(
+    state.grid,
+    unit,
+    ensureNavigationDestination(order),
+    {
+      layer: unitNavigationLayer(stats),
+      attemptedCellKeys: recovery.attemptedCellKeys,
+    },
+  );
+  if (!detour) return false;
+  activateLocalDetour(recovery, detour, unit);
+  order.x = detour.point.x;
+  order.y = detour.point.y;
+  return true;
+}
+
+function recoverBlockedStart(game, unit, order, state, stats, stepSeconds) {
+  const recovery = createBlockedStartRecovery(order, unit, state);
+  if (!recovery.detour && !activateBlockedStartDetour(order, recovery, unit, state, stats)) {
+    cancelNavigationOrder(
+      game,
+      unit,
+      order,
+      routeFailureMessage(PATH_STATUSES.START_BLOCKED),
+      state,
+    );
+    return;
+  }
+
+  order.x = recovery.detour.point.x;
+  order.y = recovery.detour.point.y;
+  updateUnitWithTerrainMovement(game, unit, stepSeconds, state.grid);
+
+  if (unit.order === null) {
+    unit.order = order;
+    clearBlockedStartRecoveryState(order);
+    clearRecoveryReplanState(order);
+    return;
+  }
+
+  const progress = recordMovementProgress(recovery, unit, stepSeconds);
+  if (progress.status !== MOVEMENT_RECOVERY_STATUSES.STUCK) return;
+  if (
+    recovery.detourAttempts >= MOVEMENT_RECOVERY_DEFAULTS.maxDetours ||
+    !activateBlockedStartDetour(order, recovery, unit, state, stats)
+  ) {
+    cancelNavigationOrder(
+      game,
+      unit,
+      order,
+      routeFailureMessage(PATH_STATUSES.START_BLOCKED),
+      state,
+    );
+  }
 }
 
 function ensureNavigationRoute(game, unit, order, state, stats) {
@@ -152,11 +259,10 @@ function ensureNavigationRoute(game, unit, order, state, stats) {
     return order.navigationRoute;
   }
 
-  const destination = order.navigationDestination ?? formationRouteDestination(order);
-  order.navigationDestination = Object.freeze({ x: destination.x, y: destination.y });
+  const destination = ensureNavigationDestination(order);
   const request = state.pathService.requestRoute(
     { x: unit.x, y: unit.y },
-    order.navigationDestination,
+    destination,
     { layer: unitNavigationLayer(stats) },
     {
       requestId: navigationRequestId(unit),
@@ -174,6 +280,7 @@ function ensureNavigationRoute(game, unit, order, state, stats) {
   order.navigationRevision = state.revision;
   delete order.navigationRepathTick;
   clearMovementRecoveryState(order);
+  clearBlockedStartRecoveryState(order);
 
   if (order.navigationRoute.status !== PATH_STATUSES.FOUND) {
     cancelNavigationOrder(
@@ -257,6 +364,12 @@ export function updateUnitWithNavigation(
     return;
   }
 
+  if (!unitStartPassable(state, unit, stats)) {
+    recoverBlockedStart(game, unit, order, state, stats, stepSeconds);
+    return;
+  }
+  clearBlockedStartRecoveryState(order);
+
   const route = ensureNavigationRoute(game, unit, order, state, stats);
   if (!route || unit.order !== order || route.status !== PATH_STATUSES.FOUND) return;
 
@@ -303,7 +416,7 @@ export function updateUnitWithNavigation(
 
   const progress = recordMovementProgress(recovery, unit, stepSeconds);
   if (progress.status === MOVEMENT_RECOVERY_STATUSES.PROGRESSING) {
-    clearRecoveryReplanState(order);
+    if (!recovery.detour) clearRecoveryReplanState(order);
   } else if (progress.status === MOVEMENT_RECOVERY_STATUSES.STUCK) {
     attemptMovementRecovery(game, unit, order, state, stats, formationWaypoint);
   }
