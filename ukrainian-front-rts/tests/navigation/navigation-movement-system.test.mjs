@@ -250,6 +250,28 @@ test('escapes a newly blocked start cell before replanning', () => {
   assert.equal(game.navigationState.pathService.metrics().failures, 0);
 });
 
+test('escapes an impassable terrain start before replanning', () => {
+  const destination = cellCenter(5, 1);
+  const game = makeGame({
+    units: [makeUnit({
+      position: cellCenter(2, 1),
+      order: { kind: 'move', ...destination },
+    })],
+  });
+  const unit = game.units[0];
+  const gridWidth = WORLD.w / WORLD.tile;
+  game.terrain[1 * gridWidth + 2] = 4;
+
+  for (let step = 0; step < 20 && unit.order; step += 1) {
+    updateUnitWithNavigation(game, unit, 1 / 30);
+  }
+
+  assert.deepEqual({ x: unit.x, y: unit.y }, destination);
+  assert.equal(unit.order, null);
+  assert.equal(game.lastError, '');
+  assert.equal(game.navigationState.pathService.metrics().failures, 0);
+});
+
 test('preserves direct movement behavior for air units', () => {
   const destination = cellCenter(5, 1);
   const game = makeGame({
