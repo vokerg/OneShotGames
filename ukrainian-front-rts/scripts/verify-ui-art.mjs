@@ -4,16 +4,9 @@ import { resolve } from 'node:path';
 import { verifyUiArtArtifacts } from './lib/ui-art-pipeline.mjs';
 
 const projectRoot = resolve(new URL('..', import.meta.url).pathname);
-const read = (path) => readFile(resolve(projectRoot, path), 'utf8');
-
-const [sourceManifest, runtimeManifest, symbols, contactSheet] = await Promise.all([
-  read('art-src/ui/ui-art-source.json'),
-  read('assets/ui/ui-art-manifest.json'),
-  read('assets/ui/ui-art-symbols.svg'),
-  read('assets/contact-sheets/ui-art.svg'),
-]);
-
-const result = verifyUiArtArtifacts({ sourceManifest, runtimeManifest, symbols, contactSheet });
+const sourceManifest = await readFile(resolve(projectRoot, 'art-src/ui/ui-art-source.json'), 'utf8');
+const result = verifyUiArtArtifacts({ sourceManifest });
 process.stdout.write(
-  `[ui-art] ${result.assetCount} assets verified across ${Object.keys(result.familyCounts).length} families\n`,
+  `[ui-art] ${result.assetCount} assets verified across ${Object.keys(result.familyCounts).length} families; `
+  + `${result.symbolBytes} symbol bytes and ${result.contactSheetBytes} contact-sheet bytes reproducible\n`,
 );
