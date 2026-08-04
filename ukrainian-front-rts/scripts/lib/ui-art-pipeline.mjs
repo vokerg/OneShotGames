@@ -145,7 +145,13 @@ export function validateUiArtSourceManifest(value, catalog = UI_ART_CATALOG) {
   return source;
 }
 
-export function verifyUiArtArtifacts({ sourceManifest, runtimeManifest, symbols, contactSheet, catalog = UI_ART_CATALOG }) {
+export function verifyUiArtArtifacts({
+  sourceManifest,
+  runtimeManifest = buildUiArtRuntimeManifest(),
+  symbols = renderUiArtSymbols(),
+  contactSheet = renderUiArtContactSheet(),
+  catalog = UI_ART_CATALOG,
+}) {
   validateUiArtCatalog(catalog);
   const source = validateUiArtSourceManifest(sourceManifest, catalog);
   const runtime = parseJson(runtimeManifest, 'UI art runtime manifest');
@@ -154,5 +160,19 @@ export function verifyUiArtArtifacts({ sourceManifest, runtimeManifest, symbols,
   if (runtimeManifest !== buildUiArtRuntimeManifest(catalog)) throw new Error('UI art runtime manifest is stale.');
   if (symbols !== renderUiArtSymbols(catalog)) throw new Error('UI art symbol sheet is stale.');
   if (contactSheet !== renderUiArtContactSheet(catalog)) throw new Error('UI art contact sheet is stale.');
-  return Object.freeze({ sourceId: source.id, assetCount: catalog.assets.length, familyCounts: catalog.familyCounts });
+  for (const asset of catalog.assets) {
+    const symbolToken = `id="${asset.symbolId}"`;
+    if (symbols.split(symbolToken).length !== 2) throw new Error(`UI art symbol coverage drift for ${asset.key}.`);
+    const contactToken = `#${asset.symbolId}`;
+    if (!contactSheet.includes(contactToken)) throw new Error(`UI art contact-sheet coverage drift for ${asset.key}.`);
+  }
+  if (symbols.includes('<text') || contactSheet.includes('<text')) throw new Error('UI art outputs must not embed text.');
+  return Object.freeze({
+    sourceId: source.id,
+    assetCount: catalog.assets.length,
+    familyCounts: catalog.familyCounts,
+    runtimeBytes: runtimeManifest.length,
+    symbolBytes: symbols.length,
+    contactSheetBytes: contactSheet.length,
+  });
 }
