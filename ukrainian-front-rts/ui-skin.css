@@ -206,7 +206,7 @@ button:disabled,
 .ability.upgrade-command { background-color: #373044; }
 
 .selectionSubgroupTab {
-  min-height: 28px;
+  min-height: var(--ui-control-compact);
   padding: 2px 7px;
   border-image-source: url("assets/ui/skin/button.svg");
   font-family: var(--ui-data-font);
