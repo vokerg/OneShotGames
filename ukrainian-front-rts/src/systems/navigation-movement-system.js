@@ -133,9 +133,21 @@ function navigationRequestId(unit) {
   return `unit:${unit.id}`;
 }
 
-function intermediateWaypointReached(unit, formationWaypoint, recovery, stats) {
+function sameNavigationCell(state, left, right) {
+  try {
+    const leftCell = state.grid.worldToCell(left.x, left.y);
+    const rightCell = state.grid.worldToCell(right.x, right.y);
+    return leftCell.x === rightCell.x && leftCell.y === rightCell.y;
+  } catch (error) {
+    if (error instanceof RangeError) return false;
+    throw error;
+  }
+}
+
+function intermediateWaypointReached(state, unit, formationWaypoint, recovery, stats) {
   const route = recovery.route;
   if (recovery.detour || route.nextIndex >= route.waypoints.length - 1) return false;
+  if (sameNavigationCell(state, unit, formationWaypoint)) return true;
   const remaining = Math.hypot(
     formationWaypoint.x - unit.x,
     formationWaypoint.y - unit.y,
@@ -413,7 +425,7 @@ function evaluateMovementProgress({
   stepSeconds,
 }) {
   if (unit.order !== order) return;
-  if (intermediateWaypointReached(unit, formationWaypoint, recovery, stats)) {
+  if (intermediateWaypointReached(state, unit, formationWaypoint, recovery, stats)) {
     recovery.route.nextIndex += 1;
     clearMovementRecoveryState(order);
     restoreRouteTarget(order, recovery.route, state, stats, unit);
