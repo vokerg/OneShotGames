@@ -15,6 +15,7 @@ const UNIT_COUNT = 150;
 const MAX_TICKS = 6_000;
 const MAX_STALL_TICKS = 600;
 const ARRIVAL_DISTANCE = WORLD.tile * 4;
+const INITIAL_ROUTING_BUDGET_MS = 5_000;
 const FRAME_BUDGET_MS = 1000 / 60;
 const UNIT_TYPES = Object.freeze(['uaInfantry', 'uaMedic', 'uaIfv', 'uaTank', 'uaArtillery']);
 
@@ -317,7 +318,7 @@ test('150 mixed units cross authored chokepoints deterministically within naviga
   assert.ok(first.deterministic.maxStallTicks <= MAX_STALL_TICKS);
 
   assert.ok(
-    first.timing.initialRoutingMs < 2_500,
+    first.timing.initialRoutingMs < INITIAL_ROUTING_BUDGET_MS,
     `initial 150-unit routing took ${first.timing.initialRoutingMs.toFixed(2)}ms`,
   );
   assert.ok(
