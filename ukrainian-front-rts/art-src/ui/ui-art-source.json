@@ -1,0 +1,47 @@
+{
+  "schema": "fields-of-resolve.ui-art-source",
+  "version": 1,
+  "id": "fields-of-resolve-ui-art-v1",
+  "authority": "src/ui/ui-art-catalog.js",
+  "generator": "scripts/build-ui-art.mjs",
+  "familyCounts": {
+    "portraits": 16,
+    "unitIcons": 16,
+    "buildingIcons": 4,
+    "abilityIcons": 14,
+    "upgradeIcons": 6,
+    "objectiveIcons": 11,
+    "cursors": 16,
+    "pings": 8,
+    "medals": 8,
+    "fallback": 1
+  },
+  "outputs": {
+    "symbols": "assets/ui/ui-art-symbols.svg",
+    "runtimeManifest": "assets/ui/ui-art-manifest.json",
+    "contactSheet": "assets/contact-sheets/ui-art.svg"
+  },
+  "provenance": {
+    "creator": "OneShotGames contributors",
+    "createdAt": "2026-08-04",
+    "source": "Original repository-authored deterministic vector recipes",
+    "license": "CC0-1.0",
+    "redistribution": "allowed",
+    "externalInputs": [],
+    "fictionalSubjectsOnly": true,
+    "generatedTools": {
+      "used": true,
+      "details": "scripts/build-ui-art.mjs renders deterministic SVG geometry from the reviewed catalog.",
+      "humanCorrections": "Family silhouettes, palette hierarchy, hotspots, safe areas, reduced-motion behavior, and canonical coverage were manually reviewed."
+    },
+    "approval": "approved"
+  },
+  "constraints": {
+    "portraitViewport": { "width": 144, "height": 112 },
+    "iconGrid": { "width": 32, "height": 32 },
+    "cursorPixelRatios": [1, 2],
+    "pingDurationMs": 900,
+    "nearestNeighbor": true,
+    "embeddedText": false
+  }
+}
