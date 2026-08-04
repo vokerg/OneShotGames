@@ -6,6 +6,7 @@
     <title>Fields of Resolve</title>
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="economy-hud.css" />
+    <link rel="stylesheet" href="selection-panel.css" />
   </head>
   <body>
     <div id="shell">
@@ -41,9 +42,14 @@
       <div id="commandPanel">
         <section class="portrait">
           <canvas id="portrait" width="144" height="112"></canvas>
-          <div>
+          <div class="selectionOverview">
             <h3 id="selectionName">No selection</h3>
             <p id="selectionStats">Select units or a building.</p>
+            <section id="selectionPanel" class="hidden" aria-label="Current selection">
+              <div id="selectionSubgroups" class="selectionSubgroups" role="tablist" aria-label="Selection subgroups"></div>
+              <div id="selectionGrid" class="selectionGrid" role="list" aria-label="Selected units and structures"></div>
+              <div id="selectionContents" class="selectionContents hidden" aria-label="Transport and garrison contents"></div>
+            </section>
           </div>
         </section>
         <section id="abilities" aria-label="Unit and building commands"></section>

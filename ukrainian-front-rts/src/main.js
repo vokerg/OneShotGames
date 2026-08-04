@@ -58,6 +58,7 @@ import { createCombatReadabilityController } from './ui/combat-readability-runti
 import { installCommandCapacityFeedback } from './ui/command-capacity-feedback.js';
 import { installEconomyHudOverview } from './ui/economy-hud-overview.js';
 import { installProductionExitFeedback } from './ui/production-exit-feedback.js';
+import { installSelectionPanel } from './ui/selection-panel.js';
 import { installStanceCommandCard } from './ui/stance-command-card.js';
 import { installTacticalCommandCard } from './ui/tactical-command-card.js';
 import { installVeterancyIndicator } from './ui/veterancy-indicator.js';
@@ -177,6 +178,7 @@ const modules = [
   module('tactical-command-card', () => installTacticalCommandCard(ui)),
   module('stance-command-card', () => installStanceCommandCard(ui)),
   module('veterancy-indicator', () => installVeterancyIndicator({ game, ui })),
+  module('selection-panel', () => installSelectionPanel({ game, ui })),
   module('production-exit-feedback', () => installProductionExitFeedback({ game, ui })),
   module('worker-overview', () => installWorkerOverview({ game, ui, windowTarget: window })),
   module('command-capacity-feedback', () => installCommandCapacityFeedback({ game, ui })),
