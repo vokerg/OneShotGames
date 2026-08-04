@@ -275,7 +275,6 @@ function recoverBlockedStart(game, unit, order, state, stats, stepSeconds) {
 
   if (unit.order === null) {
     unit.order = order;
-    clearBlockedStartRecoveryState(order);
     clearRecoveryReplanState(order);
     return;
   }
@@ -322,7 +321,6 @@ function ensureNavigationRoute(game, unit, order, state, stats) {
   order.navigationRevision = state.revision;
   delete order.navigationRepathTick;
   clearMovementRecoveryState(order);
-  clearBlockedStartRecoveryState(order);
 
   if (order.navigationRoute.status !== PATH_STATUSES.FOUND) {
     cancelNavigationOrder(
@@ -410,7 +408,6 @@ export function updateUnitWithNavigation(
     recoverBlockedStart(game, unit, order, state, stats, stepSeconds);
     return;
   }
-  clearBlockedStartRecoveryState(order);
 
   const route = ensureNavigationRoute(game, unit, order, state, stats);
   if (!route || unit.order !== order || route.status !== PATH_STATUSES.FOUND) return;
@@ -419,6 +416,7 @@ export function updateUnitWithNavigation(
   if (!waypoint) {
     clearMovementRecoveryState(order);
     clearRecoveryReplanState(order);
+    clearBlockedStartRecoveryState(order);
     unit.order = null;
     state.pathService.releaseRequest(requestId);
     return;
@@ -451,6 +449,7 @@ export function updateUnitWithNavigation(
       unit.order = order;
     } else {
       clearRecoveryReplanState(order);
+      clearBlockedStartRecoveryState(order);
       state.pathService.releaseRequest(requestId);
     }
     return;
@@ -471,9 +470,20 @@ export function updateUnitsWithNavigation(game, stepSeconds) {
   for (const unit of game.units) {
     updateUnitWithNavigation(game, unit, stepSeconds, state);
   }
-  return resolveUnitOverlaps(
-    game.units,
+
+  const collisionUnits = game.units.filter(
+    (unit) => !unit.order?.navigationBlockedStartRecovery,
+  );
+  const collisionResult = resolveUnitOverlaps(
+    collisionUnits,
     (unit) => unitRuntimeStats(game, unit),
     { worldWidth: WORLD.w, worldHeight: WORLD.h },
   );
+  for (const unit of game.units) {
+    const order = unit.order;
+    if (!order?.navigationBlockedStartRecovery) continue;
+    const stats = unitRuntimeStats(game, unit);
+    if (unitStartPassable(state, unit, stats)) clearBlockedStartRecoveryState(order);
+  }
+  return collisionResult;
 }
