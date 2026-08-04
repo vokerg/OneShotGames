@@ -139,7 +139,13 @@ export const URBAN_DEFENSE_MISSION_SCRIPT = deepFreeze({
     {
       id: 'collateral-limit-reached',
       once: true,
-      when: { kind: 'variable', id: 'collateralIncidents', operator: 'gte', value: 2 },
+      when: {
+        kind: 'all',
+        conditions: [
+          { kind: 'entity', selector: { collection: 'buildings', scriptId: 'protected-clinic' }, state: 'destroyed', operator: 'gte', value: 1 },
+          { kind: 'entity', selector: { collection: 'buildings', scriptId: 'protected-waterworks' }, state: 'destroyed', operator: 'gte', value: 1 },
+        ],
+      },
       actions: [
         {
           kind: 'finish',
