@@ -35,6 +35,7 @@ import { resolveUnitOverlaps } from './unit-collision-system.js';
 
 const NAVIGATION_ORDER_KINDS = new Set(['move', 'attackMove']);
 const STUCK_ORDER_MESSAGE = 'Unit is blocked and cannot reach the destination.';
+const BLOCKED_START_ESCAPE_RADIUS = 8;
 
 function placementSignature(building) {
   const placement = building.placement;
@@ -197,16 +198,57 @@ function createBlockedStartRecovery(order, unit, state) {
   return recovery;
 }
 
+function blockedStartEscapeCandidate(order, recovery, unit, state, stats) {
+  let origin;
+  try {
+    origin = state.grid.worldToCell(unit.x, unit.y);
+  } catch (error) {
+    if (error instanceof RangeError) return null;
+    throw error;
+  }
+
+  const destination = ensureNavigationDestination(order);
+  const attempted = new Set(recovery.attemptedCellKeys);
+  const candidates = [];
+  for (let radius = 1; radius <= BLOCKED_START_ESCAPE_RADIUS; radius += 1) {
+    candidates.length = 0;
+    for (let y = origin.y - radius; y <= origin.y + radius; y += 1) {
+      for (let x = origin.x - radius; x <= origin.x + radius; x += 1) {
+        if (Math.max(Math.abs(x - origin.x), Math.abs(y - origin.y)) !== radius) continue;
+        if (x < 0 || y < 0 || x >= state.grid.width || y >= state.grid.height) continue;
+        const cellKey = `${x},${y}`;
+        if (attempted.has(cellKey)) continue;
+        if (!state.grid.isPassable(x, y, { layer: unitNavigationLayer(stats) })) continue;
+        const point = state.grid.cellToWorldCenter(x, y);
+        candidates.push({
+          cell: { x, y },
+          cellKey,
+          point,
+          escapeDistance: Math.hypot(point.x - unit.x, point.y - unit.y),
+          destinationDistance: Math.hypot(destination.x - point.x, destination.y - point.y),
+        });
+      }
+    }
+    candidates.sort((left, right) =>
+      left.escapeDistance - right.escapeDistance ||
+      left.destinationDistance - right.destinationDistance ||
+      left.cell.y - right.cell.y ||
+      left.cell.x - right.cell.x,
+    );
+    if (candidates.length) {
+      const selected = candidates[0];
+      return Object.freeze({
+        cell: Object.freeze({ ...selected.cell }),
+        cellKey: selected.cellKey,
+        point: Object.freeze({ ...selected.point }),
+      });
+    }
+  }
+  return null;
+}
+
 function activateBlockedStartDetour(order, recovery, unit, state, stats) {
-  const detour = chooseLocalDetour(
-    state.grid,
-    unit,
-    ensureNavigationDestination(order),
-    {
-      layer: unitNavigationLayer(stats),
-      attemptedCellKeys: recovery.attemptedCellKeys,
-    },
-  );
+  const detour = blockedStartEscapeCandidate(order, recovery, unit, state, stats);
   if (!detour) return false;
   activateLocalDetour(recovery, detour, unit);
   order.x = detour.point.x;
