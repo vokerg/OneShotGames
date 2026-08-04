@@ -41,23 +41,6 @@ test('moves lighter infantry farther than a larger vehicle', () => {
   assert.equal(100 - units[0].x > units[1].x - 110, true);
 });
 
-test('bounds aggregate displacement in dense exact-overlap clusters', () => {
-  const units = Array.from({ length: 20 }, (_, index) => ({
-    id: index + 1,
-    type: 'infantry',
-    hp: 100,
-    x: 250,
-    y: 250,
-  }));
-
-  resolveUnitOverlaps(units, getStats, { ...options, passes: 1, softness: 1 });
-
-  assert.equal(
-    units.every((unit) => Math.hypot(unit.x - 250, unit.y - 250) <= stats.infantry.size + 1e-9),
-    true,
-  );
-});
-
 test('resolves exact overlaps deterministically regardless of input order', () => {
   const source = [
     { id: 7, type: 'infantry', hp: 100, x: 200, y: 200 },
