@@ -108,8 +108,9 @@ test('assembles when observed strength is too high for the current force', () =>
   const result = plan({
     knowledge: [contact(90, 1200, 800, { strength: 200 })],
   });
-  assert.equal(result.posture, TACTICAL_AI_POSTURES.RETREATING);
-  assert.match(result.reason, /force ratio/i);
+  assert.equal(result.posture, TACTICAL_AI_POSTURES.ASSEMBLING);
+  assert.match(result.reason, /concentration|strength/i);
+  assert.deepEqual(result.commands.map((command) => command.role), ['assembly']);
 });
 
 test('reinforces separated units while the main force screens the target', () => {
