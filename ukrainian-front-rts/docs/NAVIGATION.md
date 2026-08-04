@@ -116,7 +116,7 @@ Blocked goals, unreachable goals, and search-limited player orders are cancelled
 
 `resolveUnitOverlaps(units, getStats, options)` operates after every ground unit has completed its movement update for the fixed step. It derives a circular collision radius from the existing unit `size` value, ignores air and destroyed units, and clamps the full footprint inside world bounds.
 
-Pairs are evaluated in stable unit-ID order. Exact coordinate overlaps use an ID-derived direction rather than randomness. Pair corrections are accumulated per pass, then each unit's aggregate displacement is capped at its radius multiplied by softness and applied simultaneously, so dense clusters cannot eject one unit an unbounded distance and input-array order does not affect the result. Three bounded soft-separation passes run by default; subsequent fixed steps continue convergence without an unbounded solver loop.
+Pairs are evaluated in stable unit-ID order. Exact coordinate overlaps use an ID-derived direction rather than randomness. Separation is accumulated per pass and applied simultaneously, so input-array order does not affect the result. Three bounded soft-separation passes run by default; subsequent fixed steps continue convergence without an unbounded solver loop.
 
 Displacement is mass weighted using radius squared. Larger vehicles therefore move less than lighter infantry when they overlap. The collision system changes positions only: it does not rewrite orders, paths, facing, combat targets, or authored unit statistics.
 
