@@ -62,7 +62,7 @@ export async function verifyEffectsArt(projectRoot) {
   const catalog = verifyRecipeFrames(artifacts);
 
   equalJson(JSON.parse(await readFile(resolve(root, EFFECTS_CATALOG_PATH), 'utf8')), artifacts.catalog, EFFECTS_CATALOG_PATH);
-  equalJson(JSON.parse(await readFile(resolve(root, EFFECTS_ATLAS_SOURCE_PATH), 'utf8')), artifacts.atlasSource, EFECTTS_ATLAS_SOURCE_PATH);
+  equalJson(JSON.parse(await readFile(resolve(root, EFFECTS_ATLAS_SOURCE_PATH), 'utf8')), artifacts.atlasSource, EFFECTS_ATLAS_SOURCE_PATH);
   await exactFile(root, EFFECTS_ATLAS_IMAGE_PATH, artifacts.files[EFFECTS_ATLAS_IMAGE_PATH]);
 
   const derivedManifest = createEffectsAtlasManifestFromSource(artifacts.atlasSource, { source: EFFECTS_ATLAS_SOURCE_PATH });
