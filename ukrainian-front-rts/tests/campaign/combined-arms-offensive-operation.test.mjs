@@ -102,6 +102,7 @@ test('combined-arms operation validates through prerequisite campaign contracts'
   assert.deepEqual(objectives.map((objective) => objective.id), COMBINED_ARMS_OPERATION.mission.objectiveIds);
   assert.equal(briefing.operationId, COMBINED_ARMS_OPERATION_ID);
   assert.equal(briefing.objectives.filter((objective) => objective.optional).length, 3);
+  assert.equal(briefing.objectives.every((objective) => objective.description.length > 0), true);
   assert.ok(Object.isFrozen(COMBINED_ARMS_OPERATION));
   assert.ok(Object.isFrozen(map));
 });
@@ -214,6 +215,22 @@ test('second secured sector deploys the final armored counterattack on the follo
   assert.equal(game.units.filter((unit) => unit.scriptId.startsWith('enemy-final-')).length, 4);
 });
 
+test('delayed reserve objective cannot complete before a reserve exists', () => {
+  const game = scriptedGame(COMBINED_ARMS_SCRIPT);
+  game.mission = COMBINED_ARMS_OPERATION.mission;
+  game.time = 900;
+
+  let summary = updateObjectiveLibrary(game);
+  let reserve = summary.results.find((result) => result.id === 'preserve-player-reserve');
+  assert.equal(reserve.status, 'active');
+  assert.equal(reserve.complete, false);
+
+  game.units.push(aliveUnit('player-reserve-test', 'uaIfv', TEAM.UA, 900, 384, 'player-reserve'));
+  summary = updateObjectiveLibrary(game);
+  reserve = summary.results.find((result) => result.id === 'preserve-player-reserve');
+  assert.equal(reserve.complete, true);
+});
+
 test('required multi-sector objectives complete independently of optional force preservation', () => {
   const game = scriptedGame(COMBINED_ARMS_SCRIPT);
   game.mission = COMBINED_ARMS_OPERATION.mission;
@@ -238,7 +255,7 @@ test('required multi-sector objectives complete independently of optional force 
   assert.equal(game.outcome, 'victory');
 });
 
-test('persistent-force summary is deterministic, immutable, and axis-specific', () => {
+test('persistent-force summary is deterministic, immutable, axis-specific, and finite', () => {
   const input = {
     survivorCounts: {
       'allied-ai-spearhead': 2,
@@ -257,4 +274,16 @@ test('persistent-force summary is deterministic, immutable, and axis-specific', 
   assert.equal(first.groups['command-cadre'].modifier, 'command-cadre-replaced');
   assert.ok(Object.isFrozen(first));
   assert.ok(Object.isFrozen(first.groups));
+
+  const normalized = evaluateCombinedArmsPersistence({
+    survivorCounts: {
+      'allied-ai-spearhead': Number.POSITIVE_INFINITY,
+      'player-reserve': -4,
+      'persistent-command-cadre': 'not-a-number',
+    },
+    reserveAxis: 'south',
+  });
+  assert.deepEqual(Object.values(normalized.groups).map((group) => group.survivors), [0, 0, 0]);
+  assert.throws(() => evaluateCombinedArmsPersistence({ survivorCounts: null }), TypeError);
+  assert.throws(() => evaluateCombinedArmsPersistence({ reserveAxis: 'east' }), RangeError);
 });
