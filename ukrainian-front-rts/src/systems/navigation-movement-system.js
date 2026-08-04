@@ -36,11 +36,6 @@ import { resolveUnitOverlaps } from './unit-collision-system.js';
 const NAVIGATION_ORDER_KINDS = new Set(['move', 'attackMove']);
 const STUCK_ORDER_MESSAGE = 'Unit is blocked and cannot reach the destination.';
 const BLOCKED_START_ESCAPE_RADIUS = 8;
-const MAX_GROUND_UNIT_RADIUS = Math.max(
-  ...Object.values(UNIT_TYPES)
-    .filter((stats) => stats && !stats.air)
-    .map((stats) => Math.max(0, Number(stats.size) || 0)),
-);
 
 function placementSignature(building) {
   const placement = building.placement;
@@ -136,15 +131,6 @@ function routeFailureMessage(status) {
 
 function navigationRequestId(unit) {
   return `unit:${unit.id}`;
-}
-
-function navigationWaypointArrivalDistance(stats) {
-  const radius = Math.max(0, Number(stats?.size) || 0);
-  return WORLD.tile + radius + MAX_GROUND_UNIT_RADIUS;
-}
-
-function distanceToPoint(unit, point) {
-  return Math.hypot(point.x - unit.x, point.y - unit.y);
 }
 
 function clearRecoveryReplanState(order) {
@@ -403,11 +389,31 @@ function attemptMovementRecovery(game, unit, order, state, stats, formationWaypo
   return true;
 }
 
+function evaluateMovementProgress({
+  game,
+  unit,
+  order,
+  state,
+  stats,
+  formationWaypoint,
+  recovery,
+  stepSeconds,
+}) {
+  if (unit.order !== order) return;
+  const progress = recordMovementProgress(recovery, unit, stepSeconds);
+  if (progress.status === MOVEMENT_RECOVERY_STATUSES.PROGRESSING) {
+    if (!recovery.detour) clearRecoveryReplanState(order);
+  } else if (progress.status === MOVEMENT_RECOVERY_STATUSES.STUCK) {
+    attemptMovementRecovery(game, unit, order, state, stats, formationWaypoint);
+  }
+}
+
 export function updateUnitWithNavigation(
   game,
   unit,
   stepSeconds,
   state = synchronizeNavigationGrid(game),
+  { deferProgress = false } = {},
 ) {
   const order = unit.order;
   const stats = unitRuntimeStats(game, unit);
@@ -446,18 +452,7 @@ export function updateUnitWithNavigation(
   order.y = movementTarget.y;
   applyFormationState(order, formationWaypoint);
   const wasFollowingDetour = Boolean(recovery.detour);
-  const distanceBeforeMovement = distanceToPoint(unit, formationWaypoint);
   updateUnitWithTerrainMovement(game, unit, stepSeconds, state.grid);
-  const distanceAfterMovement = distanceToPoint(unit, formationWaypoint);
-
-  if (
-    !wasFollowingDetour &&
-    unit.order === order &&
-    distanceAfterMovement < distanceBeforeMovement &&
-    distanceAfterMovement <= navigationWaypointArrivalDistance(stats)
-  ) {
-    unit.order = null;
-  }
 
   if (unit.order === null) {
     if (wasFollowingDetour) {
@@ -480,20 +475,35 @@ export function updateUnitWithNavigation(
     return;
   }
 
-  const progress = recordMovementProgress(recovery, unit, stepSeconds);
-  if (progress.status === MOVEMENT_RECOVERY_STATUSES.PROGRESSING) {
-    if (!recovery.detour) clearRecoveryReplanState(order);
-  } else if (progress.status === MOVEMENT_RECOVERY_STATUSES.STUCK) {
-    attemptMovementRecovery(game, unit, order, state, stats, formationWaypoint);
-  }
+  const progressContext = {
+    game,
+    unit,
+    order,
+    state,
+    stats,
+    formationWaypoint,
+    recovery,
+    stepSeconds,
+  };
+  if (deferProgress) return progressContext;
+  evaluateMovementProgress(progressContext);
+  return null;
 }
 
 export function updateUnitsWithNavigation(game, stepSeconds) {
   const state = synchronizeNavigationGrid(game);
   state.pathService.retainRequests(game.units.map(navigationRequestId));
   state.tick += 1;
+  const progressContexts = [];
   for (const unit of game.units) {
-    updateUnitWithNavigation(game, unit, stepSeconds, state);
+    const progressContext = updateUnitWithNavigation(
+      game,
+      unit,
+      stepSeconds,
+      state,
+      { deferProgress: true },
+    );
+    if (progressContext) progressContexts.push(progressContext);
   }
 
   const collisionUnits = game.units.filter(
@@ -509,6 +519,9 @@ export function updateUnitsWithNavigation(game, stepSeconds) {
     if (!order?.navigationBlockedStartRecovery) continue;
     const stats = unitRuntimeStats(game, unit);
     if (unitStartPassable(state, unit, stats)) clearBlockedStartRecoveryState(order);
+  }
+  for (const progressContext of progressContexts) {
+    evaluateMovementProgress(progressContext);
   }
   return collisionResult;
 }
