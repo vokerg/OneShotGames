@@ -63,6 +63,49 @@ test('resets the stall window after meaningful progress', () => {
   assert.equal(state.stalledSeconds, 0.2);
 });
 
+test('marks repeated small gains as stuck when net progress misses the recovery window', () => {
+  const order = {};
+  const route = { nextIndex: 0 };
+  const unit = { x: 0, y: 0 };
+  const state = ensureMovementRecoveryState(order, route, unit, { x: 100, y: 0 });
+
+  let result;
+  for (let step = 1; step <= 6; step += 1) {
+    unit.x = step * 1.5;
+    result = recordMovementProgress(state, unit, 0.5, {
+      minimumProgress: 1,
+      stuckSeconds: 1,
+      progressWindowSeconds: 3,
+      minimumWindowProgress: 12,
+    });
+  }
+
+  assert.equal(result.status, MOVEMENT_RECOVERY_STATUSES.STUCK);
+  assert.equal(state.madeWaypointProgress, true);
+});
+
+test('resets the recovery window after sufficient sustained progress', () => {
+  const order = {};
+  const route = { nextIndex: 0 };
+  const unit = { x: 0, y: 0 };
+  const state = ensureMovementRecoveryState(order, route, unit, { x: 100, y: 0 });
+
+  let result;
+  for (let step = 1; step <= 6; step += 1) {
+    unit.x = step * 2.5;
+    result = recordMovementProgress(state, unit, 0.5, {
+      minimumProgress: 1,
+      stuckSeconds: 1,
+      progressWindowSeconds: 3,
+      minimumWindowProgress: 12,
+    });
+  }
+
+  assert.equal(result.status, MOVEMENT_RECOVERY_STATUSES.PROGRESSING);
+  assert.equal(state.progressWindowSeconds, 0);
+  assert.equal(state.progressWindowDistance, 85);
+});
+
 test('does not reset accumulated stall time when a formation target shifts', () => {
   const order = {};
   const route = { nextIndex: 0 };

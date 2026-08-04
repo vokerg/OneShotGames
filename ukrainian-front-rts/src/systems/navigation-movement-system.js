@@ -1,5 +1,6 @@
 import { BUILDING_TYPES, TEAM, UNIT_TYPES, WORLD } from '../config.js';
 import {
+  FORMATION_STATES,
   formationRouteDestination,
   resolveFormationWaypoint,
 } from '../core/formation.js';
@@ -12,7 +13,6 @@ import {
   ensureMovementRecoveryState,
   finishLocalDetour,
   recordMovementProgress,
-  retargetMovementRecoveryState,
 } from '../navigation/movement-recovery.js';
 import {
   MOVEMENT_LAYERS,
@@ -35,6 +35,7 @@ import { resolveUnitOverlaps } from './unit-collision-system.js';
 
 const NAVIGATION_ORDER_KINDS = new Set(['move', 'attackMove']);
 const STUCK_ORDER_MESSAGE = 'Unit is blocked and cannot reach the destination.';
+const BLOCKED_START_ESCAPE_RADIUS = 8;
 
 function placementSignature(building) {
   const placement = building.placement;
@@ -132,12 +133,191 @@ function navigationRequestId(unit) {
   return `unit:${unit.id}`;
 }
 
+function sameNavigationCell(state, left, right) {
+  try {
+    const leftCell = state.grid.worldToCell(left.x, left.y);
+    const rightCell = state.grid.worldToCell(right.x, right.y);
+    return leftCell.x === rightCell.x && leftCell.y === rightCell.y;
+  } catch (error) {
+    if (error instanceof RangeError) return false;
+    throw error;
+  }
+}
+
+function intermediateWaypointReached(state, unit, formationWaypoint, recovery, stats) {
+  const route = recovery.route;
+  if (recovery.detour || route.nextIndex >= route.waypoints.length - 1) return false;
+  if (sameNavigationCell(state, unit, formationWaypoint)) return true;
+  const remaining = Math.hypot(
+    formationWaypoint.x - unit.x,
+    formationWaypoint.y - unit.y,
+  );
+  const unitRadius = Math.max(0, Number(stats?.size) || 0);
+  if (remaining <= WORLD.tile / 2 + unitRadius) return true;
+  const clearance = Math.SQRT2 * WORLD.tile + unitRadius;
+  return (recovery.madeWaypointProgress || remaining < recovery.bestDistance) && remaining <= clearance;
+}
+
+function clearRecoveryReplanState(order) {
+  if (order && Object.hasOwn(order, 'navigationRecoveryReplans')) {
+    delete order.navigationRecoveryReplans;
+  }
+}
+
+function clearBlockedStartRecoveryState(order) {
+  if (order && Object.hasOwn(order, 'navigationBlockedStartRecovery')) {
+    delete order.navigationBlockedStartRecovery;
+  }
+}
+
 function cancelNavigationOrder(game, unit, order, message, state) {
   if (unit.team === TEAM.UA) game.lastError = message;
   if (unit.order === order) unit.order = null;
   unit.target = null;
   clearMovementRecoveryState(order);
+  clearRecoveryReplanState(order);
+  clearBlockedStartRecoveryState(order);
   state.pathService.releaseRequest(navigationRequestId(unit));
+}
+
+function ensureNavigationDestination(order) {
+  if (!order.navigationDestination) {
+    const destination = formationRouteDestination(order);
+    order.navigationDestination = Object.freeze({ x: destination.x, y: destination.y });
+  }
+  return order.navigationDestination;
+}
+
+function unitStartPassable(state, unit, stats) {
+  try {
+    const cell = state.grid.worldToCell(unit.x, unit.y);
+    return state.grid.isPassable(cell.x, cell.y, {
+      layer: unitNavigationLayer(stats),
+    });
+  } catch (error) {
+    if (error instanceof RangeError) return false;
+    throw error;
+  }
+}
+
+function createBlockedStartRecovery(order, unit, state) {
+  const existing = order.navigationBlockedStartRecovery;
+  if (existing?.revision === state.revision) return existing;
+
+  delete order.navigationRoute;
+  delete order.navigationRevision;
+  delete order.navigationRepathTick;
+  clearMovementRecoveryState(order);
+  state.pathService.releaseRequest(navigationRequestId(unit));
+  const recovery = {
+    revision: state.revision,
+    waypointIndex: 0,
+    attemptedCellKeys: [],
+    detourAttempts: 0,
+    detour: null,
+    target: Object.freeze({ x: unit.x, y: unit.y }),
+    bestDistance: 0,
+    stalledSeconds: 0,
+  };
+  order.navigationBlockedStartRecovery = recovery;
+  return recovery;
+}
+
+function blockedStartEscapeCandidate(order, recovery, unit, state, stats) {
+  let origin;
+  try {
+    origin = state.grid.worldToCell(unit.x, unit.y);
+  } catch (error) {
+    if (error instanceof RangeError) return null;
+    throw error;
+  }
+
+  const destination = ensureNavigationDestination(order);
+  const attempted = new Set(recovery.attemptedCellKeys);
+  const candidates = [];
+  for (let radius = 1; radius <= BLOCKED_START_ESCAPE_RADIUS; radius += 1) {
+    candidates.length = 0;
+    for (let y = origin.y - radius; y <= origin.y + radius; y += 1) {
+      for (let x = origin.x - radius; x <= origin.x + radius; x += 1) {
+        if (Math.max(Math.abs(x - origin.x), Math.abs(y - origin.y)) !== radius) continue;
+        if (x < 0 || y < 0 || x >= state.grid.width || y >= state.grid.height) continue;
+        const cellKey = `${x},${y}`;
+        if (attempted.has(cellKey)) continue;
+        if (!state.grid.isPassable(x, y, { layer: unitNavigationLayer(stats) })) continue;
+        const point = state.grid.cellToWorldCenter(x, y);
+        candidates.push({
+          cell: { x, y },
+          cellKey,
+          point,
+          escapeDistance: Math.hypot(point.x - unit.x, point.y - unit.y),
+          destinationDistance: Math.hypot(destination.x - point.x, destination.y - point.y),
+        });
+      }
+    }
+    candidates.sort((left, right) =>
+      left.escapeDistance - right.escapeDistance ||
+      left.destinationDistance - right.destinationDistance ||
+      left.cell.y - right.cell.y ||
+      left.cell.x - right.cell.x,
+    );
+    if (candidates.length) {
+      const selected = candidates[0];
+      return Object.freeze({
+        cell: Object.freeze({ ...selected.cell }),
+        cellKey: selected.cellKey,
+        point: Object.freeze({ ...selected.point }),
+      });
+    }
+  }
+  return null;
+}
+
+function activateBlockedStartDetour(order, recovery, unit, state, stats) {
+  const detour = blockedStartEscapeCandidate(order, recovery, unit, state, stats);
+  if (!detour) return false;
+  activateLocalDetour(recovery, detour, unit);
+  order.x = detour.point.x;
+  order.y = detour.point.y;
+  return true;
+}
+
+function recoverBlockedStart(game, unit, order, state, stats, stepSeconds) {
+  const recovery = createBlockedStartRecovery(order, unit, state);
+  if (!recovery.detour && !activateBlockedStartDetour(order, recovery, unit, state, stats)) {
+    cancelNavigationOrder(
+      game,
+      unit,
+      order,
+      routeFailureMessage(PATH_STATUSES.START_BLOCKED),
+      state,
+    );
+    return;
+  }
+
+  order.x = recovery.detour.point.x;
+  order.y = recovery.detour.point.y;
+  game.updateUnit(unit, stepSeconds);
+
+  if (unit.order === null) {
+    unit.order = order;
+    clearRecoveryReplanState(order);
+    return;
+  }
+
+  const progress = recordMovementProgress(recovery, unit, stepSeconds);
+  if (progress.status !== MOVEMENT_RECOVERY_STATUSES.STUCK) return;
+  if (
+    recovery.detourAttempts >= MOVEMENT_RECOVERY_DEFAULTS.maxDetours ||
+    !activateBlockedStartDetour(order, recovery, unit, state, stats)
+  ) {
+    cancelNavigationOrder(
+      game,
+      unit,
+      order,
+      routeFailureMessage(PATH_STATUSES.START_BLOCKED),
+      state,
+    );
+  }
 }
 
 function ensureNavigationRoute(game, unit, order, state, stats) {
@@ -145,11 +325,10 @@ function ensureNavigationRoute(game, unit, order, state, stats) {
     return order.navigationRoute;
   }
 
-  const destination = order.navigationDestination ?? formationRouteDestination(order);
-  order.navigationDestination = Object.freeze({ x: destination.x, y: destination.y });
+  const destination = ensureNavigationDestination(order);
   const request = state.pathService.requestRoute(
     { x: unit.x, y: unit.y },
-    order.navigationDestination,
+    destination,
     { layer: unitNavigationLayer(stats) },
     {
       requestId: navigationRequestId(unit),
@@ -186,21 +365,54 @@ function applyFormationState(order, formationWaypoint) {
   order.formationState = formationWaypoint.state;
 }
 
-function restoreRouteTarget(order, route, state, stats) {
-  const next = currentWaypoint(route);
-  if (!next) return false;
-  const nextFormationWaypoint = resolveFormationWaypoint(state.grid, next, order, {
-    layer: unitNavigationLayer(stats),
+function resolveRouteWaypointTarget(route, state, order, stats, unit) {
+  const waypoint = currentWaypoint(route);
+  if (!waypoint) return null;
+  const finalWaypoint = route.nextIndex >= route.waypoints.length - 1;
+  const resolved = resolveFormationWaypoint(
+    state.grid,
+    waypoint,
+    finalWaypoint ? order : null,
+    {
+      layer: unitNavigationLayer(stats),
+      origin: unit,
+    },
+  );
+  if (!order.formation || finalWaypoint) return resolved;
+  return Object.freeze({
+    x: resolved.x,
+    y: resolved.y,
+    compression: 0,
+    state: FORMATION_STATES.COMPRESSED,
   });
+}
+
+function restoreRouteTarget(order, route, state, stats, unit) {
+  const nextFormationWaypoint = resolveRouteWaypointTarget(route, state, order, stats, unit);
+  if (!nextFormationWaypoint) return false;
   order.x = nextFormationWaypoint.x;
   order.y = nextFormationWaypoint.y;
   applyFormationState(order, nextFormationWaypoint);
+  clearRecoveryReplanState(order);
+  return true;
+}
+
+function scheduleGlobalRecoveryReplan(unit, order, state) {
+  const attempts = Number(order.navigationRecoveryReplans || 0);
+  if (attempts >= MOVEMENT_RECOVERY_DEFAULTS.maxReplans) return false;
+  order.navigationRecoveryReplans = attempts + 1;
+  delete order.navigationRoute;
+  delete order.navigationRevision;
+  delete order.navigationRepathTick;
+  clearMovementRecoveryState(order);
+  state.pathService.releaseRequest(navigationRequestId(unit));
   return true;
 }
 
 function attemptMovementRecovery(game, unit, order, state, stats, formationWaypoint) {
   const recovery = order.navigationRecovery;
   if (recovery.detourAttempts >= MOVEMENT_RECOVERY_DEFAULTS.maxDetours) {
+    if (scheduleGlobalRecoveryReplan(unit, order, state)) return true;
     cancelNavigationOrder(game, unit, order, STUCK_ORDER_MESSAGE, state);
     return false;
   }
@@ -210,6 +422,7 @@ function attemptMovementRecovery(game, unit, order, state, stats, formationWaypo
     attemptedCellKeys: recovery.attemptedCellKeys,
   });
   if (!detour) {
+    if (scheduleGlobalRecoveryReplan(unit, order, state)) return true;
     cancelNavigationOrder(game, unit, order, STUCK_ORDER_MESSAGE, state);
     return false;
   }
@@ -220,11 +433,37 @@ function attemptMovementRecovery(game, unit, order, state, stats, formationWaypo
   return true;
 }
 
+function evaluateMovementProgress({
+  game,
+  unit,
+  order,
+  state,
+  stats,
+  formationWaypoint,
+  recovery,
+  stepSeconds,
+}) {
+  if (unit.order !== order) return;
+  if (intermediateWaypointReached(state, unit, formationWaypoint, recovery, stats)) {
+    recovery.route.nextIndex += 1;
+    clearMovementRecoveryState(order);
+    restoreRouteTarget(order, recovery.route, state, stats, unit);
+    return;
+  }
+  const progress = recordMovementProgress(recovery, unit, stepSeconds);
+  if (progress.status === MOVEMENT_RECOVERY_STATUSES.PROGRESSING) {
+    if (!recovery.detour) clearRecoveryReplanState(order);
+  } else if (progress.status === MOVEMENT_RECOVERY_STATUSES.STUCK) {
+    attemptMovementRecovery(game, unit, order, state, stats, formationWaypoint);
+  }
+}
+
 export function updateUnitWithNavigation(
   game,
   unit,
   stepSeconds,
   state = synchronizeNavigationGrid(game),
+  { deferProgress = false } = {},
 ) {
   const order = unit.order;
   const stats = unitRuntimeStats(game, unit);
@@ -235,22 +474,26 @@ export function updateUnitWithNavigation(
     return;
   }
 
+  if (!unitStartPassable(state, unit, stats)) {
+    recoverBlockedStart(game, unit, order, state, stats, stepSeconds);
+    return;
+  }
+
   const route = ensureNavigationRoute(game, unit, order, state, stats);
   if (!route || unit.order !== order || route.status !== PATH_STATUSES.FOUND) return;
 
-  const waypoint = currentWaypoint(route);
-  if (!waypoint) {
+  const resolvedFormationWaypoint = resolveRouteWaypointTarget(route, state, order, stats, unit);
+  if (!resolvedFormationWaypoint) {
     clearMovementRecoveryState(order);
+    clearRecoveryReplanState(order);
+    clearBlockedStartRecoveryState(order);
     unit.order = null;
     state.pathService.releaseRequest(requestId);
     return;
   }
 
-  const formationWaypoint = resolveFormationWaypoint(state.grid, waypoint, order, {
-    layer: unitNavigationLayer(stats),
-  });
-  const recovery = ensureMovementRecoveryState(order, route, unit, formationWaypoint);
-  retargetMovementRecoveryState(recovery, unit, formationWaypoint);
+  const recovery = ensureMovementRecoveryState(order, route, unit, resolvedFormationWaypoint);
+  const formationWaypoint = recovery.routeTarget ??= resolvedFormationWaypoint;
   const movementTarget = recovery.detour?.point ?? formationWaypoint;
   order.x = movementTarget.x;
   order.y = movementTarget.y;
@@ -269,30 +512,63 @@ export function updateUnitWithNavigation(
 
     route.nextIndex += 1;
     clearMovementRecoveryState(order);
-    if (restoreRouteTarget(order, route, state, stats)) {
+    if (restoreRouteTarget(order, route, state, stats, unit)) {
       unit.order = order;
     } else {
+      clearRecoveryReplanState(order);
+      clearBlockedStartRecoveryState(order);
       state.pathService.releaseRequest(requestId);
     }
     return;
   }
 
-  const progress = recordMovementProgress(recovery, unit, stepSeconds);
-  if (progress.status === MOVEMENT_RECOVERY_STATUSES.STUCK) {
-    attemptMovementRecovery(game, unit, order, state, stats, formationWaypoint);
-  }
+  const progressContext = {
+    game,
+    unit,
+    order,
+    state,
+    stats,
+    formationWaypoint,
+    recovery,
+    stepSeconds,
+  };
+  if (deferProgress) return progressContext;
+  evaluateMovementProgress(progressContext);
+  return null;
 }
 
 export function updateUnitsWithNavigation(game, stepSeconds) {
   const state = synchronizeNavigationGrid(game);
   state.pathService.retainRequests(game.units.map(navigationRequestId));
   state.tick += 1;
+  const progressContexts = [];
   for (const unit of game.units) {
-    updateUnitWithNavigation(game, unit, stepSeconds, state);
+    const progressContext = updateUnitWithNavigation(
+      game,
+      unit,
+      stepSeconds,
+      state,
+      { deferProgress: true },
+    );
+    if (progressContext) progressContexts.push(progressContext);
   }
-  return resolveUnitOverlaps(
-    game.units,
+
+  const collisionUnits = game.units.filter(
+    (unit) => !unit.order?.navigationBlockedStartRecovery,
+  );
+  const collisionResult = resolveUnitOverlaps(
+    collisionUnits,
     (unit) => unitRuntimeStats(game, unit),
     { worldWidth: WORLD.w, worldHeight: WORLD.h },
   );
+  for (const unit of game.units) {
+    const order = unit.order;
+    if (!order?.navigationBlockedStartRecovery) continue;
+    const stats = unitRuntimeStats(game, unit);
+    if (unitStartPassable(state, unit, stats)) clearBlockedStartRecoveryState(order);
+  }
+  for (const progressContext of progressContexts) {
+    evaluateMovementProgress(progressContext);
+  }
+  return collisionResult;
 }
