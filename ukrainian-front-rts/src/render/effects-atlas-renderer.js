@@ -16,6 +16,8 @@ export const DEFAULT_EFFECT_ATLAS_SOURCE = new URL(
   import.meta.url,
 );
 
+const UNIT_FLASH_LIFETIME_SECONDS = 0.1;
+
 export async function loadEffectsAtlas(source, {
   fetchImpl = globalThis.fetch?.bind(globalThis),
   imageFactory,
@@ -152,8 +154,8 @@ export function createEffectsAtlasController({
     const screen = owner.sp(unit.x, unit.y);
     const zoom = Number(simulation.camera?.z) || 1;
     const descriptor = createEffectPresentationDescriptor(
-      { ...unit, life: unit.flash, max: Math.max(0.1, Number(unit.flash) || 0.1) },
-      { channel: 'unit-flash' },
+      { ...unit, life: unit.flash },
+      { channel: 'unit-flash', maxLife: UNIT_FLASH_LIFETIME_SECONDS },
     );
     const context = owner.x;
     context.save();
