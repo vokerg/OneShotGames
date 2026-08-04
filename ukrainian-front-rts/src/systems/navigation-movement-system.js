@@ -36,12 +36,6 @@ import { resolveUnitOverlaps } from './unit-collision-system.js';
 const NAVIGATION_ORDER_KINDS = new Set(['move', 'attackMove']);
 const STUCK_ORDER_MESSAGE = 'Unit is blocked and cannot reach the destination.';
 const BLOCKED_START_ESCAPE_RADIUS = 8;
-const DIRECT_MOVEMENT_ARRIVAL_DISTANCE = 5;
-const MAX_GROUND_UNIT_RADIUS = Math.max(
-  ...Object.values(UNIT_TYPES)
-    .filter((stats) => stats && !stats.air)
-    .map((stats) => Math.max(0, Number(stats.size) || 0)),
-);
 
 function placementSignature(building) {
   const placement = building.placement;
@@ -147,7 +141,7 @@ function intermediateWaypointReached(unit, formationWaypoint, recovery, stats) {
     formationWaypoint.y - unit.y,
   );
   const unitRadius = Math.max(0, Number(stats?.size) || 0);
-  const clearance = DIRECT_MOVEMENT_ARRIVAL_DISTANCE + unitRadius + MAX_GROUND_UNIT_RADIUS;
+  const clearance = WORLD.tile + unitRadius;
   return (recovery.madeWaypointProgress || remaining < recovery.bestDistance) && remaining <= clearance;
 }
 
