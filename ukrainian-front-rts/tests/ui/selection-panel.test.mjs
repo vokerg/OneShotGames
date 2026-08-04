@@ -95,7 +95,7 @@ test('builds immutable subgroup, primary, health, status, veterancy, transport, 
   });
   const medic = unit(1, 'uaMedic');
   const transport = unit(3, 'uaIfv', {
-    passengers: [unit(8, 'uaInfantry', { hp: 70, maxHp: 100 })],
+    passengers: [unit(8, 'uaInfantry', { hp: 70, maxHp: 100, transportSlots: 2 })],
   });
   const garrison = {
     id: 4,
@@ -106,7 +106,7 @@ test('builds immutable subgroup, primary, health, status, veterancy, transport, 
     queue: [],
     garrisonState: {
       capacity: 4,
-      occupants: [{ id: 'g-1', type: 'uaInfantry', team: TEAM.UA, hp: 60, maxHp: 100 }],
+      occupants: [{ id: 'g-1', type: 'uaInfantry', team: TEAM.UA, hp: 60, maxHp: 100, slotCost: 2 }],
     },
   };
   const game = gameWith([infantry, medic, transport, garrison], 2);
@@ -126,6 +126,7 @@ test('builds immutable subgroup, primary, health, status, veterancy, transport, 
   assert.equal(primary.veterancy.label, 'Veteran');
   assert.equal(model.containers.length, 2);
   assert.deepEqual(model.containers.map((container) => container.kind), ['transport', 'garrison']);
+  assert.deepEqual(model.containers.map((container) => container.used), [2, 2]);
   assert.ok(Object.isFrozen(model));
   assert.ok(Object.isFrozen(model.items));
   assert.ok(Object.isFrozen(model.containers[0].contents[0]));
