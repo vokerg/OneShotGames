@@ -340,11 +340,12 @@ function applyFormationState(order, formationWaypoint) {
   order.formationState = formationWaypoint.state;
 }
 
-function restoreRouteTarget(order, route, state, stats) {
+function restoreRouteTarget(order, route, state, stats, unit) {
   const next = currentWaypoint(route);
   if (!next) return false;
   const nextFormationWaypoint = resolveFormationWaypoint(state.grid, next, order, {
     layer: unitNavigationLayer(stats),
+    origin: unit,
   });
   order.x = nextFormationWaypoint.x;
   order.y = nextFormationWaypoint.y;
@@ -442,9 +443,15 @@ export function updateUnitWithNavigation(
     return;
   }
 
-  const formationWaypoint = resolveFormationWaypoint(state.grid, waypoint, order, {
-    layer: unitNavigationLayer(stats),
-  });
+  const formationWaypoint = resolveFormationWaypoint(
+    state.grid,
+    waypoint,
+    route.nextIndex === 0 ? null : order,
+    {
+      layer: unitNavigationLayer(stats),
+      origin: unit,
+    },
+  );
   const recovery = ensureMovementRecoveryState(order, route, unit, formationWaypoint);
   retargetMovementRecoveryState(recovery, unit, formationWaypoint);
   const movementTarget = recovery.detour?.point ?? formationWaypoint;
@@ -465,7 +472,7 @@ export function updateUnitWithNavigation(
 
     route.nextIndex += 1;
     clearMovementRecoveryState(order);
-    if (restoreRouteTarget(order, route, state, stats)) {
+    if (restoreRouteTarget(order, route, state, stats, unit)) {
       unit.order = order;
     } else {
       clearRecoveryReplanState(order);
