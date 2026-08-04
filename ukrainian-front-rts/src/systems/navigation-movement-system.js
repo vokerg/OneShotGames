@@ -12,7 +12,6 @@ import {
   ensureMovementRecoveryState,
   finishLocalDetour,
   recordMovementProgress,
-  retargetMovementRecoveryState,
 } from '../navigation/movement-recovery.js';
 import {
   MOVEMENT_LAYERS,
@@ -473,7 +472,7 @@ export function updateUnitWithNavigation(
     return;
   }
 
-  const formationWaypoint = resolveFormationWaypoint(
+  const resolvedFormationWaypoint = resolveFormationWaypoint(
     state.grid,
     waypoint,
     route.nextIndex === 0 ? null : order,
@@ -482,8 +481,8 @@ export function updateUnitWithNavigation(
       origin: unit,
     },
   );
-  const recovery = ensureMovementRecoveryState(order, route, unit, formationWaypoint);
-  retargetMovementRecoveryState(recovery, unit, formationWaypoint);
+  const recovery = ensureMovementRecoveryState(order, route, unit, resolvedFormationWaypoint);
+  const formationWaypoint = recovery.routeTarget ??= resolvedFormationWaypoint;
   const movementTarget = recovery.detour?.point ?? formationWaypoint;
   order.x = movementTarget.x;
   order.y = movementTarget.y;
@@ -546,21 +545,11 @@ export function updateUnitsWithNavigation(game, stepSeconds) {
   const collisionUnits = game.units.filter(
     (unit) => !unit.order?.navigationBlockedStartRecovery,
   );
-  const collisionPositions = new Map(
-    collisionUnits.map((unit) => [unit.id, { x: unit.x, y: unit.y }]),
-  );
   const collisionResult = resolveUnitOverlaps(
     collisionUnits,
     (unit) => unitRuntimeStats(game, unit),
     { worldWidth: WORLD.w, worldHeight: WORLD.h },
   );
-  for (const unit of collisionUnits) {
-    const stats = unitRuntimeStats(game, unit);
-    if (unitStartPassable(state, unit, stats)) continue;
-    const previous = collisionPositions.get(unit.id);
-    unit.x = previous.x;
-    unit.y = previous.y;
-  }
   for (const unit of game.units) {
     const order = unit.order;
     if (!order?.navigationBlockedStartRecovery) continue;
