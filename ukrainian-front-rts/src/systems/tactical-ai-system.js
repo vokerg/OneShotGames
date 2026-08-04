@@ -68,7 +68,8 @@ function buildingStrength(building) {
   const stats = BUILDING_TYPES[building.type] ?? {};
   const hpRatio = building.maxHp > 0 ? building.hp / building.maxHp : 0;
   const damage = Math.max(0, Number(stats.damage) || 0);
-  return Math.max(0.1, (damage + Math.max(1, Number(building.maxHp) || Number(stats.hp) || 1) * 0.025) * hpRatio);
+  const durability = Math.max(1, Number(building.maxHp) || Number(stats.hp) || 1);
+  return Math.max(0.1, (damage + durability * 0.025) * hpRatio);
 }
 
 function ownUnitSnapshot(game, unit) {
@@ -118,9 +119,7 @@ function entitySight(game, observer) {
 function defaultCanObserve(game, observer, target, sight) {
   if (distance(observer, target) > sight) return false;
   const query = game.visibilityQuery;
-  if (query && typeof query.canSee === 'function') {
-    return Boolean(query.canSee(observer, target));
-  }
+  if (query && typeof query.canSee === 'function') return Boolean(query.canSee(observer, target));
   if (typeof game.canUnitSee === 'function') return Boolean(game.canUnitSee(observer, target));
   return true;
 }
@@ -212,6 +211,7 @@ function applyPlan(game, state, plan) {
     controllableUnits(game, state.team, state.policy.maxUnits)
       .map((unit) => [entityId('unit', unit), unit]),
   );
+  const assignedIds = new Set();
   let assigned = 0;
   let skipped = 0;
 
@@ -219,7 +219,7 @@ function applyPlan(game, state, plan) {
     const target = resolveTarget(game, descriptor.targetId, state.team);
     for (const unitId of descriptor.unitIds) {
       const unit = units.get(unitId);
-      if (!unit) {
+      if (!unit || assignedIds.has(unitId)) {
         skipped += 1;
         continue;
       }
@@ -237,6 +237,7 @@ function applyPlan(game, state, plan) {
         unit.target = null;
       }
       unit.tacticalAiRole = descriptor.role;
+      assignedIds.add(unitId);
       assigned += 1;
     }
   }
@@ -265,7 +266,7 @@ function tacticalGoals(tick) {
   ];
 }
 
-function createState(game, options) {
+function createState(options) {
   const team = options.team ?? DEFAULT_TEAM;
   const factionId = teamFactionId(team);
   const doctrine = createAiDoctrineProfile({
@@ -288,8 +289,10 @@ function createState(game, options) {
     worldHeight: WORLD.h,
     ...options.policy,
   });
-  const blackboard = createAiBlackboard({ factionId, doctrine, initialTick: 0, historyLimit: 32 });
-  replaceAiGoals(blackboard, tacticalGoals(0));
+  // Start the blackboard at tick 1 so a decision offset of zero cannot become
+  // overdue before the first runtime observation is recorded.
+  const blackboard = createAiBlackboard({ factionId, doctrine, initialTick: 1, historyLimit: 32 });
+  replaceAiGoals(blackboard, tacticalGoals(1));
   return {
     team,
     tick: 0,
@@ -308,7 +311,7 @@ function createState(game, options) {
 }
 
 function resetState(game, previous) {
-  const next = createState(game, previous.options);
+  const next = createState(previous.options);
   STATES.set(game, next);
   return next;
 }
@@ -364,7 +367,7 @@ export function createTacticalAiController(game, options = {}) {
   if (typeof game.start !== 'function') throw new TypeError('Tactical AI controller requires game.start().');
 
   const originalStart = game.start;
-  STATES.set(game, createState(game, options));
+  STATES.set(game, createState(options));
   game.tacticalAiSnapshot = () => tacticalAiSnapshot(game);
   game.setTacticalAiEnabled = (enabled) => {
     const state = STATES.get(game);
