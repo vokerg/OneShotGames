@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { TEAM, UNIT_TYPES, WORLD } from '../../src/config.js';
-import { createFormationAssignments } from '../../src/core/formation.js';
+import { FORMATION_STATES, createFormationAssignments } from '../../src/core/formation.js';
 import { MOVEMENT_RECOVERY_DEFAULTS } from '../../src/navigation/movement-recovery.js';
 import {
   synchronizeNavigationGrid,
@@ -159,7 +159,7 @@ test('shares cached path templates across units without sharing route progress',
   assert.equal(metrics.cacheHits, 1);
 });
 
-test('formation orders share the anchor route while preserving distinct slots', () => {
+test('formation orders share the compressed anchor route before expanding to distinct final slots', () => {
   const units = [makeUnit({ id: 1 }), makeUnit({ id: 2 })];
   const anchorDestination = cellCenter(8, 4);
   const assignments = createFormationAssignments(units, anchorDestination, { spacing: 32 });
@@ -182,10 +182,15 @@ test('formation orders share the anchor route while preserving distinct slots', 
     units[0].order.navigationRoute.waypoints,
     units[1].order.navigationRoute.waypoints,
   );
-  assert.notDeepEqual(
+  assert.deepEqual(
     { x: units[0].order.x, y: units[0].order.y },
     { x: units[1].order.x, y: units[1].order.y },
   );
+  assert.equal(units[0].order.formationCompression, 0);
+  assert.equal(units[1].order.formationCompression, 0);
+  assert.equal(units[0].order.formationState, FORMATION_STATES.COMPRESSED);
+  assert.equal(units[1].order.formationState, FORMATION_STATES.COMPRESSED);
+  assert.notDeepEqual(units[0].order.formation.slotOffset, units[1].order.formation.slotOffset);
   assert.equal(game.navigationState.pathService.metrics().searches, 1);
   assert.equal(game.navigationState.pathService.metrics().cacheHits, 1);
 });
