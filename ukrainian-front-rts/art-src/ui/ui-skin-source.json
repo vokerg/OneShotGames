@@ -1,0 +1,58 @@
+{
+  "schema": "fields-of-resolve.ui-skin-source",
+  "version": 1,
+  "id": "fields-of-resolve-production-ui-skin-v1",
+  "authority": "src/ui/ui-skin.js",
+  "generator": "scripts/build-ui-skin.mjs",
+  "runtime": {
+    "assetDirectory": "assets/ui/skin",
+    "skinStylesheet": "ui-skin.css",
+    "entrypoint": "index.html"
+  },
+  "nineSliceAssets": [
+    "panel",
+    "panel-accent",
+    "overlay",
+    "parchment",
+    "button",
+    "tab",
+    "tooltip",
+    "scroll-thumb",
+    "missing"
+  ],
+  "requiredStates": [
+    "default",
+    "hover",
+    "active",
+    "focus-visible",
+    "disabled",
+    "selected",
+    "primary",
+    "researched",
+    "warning",
+    "danger",
+    "benefit"
+  ],
+  "constraints": {
+    "baseSpacing": 4,
+    "compactControlHeight": 32,
+    "primaryControlHeight": 40,
+    "minimumTarget": 32,
+    "crispEdges": true,
+    "textRemainsText": true,
+    "reducedMotion": true,
+    "highContrast": true,
+    "localizationExpansion": 1.4
+  },
+  "provenance": {
+    "creator": "OneShotGames contributors",
+    "createdAt": "2026-08-04",
+    "source": "Original repository-authored deterministic vector recipes",
+    "license": "CC0-1.0",
+    "redistribution": "allowed",
+    "externalInputs": [],
+    "embeddedText": false,
+    "fictionalSubjectsOnly": true,
+    "approval": "approved"
+  }
+}

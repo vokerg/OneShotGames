@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="economy-hud.css" />
     <link rel="stylesheet" href="selection-panel.css" />
+    <link rel="stylesheet" href="ui-skin.css" />
   </head>
   <body>
     <div id="shell">
@@ -19,8 +20,8 @@
         <div class="resource"><span>★</span><b id="intel">0</b><small>intel</small></div>
         <div class="resource"><span>♟</span><b id="pop">0/0</b><small>command</small></div>
         <div class="resource threat"><span>⚔</span><b id="waveStatus">staging</b><small>enemy assault</small></div>
-        <button id="economyHudToggle" aria-controls="economyHud" aria-expanded="false">Economy</button>
-        <button id="objectivesBtn">Objectives</button>
+        <button id="economyHudToggle" aria-controls="economyHud" aria-expanded="false" data-tooltip="Open the economy and production overview.">Economy</button>
+        <button id="objectivesBtn" data-tooltip="Show the current mission objectives.">Objectives</button>
       </div>
 
       <aside id="objectives" class="hidden">
@@ -32,7 +33,7 @@
       <aside id="economyHud" class="hidden" aria-label="Economy overview">
         <header class="economyHudHeader">
           <div><small>OPERATIONAL LEDGER</small><h2>Economy Overview</h2></div>
-          <button id="economyHudClose" type="button" aria-label="Close economy overview">×</button>
+          <button id="economyHudClose" type="button" aria-label="Close economy overview" data-tooltip="Close the economy overview.">×</button>
         </header>
         <div id="economyHudContent"></div>
       </aside>
@@ -76,8 +77,8 @@
           <p id="endgameReason"></p>
           <div id="endgameStats"></div>
           <div class="endgameActions">
-            <button id="retryMission">Retry Mission</button>
-            <button id="returnOperations">Return to Operations</button>
+            <button id="retryMission" data-tooltip="Restart the current mission.">Retry Mission</button>
+            <button id="returnOperations" data-tooltip="Return to operation selection.">Return to Operations</button>
           </div>
         </div>
       </div>

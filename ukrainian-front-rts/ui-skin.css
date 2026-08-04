@@ -1,0 +1,451 @@
+/* UFR-120 production UI skin. Nine-slice geometry comes from assets/ui/skin/*.svg. */
+
+:root {
+  --ui-space: 4px;
+  --ui-control-compact: 32px;
+  --ui-control-primary: 40px;
+  --ui-target-min: 32px;
+  --ui-transition: 90ms;
+  --ui-color-ink: #111512;
+  --ui-color-panel: #202820;
+  --ui-color-panel-raised: #303a31;
+  --ui-color-panel-deep: #111713;
+  --ui-color-text: #f3e8c2;
+  --ui-color-text-muted: #c8bea1;
+  --ui-color-selection: #ffe47b;
+  --ui-color-objective: #d5ad4f;
+  --ui-color-benefit: #58a88b;
+  --ui-color-danger: #d65c46;
+  --ui-color-unavailable: #6d746b;
+  --ui-color-ukraine-primary: #3978ad;
+  --ui-color-ukraine-secondary: #e0c75b;
+  --ui-color-russia-primary: #7c5043;
+  --ui-color-russia-secondary: #c9b998;
+  --ui-display-font: Georgia, Cambria, serif;
+  --ui-body-font: Georgia, Cambria, serif;
+  --ui-data-font: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --ui-shadow-heavy: 0 8px 24px rgb(0 0 0 / 72%);
+  --ui-shadow-soft: 0 4px 12px rgb(0 0 0 / 46%);
+  --ui-focus-ring: 0 0 0 3px var(--ui-color-selection), 0 0 0 5px var(--ui-color-ink);
+}
+
+html,
+body,
+#shell {
+  background:
+    radial-gradient(circle at 50% 24%, rgb(47 62 49 / 48%), transparent 52%),
+    #0c110d;
+  color: var(--ui-color-text);
+  font-family: var(--ui-body-font);
+}
+
+button,
+input,
+select,
+textarea { font-family: inherit; }
+
+button:focus-visible,
+[tabindex]:focus-visible,
+a:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+  position: relative;
+  z-index: 2;
+}
+
+#topbar,
+#commandPanel,
+#objectives,
+#economyHud,
+.book,
+.endgameCard {
+  background-color: var(--ui-color-panel);
+  background-image: none;
+  border-style: solid;
+  border-color: transparent;
+  border-image-repeat: stretch;
+  image-rendering: pixelated;
+}
+
+#topbar {
+  min-height: 60px;
+  gap: calc(var(--ui-space) * 2);
+  padding: 6px 10px;
+  border-width: 8px;
+  border-image-source: url("assets/ui/skin/panel-accent.svg");
+  border-image-slice: 12 fill;
+  border-image-width: 8px;
+  box-shadow: var(--ui-shadow-heavy);
+}
+
+.crest {
+  color: var(--ui-color-ukraine-secondary);
+  font-family: var(--ui-display-font);
+  font-size: 14px;
+  letter-spacing: .14em;
+  text-shadow: 2px 2px var(--ui-color-ink);
+}
+
+.resource {
+  min-height: var(--ui-control-compact);
+  min-width: 92px;
+  padding: 3px 7px;
+  border: 1px solid rgb(216 223 207 / 18%);
+  background: linear-gradient(180deg, rgb(255 255 255 / 7%), rgb(0 0 0 / 16%));
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 28%);
+}
+.resource span { color: var(--ui-color-objective); filter: drop-shadow(1px 1px 0 var(--ui-color-ink)); }
+.resource b { color: var(--ui-color-text); font-family: var(--ui-data-font); }
+.resource small { color: var(--ui-color-text-muted); font-family: var(--ui-data-font); letter-spacing: .08em; }
+.resource.threat {
+  border-color: rgb(214 92 70 / 45%);
+  background: linear-gradient(180deg, rgb(214 92 70 / 14%), rgb(0 0 0 / 18%));
+}
+
+button,
+.ability,
+.selectionUnitCard,
+.selectionSubgroupTab,
+.economyHudAction {
+  min-width: var(--ui-target-min);
+  min-height: var(--ui-control-compact);
+  color: var(--ui-color-text);
+  background-color: var(--ui-color-panel-raised);
+  background-image: none;
+  border: 6px solid transparent;
+  border-image-source: url("assets/ui/skin/button.svg");
+  border-image-slice: 9 fill;
+  border-image-width: 6px;
+  border-image-repeat: stretch;
+  text-shadow: 1px 1px var(--ui-color-ink);
+  transition: filter var(--ui-transition) linear, transform var(--ui-transition) linear, box-shadow var(--ui-transition) linear;
+  image-rendering: pixelated;
+}
+
+button:hover,
+.ability:hover,
+.selectionUnitCard:hover,
+.selectionSubgroupTab:hover,
+.economyHudAction:hover { filter: brightness(1.15) saturate(1.05); }
+
+button:active,
+.ability:active,
+.selectionUnitCard:active,
+.selectionSubgroupTab:active,
+.economyHudAction:active { transform: translateY(1px); filter: brightness(.9); }
+
+button:disabled,
+.ability:disabled,
+.economyHudAction:disabled,
+[aria-disabled='true'] {
+  color: var(--ui-color-unavailable);
+  cursor: not-allowed;
+  filter: grayscale(.8) brightness(.72);
+  opacity: .72;
+  text-shadow: none;
+}
+
+#commandPanel {
+  height: 184px;
+  gap: calc(var(--ui-space) * 2);
+  padding: 9px;
+  border-width: 8px;
+  border-image-source: url("assets/ui/skin/panel.svg");
+  border-image-slice: 12 fill;
+  border-image-width: 8px;
+  box-shadow: 0 -8px 26px rgb(0 0 0 / 72%);
+}
+
+.portrait { gap: calc(var(--ui-space) * 2); border-right: 2px solid rgb(213 173 79 / 34%); }
+.portrait canvas,
+.minimapFrame canvas {
+  background: var(--ui-color-panel-deep);
+  border: 4px solid transparent;
+  border-image-source: url("assets/ui/skin/panel-accent.svg");
+  border-image-slice: 12 fill;
+  border-image-width: 4px;
+  box-shadow: inset 0 0 0 2px var(--ui-color-ink);
+}
+
+.portrait h3,
+#objectives h2,
+.economyHudHeader h2 {
+  color: var(--ui-color-selection);
+  font-family: var(--ui-display-font);
+  text-shadow: 1px 1px var(--ui-color-ink);
+}
+.portrait p,
+.selectionUnitMeta,
+.selectionStatus,
+.ability small { color: var(--ui-color-text-muted); }
+
+#abilities { gap: calc(var(--ui-space) * 2); padding: 2px 6px 2px 2px; }
+.ability { min-height: 72px; padding: 7px; overflow: hidden; }
+.ability::before { inset: 5px; border-color: rgb(216 223 207 / 12%); }
+.ability strong { color: var(--ui-color-selection); letter-spacing: .015em; }
+.abilityMeta {
+  color: var(--ui-color-objective);
+  background: rgb(10 14 11 / 82%);
+  border: 1px solid rgb(213 173 79 / 38%);
+  font-family: var(--ui-data-font);
+}
+.ability.command { border-image-source: url("assets/ui/skin/button.svg"); }
+.ability.stance-on,
+.ability.researched,
+.selectionUnitCard.primary,
+.selectionUnitCard[aria-selected='true'] {
+  border-image-source: url("assets/ui/skin/tab.svg");
+  box-shadow: inset 0 0 0 2px var(--ui-color-benefit);
+}
+.ability.stance-off,
+.selectionStatus-danger,
+.health-critical,
+.health-destroyed { box-shadow: inset 0 0 0 2px var(--ui-color-danger); }
+.ability.build-command { background-color: #3d382b; }
+.ability.production-command { background-color: #303a42; }
+.ability.upgrade-command { background-color: #373044; }
+
+.selectionSubgroupTab {
+  min-height: 28px;
+  padding: 2px 7px;
+  border-image-source: url("assets/ui/skin/button.svg");
+  font-family: var(--ui-data-font);
+}
+.selectionSubgroupTab.active {
+  color: var(--ui-color-selection);
+  border-image-source: url("assets/ui/skin/tab.svg");
+  background-color: #36483f;
+  box-shadow: inset 0 -2px var(--ui-color-selection);
+}
+.selectionUnitCard { background-color: #222b24; }
+.selectionUnitName,
+.selectionContentsGroup h4 { color: var(--ui-color-selection); }
+
+.selectionHealthMeter,
+.economyHudProgress {
+  border: 1px solid var(--ui-color-ink);
+  background: #0c110d;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
+}
+.selectionHealthFill,
+.economyHudProgressFill { background: var(--ui-color-benefit); }
+.health-damaged .selectionHealthFill,
+.capacity-near .economyHudProgressFill { background: var(--ui-color-objective); }
+.health-critical .selectionHealthFill,
+.health-destroyed .selectionHealthFill,
+.capacity-over .economyHudProgressFill { background: var(--ui-color-danger); }
+
+#objectives,
+#economyHud {
+  border-width: 8px;
+  border-image-source: url("assets/ui/skin/overlay.svg");
+  border-image-slice: 12 fill;
+  border-image-width: 8px;
+  box-shadow: var(--ui-shadow-heavy);
+  color: var(--ui-color-text);
+}
+#objectives { padding: 16px; }
+#objectives li { margin: 5px 0; padding-left: 3px; }
+#objectives li::marker { color: var(--ui-color-objective); font-family: var(--ui-data-font); }
+.done { color: var(--ui-color-benefit); opacity: .8; }
+
+.economyHudHeader {
+  padding: 9px 12px;
+  border-bottom: 2px solid rgb(213 173 79 / 38%);
+  background: linear-gradient(180deg, rgb(57 120 173 / 28%), rgb(17 23 19 / 18%));
+  color: var(--ui-color-text);
+}
+#economyHudContent { background: rgb(11 15 12 / 32%); }
+.economyHudSection,
+.economyHudCard,
+.economyHudResource {
+  color: var(--ui-color-text);
+  border: 1px solid rgb(216 223 207 / 22%);
+  background: linear-gradient(180deg, rgb(255 255 255 / 6%), rgb(0 0 0 / 14%));
+}
+.economyHudCard.selected { outline: 3px solid var(--ui-color-selection); outline-offset: 1px; }
+.economyHudWarning,
+.capacity-over { color: #ffb6a5; }
+.economyHudAvailable { color: #a9e5c9; }
+.economyHudPrerequisite { border-left-color: var(--ui-color-objective); }
+
+#message {
+  padding: 9px 16px;
+  color: var(--ui-color-selection);
+  background: rgb(13 18 14 / 86%);
+  border: 7px solid transparent;
+  border-image-source: url("assets/ui/skin/tooltip.svg");
+  border-image-slice: 10 fill;
+  border-image-width: 7px;
+  box-shadow: var(--ui-shadow-soft);
+  font-family: var(--ui-display-font);
+}
+
+#missionSelect {
+  background: linear-gradient(rgb(8 12 9 / 54%), rgb(8 12 9 / 82%)), repeating-linear-gradient(45deg, #243026 0 16px, #202a22 16px 32px);
+}
+.book,
+.endgameCard {
+  color: #2d2417;
+  background-image: none;
+  border-width: 10px;
+  border-image-source: url("assets/ui/skin/parchment.svg");
+  border-image-slice: 12 fill;
+  border-image-width: 10px;
+  box-shadow: 0 18px 60px rgb(0 0 0 / 82%);
+}
+.book { padding: 28px; background-color: #bca66f; }
+.book h1,
+.endgameCard h1 {
+  color: #2b2115;
+  font-family: var(--ui-display-font);
+  text-shadow: 1px 1px rgb(255 255 255 / 18%);
+}
+.missionCard {
+  border: 6px solid transparent;
+  border-image-source: url("assets/ui/skin/parchment.svg");
+  border-image-slice: 12 fill;
+  border-image-width: 6px;
+  background-color: #a99260;
+}
+.missionCard:hover { filter: brightness(1.05); }
+.missionCard canvas {
+  border: 4px solid transparent;
+  border-image-source: url("assets/ui/skin/panel.svg");
+  border-image-slice: 12 fill;
+  border-image-width: 4px;
+}
+
+#endgame { background: rgb(5 8 6 / 78%); }
+.endgameSeal { background: #29372c; color: var(--ui-color-selection); border-color: var(--ui-color-objective); }
+.defeat .endgameSeal { background: #512a24; color: #ffd0c4; }
+#endgameStats div {
+  border: 4px solid transparent;
+  border-image-source: url("assets/ui/skin/parchment.svg");
+  border-image-slice: 12 fill;
+  border-image-width: 4px;
+  background-color: rgb(77 57 31 / 10%);
+}
+
+[data-tooltip] { position: relative; }
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  width: max-content;
+  max-width: min(280px, 70vw);
+  padding: 7px 9px;
+  color: var(--ui-color-text);
+  background-color: var(--ui-color-panel);
+  border: 7px solid transparent;
+  border-image-source: url("assets/ui/skin/tooltip.svg");
+  border-image-slice: 10 fill;
+  border-image-width: 7px;
+  box-shadow: var(--ui-shadow-soft);
+  font: 12px/1.35 var(--ui-body-font);
+  text-align: left;
+  text-shadow: none;
+  white-space: normal;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  transition: opacity var(--ui-transition) linear, transform var(--ui-transition) linear;
+  z-index: 40;
+}
+[data-tooltip]:hover::after,
+[data-tooltip]:focus-visible::after { opacity: 1; transform: translate(-50%, 0); }
+
+#topbar [data-tooltip]::after,
+.economyHudHeader [data-tooltip]::after {
+  top: calc(100% + 8px);
+  bottom: auto;
+  transform: translate(-50%, -4px);
+}
+#topbar [data-tooltip]:hover::after,
+#topbar [data-tooltip]:focus-visible::after,
+.economyHudHeader [data-tooltip]:hover::after,
+.economyHudHeader [data-tooltip]:focus-visible::after { transform: translate(-50%, 0); }
+
+:is(#abilities, #economyHudContent, .book, .selectionGrid, .selectionSubgroups, .selectionContents) {
+  scrollbar-width: thin;
+  scrollbar-color: #718172 #111713;
+}
+:is(#abilities, #economyHudContent, .book, .selectionGrid, .selectionSubgroups, .selectionContents)::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+  background: #111713;
+}
+:is(#abilities, #economyHudContent, .book, .selectionGrid, .selectionSubgroups, .selectionContents)::-webkit-scrollbar-track {
+  background: #111713;
+  border: 1px solid #050806;
+}
+:is(#abilities, #economyHudContent, .book, .selectionGrid, .selectionSubgroups, .selectionContents)::-webkit-scrollbar-thumb {
+  min-height: 28px;
+  background-color: #4a584b;
+  border: 5px solid transparent;
+  border-image-source: url("assets/ui/skin/scroll-thumb.svg");
+  border-image-slice: 8 fill;
+  border-image-width: 5px;
+}
+:is(#abilities, #economyHudContent, .book, .selectionGrid, .selectionSubgroups, .selectionContents)::-webkit-scrollbar-thumb:hover { filter: brightness(1.16); }
+
+@media (max-width: 1050px) { #commandPanel { height: 213px; } }
+@media (max-width: 760px) {
+  #topbar { top: 4px; left: 4px; right: 4px; }
+  #commandPanel { left: 4px; right: 4px; bottom: 4px; height: 258px; }
+  .book { padding: 18px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+  button:active,
+  .ability:active,
+  .selectionUnitCard:active,
+  .selectionSubgroupTab:active,
+  .economyHudAction:active { transform: none; }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --ui-color-text: #fff9df;
+    --ui-color-text-muted: #eee3bf;
+    --ui-color-panel: #111713;
+    --ui-color-panel-raised: #202a22;
+  }
+  #topbar,
+  #commandPanel,
+  #objectives,
+  #economyHud,
+  .book,
+  .endgameCard,
+  button,
+  .ability,
+  .selectionUnitCard,
+  .selectionSubgroupTab { filter: contrast(1.22); }
+}
+
+@media (forced-colors: active) {
+  #topbar,
+  #commandPanel,
+  #objectives,
+  #economyHud,
+  .book,
+  .endgameCard,
+  button,
+  .ability,
+  .selectionUnitCard,
+  .selectionSubgroupTab {
+    border-image: none;
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+  }
+}

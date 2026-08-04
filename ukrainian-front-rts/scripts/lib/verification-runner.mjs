@@ -17,6 +17,7 @@ export const VERIFICATION_COMMANDS = Object.freeze([
   Object.freeze({ id: 'seeded-random', label: 'seeded simulation randomness', script: 'scripts/verify-seeded-random.mjs' }),
   Object.freeze({ id: 'art-sources', label: 'source art and export manifests', script: 'scripts/verify-art-sources.mjs' }),
   Object.freeze({ id: 'ui-art', label: 'deterministic UI art assets', script: 'scripts/verify-ui-art.mjs' }),
+  Object.freeze({ id: 'ui-skin', label: 'production UI skin', script: 'scripts/verify-ui-skin.mjs' }),
   Object.freeze({ id: 'sprite-atlases', label: 'sprite atlas sources and manifests', script: 'scripts/verify-sprite-atlases.mjs' }),
   Object.freeze({ id: 'effects-art', label: 'deterministic effects atlas and renderer', script: 'scripts/verify-effects-art.mjs' }),
   Object.freeze({ id: 'combat-sfx', label: 'deterministic combat sound effects', script: 'scripts/verify-combat-sfx.mjs' }),
