@@ -153,7 +153,7 @@ function intermediateWaypointReached(state, unit, formationWaypoint, recovery, s
     formationWaypoint.y - unit.y,
   );
   const unitRadius = Math.max(0, Number(stats?.size) || 0);
-  const clearance = WORLD.tile + unitRadius;
+  const clearance = Math.SQRT2 * WORLD.tile + unitRadius;
   return (recovery.madeWaypointProgress || remaining < recovery.bestDistance) && remaining <= clearance;
 }
 
@@ -546,11 +546,21 @@ export function updateUnitsWithNavigation(game, stepSeconds) {
   const collisionUnits = game.units.filter(
     (unit) => !unit.order?.navigationBlockedStartRecovery,
   );
+  const collisionPositions = new Map(
+    collisionUnits.map((unit) => [unit.id, { x: unit.x, y: unit.y }]),
+  );
   const collisionResult = resolveUnitOverlaps(
     collisionUnits,
     (unit) => unitRuntimeStats(game, unit),
     { worldWidth: WORLD.w, worldHeight: WORLD.h },
   );
+  for (const unit of collisionUnits) {
+    const stats = unitRuntimeStats(game, unit);
+    if (unitStartPassable(state, unit, stats)) continue;
+    const previous = collisionPositions.get(unit.id);
+    unit.x = previous.x;
+    unit.y = previous.y;
+  }
   for (const unit of game.units) {
     const order = unit.order;
     if (!order?.navigationBlockedStartRecovery) continue;
