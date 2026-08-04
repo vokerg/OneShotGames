@@ -209,7 +209,7 @@ test('bounds structure-triggered replans and resumes at the deterministic retry 
     updateUnitsWithNavigation(game, 1 / 30);
     assert.deepEqual({ x: unit.x, y: unit.y }, pausedPosition);
   }
-  updateUnitsWithNavigation(game, unit, 1 / 30);
+  updateUnitsWithNavigation(game, 1 / 30);
 
   assert.equal(unit.order.navigationRevision, game.navigationState.revision);
   assert.equal(Object.hasOwn(unit.order, 'navigationRepathTick'), false);
