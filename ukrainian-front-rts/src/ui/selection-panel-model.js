@@ -138,6 +138,13 @@ function contentRecord(record, source) {
     fullName: definition?.name ?? record?.name ?? record?.type ?? `Unit ${entityKey(record)}`,
     team: record?.team ?? null,
     source,
+    slotCost: Number.isInteger(record?.slotCost) && record.slotCost > 0
+      ? record.slotCost
+      : Number.isInteger(record?.transportSlots) && record.transportSlots > 0
+        ? record.transportSlots
+        : Number.isInteger(definition?.transportSlots) && definition.transportSlots > 0
+          ? definition.transportSlots
+          : 1,
     health,
     veterancy: veterancyFor(record),
   });
@@ -158,7 +165,7 @@ function containerPresentation(entity) {
       hostId: entityKey(entity),
       label: 'Transport cargo',
       capacity,
-      used: contents.length,
+      used: contents.reduce((total, content) => total + content.slotCost, 0),
       contents,
     }));
   }
@@ -181,7 +188,7 @@ function containerPresentation(entity) {
       hostId: entityKey(entity),
       label: 'Garrison occupants',
       capacity,
-      used: contents.length,
+      used: contents.reduce((total, content) => total + content.slotCost, 0),
       contents,
     }));
   }
