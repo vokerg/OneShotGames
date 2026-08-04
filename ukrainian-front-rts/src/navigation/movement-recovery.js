@@ -66,6 +66,7 @@ export function ensureMovementRecoveryState(order, route, unit, target) {
     bestDistance: distance(unit, target),
     stalledSeconds: 0,
     madeProgress: false,
+    madeWaypointProgress: false,
     detour: null,
     detourAttempts: 0,
     attemptedCellKeys: [],
@@ -118,6 +119,7 @@ export function recordMovementProgress(
     state.bestDistance = remaining;
     state.stalledSeconds = 0;
     state.madeProgress = true;
+    if (!state.detour) state.madeWaypointProgress = true;
     return Object.freeze({
       status: MOVEMENT_RECOVERY_STATUSES.PROGRESSING,
       remaining,
