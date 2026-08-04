@@ -36,12 +36,6 @@ import { resolveUnitOverlaps } from './unit-collision-system.js';
 const NAVIGATION_ORDER_KINDS = new Set(['move', 'attackMove']);
 const STUCK_ORDER_MESSAGE = 'Unit is blocked and cannot reach the destination.';
 const BLOCKED_START_ESCAPE_RADIUS = 8;
-const DIRECT_MOVEMENT_ARRIVAL_DISTANCE = 5;
-const MAX_GROUND_UNIT_RADIUS = Math.max(
-  ...Object.values(UNIT_TYPES)
-    .filter((stats) => stats && !stats.air)
-    .map((stats) => Math.max(0, Number(stats.size) || 0)),
-);
 
 function placementSignature(building) {
   const placement = building.placement;
@@ -137,18 +131,6 @@ function routeFailureMessage(status) {
 
 function navigationRequestId(unit) {
   return `unit:${unit.id}`;
-}
-
-function intermediateWaypointReached(unit, formationWaypoint, recovery, stats) {
-  const route = recovery.route;
-  if (recovery.detour || route.nextIndex >= route.waypoints.length - 1) return false;
-  const remaining = Math.hypot(
-    formationWaypoint.x - unit.x,
-    formationWaypoint.y - unit.y,
-  );
-  const unitRadius = Math.max(0, Number(stats?.size) || 0);
-  const clearance = DIRECT_MOVEMENT_ARRIVAL_DISTANCE + unitRadius + MAX_GROUND_UNIT_RADIUS;
-  return remaining < recovery.bestDistance && remaining <= clearance;
 }
 
 function clearRecoveryReplanState(order) {
@@ -408,6 +390,25 @@ function attemptMovementRecovery(game, unit, order, state, stats, formationWaypo
   return true;
 }
 
+function advanceIntermediateWaypointAfterCollision({
+  unit,
+  order,
+  route,
+  state,
+  stats,
+  recovery,
+}) {
+  if (recovery.detour || route.nextIndex >= route.waypoints.length - 1) return false;
+  const remaining = Math.hypot(recovery.target.x - unit.x, recovery.target.y - unit.y);
+  const collisionClearance = (Number(stats.size) || 0) + WORLD.tile;
+  if (remaining > collisionClearance || remaining >= recovery.bestDistance) return false;
+
+  route.nextIndex += 1;
+  clearMovementRecoveryState(order);
+  restoreRouteTarget(order, route, state, stats, unit);
+  return true;
+}
+
 function evaluateMovementProgress({
   game,
   unit,
@@ -415,16 +416,19 @@ function evaluateMovementProgress({
   state,
   stats,
   formationWaypoint,
+  route,
   recovery,
   stepSeconds,
 }) {
   if (unit.order !== order) return;
-  if (intermediateWaypointReached(unit, formationWaypoint, recovery, stats)) {
-    recovery.route.nextIndex += 1;
-    clearMovementRecoveryState(order);
-    restoreRouteTarget(order, recovery.route, state, stats, unit);
-    return;
-  }
+  if (advanceIntermediateWaypointAfterCollision({
+    unit,
+    order,
+    route,
+    state,
+    stats,
+    recovery,
+  })) return;
   const progress = recordMovementProgress(recovery, unit, stepSeconds);
   if (progress.status === MOVEMENT_RECOVERY_STATUSES.PROGRESSING) {
     if (!recovery.detour) clearRecoveryReplanState(order);
@@ -457,6 +461,17 @@ export function updateUnitWithNavigation(
   const route = ensureNavigationRoute(game, unit, order, state, stats);
   if (!route || unit.order !== order || route.status !== PATH_STATUSES.FOUND) return;
 
+  if (route.nextIndex === 0) {
+    route.nextIndex = 1;
+    clearMovementRecoveryState(order);
+    if (restoreRouteTarget(order, route, state, stats, unit)) return;
+    clearRecoveryReplanState(order);
+    clearBlockedStartRecoveryState(order);
+    unit.order = null;
+    state.pathService.releaseRequest(requestId);
+    return;
+  }
+
   const waypoint = currentWaypoint(route);
   if (!waypoint) {
     clearMovementRecoveryState(order);
@@ -467,15 +482,10 @@ export function updateUnitWithNavigation(
     return;
   }
 
-  const formationWaypoint = resolveFormationWaypoint(
-    state.grid,
-    waypoint,
-    route.nextIndex === 0 ? null : order,
-    {
-      layer: unitNavigationLayer(stats),
-      origin: unit,
-    },
-  );
+  const formationWaypoint = resolveFormationWaypoint(state.grid, waypoint, order, {
+    layer: unitNavigationLayer(stats),
+    origin: unit,
+  });
   const recovery = ensureMovementRecoveryState(order, route, unit, formationWaypoint);
   retargetMovementRecoveryState(recovery, unit, formationWaypoint);
   const movementTarget = recovery.detour?.point ?? formationWaypoint;
@@ -513,6 +523,7 @@ export function updateUnitWithNavigation(
     state,
     stats,
     formationWaypoint,
+    route,
     recovery,
     stepSeconds,
   };
