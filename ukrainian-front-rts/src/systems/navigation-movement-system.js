@@ -1,5 +1,6 @@
 import { BUILDING_TYPES, TEAM, UNIT_TYPES, WORLD } from '../config.js';
 import {
+  FORMATION_STATES,
   formationRouteDestination,
   resolveFormationWaypoint,
 } from '../core/formation.js';
@@ -364,13 +365,31 @@ function applyFormationState(order, formationWaypoint) {
   order.formationState = formationWaypoint.state;
 }
 
-function restoreRouteTarget(order, route, state, stats, unit) {
-  const next = currentWaypoint(route);
-  if (!next) return false;
-  const nextFormationWaypoint = resolveFormationWaypoint(state.grid, next, order, {
-    layer: unitNavigationLayer(stats),
-    origin: unit,
+function resolveRouteWaypointTarget(route, state, order, stats, unit) {
+  const waypoint = currentWaypoint(route);
+  if (!waypoint) return null;
+  const finalWaypoint = route.nextIndex >= route.waypoints.length - 1;
+  const resolved = resolveFormationWaypoint(
+    state.grid,
+    waypoint,
+    finalWaypoint ? order : null,
+    {
+      layer: unitNavigationLayer(stats),
+      origin: unit,
+    },
+  );
+  if (!order.formation || finalWaypoint) return resolved;
+  return Object.freeze({
+    x: resolved.x,
+    y: resolved.y,
+    compression: 0,
+    state: FORMATION_STATES.COMPRESSED,
   });
+}
+
+function restoreRouteTarget(order, route, state, stats, unit) {
+  const nextFormationWaypoint = resolveRouteWaypointTarget(route, state, order, stats, unit);
+  if (!nextFormationWaypoint) return false;
   order.x = nextFormationWaypoint.x;
   order.y = nextFormationWaypoint.y;
   applyFormationState(order, nextFormationWaypoint);
@@ -463,8 +482,8 @@ export function updateUnitWithNavigation(
   const route = ensureNavigationRoute(game, unit, order, state, stats);
   if (!route || unit.order !== order || route.status !== PATH_STATUSES.FOUND) return;
 
-  const waypoint = currentWaypoint(route);
-  if (!waypoint) {
+  const resolvedFormationWaypoint = resolveRouteWaypointTarget(route, state, order, stats, unit);
+  if (!resolvedFormationWaypoint) {
     clearMovementRecoveryState(order);
     clearRecoveryReplanState(order);
     clearBlockedStartRecoveryState(order);
@@ -473,15 +492,6 @@ export function updateUnitWithNavigation(
     return;
   }
 
-  const resolvedFormationWaypoint = resolveFormationWaypoint(
-    state.grid,
-    waypoint,
-    route.nextIndex === 0 ? null : order,
-    {
-      layer: unitNavigationLayer(stats),
-      origin: unit,
-    },
-  );
   const recovery = ensureMovementRecoveryState(order, route, unit, resolvedFormationWaypoint);
   const formationWaypoint = recovery.routeTarget ??= resolvedFormationWaypoint;
   const movementTarget = recovery.detour?.point ?? formationWaypoint;
