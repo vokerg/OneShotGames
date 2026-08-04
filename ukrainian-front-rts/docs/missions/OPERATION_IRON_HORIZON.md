@@ -54,7 +54,7 @@ Required objectives use only UFR-087 objective types:
 - destroy the three sector targets;
 - destroy the eastern command post.
 
-Optional objectives preserve the allied spearhead, preserve the committed player reserve, and destroy four tagged enemy operational-reserve units.
+Optional objectives preserve the allied spearhead, escort at least one committed reserve unit into the eastern consolidation zone, and destroy four tagged enemy operational-reserve units. The reserve objective uses escort semantics so it cannot complete before the delayed reserve package exists.
 
 Checkpoint metadata exposes stable boundaries after central reconnaissance, reserve commitment, two sectors secured, and all three sectors secured. A runtime checkpoint owner must preserve mission-script variables, trigger activation state, spawned force identities, objective state, and persistent tags.
 
@@ -66,18 +66,19 @@ Checkpoint metadata exposes stable boundaries after central reconnaissance, rese
 - committed player reserve;
 - player command cadre.
 
-`evaluateCombinedArmsPersistence()` converts survivor counts and the committed reserve axis into a deeply immutable summary containing preserved/lost states and stable campaign modifier IDs. It does not mutate campaign rosters. The existing campaign progression/runtime owner remains responsible for applying health, veterancy, unlock, and next-operation composition rules.
+`evaluateCombinedArmsPersistence()` validates the reserve axis, normalizes non-finite or negative survivor counts to zero, and returns a deeply immutable summary containing preserved/lost states and stable campaign modifier IDs. It does not mutate campaign rosters. The existing campaign progression/runtime owner remains responsible for applying health, veterancy, unlock, and next-operation composition rules.
 
 ## Verification
 
 Focused tests in `tests/campaign/combined-arms-offensive-operation.test.mjs` verify:
 
-- authored-map, mission-script, objective-library, and briefing validation;
+- authored-map, mission-script, objective-library, and briefing validation, including non-empty objective descriptions;
 - canonical unit, building, team, region, objective, checkpoint, and tag references;
 - northern reserve commitment and opposite-axis response;
 - deterministic simultaneous-breach tie-breaking;
 - next-tick final counterattack deployment;
+- delayed reserve objectives remaining active until a reserve exists and reaches consolidation;
 - required multi-sector completion independent of optional preservation;
-- deterministic, immutable persistent-force summaries.
+- deterministic, immutable, finite persistent-force summaries and invalid-axis rejection.
 
 Repository-wide verification remains `bash verify.sh`. Browser startup smoke proves the operation does not regress the assembled application, but the operation remains declarative until a later campaign loader mounts authored operations. The highest justified evidence for this task is therefore `CONTRACT_COMPLETE`.
