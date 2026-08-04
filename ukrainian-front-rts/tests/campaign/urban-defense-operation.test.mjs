@@ -99,7 +99,7 @@ test('civilian handling is abstracted and protected-site collateral is bounded',
   assert.equal(allStarts.find((start) => start.id === 'protected-column-start').metadata.abstractedManifest, true);
 });
 
-test('one protected-site loss is tolerated and the second deterministically ends the operation', () => {
+test('second protected-site loss defeats before objective victory can resolve', () => {
   const game = scriptedGame();
   initializeMissionScripts(game);
 
@@ -108,13 +108,15 @@ test('one protected-site loss is tolerated and the second deterministically ends
   assert.equal(game.missionScriptState.variables.collateralIncidents, 1);
   assert.equal(game.gameOver, false);
 
+  game.time = 420;
+  game.units = [aliveUnit('evacuation-column', 'uaIfv', 32, 352)];
   game.buildings = game.buildings.filter((building) => building.scriptId !== 'protected-waterworks');
   updateMissionScripts(game);
-  assert.equal(game.missionScriptState.variables.collateralIncidents, 2);
-  assert.equal(game.gameOver, false, 'same-tick cascades must remain disabled');
+  if (!game.gameOver) updateObjectiveLibrary(game);
 
-  updateMissionScripts(game);
+  assert.equal(game.missionScriptState.variables.collateralIncidents, 2);
   assert.equal(game.outcome, 'defeat');
+  assert.notEqual(game.outcome, 'victory');
   assert.match(game.endReason, /protected-site loss limit/i);
 });
 
