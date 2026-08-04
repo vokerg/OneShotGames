@@ -25,6 +25,7 @@ import { installWorkerOverview } from './input/worker-overview.js';
 import { Renderer } from './render.js';
 import { installCombatReadabilityOverlay } from './render/combat-readability-overlay.js';
 import { installConstructionPreview } from './render/construction-preview.js';
+import { installEffectsAtlasRenderer } from './render/effects-atlas-renderer.js';
 import {
   createBuildingLifecycleController,
   updateBuildingCaptures,
@@ -186,6 +187,7 @@ const modules = [
   module('combat-readability-feedback', () => installCombatReadabilityFeedback({ game, ui })),
   module('economy-hud-overview', () => installEconomyHudOverview({ game, ui })),
   module('construction-preview', () => installConstructionPreview({ game, renderer })),
+  module('effects-atlas-renderer', () => installEffectsAtlasRenderer({ game, renderer })),
   module('combat-readability-overlay', () => installCombatReadabilityOverlay({ game, renderer })),
   module('construction-placement-input', () => installConstructionPlacementInput({ game, ui })),
   module('attack-ground-input', () => installAttackGroundInput({ game, canvas, ui })),
