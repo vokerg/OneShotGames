@@ -1,0 +1,247 @@
+{
+  "schema": "fields-of-resolve.voice-hooks",
+  "version": 1,
+  "id": "voice-hooks-v1",
+  "generatedAt": "2026-08-04",
+  "defaultLanguage": "en",
+  "languages": [
+    { "id": "en", "label": "English", "fallbacks": [] },
+    { "id": "uk", "label": "Українська", "fallbacks": ["en"] }
+  ],
+  "speakers": [
+    {
+      "id": "unit-generic",
+      "labels": { "en": "Unit", "uk": "Підрозділ" },
+      "publicFigure": false,
+      "voiceAllowed": true,
+      "fictional": true
+    },
+    {
+      "id": "operations-alert",
+      "labels": { "en": "Operations", "uk": "Оперативний центр" },
+      "publicFigure": false,
+      "voiceAllowed": true,
+      "fictional": true
+    },
+    {
+      "id": "campaign-fictional",
+      "labels": { "en": "Campaign speaker", "uk": "Учасник кампанії" },
+      "publicFigure": false,
+      "voiceAllowed": true,
+      "fictional": true
+    }
+  ],
+  "hooks": [
+    {
+      "id": "unit.ready",
+      "kind": "unit-acknowledgement",
+      "eventId": "unit.acknowledgement",
+      "speakerId": "unit-generic",
+      "requestSpeaker": false,
+      "dynamicText": false,
+      "gain": 0.9,
+      "repetition": { "windowTicks": 120, "maxPlays": 2, "variantAvoidance": 1, "requestKeyed": false },
+      "concurrency": { "key": "voice-unit-acknowledgement", "limit": 1 },
+      "variants": {
+        "en": [
+          {
+            "id": "voice.unit.ready.en.a",
+            "subtitle": "Ready.",
+            "asset": {
+              "mode": "hook-only",
+              "path": null,
+              "sha256": null,
+              "durationMs": null,
+              "provenance": {
+                "creator": "Fields of Resolve contributors",
+                "source": "Repository-authored subtitle and future voice hook; no binary speech asset is included.",
+                "license": "CC0-1.0",
+                "redistribution": "The hook metadata and subtitle may be redistributed with the project.",
+                "generatedTool": "none",
+                "externalInputs": [],
+                "humanCorrections": "Authored and reviewed in repository.",
+                "publicFigureImpersonation": false
+              }
+            }
+          },
+          {
+            "id": "voice.unit.ready.en.b",
+            "subtitle": "Standing by.",
+            "asset": {
+              "mode": "hook-only",
+              "path": null,
+              "sha256": null,
+              "durationMs": null,
+              "provenance": {
+                "creator": "Fields of Resolve contributors",
+                "source": "Repository-authored subtitle and future voice hook; no binary speech asset is included.",
+                "license": "CC0-1.0",
+                "redistribution": "The hook metadata and subtitle may be redistributed with the project.",
+                "generatedTool": "none",
+                "externalInputs": [],
+                "humanCorrections": "Authored and reviewed in repository.",
+                "publicFigureImpersonation": false
+              }
+            }
+          }
+        ],
+        "uk": [
+          {
+            "id": "voice.unit.ready.uk.a",
+            "subtitle": "Готові.",
+            "asset": {
+              "mode": "hook-only",
+              "path": null,
+              "sha256": null,
+              "durationMs": null,
+              "provenance": {
+                "creator": "Fields of Resolve contributors",
+                "source": "Repository-authored Ukrainian subtitle and future voice hook; no binary speech asset is included.",
+                "license": "CC0-1.0",
+                "redistribution": "The hook metadata and subtitle may be redistributed with the project.",
+                "generatedTool": "none",
+                "externalInputs": [],
+                "humanCorrections": "Authored and reviewed in repository.",
+                "publicFigureImpersonation": false
+              }
+            }
+          },
+          {
+            "id": "voice.unit.ready.uk.b",
+            "subtitle": "На зв’язку.",
+            "asset": {
+              "mode": "hook-only",
+              "path": null,
+              "sha256": null,
+              "durationMs": null,
+              "provenance": {
+                "creator": "Fields of Resolve contributors",
+                "source": "Repository-authored Ukrainian subtitle and future voice hook; no binary speech asset is included.",
+                "license": "CC0-1.0",
+                "redistribution": "The hook metadata and subtitle may be redistributed with the project.",
+                "generatedTool": "none",
+                "externalInputs": [],
+                "humanCorrections": "Authored and reviewed in repository.",
+                "publicFigureImpersonation": false
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "alert.under-attack",
+      "kind": "alert",
+      "eventId": "unit.under-attack",
+      "speakerId": "operations-alert",
+      "requestSpeaker": false,
+      "dynamicText": false,
+      "gain": 1,
+      "repetition": { "windowTicks": 180, "maxPlays": 1, "variantAvoidance": 0, "requestKeyed": false },
+      "concurrency": { "key": "voice-alert", "limit": 1 },
+      "variants": {
+        "en": [
+          {
+            "id": "voice.alert.under-attack.en",
+            "subtitle": "Our forces are under attack.",
+            "asset": {
+              "mode": "hook-only",
+              "path": null,
+              "sha256": null,
+              "durationMs": null,
+              "provenance": {
+                "creator": "Fields of Resolve contributors",
+                "source": "Repository-authored alert subtitle and future voice hook; no binary speech asset is included.",
+                "license": "CC0-1.0",
+                "redistribution": "The hook metadata and subtitle may be redistributed with the project.",
+                "generatedTool": "none",
+                "externalInputs": [],
+                "humanCorrections": "Authored and reviewed in repository.",
+                "publicFigureImpersonation": false
+              }
+            }
+          }
+        ],
+        "uk": [
+          {
+            "id": "voice.alert.under-attack.uk",
+            "subtitle": "Наші сили атаковано.",
+            "asset": {
+              "mode": "hook-only",
+              "path": null,
+              "sha256": null,
+              "durationMs": null,
+              "provenance": {
+                "creator": "Fields of Resolve contributors",
+                "source": "Repository-authored Ukrainian alert subtitle and future voice hook; no binary speech asset is included.",
+                "license": "CC0-1.0",
+                "redistribution": "The hook metadata and subtitle may be redistributed with the project.",
+                "generatedTool": "none",
+                "externalInputs": [],
+                "humanCorrections": "Authored and reviewed in repository.",
+                "publicFigureImpersonation": false
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "campaign.dialogue",
+      "kind": "campaign-dialogue",
+      "eventId": "voice.dialogue",
+      "speakerId": null,
+      "requestSpeaker": true,
+      "dynamicText": true,
+      "gain": 1,
+      "repetition": { "windowTicks": 600, "maxPlays": 1, "variantAvoidance": 0, "requestKeyed": true },
+      "concurrency": { "key": "voice-campaign-dialogue", "limit": 1 },
+      "variants": {
+        "en": [
+          {
+            "id": "voice.campaign.dialogue.en",
+            "subtitle": null,
+            "asset": {
+              "mode": "hook-only",
+              "path": null,
+              "sha256": null,
+              "durationMs": null,
+              "provenance": {
+                "creator": "Fields of Resolve contributors",
+                "source": "Dynamic campaign dialogue hook; authored narrative text remains owned by the mission script and no binary speech asset is included.",
+                "license": "CC0-1.0",
+                "redistribution": "The hook metadata may be redistributed with the project.",
+                "generatedTool": "none",
+                "externalInputs": [],
+                "humanCorrections": "Contract reviewed in repository.",
+                "publicFigureImpersonation": false
+              }
+            }
+          }
+        ],
+        "uk": [
+          {
+            "id": "voice.campaign.dialogue.uk",
+            "subtitle": null,
+            "asset": {
+              "mode": "hook-only",
+              "path": null,
+              "sha256": null,
+              "durationMs": null,
+              "provenance": {
+                "creator": "Fields of Resolve contributors",
+                "source": "Dynamic Ukrainian campaign dialogue hook; authored narrative text remains owned by the mission script and no binary speech asset is included.",
+                "license": "CC0-1.0",
+                "redistribution": "The hook metadata may be redistributed with the project.",
+                "generatedTool": "none",
+                "externalInputs": [],
+                "humanCorrections": "Contract reviewed in repository.",
+                "publicFigureImpersonation": false
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -21,6 +21,7 @@ export const VERIFICATION_COMMANDS = Object.freeze([
   Object.freeze({ id: 'combat-sfx', label: 'deterministic combat sound effects', script: 'scripts/verify-combat-sfx.mjs' }),
   Object.freeze({ id: 'ui-sfx', label: 'deterministic UI sound effects', script: 'scripts/verify-ui-sfx.mjs' }),
   Object.freeze({ id: 'adaptive-music', label: 'deterministic adaptive music', script: 'scripts/verify-adaptive-music.mjs' }),
+  Object.freeze({ id: 'voice-hooks', label: 'voice hooks and provenance', script: 'scripts/verify-voice-hooks.mjs' }),
   Object.freeze({
     id: 'runtime-composition',
     label: 'runtime composition ownership',
