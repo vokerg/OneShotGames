@@ -1,6 +1,6 @@
 # Navigation contracts
 
-`src/navigation/navigation-grid.js` owns deterministic, browser-independent passability data. `src/navigation/pathfinder.js` owns pure path search over that data. `src/navigation/waypoint-route.js` translates path results into runtime-ready world-space waypoints. `src/navigation/path-service.js` owns bounded route-template caching, revision invalidation, repath cadence, and deterministic path-search counters. `src/navigation/movement-recovery.js` owns deterministic stuck detection and bounded local-detour selection. `src/systems/navigation-movement-system.js` synchronizes runtime map/building state, delegates fixed-step unit movement through those routes, applies the recovery policy, and invokes `src/systems/unit-collision-system.js` after all units have advanced for the step.
+`src/navigation/navigation-grid.js` owns deterministic, browser-independent passability data. `src/navigation/pathfinder.js` owns pure path search over that data. `src/navigation/waypoint-route.js` translates path results into runtime-ready world-space waypoints. `src/navigation/path-service.js` owns bounded route-template caching, revision invalidation, repath cadence, and deterministic path-search counters. `src/navigation/movement-recovery.js` owns deterministic stuck detection and bounded local-detour selection. `src/systems/navigation-movement-system.js` synchronizes runtime map/building state, delegates fixed-step unit movement through those routes, applies bounded local/global recovery and blocked-start escape policy, and invokes `src/systems/unit-collision-system.js` after all units have advanced for the step.
 
 ## Coordinate model
 
@@ -110,7 +110,7 @@ Formation orders request one anchor route and resolve each unit's slot or compre
 
 Ground `move` and `attackMove` orders expose the current route waypoint through the existing `Game.updateUnit()` contract. When that method reaches a waypoint and clears the order, the movement system advances one route step and restores the same order until the final destination is reached. Air units preserve their previous direct-movement behavior.
 
-Blocked, unreachable, and search-limited player orders are cancelled safely. Ukrainian units receive actionable `lastError` feedback; simulation state never retains an order with an unusable route.
+Blocked goals, unreachable goals, and search-limited player orders are cancelled safely. Ukrainian units receive actionable `lastError` feedback; simulation state never retains an order with an unusable route. A unit whose current cell becomes blocked by a newly synchronized structure first executes bounded blocked-start escape instead of issuing a guaranteed `START_BLOCKED` search or cancelling a still-reachable order.
 
 ## Unit collision and soft separation
 
@@ -122,17 +122,27 @@ Displacement is mass weighted using radius squared. Larger vehicles therefore mo
 
 The resolver requires unique stable unit IDs and returns frozen diagnostics containing considered-unit count, resolved-pair count, and maximum observed overlap. Collision diagnostics remain separate from path-service metrics because collision and route search have distinct policy owners.
 
-## Stuck recovery and local detours
+## Stuck recovery, local detours, and global replans
 
 Each active ground waypoint keeps fixed-step recovery state on its order. Progress is measured against the best distance reached toward the current movement target, not raw displacement. Side-to-side oscillation therefore continues accumulating stalled time unless the unit establishes a new best distance.
 
 After 0.75 seconds without at least one world-unit of progress, the recovery policy selects one adjacent passable cell as a temporary detour. Candidates use the unit movement layer, reject diagonal corner cutting, exclude cells already attempted for the current waypoint, prefer lateral forward progress, and use row/column ordering to break ties deterministically.
 
-Reaching a detour does not advance the route. The movement system restores the original formation-aware waypoint and resumes normal following. Recovery state resets when the waypoint advances, the route is invalidated, or the order changes.
+Reaching a detour does not advance the route. The movement system restores the original formation-aware waypoint and resumes normal following. Detour-only movement does not reset the global-replan budget; only progress toward an authoritative route waypoint, waypoint completion, or a successful blocked-start escape does so.
 
-A waypoint permits at most three distinct local detours. If no valid candidate exists or all attempts are exhausted, the movement order and target are cleared safely. Player-owned Ukrainian units receive `Unit is blocked and cannot reach the destination.` feedback instead of remaining indefinitely stalled or oscillating.
+A waypoint permits at most three distinct local detours. If no candidate exists or those attempts are exhausted, the runtime releases the stale path request and performs a fresh global route request from the unit's current position. A movement order permits at most three such global replans without authoritative route progress. Exhausting that budget clears the order and target safely and reports `Unit is blocked and cannot reach the destination.` for player-owned Ukrainian units.
 
-The recovery policy uses no wall clock, randomness, path-cache mutation, collision rewrite, or command-type expansion. It is a bounded local fallback above the existing path and collision contracts.
+Before any route request, the movement owner checks whether the unit's current navigation cell is passable. If a newly constructed or synchronized blocker encloses the unit, the runtime chooses an adjacent passable escape cell using the same deterministic local-detour ordering. The escape is bounded to three distinct attempts. Once the unit leaves the blocked cell, the original destination is preserved and a fresh route is requested; if escape is impossible, the order is cancelled with `Unit cannot leave its current position.` This preflight avoids recording an expected failed search for a recoverable dynamic-blocker overlap.
+
+The recovery policy uses no wall clock, randomness, collision rewrite, or command-type expansion. It is a bounded fallback above the existing path and collision contracts.
+
+## Gate A integration and performance budget
+
+`tests/navigation/navigation-integration-gate.test.mjs` is the assembled Gate A movement gate. It runs two identical seeded scenarios through the live `Game` movement path, not a reconstructed navigation simulator. Each scenario creates six opposing 25-unit mixed formations, three authored water barriers with constrained gates, a shared central chokepoint, and a temporary four-cell construction blocker that is later destroyed. The blocker lifecycle produces two navigation-grid invalidations and exercises construction, destruction, formation compression, collision, route caching, throttling, blocked-start escape, local detours, and global recovery.
+
+The deterministic gate requires all 150 units to arrive within 6,000 fixed ticks, forbids more than 600 consecutive ticks without measurable movement or a newly completed unit, requires zero failed path searches, and compares final positions, completion ticks, navigation metrics, maximum stall, and revision state across both runs. Search count is capped at six searches per unit, throttle count at four per unit, and every search is bounded by the 80×52 grid area.
+
+The CI execution proxy requires initial 150-unit routing below 2,500 ms, steady-state p95 navigation update time below one 60 Hz frame (16.67 ms), and both complete scenario runs below 20 seconds each. These wall-clock limits are guardrails for the supported CI environment, not replay-authoritative state: machine load can affect timing, while deterministic state and counters must remain identical. A materially different runner should preserve the deterministic/search budgets and calibrate timing only through a reviewed task rather than silently weakening the gate.
 
 ## Determinism and ownership
 
@@ -145,7 +155,7 @@ The recovery policy uses no wall clock, randomness, path-cache mutation, collisi
 - Navigation modules import only core or sibling navigation modules; they do not import game, system, renderer, UI, DOM, or browser services.
 - `src/navigation/path-service.js` owns cache identity, cache invalidation, cadence state/lifecycle, and path-search counters only.
 - `src/navigation/movement-recovery.js` owns pure progress tracking and local-detour candidate ordering.
-- `src/systems/navigation-movement-system.js` owns runtime synchronization, fixed-step movement sequencing, request-owner retention, recovery-state application, and safe order cancellation.
+- `src/systems/navigation-movement-system.js` owns runtime synchronization, fixed-step movement sequencing, request-owner retention, blocked-start/global recovery-state application, and safe order cancellation.
 - `src/systems/unit-collision-system.js` owns unit-to-unit footprint separation only.
 - `Game` remains authoritative for speed, facing, buffs, combat acquisition, and physical movement before separation.
 - Transports and additional command types remain separate queue tasks.
