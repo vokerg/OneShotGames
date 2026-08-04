@@ -271,7 +271,7 @@ function recoverBlockedStart(game, unit, order, state, stats, stepSeconds) {
 
   order.x = recovery.detour.point.x;
   order.y = recovery.detour.point.y;
-  updateUnitWithTerrainMovement(game, unit, stepSeconds, state.grid);
+  game.updateUnit(unit, stepSeconds);
 
   if (unit.order === null) {
     unit.order = order;
