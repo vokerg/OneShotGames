@@ -43,6 +43,7 @@ if (indexHtml.indexOf(skinLink) < indexHtml.indexOf('selection-panel.css')) fail
 const requiredPatterns = [
   ['nine-slice panel', /border-image-slice:\s*12\s+fill/],
   ['nine-slice control', /border-image-slice:\s*9\s+fill/],
+  ['minimum subgroup target', /\.selectionSubgroupTab\s*\{[^}]*min-height:\s*var\(--ui-control-compact\)/s],
   ['top bar', /#topbar/],
   ['command panel', /#commandPanel/],
   ['mission screen', /\.book/],
