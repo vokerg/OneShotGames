@@ -14,10 +14,30 @@ const worldRect = (x, y, width, height, tileSize = 32) => ({
   width: width * tileSize,
   height: height * tileSize,
 });
+const finiteSurvivorCount = (value) => {
+  try {
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? Math.max(0, Math.floor(numeric)) : 0;
+  } catch {
+    return 0;
+  }
+};
 
 export const COMBINED_ARMS_OPERATION_VERSION = 1;
 export const COMBINED_ARMS_OPERATION_ID = 'operation-iron-horizon';
 export const COMBINED_ARMS_MAP_ID = 'map-iron-horizon';
+
+const RESERVE_AXES = Object.freeze(['uncommitted', 'north', 'center', 'south']);
+const BRIEFING_OBJECTIVE_DESCRIPTIONS = Object.freeze({
+  'recon-center-axis': 'Move the reconnaissance drone into the central sector to identify reserve routes and the defensive layout.',
+  'secure-north-sector': 'Destroy the northern fire-control node to open the allied spearhead axis.',
+  'secure-center-sector': 'Destroy the central strongpoint to break the middle of the defensive network.',
+  'secure-south-sector': 'Destroy the southern logistics node to deny reinforcement support.',
+  'break-east-command': 'After opening all three sectors, destroy the eastern command post to complete the breakthrough.',
+  'preserve-allied-spearhead': 'Keep at least part of the allied northern spearhead alive through the operation.',
+  'preserve-player-reserve': 'Escort at least one committed reserve unit into the eastern consolidation zone.',
+  'neutralize-enemy-reserve': 'Destroy four units tagged as part of the enemy operational reserve.',
+});
 
 const MAP_REGIONS = {
   'west-assembly': { shape: 'rect', origin: { x: 0, y: 8 }, width: 8, height: 8, metadata: { purpose: 'player-assembly' } },
@@ -87,14 +107,14 @@ export const COMBINED_ARMS_OBJECTIVES = deepFreeze([
   },
   {
     id: 'preserve-player-reserve',
-    type: 'defend',
-    label: 'Preserve the committed reserve',
+    type: 'escort',
+    label: 'Consolidate the committed reserve',
     optional: true,
     target: { collection: 'units', team: 0, tag: 'player-reserve' },
     regionId: 'consolidation-zone',
-    durationSeconds: 720,
+    count: 1,
     failIfTargetLost: true,
-    failureReason: 'The committed reserve was eliminated.',
+    failureReason: 'The committed reserve was eliminated before reaching consolidation.',
   },
   {
     id: 'neutralize-enemy-reserve',
@@ -432,7 +452,12 @@ export const COMBINED_ARMS_BRIEFING = deepFreeze({
     { id: 'reserve-response', title: 'Enemy operational reserve', detail: 'The enemy will counterattack away from the first breach and commit a final armored response after two sectors fall.', confidence: 'confirmed' },
     { id: 'carryover', title: 'Persistent force consequences', detail: 'Surviving allied, reserve, and command-cadre strength is recorded for later campaign composition.', confidence: 'confirmed' },
   ],
-  objectives: COMBINED_ARMS_OBJECTIVES.map((objective) => ({ id: objective.id, title: objective.label, description: objective.failureReason, optional: Boolean(objective.optional) })),
+  objectives: COMBINED_ARMS_OBJECTIVES.map((objective) => ({
+    id: objective.id,
+    title: objective.label,
+    description: BRIEFING_OBJECTIVE_DESCRIPTIONS[objective.id],
+    optional: Boolean(objective.optional),
+  })),
   difficulty: 'standard',
   difficultyNotes: {
     label: 'Standard',
@@ -442,7 +467,7 @@ export const COMBINED_ARMS_BRIEFING = deepFreeze({
   loadingHints: [
     'Reconnoitre the center before committing the main force.',
     'The first sector destroyed determines the reserve package; simultaneous breaches use stable north-center-south declaration order, leaving south as the tie-break.',
-    'Preserving tagged allied and reserve forces improves the persistent-force summary.',
+    'Escort a committed reserve element into the consolidation zone and preserve surviving forces for the campaign handoff.',
   ],
   metadata: { fictional: true, contentNote: 'Stylized fictional combined-arms operation with original fictional speakers.' },
 });
@@ -465,8 +490,14 @@ export const COMBINED_ARMS_PERSISTENCE = deepFreeze({
 });
 
 export function evaluateCombinedArmsPersistence({ survivorCounts = {}, reserveAxis = 'uncommitted' } = {}) {
+  if (!survivorCounts || typeof survivorCounts !== 'object' || Array.isArray(survivorCounts)) {
+    throw new TypeError('survivorCounts must be an object keyed by persistent force tag.');
+  }
+  if (!RESERVE_AXES.includes(reserveAxis)) {
+    throw new RangeError(`Unknown reserve axis: ${reserveAxis}`);
+  }
   const groups = Object.fromEntries(COMBINED_ARMS_PERSISTENCE.forceGroups.map((group) => {
-    const survivors = Math.max(0, Math.floor(Number(survivorCounts[group.tag]) || 0));
+    const survivors = finiteSurvivorCount(survivorCounts[group.tag]);
     return [group.id, deepFreeze({
       tag: group.tag,
       survivors,
