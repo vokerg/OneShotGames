@@ -162,7 +162,24 @@ function orderDiagnostic(order) {
     routeWaypoints: order.navigationRoute?.waypoints?.length ?? null,
     recoveryReplans: order.navigationRecoveryReplans ?? null,
     detourAttempts: order.navigationRecovery?.detourAttempts ?? null,
+    stalledSeconds: rounded(order.navigationRecovery?.stalledSeconds ?? 0),
     blockedStartAttempts: order.navigationBlockedStartRecovery?.detourAttempts ?? null,
+  };
+}
+
+function unitDiagnostic(unit, destinations, tick, tickStart = null) {
+  const destination = destinations.get(unit.id);
+  return {
+    id: unit.id,
+    type: unit.type,
+    tick,
+    hp: rounded(unit.hp),
+    x: rounded(unit.x),
+    y: rounded(unit.y),
+    destination: { x: rounded(destination.x), y: rounded(destination.y) },
+    distance: rounded(distanceToDestination(unit, destinations)),
+    order: orderDiagnostic(unit.order),
+    tickStart,
   };
 }
 
@@ -232,20 +249,8 @@ function runScenario(seed = 'ufr-030-navigation-gate') {
       !completionTicks.has(unit.id) &&
       unit.order === null &&
       distanceToDestination(unit, destinations) > ARRIVAL_DISTANCE);
-    const cancellationDiagnostics = cancelled.map((unit) => {
-      const destination = destinations.get(unit.id);
-      return {
-        id: unit.id,
-        type: unit.type,
-        tick,
-        hp: rounded(unit.hp),
-        x: rounded(unit.x),
-        y: rounded(unit.y),
-        destination: { x: rounded(destination.x), y: rounded(destination.y) },
-        distance: rounded(distanceToDestination(unit, destinations)),
-        tickStart: tickStart.get(unit.id),
-      };
-    });
+    const cancellationDiagnostics = cancelled.map((unit) =>
+      unitDiagnostic(unit, destinations, tick, tickStart.get(unit.id)));
     assert.deepEqual(
       cancellationDiagnostics,
       [],
@@ -254,6 +259,15 @@ function runScenario(seed = 'ufr-030-navigation-gate') {
 
     if (completionTicks.size === UNIT_COUNT) break;
   }
+
+  const incompleteDiagnostics = game.units
+    .filter((unit) => !completionTicks.has(unit.id))
+    .map((unit) => unitDiagnostic(unit, destinations, tick));
+  assert.deepEqual(
+    incompleteDiagnostics,
+    [],
+    `navigation did not complete all units within ${MAX_TICKS} ticks`,
+  );
 
   const elapsedMs = performance.now() - startedAt;
   const metrics = game.navigationState.pathService.metrics();
