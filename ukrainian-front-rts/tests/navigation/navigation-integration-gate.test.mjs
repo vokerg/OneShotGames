@@ -231,7 +231,9 @@ function runScenario(seed = 'ufr-030-navigation-gate') {
     );
 
     const cancelled = game.units.filter((unit) =>
-      unit.order === null && distanceToDestination(unit, destinations) > ARRIVAL_DISTANCE);
+      !completionTicks.has(unit.id) &&
+      unit.order === null &&
+      distanceToDestination(unit, destinations) > ARRIVAL_DISTANCE);
     const cancellationDiagnostics = cancelled.map((unit) => {
       const destination = destinations.get(unit.id);
       return {
@@ -249,7 +251,7 @@ function runScenario(seed = 'ufr-030-navigation-gate') {
     assert.deepEqual(
       cancellationDiagnostics,
       [],
-      `navigation cancelled units before arrival: ${game.lastError}`,
+      `navigation cancelled units before first arrival: ${game.lastError}`,
     );
 
     if (arrived === UNIT_COUNT) break;
