@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import { TEAM, UNIT_TYPES, WORLD } from '../../src/config.js';
 import { createFormationAssignments } from '../../src/core/formation.js';
+import { MOVEMENT_RECOVERY_DEFAULTS } from '../../src/navigation/movement-recovery.js';
 import {
   synchronizeNavigationGrid,
   updateUnitWithNavigation,
@@ -208,7 +209,7 @@ test('bounds structure-triggered replans and resumes at the deterministic retry 
     updateUnitsWithNavigation(game, 1 / 30);
     assert.deepEqual({ x: unit.x, y: unit.y }, pausedPosition);
   }
-  updateUnitsWithNavigation(game, 1 / 30);
+  updateUnitsWithNavigation(game, unit, 1 / 30);
 
   assert.equal(unit.order.navigationRevision, game.navigationState.revision);
   assert.equal(Object.hasOwn(unit.order, 'navigationRepathTick'), false);
@@ -226,6 +227,27 @@ test('cancels blocked player orders with actionable feedback', () => {
 
   assert.equal(unit.order, null);
   assert.equal(game.lastError, 'Destination is blocked.');
+});
+
+test('escapes a newly blocked start cell before replanning', () => {
+  const destination = cellCenter(5, 1);
+  const game = makeGame({
+    buildings: [depot()],
+    units: [makeUnit({
+      position: cellCenter(2, 1),
+      order: { kind: 'move', ...destination },
+    })],
+  });
+  const unit = game.units[0];
+
+  for (let step = 0; step < 20 && unit.order; step += 1) {
+    updateUnitWithNavigation(game, unit, 1 / 30);
+  }
+
+  assert.deepEqual({ x: unit.x, y: unit.y }, destination);
+  assert.equal(unit.order, null);
+  assert.equal(game.lastError, '');
+  assert.equal(game.navigationState.pathService.metrics().failures, 0);
 });
 
 test('preserves direct movement behavior for air units', () => {
@@ -316,6 +338,38 @@ test('uses a local detour and then resumes a stalled waypoint route', () => {
   assert.equal(game.lastError, '');
 });
 
+test('preserves the global replan budget across detour-only movement', () => {
+  const order = { kind: 'move', ...cellCenter(5, 1) };
+  let detoursReached = 0;
+  const game = makeGame({
+    order,
+    updateUnit(subject) {
+      if (!subject.order?.navigationRecovery?.detour) return;
+      subject.x = subject.order.x;
+      subject.y = subject.order.y;
+      subject.order = null;
+      detoursReached += 1;
+    },
+  });
+  const unit = game.units[0];
+  const stuckTicks = Math.ceil(MOVEMENT_RECOVERY_DEFAULTS.stuckSeconds / (1 / 30)) + 1;
+  const recoveryCycles = MOVEMENT_RECOVERY_DEFAULTS.maxReplans + 1;
+  const attemptsPerCycle = MOVEMENT_RECOVERY_DEFAULTS.maxDetours + 1;
+  const detourArrivalTicks = recoveryCycles * MOVEMENT_RECOVERY_DEFAULTS.maxDetours;
+  const maximumSteps = stuckTicks * recoveryCycles * attemptsPerCycle + detourArrivalTicks + 10;
+
+  let steps = 0;
+  for (; steps < maximumSteps && unit.order; steps += 1) {
+    updateUnitWithNavigation(game, unit, 1 / 30);
+  }
+
+  assert.equal(detoursReached > MOVEMENT_RECOVERY_DEFAULTS.maxDetours, true);
+  assert.equal(steps < maximumSteps, true);
+  assert.equal(unit.order, null);
+  assert.equal(game.lastError, 'Unit is blocked and cannot reach the destination.');
+  assert.equal(Object.hasOwn(order, 'navigationRecoveryReplans'), false);
+});
+
 test('safely cancels a permanently stuck order after bounded detour attempts', () => {
   const order = { kind: 'move', ...cellCenter(5, 1) };
   const game = makeGame({
@@ -323,15 +377,20 @@ test('safely cancels a permanently stuck order after bounded detour attempts', (
     updateUnit() {},
   });
   const unit = game.units[0];
+  const stuckTicks = Math.ceil(MOVEMENT_RECOVERY_DEFAULTS.stuckSeconds / (1 / 30)) + 1;
+  const recoveryCycles = MOVEMENT_RECOVERY_DEFAULTS.maxReplans + 1;
+  const attemptsPerCycle = MOVEMENT_RECOVERY_DEFAULTS.maxDetours + 1;
+  const maximumSteps = stuckTicks * recoveryCycles * attemptsPerCycle + 10;
 
   let steps = 0;
-  for (; steps < 180 && unit.order; steps += 1) {
+  for (; steps < maximumSteps && unit.order; steps += 1) {
     updateUnitWithNavigation(game, unit, 1 / 30);
   }
 
-  assert.equal(steps < 180, true);
+  assert.equal(steps < maximumSteps, true);
   assert.equal(unit.order, null);
   assert.equal(unit.target, null);
   assert.equal(game.lastError, 'Unit is blocked and cannot reach the destination.');
   assert.equal(Object.hasOwn(order, 'navigationRecovery'), false);
+  assert.equal(Object.hasOwn(order, 'navigationRecoveryReplans'), false);
 });
