@@ -4,7 +4,7 @@
   top: 66px;
   right: 18px;
   bottom: 186px;
-  width: min(420px, calc(100vw - 36px));
+  width: min(440px, calc(100vw - 36px));
   overflow: hidden;
   border: 3px solid #241d14;
   background: #c8b884;
@@ -25,16 +25,29 @@
 .economyHudResource { display: grid; gap: 2px; padding: 6px; border: 1px solid #776844; background: #f3e8bf; }
 .economyHudResource span { font-size: 18px; font-weight: 700; }
 .economyHudResource small { font-size: 10px; }
+.economyHudWorkerGrid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+.economyHudWorkerTask { display: grid; justify-items: center; gap: 2px; padding: 5px 2px; border: 1px solid #8b7a52; background: #f3e8bf; text-align: center; }
+.economyHudWorkerTask strong { font-size: 17px; }
+.economyHudWorkerTask small { font-size: 9px; text-transform: uppercase; }
+.economyHudWorkerTask.warning { border-color: #8f2119; background: #e6b9a7; }
+.economyHudWorkerResources { display: grid; gap: 3px; margin-top: 7px; }
 .economyHudCard { margin: 7px 0; padding: 7px; border: 1px solid #776844; background: #f3e8bf; }
 .economyHudCard.selected { outline: 3px solid #3978ad; }
 .economyHudCardHeader { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.economyHudCardHeader h3 { margin: 0; }
+.economyHudGlobalQueue { display: grid; gap: 4px; margin: 6px 0; padding: 7px; border-left: 4px solid #776844; background: #f3e8bf; }
+.economyHudGlobalQueue.production { border-left-color: #3978ad; }
+.economyHudGlobalQueue.research { border-left-color: #715596; }
+.economyHudGlobalQueue.paused { opacity: 0.72; }
 .economyHudQueueItem { display: grid; gap: 4px; margin-top: 7px; padding-top: 6px; border-top: 1px solid #9a8960; }
 .economyHudQueueLabel { display: flex; justify-content: space-between; gap: 8px; }
 .economyHudQueueControls { display: flex; flex-wrap: wrap; gap: 4px; }
 .economyHudAction { padding: 4px 7px; min-height: 28px; font: inherit; cursor: pointer; }
+.economyHudAction:focus-visible { outline: 3px solid #3978ad; outline-offset: 2px; }
 .economyHudAction:disabled { opacity: 0.45; cursor: default; }
 .economyHudProgress { display: block; height: 7px; border: 1px solid #302716; background: #8b7a52; }
 .economyHudProgressFill { display: block; height: 100%; background: #3978ad; }
+.economyHudCompletion { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 5px 0; padding: 6px; border: 1px solid #7c714f; background: #eef0c8; }
 .economyHudWarning { color: #7d251c; font-weight: 700; }
 .economyHudAvailable { color: #245c2d; }
 .economyHudPrerequisite { padding-left: 7px; border-left: 3px solid #8d6f2c; }
@@ -45,4 +58,5 @@
 @media (max-width: 760px) {
   #economyHud { left: 10px; right: 10px; top: 58px; bottom: 168px; width: auto; }
   .economyHudResourceGrid { grid-template-columns: 1fr; }
+  .economyHudWorkerGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }

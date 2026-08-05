@@ -1,4 +1,6 @@
 const RESOURCE_IDS = Object.freeze(['metal', 'fuel', 'intel']);
+const WORKER_TASK_IDS = Object.freeze(['idle', 'gathering', 'returning', 'building', 'other']);
+const COMPLETION_LIMIT = 8;
 const clamp01 = (value) => Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0));
 const nonNegative = (value) => Math.max(0, Number.isFinite(value) ? value : 0);
 const string = (value, fallback = '') => typeof value === 'string' ? value : fallback;
@@ -16,6 +18,21 @@ function resourceRows(resources = {}, incomeRates = {}) {
     amount: nonNegative(resources[id]),
     incomePerMinute: nonNegative(incomeRates[id]),
   }));
+}
+
+function workerRows(workers = {}) {
+  const taskCounts = workers.taskCounts || {};
+  const resourceCounts = workers.resourceCounts || {};
+  const carried = workers.carried || {};
+  return {
+    total: nonNegative(workers.total),
+    tasks: WORKER_TASK_IDS.map((id) => ({ id, count: nonNegative(taskCounts[id]) })),
+    resources: RESOURCE_IDS.map((id) => ({
+      id,
+      count: nonNegative(resourceCounts[id]),
+      carried: nonNegative(carried[id]),
+    })),
+  };
 }
 
 function productionItem(item = {}, index, queueLength, buildingId) {
@@ -116,13 +133,88 @@ function capacityRow(capacity = {}) {
   };
 }
 
+function globalQueueRows(production, research) {
+  const rows = [];
+  for (const facility of production) {
+    for (const item of facility.queue) {
+      rows.push({
+        id: `production:${facility.buildingId}:${item.id}`,
+        queueItemId: item.id,
+        kind: 'production',
+        sourceId: facility.buildingId,
+        buildingId: facility.buildingId,
+        sourceName: facility.name,
+        name: item.name,
+        status: facility.paused ? 'paused' : item.index === 0 ? 'active' : 'queued',
+        position: item.index,
+        remaining: item.remaining,
+        percent: item.percent,
+        paused: facility.paused,
+      });
+    }
+  }
+  for (const facility of research) {
+    for (const item of facility.items) {
+      rows.push({
+        id: `research:${facility.facilityId}:${item.id}`,
+        queueItemId: item.id,
+        kind: 'research',
+        sourceId: facility.facilityId,
+        buildingId: facility.buildingId,
+        sourceName: facility.name,
+        name: item.name,
+        status: facility.paused ? 'paused' : item.status,
+        position: item.position,
+        remaining: item.remaining,
+        percent: item.percent,
+        paused: facility.paused,
+      });
+    }
+  }
+  const statusRank = new Map([['active', 0], ['paused', 1], ['queued', 2]]);
+  return rows.sort((left, right) =>
+    (statusRank.get(left.status) ?? 3) - (statusRank.get(right.status) ?? 3) ||
+    left.sourceName.localeCompare(right.sourceName) ||
+    String(left.sourceId).localeCompare(String(right.sourceId), undefined, { numeric: true }) ||
+    left.position - right.position ||
+    left.id.localeCompare(right.id),
+  );
+}
+
+function researchTreeRow(value = {}) {
+  return {
+    screenId: string(value.screenId, 'techTree'),
+    label: string(value.label, 'Open research tree'),
+    available: value.available !== false,
+    reason: string(value.reason),
+  };
+}
+
+function completionRows(entries = []) {
+  return array(entries).slice(0, COMPLETION_LIMIT).map((entry, index) => ({
+    id: string(entry.id, `completion:${index}`),
+    kind: string(entry.kind, 'production'),
+    sourceId: string(entry.sourceId),
+    buildingId: entry.buildingId == null ? null : String(entry.buildingId),
+    sourceName: string(entry.sourceName, 'Facility'),
+    name: string(entry.name, 'Completed item'),
+    sequence: Number.isInteger(entry.sequence) ? entry.sequence : index,
+  }));
+}
+
 export function createEconomyHudModel(snapshot = {}) {
+  const production = array(snapshot.production).map(productionRow);
+  const research = array(snapshot.research).map(researchRow);
   const model = {
     resources: resourceRows(snapshot.resources, snapshot.incomeRates),
-    production: array(snapshot.production).map(productionRow),
-    research: array(snapshot.research).map(researchRow),
-    prerequisites: array(snapshot.prerequisites).map(prerequisiteRow),
+    workers: workerRows(snapshot.workers),
     capacity: capacityRow(snapshot.capacity),
+    globalQueue: globalQueueRows(production, research),
+    production,
+    research,
+    researchTree: researchTreeRow(snapshot.researchTree),
+    completions: completionRows(snapshot.completions),
+    prerequisites: array(snapshot.prerequisites).map(prerequisiteRow),
   };
   return deepFreeze(model);
 }
@@ -142,6 +234,11 @@ export function productionQueueCommands(entry) {
     commands.push({ action: 'set-production-paused', buildingId: entry.buildingId, paused: !entry.paused });
     commands.push({ action: 'set-production-repeat', buildingId: entry.buildingId, repeat: !entry.repeat });
   }
-  if (entry.rally.waypoints.length) commands.push({ action: 'clear-production-rally', buildingId: entry.buildingId });
+  commands.push({ action: 'set-production-rally-view', buildingId: entry.buildingId, append: false });
+  commands.push({ action: 'set-production-rally-view', buildingId: entry.buildingId, append: true });
+  if (entry.rally.waypoints.length) {
+    commands.push({ action: 'focus-production-rally', buildingId: entry.buildingId });
+    commands.push({ action: 'clear-production-rally', buildingId: entry.buildingId });
+  }
   return deepFreeze(commands);
 }
