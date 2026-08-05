@@ -4,9 +4,17 @@
   "sourceCatalog": "art-src/manifest.json",
   "sourceCatalogId": "fields-of-resolve.art-sources",
   "paletteTokens": {
+    "damage": "#d95f45",
     "danger": "#ff4fa3",
     "diagnostic-outline": "#ffffff",
-    "ink": "#111512"
+    "ink": "#111512",
+    "neutral-metal": "#9aa291",
+    "template-accent": "#e4ca54",
+    "template-base": "#50684c",
+    "template-deep": "#18271f",
+    "template-light": "#81956a",
+    "template-optic": "#4e8db2",
+    "template-shadow": "#293c30"
   },
   "assets": [
     {
@@ -69,6 +77,3978 @@
           },
           "sha256": "cdbd4f9047238cecd0156b8c2eb535c229110570e398ea84dc33d261654575e9",
           "byteLength": 392
+        }
+      ]
+    },
+    {
+      "id": "template.pathfinder-car",
+      "kind": "units",
+      "family": "template-vehicle",
+      "faction": "shared",
+      "atlasSource": "assets/atlases/template-unit.source.json",
+      "provenance": {
+        "creator": "Fields of Resolve contributors with OpenAI-assisted vector generation",
+        "createdAt": "2026-08-03",
+        "source": "Original fictional tracked scout carrier authored for the repository template pipeline",
+        "license": "CC0-1.0",
+        "redistribution": "allowed",
+        "transformations": [
+          "Generated as deterministic crisp-edge SVG geometry from repository art-direction constraints",
+          "Reviewed for stable palette tokens, direction order, anchor alignment, and state timing",
+          "Packed without resampling by the UFR-107 atlas builder"
+        ],
+        "generatedTools": {
+          "used": true,
+          "details": "OpenAI ChatGPT generated the initial vector geometry, frame variants, and metadata from the repository art bible.",
+          "humanCorrections": "No maintainer visual corrections are recorded yet; the deterministic contact sheet remains pending human art approval."
+        },
+        "reviewer": "UFR-109 automated contract review",
+        "approval": "pending"
+      },
+      "frames": [
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d00__f00.svg",
+          "runtimeId": "template.pathfinder-car.attack.n.f00",
+          "animation": "attack",
+          "direction": 0,
+          "frame": 0,
+          "durationMs": 80,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 24,
+              "y": 7
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "cb44f3a1537fcefb5b6d3849f9bfa856456d64bddd56c46dbfc7a5b0e352bb6c",
+          "byteLength": 1016
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d00__f01.svg",
+          "runtimeId": "template.pathfinder-car.attack.n.f01",
+          "animation": "attack",
+          "direction": 0,
+          "frame": 1,
+          "durationMs": 60,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 24,
+              "y": 7
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "25261da46a5a5fcd11b4f4cc7f3e81ae7278f602d44ee368a76102afc715b445",
+          "byteLength": 1061
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d00__f02.svg",
+          "runtimeId": "template.pathfinder-car.attack.n.f02",
+          "animation": "attack",
+          "direction": 0,
+          "frame": 2,
+          "durationMs": 120,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 24,
+              "y": 7
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "741c897ba851931f489a2150cadf23fa1e7f6b59702c9f5adeb3ee1637faeb31",
+          "byteLength": 1016
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d01__f00.svg",
+          "runtimeId": "template.pathfinder-car.attack.ne.f00",
+          "animation": "attack",
+          "direction": 1,
+          "frame": 0,
+          "durationMs": 80,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 36,
+              "y": 12
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "44c5d18d84af7df3c4b3d2b8f2316e5f5782511c4f30ab60b60ccdc0fba31bdb",
+          "byteLength": 1017
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d01__f01.svg",
+          "runtimeId": "template.pathfinder-car.attack.ne.f01",
+          "animation": "attack",
+          "direction": 1,
+          "frame": 1,
+          "durationMs": 60,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 36,
+              "y": 12
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "bbec32432c4a1ba652ce0f1bcbfaec2afe5fed0a88ca507268cc53fbba399f5c",
+          "byteLength": 1062
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d01__f02.svg",
+          "runtimeId": "template.pathfinder-car.attack.ne.f02",
+          "animation": "attack",
+          "direction": 1,
+          "frame": 2,
+          "durationMs": 120,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 36,
+              "y": 12
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "1c310292155e5554eb4bdd250ed47643e2531f5ec23f7dd185356aadce8bff3b",
+          "byteLength": 1017
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d02__f00.svg",
+          "runtimeId": "template.pathfinder-car.attack.e.f00",
+          "animation": "attack",
+          "direction": 2,
+          "frame": 0,
+          "durationMs": 80,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 41,
+              "y": 24
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "e578142dbc08f913308520523c50d41c4616378786242a4445c5ba00688929c3",
+          "byteLength": 1017
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d02__f01.svg",
+          "runtimeId": "template.pathfinder-car.attack.e.f01",
+          "animation": "attack",
+          "direction": 2,
+          "frame": 1,
+          "durationMs": 60,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 41,
+              "y": 24
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "93dd2333a219b58d1212fedece13d40bfbbc83d050fde2cc1e31ce5ed832b8fd",
+          "byteLength": 1062
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d02__f02.svg",
+          "runtimeId": "template.pathfinder-car.attack.e.f02",
+          "animation": "attack",
+          "direction": 2,
+          "frame": 2,
+          "durationMs": 120,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 41,
+              "y": 24
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "ce2da72c39d7cdd5a03ad7fd4b74d4b11ed6bac25e23f22d140df49c7f160c81",
+          "byteLength": 1017
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d03__f00.svg",
+          "runtimeId": "template.pathfinder-car.attack.se.f00",
+          "animation": "attack",
+          "direction": 3,
+          "frame": 0,
+          "durationMs": 80,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 36,
+              "y": 36
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "db7b11118609a822f833fbb735a7c6aed8f1332b76c384bcb18cd96982f243e0",
+          "byteLength": 1018
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d03__f01.svg",
+          "runtimeId": "template.pathfinder-car.attack.se.f01",
+          "animation": "attack",
+          "direction": 3,
+          "frame": 1,
+          "durationMs": 60,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 36,
+              "y": 36
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "543255dcf18df0e98d33ff462e598864b54ec5a2f37fc0b8a1f557d702dcf096",
+          "byteLength": 1063
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d03__f02.svg",
+          "runtimeId": "template.pathfinder-car.attack.se.f02",
+          "animation": "attack",
+          "direction": 3,
+          "frame": 2,
+          "durationMs": 120,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 36,
+              "y": 36
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "10b864ef7eee517926aef0f8a04e5934f5d2f2978d88ffe18e6682b7b0445f0b",
+          "byteLength": 1018
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d04__f00.svg",
+          "runtimeId": "template.pathfinder-car.attack.s.f00",
+          "animation": "attack",
+          "direction": 4,
+          "frame": 0,
+          "durationMs": 80,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 24,
+              "y": 41
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "d53aa82bc1cf1af8cd075abff64b82e72923aed5bcdbab3715af9b310a984d4a",
+          "byteLength": 1018
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d04__f01.svg",
+          "runtimeId": "template.pathfinder-car.attack.s.f01",
+          "animation": "attack",
+          "direction": 4,
+          "frame": 1,
+          "durationMs": 60,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 24,
+              "y": 41
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "15b362ad0382963653fe57124164a3f92b4792d7906c92848dd7281a3fc231fb",
+          "byteLength": 1063
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d04__f02.svg",
+          "runtimeId": "template.pathfinder-car.attack.s.f02",
+          "animation": "attack",
+          "direction": 4,
+          "frame": 2,
+          "durationMs": 120,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 24,
+              "y": 41
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "4a9ff5b8a1d77af61d3d53eab4a46772233e3d47572b17dee1d713bdcde75f66",
+          "byteLength": 1018
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d05__f00.svg",
+          "runtimeId": "template.pathfinder-car.attack.sw.f00",
+          "animation": "attack",
+          "direction": 5,
+          "frame": 0,
+          "durationMs": 80,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 12,
+              "y": 36
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "f1f4d7a9a8e084e8c2ca23cd0b2b0c65a80f99c5a206d0d7db1fd3e0dd439ee5",
+          "byteLength": 1018
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d05__f01.svg",
+          "runtimeId": "template.pathfinder-car.attack.sw.f01",
+          "animation": "attack",
+          "direction": 5,
+          "frame": 1,
+          "durationMs": 60,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 12,
+              "y": 36
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "3b7c2498c6afbb9d06d3e2afa248ae22fec9887128d3f929703f1e8084be5e4e",
+          "byteLength": 1063
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d05__f02.svg",
+          "runtimeId": "template.pathfinder-car.attack.sw.f02",
+          "animation": "attack",
+          "direction": 5,
+          "frame": 2,
+          "durationMs": 120,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 12,
+              "y": 36
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "f724e4d1b66ce4ce0b2c92470e26802ba34720d7f7c6ba88c8456f9b28831e0d",
+          "byteLength": 1018
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d06__f00.svg",
+          "runtimeId": "template.pathfinder-car.attack.w.f00",
+          "animation": "attack",
+          "direction": 6,
+          "frame": 0,
+          "durationMs": 80,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 7,
+              "y": 24
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "18e4fc1472e0a551a33162061f7dca05ddb660a07ee651e6dd40fc0ab625bb51",
+          "byteLength": 1018
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d06__f01.svg",
+          "runtimeId": "template.pathfinder-car.attack.w.f01",
+          "animation": "attack",
+          "direction": 6,
+          "frame": 1,
+          "durationMs": 60,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 7,
+              "y": 24
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "26479ab28859ae1d2867c0d94200775a965f47eeead77214678f0937e419b71c",
+          "byteLength": 1063
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d06__f02.svg",
+          "runtimeId": "template.pathfinder-car.attack.w.f02",
+          "animation": "attack",
+          "direction": 6,
+          "frame": 2,
+          "durationMs": 120,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 7,
+              "y": 24
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "a7cb5baae11e58ea5d9acbcff0f09dcbb035f0e0861b687d63cef54cc949509a",
+          "byteLength": 1018
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d07__f00.svg",
+          "runtimeId": "template.pathfinder-car.attack.nw.f00",
+          "animation": "attack",
+          "direction": 7,
+          "frame": 0,
+          "durationMs": 80,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 12,
+              "y": 12
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "35801519e71b876e1280ba44963e3d98c11683d269edf01f0b9ccaf955165158",
+          "byteLength": 1018
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d07__f01.svg",
+          "runtimeId": "template.pathfinder-car.attack.nw.f01",
+          "animation": "attack",
+          "direction": 7,
+          "frame": 1,
+          "durationMs": 60,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 12,
+              "y": 12
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "f937470c41130460ba7b319a717da7cbaa073a5d93c4433bbfcc1804e277dac0",
+          "byteLength": 1063
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d07__f02.svg",
+          "runtimeId": "template.pathfinder-car.attack.nw.f02",
+          "animation": "attack",
+          "direction": 7,
+          "frame": 2,
+          "durationMs": 120,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 12,
+              "y": 12
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "7c22ef1a355163770b26ba35d61db05af6458433411dfc24b95f92b246b886b9",
+          "byteLength": 1018
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__damaged__d00__f00.svg",
+          "runtimeId": "template.pathfinder-car.damaged.f00",
+          "animation": "damaged",
+          "direction": 0,
+          "frame": 0,
+          "durationMs": 220,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 24,
+              "y": 7
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "2170fe2f17d0762e901bc04934acc3d6df98d863c46394b8b8559f07bc5bd596",
+          "byteLength": 1040
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__damaged__d00__f01.svg",
+          "runtimeId": "template.pathfinder-car.damaged.f01",
+          "animation": "damaged",
+          "direction": 0,
+          "frame": 1,
+          "durationMs": 220,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 24,
+              "y": 7
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "ed12c97736e2b70b2a3694f91fd8b1576ea9fa8561c9f2969206374583fe1146",
+          "byteLength": 1097
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__death__d00__f00.svg",
+          "runtimeId": "template.pathfinder-car.death.f00",
+          "animation": "death",
+          "direction": 0,
+          "frame": 0,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 24,
+              "y": 7
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "0bb3a8e6da2241e71bb291961e88767759fa1b66f7844caa5bba8a2a391d3194",
+          "byteLength": 960
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__death__d00__f01.svg",
+          "runtimeId": "template.pathfinder-car.death.f01",
+          "animation": "death",
+          "direction": 0,
+          "frame": 1,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 24,
+              "y": 7
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "e5388495d5e8293dff291683dbb0abf215c5b6fabd91aa0e72ae43a4a480d272",
+          "byteLength": 1036
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__death__d00__f02.svg",
+          "runtimeId": "template.pathfinder-car.death.f02",
+          "animation": "death",
+          "direction": 0,
+          "frame": 2,
+          "durationMs": 100,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 24,
+              "y": 7
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "5fc7cc840433d9d5d46f5a129d5c7f9ab82e3894f62b92fcdda57e4c72765a41",
+          "byteLength": 1093
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__death__d00__f03.svg",
+          "runtimeId": "template.pathfinder-car.death.f03",
+          "animation": "death",
+          "direction": 0,
+          "frame": 3,
+          "durationMs": 110,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 24,
+              "y": 7
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "0e0559db4a3a8944a3a88201950ceda1b4f2f8d11ac5f155cc84a36e97b0c151",
+          "byteLength": 1138
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__death__d00__f04.svg",
+          "runtimeId": "template.pathfinder-car.death.f04",
+          "animation": "death",
+          "direction": 0,
+          "frame": 4,
+          "durationMs": 120,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 24,
+              "y": 7
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "4874838ae568ddfeb4f01b51663f37c77fcbf07dec7637e95ba3f23fddf97f85",
+          "byteLength": 1196
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__death__d00__f05.svg",
+          "runtimeId": "template.pathfinder-car.death.f05",
+          "animation": "death",
+          "direction": 0,
+          "frame": 5,
+          "durationMs": 140,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 24,
+              "y": 7
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "98880ad8bb46f99f58d566bd4f878b794251f146a3cd9b8cc4bddad82a1887aa",
+          "byteLength": 1254
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__hit__d00__f00.svg",
+          "runtimeId": "template.pathfinder-car.hit.f00",
+          "animation": "hit",
+          "direction": 0,
+          "frame": 0,
+          "durationMs": 100,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 24,
+              "y": 7
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "0ea185de61664fbda7e9849254154a3c8a4e0fda3a55180e6175decafe5488f1",
+          "byteLength": 1017
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__idle__d00__f00.svg",
+          "runtimeId": "template.pathfinder-car.idle.f00",
+          "animation": "idle",
+          "direction": 0,
+          "frame": 0,
+          "durationMs": 240,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 24,
+              "y": 7
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "0bb3a8e6da2241e71bb291961e88767759fa1b66f7844caa5bba8a2a391d3194",
+          "byteLength": 960
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__idle__d00__f01.svg",
+          "runtimeId": "template.pathfinder-car.idle.f01",
+          "animation": "idle",
+          "direction": 0,
+          "frame": 1,
+          "durationMs": 240,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 24,
+              "y": 7
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "0bb3a8e6da2241e71bb291961e88767759fa1b66f7844caa5bba8a2a391d3194",
+          "byteLength": 960
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d00__f00.svg",
+          "runtimeId": "template.pathfinder-car.move.n.f00",
+          "animation": "move",
+          "direction": 0,
+          "frame": 0,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 24,
+              "y": 7
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "f8de8cffb7398329b085498029e55dca4c29fbda7091ae89bc8140f57efa1fdf",
+          "byteLength": 1035
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d00__f01.svg",
+          "runtimeId": "template.pathfinder-car.move.n.f01",
+          "animation": "move",
+          "direction": 0,
+          "frame": 1,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 24,
+              "y": 7
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "3d8f716e9b5aefcc2851436297838bcb87ad3fce26b7039ad95d8191b0215c1d",
+          "byteLength": 1036
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d00__f02.svg",
+          "runtimeId": "template.pathfinder-car.move.n.f02",
+          "animation": "move",
+          "direction": 0,
+          "frame": 2,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 24,
+              "y": 7
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "f8de8cffb7398329b085498029e55dca4c29fbda7091ae89bc8140f57efa1fdf",
+          "byteLength": 1035
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d00__f03.svg",
+          "runtimeId": "template.pathfinder-car.move.n.f03",
+          "animation": "move",
+          "direction": 0,
+          "frame": 3,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 24,
+              "y": 7
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "5d6cdd673125b791e0aceabbf96522c5d5b5e1bf38863751cc13c34726266a04",
+          "byteLength": 1035
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d01__f00.svg",
+          "runtimeId": "template.pathfinder-car.move.ne.f00",
+          "animation": "move",
+          "direction": 1,
+          "frame": 0,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 36,
+              "y": 12
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "81a016d34dbfcd3aac6003fdb821b93a63fc0621cab5ed0808ffa51bcd63057c",
+          "byteLength": 1036
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d01__f01.svg",
+          "runtimeId": "template.pathfinder-car.move.ne.f01",
+          "animation": "move",
+          "direction": 1,
+          "frame": 1,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 36,
+              "y": 12
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "04bcdc3625369144b3b65ecf7b4454337fb905fe396f491881a4ad62f45faa22",
+          "byteLength": 1037
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d01__f02.svg",
+          "runtimeId": "template.pathfinder-car.move.ne.f02",
+          "animation": "move",
+          "direction": 1,
+          "frame": 2,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 36,
+              "y": 12
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "81a016d34dbfcd3aac6003fdb821b93a63fc0621cab5ed0808ffa51bcd63057c",
+          "byteLength": 1036
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d01__f03.svg",
+          "runtimeId": "template.pathfinder-car.move.ne.f03",
+          "animation": "move",
+          "direction": 1,
+          "frame": 3,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 36,
+              "y": 12
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "214f608be3459db91c7f54d36bd0564eb2c80a6c5944204d0e18a710ca6c3de9",
+          "byteLength": 1036
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d02__f00.svg",
+          "runtimeId": "template.pathfinder-car.move.e.f00",
+          "animation": "move",
+          "direction": 2,
+          "frame": 0,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 41,
+              "y": 24
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "2a9a6cb22df5e40ba5d200ce9b7926a7d5d239478e8b278bba5becb83e58a60c",
+          "byteLength": 1036
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d02__f01.svg",
+          "runtimeId": "template.pathfinder-car.move.e.f01",
+          "animation": "move",
+          "direction": 2,
+          "frame": 1,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 41,
+              "y": 24
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "58853016d87a101fd9e7c26e20ac342134af49aae58e38a40ebde9a4fec4d027",
+          "byteLength": 1037
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d02__f02.svg",
+          "runtimeId": "template.pathfinder-car.move.e.f02",
+          "animation": "move",
+          "direction": 2,
+          "frame": 2,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 41,
+              "y": 24
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "2a9a6cb22df5e40ba5d200ce9b7926a7d5d239478e8b278bba5becb83e58a60c",
+          "byteLength": 1036
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d02__f03.svg",
+          "runtimeId": "template.pathfinder-car.move.e.f03",
+          "animation": "move",
+          "direction": 2,
+          "frame": 3,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 41,
+              "y": 24
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "7a7e86343a40f8adc673792ea8864a62ebb77381517b8ad2a4e1b59bf8188046",
+          "byteLength": 1036
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d03__f00.svg",
+          "runtimeId": "template.pathfinder-car.move.se.f00",
+          "animation": "move",
+          "direction": 3,
+          "frame": 0,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 36,
+              "y": 36
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "2cda3b93d7a6a0e4e4da37672551c4f8070c3dcc76cdc1a0c925fd8e4666263c",
+          "byteLength": 1037
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d03__f01.svg",
+          "runtimeId": "template.pathfinder-car.move.se.f01",
+          "animation": "move",
+          "direction": 3,
+          "frame": 1,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 36,
+              "y": 36
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "a028c12970aa7655152c06b59ec30f4af6b36de656d065ced2ebd8f1257a6928",
+          "byteLength": 1038
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d03__f02.svg",
+          "runtimeId": "template.pathfinder-car.move.se.f02",
+          "animation": "move",
+          "direction": 3,
+          "frame": 2,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 36,
+              "y": 36
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "2cda3b93d7a6a0e4e4da37672551c4f8070c3dcc76cdc1a0c925fd8e4666263c",
+          "byteLength": 1037
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d03__f03.svg",
+          "runtimeId": "template.pathfinder-car.move.se.f03",
+          "animation": "move",
+          "direction": 3,
+          "frame": 3,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 36,
+              "y": 36
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "c868826d69f704842540cc3e4f40bb980ef51ab08e49e42e0e3b9f7042dc8108",
+          "byteLength": 1037
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d04__f00.svg",
+          "runtimeId": "template.pathfinder-car.move.s.f00",
+          "animation": "move",
+          "direction": 4,
+          "frame": 0,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 24,
+              "y": 41
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "3d457e3e44979fc48e032a709a5f3230a694c3403b43ef87e63aabdd3102c9d2",
+          "byteLength": 1037
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d04__f01.svg",
+          "runtimeId": "template.pathfinder-car.move.s.f01",
+          "animation": "move",
+          "direction": 4,
+          "frame": 1,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 24,
+              "y": 41
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "6e0cd94817a78756a113f00026470f07e018e0bc199f59a2098fadaa7b43cbb4",
+          "byteLength": 1038
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d04__f02.svg",
+          "runtimeId": "template.pathfinder-car.move.s.f02",
+          "animation": "move",
+          "direction": 4,
+          "frame": 2,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 24,
+              "y": 41
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "3d457e3e44979fc48e032a709a5f3230a694c3403b43ef87e63aabdd3102c9d2",
+          "byteLength": 1037
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d04__f03.svg",
+          "runtimeId": "template.pathfinder-car.move.s.f03",
+          "animation": "move",
+          "direction": 4,
+          "frame": 3,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 24,
+              "y": 41
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "1f87021e61cda7af3c7358fc0c0985cb0829071674be3328439b636181d00505",
+          "byteLength": 1037
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d05__f00.svg",
+          "runtimeId": "template.pathfinder-car.move.sw.f00",
+          "animation": "move",
+          "direction": 5,
+          "frame": 0,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 12,
+              "y": 36
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "e70f905b11770d39520e20e2483dc3449b3e4f60185cf0737500fb6adbf3bcc9",
+          "byteLength": 1037
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d05__f01.svg",
+          "runtimeId": "template.pathfinder-car.move.sw.f01",
+          "animation": "move",
+          "direction": 5,
+          "frame": 1,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 12,
+              "y": 36
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "6dc72474723e4922255c9e2913cb664c114d19ffbfa1f9f431ea436e713f5abb",
+          "byteLength": 1038
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d05__f02.svg",
+          "runtimeId": "template.pathfinder-car.move.sw.f02",
+          "animation": "move",
+          "direction": 5,
+          "frame": 2,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 12,
+              "y": 36
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "e70f905b11770d39520e20e2483dc3449b3e4f60185cf0737500fb6adbf3bcc9",
+          "byteLength": 1037
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d05__f03.svg",
+          "runtimeId": "template.pathfinder-car.move.sw.f03",
+          "animation": "move",
+          "direction": 5,
+          "frame": 3,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 12,
+              "y": 36
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "e80b8a0d1296d3a0ccd303fa47d880eff7b62f608372e831fe180a2fe0896a2d",
+          "byteLength": 1037
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d06__f00.svg",
+          "runtimeId": "template.pathfinder-car.move.w.f00",
+          "animation": "move",
+          "direction": 6,
+          "frame": 0,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 7,
+              "y": 24
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "8baf141c0d3a93af623868206113df444aa732f952ebcb5692c19157a4cc17f1",
+          "byteLength": 1037
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d06__f01.svg",
+          "runtimeId": "template.pathfinder-car.move.w.f01",
+          "animation": "move",
+          "direction": 6,
+          "frame": 1,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 7,
+              "y": 24
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "d7c09ff392657d852392e2f79c8a343b7d3991067c2a58dd45cb00a44b795d19",
+          "byteLength": 1038
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d06__f02.svg",
+          "runtimeId": "template.pathfinder-car.move.w.f02",
+          "animation": "move",
+          "direction": 6,
+          "frame": 2,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 7,
+              "y": 24
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "8baf141c0d3a93af623868206113df444aa732f952ebcb5692c19157a4cc17f1",
+          "byteLength": 1037
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d06__f03.svg",
+          "runtimeId": "template.pathfinder-car.move.w.f03",
+          "animation": "move",
+          "direction": 6,
+          "frame": 3,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 7,
+              "y": 24
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "e547ac874ac67bcaef0ef3f84d7e29946d58514816c74d9c577aa4ac08ea8a2d",
+          "byteLength": 1037
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d07__f00.svg",
+          "runtimeId": "template.pathfinder-car.move.nw.f00",
+          "animation": "move",
+          "direction": 7,
+          "frame": 0,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 12,
+              "y": 12
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "01d4ac07576335b6351c87866ba08b954169780218a290449d1d1a3d496c7d93",
+          "byteLength": 1037
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d07__f01.svg",
+          "runtimeId": "template.pathfinder-car.move.nw.f01",
+          "animation": "move",
+          "direction": 7,
+          "frame": 1,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 12,
+              "y": 12
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "14fcce0625cd647a8d3a70c726aa72a1f50bab9c85e892eb51b4bdccfde06c54",
+          "byteLength": 1038
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d07__f02.svg",
+          "runtimeId": "template.pathfinder-car.move.nw.f02",
+          "animation": "move",
+          "direction": 7,
+          "frame": 2,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 12,
+              "y": 12
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "01d4ac07576335b6351c87866ba08b954169780218a290449d1d1a3d496c7d93",
+          "byteLength": 1037
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d07__f03.svg",
+          "runtimeId": "template.pathfinder-car.move.nw.f03",
+          "animation": "move",
+          "direction": 7,
+          "frame": 3,
+          "durationMs": 90,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 12,
+              "y": 12
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "816b60ea12560be5241a8bf4f6409f9721e538284731c552eabf746fe2572ded",
+          "byteLength": 1037
+        },
+        {
+          "path": "units/shared/template/template.pathfinder-car/template.pathfinder-car__wreck__d00__f00.svg",
+          "runtimeId": "template.pathfinder-car.wreck.f00",
+          "animation": "wreck",
+          "direction": 0,
+          "frame": 0,
+          "durationMs": 1000,
+          "canvas": {
+            "width": 48,
+            "height": 48
+          },
+          "contentBounds": {
+            "x": 4,
+            "y": 4,
+            "w": 40,
+            "h": 40
+          },
+          "requiredPadding": 4,
+          "paletteTokens": [
+            "damage",
+            "ink",
+            "neutral-metal",
+            "template-accent",
+            "template-base",
+            "template-deep",
+            "template-light",
+            "template-optic",
+            "template-shadow"
+          ],
+          "anchor": {
+            "x": 24,
+            "y": 44
+          },
+          "attachments": {
+            "center": {
+              "x": 24,
+              "y": 24
+            },
+            "effect": {
+              "x": 24,
+              "y": 18
+            },
+            "muzzle": {
+              "x": 24,
+              "y": 7
+            },
+            "selection": {
+              "x": 24,
+              "y": 40
+            },
+            "shadow": {
+              "x": 24,
+              "y": 39
+            }
+          },
+          "sha256": "339c96994ecd5e93e08f967345b6c9245cf68528ab4c3abafaf3dbb61475454d",
+          "byteLength": 491
         }
       ]
     }
