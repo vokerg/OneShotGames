@@ -41,7 +41,7 @@ Actions are grouped and ordered as:
 
 Source order remains stable inside each group. Duplicate action identifiers receive deterministic numeric suffixes rather than overwriting another command. Selection changes reset to page one; state-only changes retain the active page when it remains valid.
 
-The active combat card naturally exercises paging because its base, tactical, and stance actions exceed twelve slots. Page controls use the same 32-pixel minimum target as the production skin.
+The active combat card naturally exercises paging because its base, tactical, and stance actions exceed twelve slots. All action and page controls retain the production skin's 32-pixel minimum target. Grid columns use a zero intrinsic minimum so the four-column model contracts inside narrow panels instead of clipping horizontally.
 
 ## State presentation
 
@@ -59,14 +59,14 @@ Attack Ground is now exposed as a command-card button using the already-integrat
 
 ## Keyboard and accessibility behavior
 
-Native buttons retain Tab, Shift+Tab, Enter, and Space behavior. While a command has focus:
+The visible page is a labeled ARIA toolbar containing native buttons. Native buttons retain Tab, Shift+Tab, Enter, and Space behavior. While a command has focus:
 
 - Left/Right move through the visible page;
 - Up/Down move by one grid row;
 - Home/End move to the first/last visible command;
 - PageUp/PageDown change pages and retain the nearest slot.
 
-The renderer exposes page labels, row/column indices, `aria-pressed`, `aria-current`, disabled explanations, visible `<kbd>` labels, reduced-motion treatment, and forced-colors fallback. Disabled reasons are available both inline and through the production tooltip surface.
+The renderer exposes deterministic row/column geometry as data attributes, `aria-keyshortcuts`, `aria-pressed`, `aria-current`, disabled explanations, visible `<kbd>` labels, reduced-motion treatment, and forced-colors fallback. It intentionally avoids grid-only ARIA indices on native toolbar buttons. Disabled reasons are available both inline and through the production tooltip surface.
 
 ## Styling
 
@@ -81,6 +81,6 @@ node --test tests/ui/command-card.test.mjs
 node scripts/verify-command-card.mjs
 ```
 
-The tests cover model immutability, grouping, paging, navigation, targeting, disabled reasons, activation, focus, stylesheet lifecycle, UI capture, reset, and exact teardown. The dedicated verifier checks active composition and required CSS states.
+The tests cover model immutability, grouping, paging, navigation, targeting, disabled reasons, activation, focus, stylesheet lifecycle, UI capture, reset, and exact teardown. The dedicated verifier checks active composition, responsive targets, toolbar semantics, assistive hotkey metadata, and required CSS states.
 
 Successful assembled verification and browser mission smoke justify `RUNTIME_INTEGRATED`: the active application installs the command card and renders it during normal mission refresh. Automated smoke does not constitute human verification of every command combination, viewport, or input device, so this task does not independently claim `PLAYER_VERIFIED` or `RELEASE_VERIFIED`.
