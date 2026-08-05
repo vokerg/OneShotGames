@@ -66,6 +66,7 @@ import { installProductionExitFeedback } from './ui/production-exit-feedback.js'
 import { installSelectionPanel } from './ui/selection-panel.js';
 import { installStanceCommandCard } from './ui/stance-command-card.js';
 import { installTacticalCommandCard } from './ui/tactical-command-card.js';
+import { installTechTreeScreen } from './ui/tech-tree-screen.js';
 import { installVeterancyIndicator } from './ui/veterancy-indicator.js';
 
 function requiredElement(selector) {
@@ -204,6 +205,7 @@ const modules = [
   module('building-lifecycle-controls', () => installBuildingLifecycleControls({ game, ui })),
   module('combat-readability-feedback', () => installCombatReadabilityFeedback({ game, ui })),
   module('economy-hud-overview', () => installEconomyHudOverview({ game, ui })),
+  module('tech-tree-screen', () => installTechTreeScreen({ game, ui })),
   module('construction-preview', () => installConstructionPreview({ game, renderer })),
   module('effects-atlas-renderer', () => installEffectsAtlasRenderer({ game, renderer })),
   module('combat-readability-overlay', () => installCombatReadabilityOverlay({ game, renderer })),

@@ -1,86 +1,77 @@
-# Production command card
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-Task: UFR-135  
-Contract: `fields-of-resolve.command-card` version 1
+import {
+  COMMAND_CARD_COLUMNS,
+  COMMAND_CARD_PAGE_SIZE,
+  COMMAND_CARD_ROWS,
+  COMMAND_CARD_SCHEMA,
+  COMMAND_CARD_STYLESHEET,
+  createCommandCardModel,
+  navigateCommandCard,
+} from '../src/ui/command-card.js';
 
-## Purpose and ownership
+const projectRoot = resolve(fileURLToPath(new URL('..', import.meta.url)));
+const read = (path) => readFile(resolve(projectRoot, path), 'utf8');
+const fail = (message) => { throw new Error(message); };
 
-The production command card replaces the legacy unstructured command-button list with a deterministic 4-column by 3-row presentation model. It owns command grouping, paging, visible hotkeys, disabled explanations, armed-targeting and stance presentation, and local keyboard focus movement.
+const [stylesheet, tacticalInstaller, mainSource] = await Promise.all([
+  read(COMMAND_CARD_STYLESHEET),
+  read('src/ui/tactical-command-card.js'),
+  read('src/main.js'),
+]);
 
-It does not own command validation or execution. Buttons continue to call the existing `Game`, tactical-command, stance, attack-ground, production, construction, ability, and research delegates. UFR-141 retains key rebinding and broader accessibility settings. UFR-133 retains screen and modal architecture.
+const fixture = Array.from({ length: COMMAND_CARD_PAGE_SIZE + 1 }, (_, index) => ({
+  id: `fixture-${index}`,
+  title: `Fixture ${index}`,
+  description: 'Verification action.',
+  group: index % 2 ? 'ability' : 'order',
+  disabled: index === 2,
+  disabledReason: index === 2 ? 'Fixture disabled reason.' : '',
+  onClick() {},
+}));
+const model = createCommandCardModel(fixture);
+if (model.schema !== COMMAND_CARD_SCHEMA) fail('Command card schema drifted.');
+if (model.columns !== COMMAND_CARD_COLUMNS || model.rows !== COMMAND_CARD_ROWS) fail('Command card grid geometry drifted.');
+if (model.pageCount !== 2 || model.actions.length !== COMMAND_CARD_PAGE_SIZE) fail('Command card paging contract is incomplete.');
+if (!Object.isFrozen(model) || !Object.isFrozen(model.actions[0])) fail('Command card model must be deeply immutable.');
+if (!model.allActions.find((action) => action.disabled)?.disabledReason) fail('Disabled commands must expose a reason.');
+const navigation = navigateCommandCard(model, model.actions[0].id, 'ArrowDown');
+if (!navigation.actionId || navigation.pageDelta !== 0) fail('Command card grid navigation is invalid.');
 
-## Runtime composition
+const requiredCss = [
+  ['4-column grid', /grid-template-columns:\s*repeat\(4,\s*minmax\(0,\s*1fr\)\)/],
+  ['three rows', /grid-template-rows:\s*repeat\(3,/],
+  ['minimum action target', /\.commandCardAction\s*\{[^}]*min-height:\s*var\(--ui-target-min,\s*32px\)/s],
+  ['targeting state', /\[data-targeting='true'\]/],
+  ['group labels', /\.commandGroupLabel/],
+  ['hotkey labels', /\.commandHotkey/],
+  ['disabled reasons', /\.commandDisabledReason/],
+  ['page controls', /\.commandCardPager/],
+  ['reduced motion', /prefers-reduced-motion:\s*reduce/],
+  ['forced colors', /forced-colors:\s*active/],
+];
+for (const [label, pattern] of requiredCss) {
+  if (!pattern.test(stylesheet)) fail(`Command card stylesheet is missing ${label}.`);
+}
 
-`src/ui/command-card.js` installs through the existing `tactical-command-card` application module. The installer wraps these legacy UI seams reversibly:
+if (!tacticalInstaller.includes("import { installProductionCommandCard } from './command-card.js';")) {
+  fail('Tactical command-card composition does not import the production command card.');
+}
+if (!tacticalInstaller.includes('const disposeProductionCommandCard = installProductionCommandCard(ui);')) {
+  fail('Production command card is not installed through the active UI composition seam.');
+}
+if (!tacticalInstaller.includes("title: 'Attack Ground'")) fail('Existing attack-ground semantics are not exposed in the command card.');
+if (!tacticalInstaller.includes('disabledReason:')) fail('Command-card extensions do not provide disabled reasons.');
+if (!mainSource.includes("module('tactical-command-card', () => installTacticalCommandCard(ui))")) {
+  fail('Active runtime no longer installs the tactical command-card seam.');
+}
+if (mainSource.indexOf("module('tactical-command-card'") > mainSource.indexOf("module('stance-command-card'")) {
+  fail('Production command-card capture must install before stance-card extensions.');
+}
 
-- `commandStateSignature()` adds resources and armed presentation state;
-- `shouldRenderCommands()` begins one deterministic capture when the existing UI decides commands changed;
-- `commandButton()` captures the existing command definitions without changing their callbacks;
-- `refresh()` commits one immutable model and DOM render after all command-card extensions have appended actions;
-- mission/operation transitions reset page and focus state.
-
-The tactical installer is composed before the stance installer, so base orders, tactical targeting, transport or other extensions, and all stances flow through one model. Disposal restores the exact previous functions and removes the dynamically mounted `command-card.css` link.
-
-## Grid, grouping, and pages
-
-The contract uses twelve slots per page:
-
-```text
-4 columns × 3 rows = 12 commands
-```
-
-Actions are grouped and ordered as:
-
-1. orders;
-2. targeting;
-3. stances;
-4. abilities;
-5. construction;
-6. production;
-7. modernization.
-
-Source order remains stable inside each group. Duplicate action identifiers receive deterministic numeric suffixes rather than overwriting another command. Selection changes reset to page one; state-only changes retain the active page when it remains valid.
-
-The active combat card naturally exercises paging because its base, tactical, and stance actions exceed twelve slots. All action and page controls retain the production skin's 32-pixel minimum target. Grid columns use a zero intrinsic minimum so the four-column model contracts inside narrow panels instead of clipping horizontally.
-
-## State presentation
-
-Each command carries:
-
-- stable ID, group, slot, row, and column;
-- title and description;
-- real hotkey when an active binding exists;
-- supplemental metadata such as resource cost or cooldown;
-- disabled state and a player-facing reason;
-- pressed state for active stances or completed modernization;
-- targeting state for attack-move, attack-ground, construction placement, patrol, guard, and follow.
-
-Attack Ground is now exposed as a command-card button using the already-integrated UFR-036 controller. No new attack-ground simulation path was introduced.
-
-## Keyboard and accessibility behavior
-
-The visible page is a labeled ARIA toolbar containing native buttons. Native buttons retain Tab, Shift+Tab, Enter, and Space behavior. While a command has focus:
-
-- Left/Right move through the visible page;
-- Up/Down move by one grid row;
-- Home/End move to the first/last visible command;
-- PageUp/PageDown change pages and retain the nearest slot.
-
-The renderer exposes deterministic row/column geometry as data attributes, `aria-keyshortcuts`, `aria-pressed`, `aria-current`, disabled explanations, visible `<kbd>` labels, reduced-motion treatment, and forced-colors fallback. It intentionally avoids grid-only ARIA indices on native toolbar buttons. Disabled reasons are available both inline and through the production tooltip surface.
-
-## Styling
-
-`command-card.css` is mounted by the installer after the existing stylesheets. It keeps model and visual geometry aligned at four columns and three rows, uses UFR-120 skin assets/tokens, and adds group, targeting, hotkey, disabled, and pager treatments without changing `index.html` or settings-owned styles.
-
-## Verification and evidence boundary
-
-Focused coverage:
-
-```bash
-node --test tests/ui/command-card.test.mjs
-node scripts/verify-command-card.mjs
-```
-
-The tests cover model immutability, grouping, paging, navigation, targeting, disabled reasons, activation, focus, stylesheet lifecycle, UI capture, reset, and exact teardown. The dedicated verifier checks active composition, responsive targets, toolbar semantics, assistive hotkey metadata, and required CSS states.
-
-Successful assembled verification and browser mission smoke justify `RUNTIME_INTEGRATED`: the active application installs the command card and renders it during normal mission refresh. Automated smoke does not constitute human verification of every command combination, viewport, or input device, so this task does not independently claim `PLAYER_VERIFIED` or `RELEASE_VERIFIED`.
+process.stdout.write(
+  `[command-card] verified ${COMMAND_CARD_COLUMNS}x${COMMAND_CARD_ROWS} grid, ${model.pageCount} pages, `
+  + 'grouping, hotkeys, disabled reasons, targeting/stance states, keyboard navigation, styling, and active composition\n',
+);
