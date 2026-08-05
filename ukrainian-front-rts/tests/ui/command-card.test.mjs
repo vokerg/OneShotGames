@@ -97,7 +97,7 @@ test('builds a frozen, grouped, deterministic 4x3 paged command-card model', () 
   assert.equal(model.pageSize, COMMAND_CARD_PAGE_SIZE);
   assert.equal(model.pageCount, 2);
   assert.equal(model.actions.length, 12);
-  assert.equal(model.actions[0].title, 'Action 5');
+  assert.equal(model.actions[0].title, 'Repair');
   assert.equal(model.actions.find((entry) => entry.title === 'Attack-Move').hotkey, 'Q');
   assert.equal(model.actions.find((entry) => entry.title === 'Attack-Move').targeting, true);
   assert.equal(model.actions.find((entry) => entry.title === 'Patrol').targeting, true);
@@ -132,6 +132,7 @@ test('controller renders grouped actions, pager, targeting state, disabled reaso
     controller.add(action(index, {
       title: index === 0 ? 'Attack-Move' : `Action ${index}`,
       meta: index === 0 ? 'Q' : '',
+      group: index === 0 ? undefined : 'ability',
       disabled: index === 2,
       disabledReason: index === 2 ? 'Unavailable in test.' : '',
       onClick: () => calls.push(index),
