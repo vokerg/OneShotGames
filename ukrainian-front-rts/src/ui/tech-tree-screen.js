@@ -14,6 +14,7 @@ const LANE_DEFINITIONS = Object.freeze([
   Object.freeze({ id: 'fires', label: 'Long-Range Fires', description: 'Range and lethality improvements.' }),
   Object.freeze({ id: 'mobility', label: 'Mobility', description: 'Movement and obstacle-breaching upgrades.' }),
 ]);
+const MODAL_NAVIGATION_KEYS = new Set(['Tab', 'Enter', ' ', 'Spacebar']);
 
 function laneForUpgrade(upgrade) {
   const mods = upgrade?.mods || {};
@@ -260,6 +261,11 @@ export function renderTechTreeScreen(root, model, { documentTarget = document } 
   return root;
 }
 
+function backgroundSiblings(panel) {
+  const children = panel.parentElement?.children;
+  return children ? [...children].filter((child) => child !== panel) : [];
+}
+
 export function installTechTreeScreen({
   game,
   ui,
@@ -276,6 +282,8 @@ export function installTechTreeScreen({
 
   let selectedTechId = null;
   let refreshTimer = null;
+  let previousFocus = null;
+  const siblingInertState = new Map();
   const isOpen = () => !panel.classList.contains('hidden');
   const render = () => {
     const model = createTechTreeModel(game, { selectedTechId });
@@ -283,10 +291,24 @@ export function installTechTreeScreen({
     renderTechTreeScreen(content, model, { documentTarget });
     return model;
   };
-  const setOpen = (open) => {
+  const setBackgroundInert = (inert) => {
+    for (const sibling of backgroundSiblings(panel)) {
+      if (inert) {
+        if (!siblingInertState.has(sibling)) siblingInertState.set(sibling, Boolean(sibling.inert));
+        sibling.inert = true;
+      } else if (siblingInertState.has(sibling)) {
+        sibling.inert = siblingInertState.get(sibling);
+      }
+    }
+    if (!inert) siblingInertState.clear();
+  };
+  const setOpen = (open, { restoreFocus = true } = {}) => {
+    if (open) previousFocus = documentTarget.activeElement || toggle;
     panel.classList.toggle('hidden', !open);
+    panel.setAttribute('aria-hidden', String(!open));
     toggle.setAttribute('aria-expanded', String(open));
     documentTarget.body?.classList?.toggle('tech-tree-open', open);
+    setBackgroundInert(open);
     if (refreshTimer != null) {
       windowTarget.clearInterval?.(refreshTimer);
       refreshTimer = null;
@@ -294,12 +316,27 @@ export function installTechTreeScreen({
     if (open) {
       render();
       refreshTimer = windowTarget.setInterval?.(render, 1000) ?? null;
+      close.focus?.();
+    } else if (restoreFocus) {
+      const target = previousFocus?.isConnected === false ? toggle : previousFocus || toggle;
+      target?.focus?.();
+      previousFocus = null;
     }
   };
   const onToggle = () => setOpen(!isOpen());
   const onClose = () => setOpen(false);
   const onKeyDown = (event) => {
-    if (event.key === 'Escape' && isOpen()) setOpen(false);
+    if (!isOpen()) return;
+    if (event.key === 'Escape') {
+      event.preventDefault?.();
+      event.stopImmediatePropagation?.();
+      setOpen(false);
+      return;
+    }
+    if (!MODAL_NAVIGATION_KEYS.has(event.key)) {
+      event.preventDefault?.();
+      event.stopImmediatePropagation?.();
+    }
   };
   const onContentClick = (event) => {
     const target = event.target?.closest?.('[data-action]') || event.target;
@@ -327,15 +364,15 @@ export function installTechTreeScreen({
   toggle.addEventListener('click', onToggle);
   close.addEventListener('click', onClose);
   content.addEventListener('click', onContentClick);
-  windowTarget.addEventListener?.('keydown', onKeyDown);
+  windowTarget.addEventListener?.('keydown', onKeyDown, true);
+  panel.setAttribute('aria-hidden', String(!isOpen()));
   toggle.setAttribute('aria-expanded', String(isOpen()));
 
   return () => {
     toggle.removeEventListener('click', onToggle);
     close.removeEventListener('click', onClose);
     content.removeEventListener('click', onContentClick);
-    windowTarget.removeEventListener?.('keydown', onKeyDown);
-    if (refreshTimer != null) windowTarget.clearInterval?.(refreshTimer);
-    documentTarget.body?.classList?.toggle('tech-tree-open', false);
+    windowTarget.removeEventListener?.('keydown', onKeyDown, true);
+    setOpen(false, { restoreFocus: false });
   };
 }
