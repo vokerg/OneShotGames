@@ -33,8 +33,16 @@ jobs:
       - name: Full assembled verifier
         shell: bash
         run: |
-          set -o pipefail
-          bash verify.sh 2>&1 | tee artifacts/assembled-verifier.log
+          set +e
+          ./verify.sh > artifacts/assembled-verifier.log 2>&1
+          status=$?
+          cat artifacts/assembled-verifier.log
+          if [ "$status" -ne 0 ]; then
+            tail -n 80 artifacts/assembled-verifier.log | sed 's/%/%25/g; s/\r/%0D/g; s/\n/%0A/g' | while IFS= read -r line; do
+              echo "::error title=Full assembled verifier::${line}"
+            done
+          fi
+          exit "$status"
       - name: Active claim diagnostics
         if: always()
         env:
@@ -44,6 +52,9 @@ jobs:
       - name: Browser startup and mission smoke
         if: always()
         run: node scripts/browser-startup-smoke.mjs
+      - name: Visual regression review capture
+        if: always()
+        run: node scripts/visual-regression-smoke.mjs
       - name: Browser audio autoplay and resume smoke
         if: always()
         run: node scripts/browser-audio-release-smoke.mjs
