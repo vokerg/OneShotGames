@@ -1,0 +1,36 @@
+{
+  "schema": "fields-of-resolve.building-art-source",
+  "version": 1,
+  "id": "fields-of-resolve.production-buildings",
+  "family": "production-buildings",
+  "provenance": {
+    "creator": "Fields of Resolve contributors",
+    "createdAt": "2026-08-04",
+    "source": "Original deterministic repository-owned vector recipes",
+    "license": "CC0-1.0",
+    "redistribution": "allowed",
+    "generatedTools": {
+      "used": false,
+      "details": "No generative image model or third-party visual source was used.",
+      "humanCorrections": "Faction language, silhouettes, lifecycle readability, anchors, and palette use were designed for this project."
+    }
+  },
+  "buildings": [
+    { "id": "ru.air-defense-battalion", "faction": "russia", "role": "air-defense", "tier": 2, "silhouette": "layered radar and launcher triangle" },
+    { "id": "ru.armored-park", "faction": "russia", "role": "vehicle", "tier": 1, "silhouette": "broad vehicle bay and maintenance gantry" },
+    { "id": "ru.engineer-battalion", "faction": "russia", "role": "engineer", "tier": 2, "silhouette": "prepared works shed and route-clearing crane" },
+    { "id": "ru.fires-regiment", "faction": "russia", "role": "fires", "tier": 2, "silhouette": "ammunition revetment and elevated fire-control roof" },
+    { "id": "ru.motor-rifle-barracks", "faction": "russia", "role": "infantry", "tier": 1, "silhouette": "long barracks mass with repeated roof vents" },
+    { "id": "ru.regimental-command", "faction": "russia", "role": "command", "tier": 0, "silhouette": "deep command bunker and echelon mast" },
+    { "id": "ru.supply-depot", "faction": "russia", "role": "logistics", "tier": 0, "silhouette": "large stacked stores and protected loading lane" },
+    { "id": "ru.uas-ew-battalion", "faction": "russia", "role": "uas-ew", "tier": 1, "silhouette": "wide denial array and hardened equipment hall" },
+    { "id": "ua.air-defense-site", "faction": "ukraine", "role": "air-defense", "tier": 2, "silhouette": "compact mobile sensor and distributed launcher shelter" },
+    { "id": "ua.command-post", "faction": "ukraine", "role": "command", "tier": 0, "silhouette": "modular command cells and network mast" },
+    { "id": "ua.engineer-park", "faction": "ukraine", "role": "engineer", "tier": 2, "silhouette": "compact workshop with bridge and breach tooling" },
+    { "id": "ua.fires-center", "faction": "ukraine", "role": "fires", "tier": 2, "silhouette": "networked fire-direction shelter and ammunition cells" },
+    { "id": "ua.infantry-center", "faction": "ukraine", "role": "infantry", "tier": 1, "silhouette": "modular training block with distinct squad bays" },
+    { "id": "ua.logistics-hub", "faction": "ukraine", "role": "logistics", "tier": 0, "silhouette": "distributed cargo modules and transfer lane" },
+    { "id": "ua.motor-pool", "faction": "ukraine", "role": "vehicle", "tier": 1, "silhouette": "compact protected bays and recovery boom" },
+    { "id": "ua.uas-ew-cell", "faction": "ukraine", "role": "uas-ew", "tier": 1, "silhouette": "small relay mast and modular drone service cells" }
+  ]
+}
