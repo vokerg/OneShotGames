@@ -244,7 +244,8 @@ export function createCommandCardController({ root, game, documentTarget = globa
     actionButtons = new Map();
     const grid = documentTarget.createElement('div');
     grid.className = 'commandCardGrid';
-    grid.setAttribute('role', 'group');
+    grid.setAttribute('role', 'toolbar');
+    grid.setAttribute('aria-orientation', 'horizontal');
     grid.setAttribute('aria-label', `Command card page ${page + 1} of ${model.pageCount}`);
 
     for (const action of model.actions) {
@@ -255,10 +256,11 @@ export function createCommandCardController({ root, game, documentTarget = globa
       button.dataset.commandId = action.id;
       button.dataset.commandGroup = action.group;
       button.dataset.commandSlot = String(action.slot);
+      button.dataset.commandRow = String(action.row);
+      button.dataset.commandColumn = String(action.column);
       button.dataset.targeting = action.targeting ? 'true' : 'false';
       button.setAttribute('aria-label', `${action.title}. ${action.description}${action.disabledReason ? ` ${action.disabledReason}` : ''}`);
-      button.setAttribute('aria-rowindex', String(action.row + 1));
-      button.setAttribute('aria-colindex', String(action.column + 1));
+      if (action.hotkey) button.setAttribute('aria-keyshortcuts', action.hotkey);
       if (action.pressed) button.setAttribute('aria-pressed', 'true');
       if (action.targeting) button.setAttribute('aria-current', 'true');
       if (action.disabledReason) {
