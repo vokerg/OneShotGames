@@ -30,12 +30,26 @@ class FakeElement {
     this.dataset = {};
     this.style = {};
     this.disabled = false;
+    this.inert = false;
     this.attributes = {};
     this.listeners = new Map();
     this.classList = new FakeClassList(this);
+    this.parentElement = null;
+    this.focused = false;
   }
-  append(...children) { this.children.push(...children); }
-  replaceChildren(...children) { this.children = [...children]; }
+  adopt(children) {
+    children.forEach((child) => {
+      if (child && typeof child === 'object') child.parentElement = this;
+    });
+  }
+  append(...children) {
+    this.adopt(children);
+    this.children.push(...children);
+  }
+  replaceChildren(...children) {
+    this.adopt(children);
+    this.children = [...children];
+  }
   setAttribute(name, value) { this.attributes[name] = String(value); }
   addEventListener(type, listener) { this.listeners.set(type, listener); }
   removeEventListener(type, listener) {
@@ -43,10 +57,12 @@ class FakeElement {
   }
   dispatch(type, event = {}) { this.listeners.get(type)?.({ target: this, ...event }); }
   closest(selector) { return selector === '[data-action]' && this.dataset.action ? this : null; }
+  focus() { this.focused = true; }
 }
 
 function fakeDocument(elements = {}) {
   return {
+    activeElement: null,
     body: new FakeElement('body'),
     createElement: (tagName) => new FakeElement(tagName),
     querySelector: (selector) => elements[selector] || null,
@@ -121,9 +137,12 @@ test('renders resource, prerequisite, node-state, and selected-project details',
   assert.ok(all.some((node) => node.className.includes('state-available')));
 });
 
-test('opens, selects, researches through the game API, and closes with explicit controls or Escape', () => {
+test('opens as a modal, captures gameplay input, researches, and restores focus on close', () => {
+  const shell = new FakeElement('main');
+  const battlefield = new FakeElement('canvas');
   const panel = new FakeElement('section');
   panel.className = 'hidden';
+  shell.append(battlefield, panel);
   const content = new FakeElement();
   const toggle = new FakeElement('button');
   const close = new FakeElement('button');
@@ -133,6 +152,7 @@ test('opens, selects, researches through the game API, and closes with explicit 
     '#techTreeToggle': toggle,
     '#techTreeClose': close,
   });
+  documentTarget.activeElement = toggle;
   const windowTarget = fakeWindow();
   const game = gameFixture();
   const calls = [];
@@ -152,7 +172,20 @@ test('opens, selects, researches through the game API, and closes with explicit 
   const dispose = installTechTreeScreen({ game, ui, documentTarget, windowTarget });
   toggle.dispatch('click');
   assert.equal(panel.classList.contains('hidden'), false);
+  assert.equal(panel.attributes['aria-hidden'], 'false');
   assert.equal(toggle.attributes['aria-expanded'], 'true');
+  assert.equal(battlefield.inert, true);
+  assert.equal(close.focused, true);
+
+  let prevented = false;
+  let stopped = false;
+  windowTarget.dispatch('keydown', {
+    key: 'q',
+    preventDefault() { prevented = true; },
+    stopImmediatePropagation() { stopped = true; },
+  });
+  assert.equal(prevented, true);
+  assert.equal(stopped, true);
 
   const selectable = descendants(content).find((node) => node.dataset.techId === 'activeProtection' && node.dataset.action === 'select-tech');
   content.dispatch('click', { target: selectable });
@@ -165,8 +198,16 @@ test('opens, selects, researches through the game API, and closes with explicit 
 
   close.dispatch('click');
   assert.equal(panel.classList.contains('hidden'), true);
+  assert.equal(panel.attributes['aria-hidden'], 'true');
+  assert.equal(battlefield.inert, false);
+  assert.equal(toggle.focused, true);
+
   toggle.dispatch('click');
-  windowTarget.dispatch('keydown', { key: 'Escape' });
+  windowTarget.dispatch('keydown', {
+    key: 'Escape',
+    preventDefault() {},
+    stopImmediatePropagation() {},
+  });
   assert.equal(panel.classList.contains('hidden'), true);
 
   dispose();
