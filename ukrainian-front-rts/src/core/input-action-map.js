@@ -83,7 +83,10 @@ function plainObject(value) {
 }
 
 export function normalizeInputKey(key) {
-  return String(key || '').trim().toLowerCase();
+  const value = String(key ?? '').toLowerCase();
+  const trimmed = value.trim();
+  if (value === ' ' || trimmed === 'space' || trimmed === 'spacebar') return 'space';
+  return trimmed;
 }
 
 function actionBindingsFromKeyBindings(bindings) {
