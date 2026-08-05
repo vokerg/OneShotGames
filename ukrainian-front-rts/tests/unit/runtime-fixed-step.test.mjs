@@ -108,3 +108,52 @@ test('mission restart discards partial accumulated frame time', () => {
   scheduledFrame(currentTime);
   assert.equal(updates.length, 1);
 });
+
+test('paused runtime freezes simulation while render and UI refresh continue', () => {
+  let currentTime = 0;
+  let scheduledFrame = null;
+  let updates = 0;
+  const renderer = { renders: 0, render() { this.renders += 1; } };
+  const ui = {
+    refreshes: 0,
+    setMission() {},
+    toast() {},
+    refresh() { this.refreshes += 1; },
+  };
+  const game = {
+    mission: null,
+    start() { this.mission = { id: 'pause', waves: { firstDelay: 20 } }; },
+    update() { updates += 1; },
+  };
+  const runtime = createGameRuntime({
+    game,
+    renderer,
+    ui,
+    now: () => currentTime,
+    requestFrame(callback) {
+      scheduledFrame = callback;
+      return 1;
+    },
+    cancelFrame() {},
+  });
+
+  runtime.startMission(0, 'pause-fixed-step');
+  runtime.start();
+  currentTime = 34;
+  scheduledFrame(currentTime);
+  assert.equal(updates, 1);
+
+  assert.equal(runtime.pause(), true);
+  currentTime = 1034;
+  scheduledFrame(currentTime);
+  assert.equal(updates, 1, 'paused frames must not advance simulation');
+  assert.equal(renderer.renders, 2, 'paused frames keep rendering');
+  assert.equal(ui.refreshes, 2, 'paused frames keep refreshing UI');
+  assert.equal(runtime.isPaused(), true);
+
+  assert.equal(runtime.resume(), false);
+  currentTime = 1068;
+  scheduledFrame(currentTime);
+  assert.equal(updates, 2, 'resume restarts fixed-step updates without catching up paused wall time');
+  assert.equal(runtime.isPaused(), false);
+});
