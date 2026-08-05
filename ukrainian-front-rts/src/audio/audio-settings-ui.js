@@ -1,3 +1,4 @@
+import { installAccessibilitySettingsUI } from './accessibility-settings-ui.js';
 import { DOMAIN_EVENT_TYPES } from '../core/events.js';
 import {
   AUDIO_BUS_IDS,
@@ -192,6 +193,13 @@ export function installAudioSettingsAccessibility({
 
   try {
     const elements = resolveElements(documentTarget, suppliedElements);
+    const accessibility = installAccessibilitySettingsUI({
+      form: elements.form,
+      storage,
+      documentTarget,
+      windowTarget,
+    });
+    registerCleanup(() => accessibility.dispose());
     const controller = createAudioSettingsController({ mixer, storage });
     registerCleanup(() => controller.dispose());
     const background = createBackgroundAudioController({ mixer, visibilityTarget: documentTarget });
@@ -274,7 +282,10 @@ export function installAudioSettingsAccessibility({
         controller.update({ [setting]: Boolean(control.checked) });
       }
     };
-    const onReset = () => controller.reset();
+    const onReset = () => {
+      controller.reset();
+      accessibility.reset();
+    };
     const onTestCue = () => announceCue({ cue: 'ui.alert', visualLabel: 'Incoming attack', direction: 'north-east', urgency: 'critical' });
     const onKeyDown = (event) => {
       if (!isOpen()) return;
@@ -320,6 +331,7 @@ export function installAudioSettingsAccessibility({
 
     const snapshot = () => deepFreeze({
       settings: controller.snapshot(),
+      accessibility: accessibility.snapshot(),
       background: background.snapshot(),
       panelOpen: isOpen(),
       disposed,
@@ -328,7 +340,7 @@ export function installAudioSettingsAccessibility({
     return Object.freeze({
       snapshot,
       update: controller.update,
-      reset: controller.reset,
+      reset: onReset,
       announceCue,
       open,
       close,
