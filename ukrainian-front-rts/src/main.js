@@ -1,4 +1,5 @@
 import { acquireBrowserStorage } from './app/browser-capabilities.js';
+import { createCampaignSaveRuntime } from './app/campaign-save-runtime.js';
 import { createApplicationComposition } from './app/composition-registry.js';
 import { installControllerWithSimulationDelegates } from './app/controller-adapter.js';
 import { createGameRuntime } from './app/runtime.js';
@@ -64,6 +65,7 @@ import { installCombatReadabilityFeedback } from './ui/combat-readability-feedba
 import { createCombatReadabilityController } from './ui/combat-readability-runtime.js';
 import { installCommandCapacityFeedback } from './ui/command-capacity-feedback.js';
 import { installEconomyHudOverview } from './ui/economy-hud-overview.js';
+import { installMenuStackComposition } from './ui/menu-stack-composition.js';
 import { installMinimapAlerts } from './ui/minimap-alerts.js';
 import { installProductionExitFeedback } from './ui/production-exit-feedback.js';
 import { installSelectionPanel } from './ui/selection-panel.js';
@@ -226,6 +228,16 @@ const modules = [
   module('economy-hud-overview', () => installEconomyHudOverview({ game, ui })),
   module('minimap-alerts', () => installMinimapAlerts({ game, ui, renderer, minimap })),
   module('tech-tree-screen', () => installTechTreeScreen({ game, ui })),
+  module('menu-stack', () => installMenuStackComposition({
+    game,
+    ui,
+    runtime,
+    storage: browserStorage,
+    createSaveRuntime: createCampaignSaveRuntime,
+    audioSettings: () => audioSettingsAccessibility,
+    documentTarget: document,
+    windowTarget: window,
+  })),
   module('construction-preview', () => installConstructionPreview({ game, renderer })),
   module('effects-atlas-renderer', () => installEffectsAtlasRenderer({ game, renderer })),
   module('combat-readability-overlay', () => installCombatReadabilityOverlay({ game, renderer })),
