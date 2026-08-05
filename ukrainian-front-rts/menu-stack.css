@@ -1,0 +1,125 @@
+#pauseMenu {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(7, 10, 8, .82);
+  backdrop-filter: blur(4px);
+}
+#pauseMenu.hidden { display: none; }
+.pauseMenuCard {
+  width: min(760px, 94vw);
+  max-height: min(720px, 92vh);
+  overflow: auto;
+  color: #f3e8c2;
+  background: linear-gradient(#414a3d, #20251f 42%, #141814);
+  border: 6px ridge #9a8353;
+  box-shadow: 0 18px 60px #000;
+}
+.pauseMenuHeader {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  background: linear-gradient(#505a49, #2a3028);
+  border-bottom: 2px groove #8b7447;
+}
+.pauseMenuHeader div { flex: 1; }
+.pauseMenuHeader small {
+  display: block;
+  color: #c8b982;
+  font: 700 10px monospace;
+  letter-spacing: .18em;
+}
+.pauseMenuHeader h2 { margin: 3px 0 0; color: #ffe08a; }
+#pauseMenuContent { padding: 18px; }
+.pauseMenuIntro { margin: 0 0 16px; color: #d8cfad; }
+.pauseMenuActions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+  gap: 10px;
+}
+.pauseMenuActions button {
+  min-height: 54px;
+  text-align: left;
+}
+.pauseMenuActions .primary,
+.pauseMenuConfirmActions .primary { border-color: #d4ae54; }
+.pauseMenuActions .danger,
+.pauseMenuConfirmActions .danger,
+.pauseMenuSaveCardActions .danger { border-color: #9a544a; }
+.pauseMenuSectionHeader {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 16px;
+}
+.pauseMenuSectionHeader h3 { margin: 0 0 4px; color: #ffe08a; }
+.pauseMenuSectionHeader p { margin: 0; color: #cfc5a5; line-height: 1.35; }
+.pauseMenuSaveControls { margin-bottom: 12px; }
+.pauseMenuSaveList { display: grid; gap: 8px; }
+.pauseMenuSaveCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px;
+  background: rgba(255,255,255,.045);
+  border: 2px inset #6f603f;
+}
+.pauseMenuSaveCard > div:first-child { flex: 1; min-width: 0; }
+.pauseMenuSaveCard strong,
+.pauseMenuSaveCard small { display: block; }
+.pauseMenuSaveCard small { margin-top: 4px; color: #c8bd9d; }
+.pauseMenuSaveCardActions { display: flex; gap: 6px; }
+.pauseMenuEmpty { color: #c9bea0; font-style: italic; }
+.pauseMenuControlGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.pauseMenuControlGroup {
+  padding: 12px;
+  background: rgba(255,255,255,.04);
+  border: 2px inset #6f603f;
+}
+.pauseMenuControlGroup h4 { margin: 0 0 9px; color: #f2d172; }
+.pauseMenuControlGroup dl { margin: 0; }
+.pauseMenuControlGroup dt {
+  margin-top: 7px;
+  color: #ffe7a4;
+  font: 700 11px monospace;
+}
+.pauseMenuControlGroup dd { margin: 2px 0 0; color: #cfc5a5; font-size: 12px; }
+.pauseMenuAccessibilityList {
+  margin: 0 0 16px;
+  padding-left: 22px;
+  color: #d5caab;
+  line-height: 1.5;
+}
+.pauseMenuConfirmText { color: #d5caab; line-height: 1.45; }
+.pauseMenuConfirmActions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+.pauseMenuStatus {
+  margin: 16px 0 0;
+  padding: 9px 11px;
+  border: 1px solid #857548;
+  background: rgba(0,0,0,.2);
+}
+.pauseMenuStatus.tone-success { border-color: #6f9a67; color: #caffb8; }
+.pauseMenuStatus.tone-error { border-color: #a75e52; color: #ffc0ae; }
+body.pause-menu-open #message { opacity: 0; }
+
+@media (max-width: 720px) {
+  .pauseMenuActions,
+  .pauseMenuControlGrid { grid-template-columns: 1fr; }
+  .pauseMenuSaveCard { align-items: stretch; flex-direction: column; }
+  .pauseMenuSaveCardActions { justify-content: flex-end; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #pauseMenu { backdrop-filter: none; }
+}

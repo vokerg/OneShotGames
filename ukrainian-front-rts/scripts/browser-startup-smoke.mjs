@@ -227,6 +227,70 @@ try {
     `document.querySelector('#missionSelect')?.classList.contains('hidden') && document.querySelector('#missionTitle')?.textContent`,
     'the first mission to start',
   );
+  await waitFor(
+    `document.querySelector('#pauseMenuToggle') && document.querySelector('#pauseMenu')?.getAttribute('aria-hidden') === 'true'`,
+    'pause menu composition to mount',
+  );
+
+  await evaluate(`(() => {
+    const toggle = document.querySelector('#pauseMenuToggle');
+    toggle.focus();
+    toggle.click();
+  })()`);
+  await waitFor(
+    `!document.querySelector('#pauseMenu')?.classList.contains('hidden') && document.querySelector('#pauseMenu')?.getAttribute('aria-hidden') === 'false' && document.querySelector('#shell')?.inert === true && document.querySelector('#pauseMenuToggle')?.getAttribute('aria-expanded') === 'true'`,
+    'pause menu modal isolation',
+  );
+  const menuState = {
+    mounted: true,
+    panelOpen: true,
+    shellIsolated: true,
+  };
+
+  await evaluate(`document.querySelector('[data-menu-action="controls"]').click()`);
+  await waitFor(
+    `document.querySelector('#pauseMenuContent h3')?.textContent === 'Controls'`,
+    'pause menu controls view',
+  );
+  menuState.controlsView = true;
+  await evaluate(`document.querySelector('[data-menu-action="back"]').click()`);
+  await waitFor(
+    `document.querySelector('[data-menu-action="restart"]')`,
+    'pause menu main view restoration',
+  );
+
+  await evaluate(`document.querySelector('[data-menu-action="restart"]').click()`);
+  await waitFor(
+    `document.querySelector('#pauseMenuContent h3')?.textContent === 'Restart operation?' && document.querySelector('[data-menu-action="confirm"]')`,
+    'restart destructive confirmation',
+  );
+  menuState.destructiveConfirmation = true;
+  await evaluate(`document.querySelector('[data-menu-action="cancel-confirm"]').click()`);
+  await waitFor(
+    `document.querySelector('[data-menu-action="settings"]')`,
+    'pause menu after confirmation cancellation',
+  );
+
+  await evaluate(`document.querySelector('[data-menu-action="settings"]').click()`);
+  await waitFor(
+    `!document.querySelector('#audioSettings')?.classList.contains('hidden') && document.querySelector('#pauseMenu')?.classList.contains('hidden') && document.querySelector('#shell')?.inert === true`,
+    'audio settings handoff from pause menu',
+  );
+  menuState.audioSettingsHandoff = true;
+  await evaluate(`document.querySelector('#audioSettingsDone').click()`);
+  await waitFor(
+    `document.querySelector('#audioSettings')?.classList.contains('hidden') && !document.querySelector('#pauseMenu')?.classList.contains('hidden') && document.querySelector('#pauseMenu')?.getAttribute('aria-hidden') === 'false' && document.querySelector('#shell')?.inert === true`,
+    'pause menu restoration after audio settings',
+  );
+  menuState.restoredAfterSettings = true;
+
+  await evaluate(`document.querySelector('#pauseMenuClose').click()`);
+  await waitFor(
+    `document.querySelector('#pauseMenu')?.classList.contains('hidden') && document.querySelector('#pauseMenu')?.getAttribute('aria-hidden') === 'true' && document.querySelector('#shell')?.inert === false && document.querySelector('#pauseMenuToggle')?.getAttribute('aria-expanded') === 'false' && document.activeElement === document.querySelector('#pauseMenuToggle')`,
+    'pause menu resume and focus restoration',
+  );
+  menuState.panelClosed = true;
+  menuState.focusRestored = true;
 
   const state = JSON.parse(await evaluate(`JSON.stringify({
     title: document.querySelector('#missionTitle')?.textContent,
@@ -235,6 +299,7 @@ try {
     missionCards: document.querySelectorAll('.missionCard').length
   })`));
   state.audio = audioState;
+  state.menu = menuState;
   const failures = events.filter((event) =>
     event.method === 'Runtime.exceptionThrown' ||
     event.method === 'Inspector.targetCrashed' ||
@@ -255,7 +320,17 @@ try {
     state.audio.effectiveMusic === 0.37 &&
     state.audio.visualCue?.includes('Incoming attack') &&
     state.audio.visualCueUrgency === 'critical';
-  if (!state.title || !state.hidden || !state.canvas || state.missionCards < 1 || !audioPassed || failures.length) {
+  const menuPassed =
+    state.menu.mounted &&
+    state.menu.panelOpen &&
+    state.menu.panelClosed &&
+    state.menu.shellIsolated &&
+    state.menu.controlsView &&
+    state.menu.destructiveConfirmation &&
+    state.menu.audioSettingsHandoff &&
+    state.menu.restoredAfterSettings &&
+    state.menu.focusRestored;
+  if (!state.title || !state.hidden || !state.canvas || state.missionCards < 1 || !audioPassed || !menuPassed || failures.length) {
     try {
       const shot = await call('Page.captureScreenshot', { format: 'png' });
       await writeFile(join(artifacts, 'browser-startup-failure.png'), Buffer.from(shot.data, 'base64'));
@@ -269,7 +344,7 @@ try {
     join(artifacts, 'browser-startup-smoke.json'),
     JSON.stringify({ status: 'passed', state, warnings }, null, 2),
   );
-  console.log(`[browser-smoke] mission started: ${state.title}; audio settings exercised; warnings: ${warnings.length}`);
+  console.log(`[browser-smoke] mission started: ${state.title}; audio settings and pause menu exercised; warnings: ${warnings.length}`);
 } catch (error) {
   await writeFile(join(artifacts, 'browser-startup.log'), `${logs.join('')}\n${error.stack}\n`);
   throw error;
