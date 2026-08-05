@@ -125,18 +125,42 @@ export function actionBindingsToKeyBindings(actionBindings = DEFAULT_ACTION_BIND
   return Object.freeze(result);
 }
 
+let runtimeKeyBindings = DEFAULT_KEY_BINDINGS;
+const runtimeKeyBindingsView = new Proxy({}, {
+  get(_target, property) {
+    if (property === Symbol.toStringTag) return 'RuntimeKeyBindings';
+    return runtimeKeyBindings[property];
+  },
+  has(_target, property) {
+    return property in runtimeKeyBindings;
+  },
+  ownKeys() {
+    return Reflect.ownKeys(runtimeKeyBindings);
+  },
+  getOwnPropertyDescriptor(_target, property) {
+    if (!(property in runtimeKeyBindings)) return undefined;
+    return { configurable: true, enumerable: true, value: runtimeKeyBindings[property], writable: false };
+  },
+  set() {
+    return false;
+  },
+  deleteProperty() {
+    return false;
+  },
+});
+
 export function createKeyBindings(overrides = {}) {
+  if (!plainObject(overrides)) throw new TypeError('Key binding overrides must be a plain object.');
+  if (Object.keys(overrides).length === 0) return runtimeKeyBindingsView;
   const bindings = { ...DEFAULT_KEY_BINDINGS };
   for (const [key, action] of Object.entries(overrides)) {
     const normalizedKey = normalizeInputKey(key);
     if (!normalizedKey) continue;
     if (action == null) delete bindings[normalizedKey];
-    else bindings[normalizedKey] = action;
+    else if (ACTION_SET.has(action)) bindings[normalizedKey] = action;
   }
   return Object.freeze(bindings);
 }
-
-let runtimeKeyBindings = DEFAULT_KEY_BINDINGS;
 
 export function setRuntimeActionBindings(actionBindings = DEFAULT_ACTION_BINDINGS) {
   const previous = runtimeKeyBindings;
