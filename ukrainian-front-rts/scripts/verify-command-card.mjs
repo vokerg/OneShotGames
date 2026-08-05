@@ -41,8 +41,9 @@ const navigation = navigateCommandCard(model, model.actions[0].id, 'ArrowDown');
 if (!navigation.actionId || navigation.pageDelta !== 0) fail('Command card grid navigation is invalid.');
 
 const requiredCss = [
-  ['4-column grid', /grid-template-columns:\s*repeat\(4,/],
+  ['4-column grid', /grid-template-columns:\s*repeat\(4,\s*minmax\(0,\s*1fr\)\)/],
   ['three rows', /grid-template-rows:\s*repeat\(3,/],
+  ['minimum action target', /\.commandCardAction\s*\{[^}]*min-height:\s*var\(--ui-target-min,\s*32px\)/s],
   ['targeting state', /\[data-targeting='true'\]/],
   ['group labels', /\.commandGroupLabel/],
   ['hotkey labels', /\.commandHotkey/],
