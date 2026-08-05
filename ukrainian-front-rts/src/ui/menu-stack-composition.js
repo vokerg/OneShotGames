@@ -45,6 +45,18 @@ export function installMenuStackComposition({
       runtime.resume(ACCESSIBILITY_FOCUS_PAUSE_REASON);
     });
 
+    const previousPauseDiagnostic = windowTarget.__fieldsOfResolveAccessibilityPause;
+    windowTarget.__fieldsOfResolveAccessibilityPause = Object.freeze({
+      snapshot: () => Object.freeze({
+        paused: Boolean(runtime.isPaused()),
+        reasons: runtime.pauseReasons?.() ?? Object.freeze([]),
+      }),
+    });
+    registerCleanup(() => {
+      if (previousPauseDiagnostic === undefined) delete windowTarget.__fieldsOfResolveAccessibilityPause;
+      else windowTarget.__fieldsOfResolveAccessibilityPause = previousPauseDiagnostic;
+    });
+
     const onAudioSettingsKeyDown = (event) => {
       const settings = typeof audioSettings === 'function' ? audioSettings() : audioSettings;
       if (event.key !== 'Escape' || !settings?.snapshot?.().panelOpen) return;
