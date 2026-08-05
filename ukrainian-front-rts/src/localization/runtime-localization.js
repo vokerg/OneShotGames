@@ -3,7 +3,25 @@ import { RUNTIME_LOCALIZATION_CATALOGS } from './runtime-catalogs.js';
 
 export const LOCALE_STORAGE_KEY = 'fields-of-resolve.locale.v1';
 export const LOCALE_CHANGE_EVENT = 'fields-of-resolve:localechange';
+export const LOCALIZATION_STYLE_ID = 'fields-of-resolve-localization-style';
 export const FONT_COVERAGE_PROBE = 'AaZz Україна ҐЄІЇ 0123456789';
+export const LOCALIZED_FONT_STACK = '"Noto Serif", "DejaVu Serif", Georgia, Cambria, serif';
+
+const LOCALIZATION_STYLE = `
+:root {
+  --ui-font-body: ${LOCALIZED_FONT_STACK};
+}
+html, body, button, input, output, select, textarea {
+  font-family: var(--ui-font-body);
+}
+#localeToggle {
+  min-width: 92px;
+  white-space: nowrap;
+}
+html[lang="uk"] .crest {
+  letter-spacing: .08em;
+}
+`;
 
 const TEXT_BINDINGS = Object.freeze([
   ['.crest', 'runtime.shell.brand'],
@@ -186,6 +204,11 @@ export function installRuntimeLocalization({
     rememberTextNode(node);
   }
 
+  const style = documentTarget.createElement('style');
+  style.id = LOCALIZATION_STYLE_ID;
+  style.textContent = LOCALIZATION_STYLE;
+  documentTarget.head?.appendChild(style);
+
   const control = documentTarget.createElement('button');
   control.id = 'localeToggle';
   control.type = 'button';
@@ -275,16 +298,21 @@ export function installRuntimeLocalization({
       const probe = documentTarget.createElement('span');
       probe.textContent = FONT_COVERAGE_PROBE;
       probe.lang = 'uk';
-      probe.style.cssText = 'position:fixed;left:-10000px;top:-10000px;font:16px var(--ui-font-body, Georgia, Cambria, serif);white-space:nowrap';
+      probe.style.cssText = `position:fixed;left:-10000px;top:-10000px;font:16px ${LOCALIZED_FONT_STACK};white-space:nowrap`;
       documentTarget.body?.appendChild(probe);
       const width = Number(probe.getBoundingClientRect?.().width ?? 0);
+      const fontCoverageReady = documentTarget.fonts?.check?.(`16px ${LOCALIZED_FONT_STACK}`, FONT_COVERAGE_PROBE) ?? width > 0;
+      const computedFontFamily = view?.getComputedStyle?.(probe)?.fontFamily ?? '';
       probe.remove();
       return Object.freeze({
         ...localizer.diagnostics(),
         storageKey: LOCALE_STORAGE_KEY,
         controlMounted: control.isConnected,
+        styleMounted: style.isConnected,
         fontProbe: FONT_COVERAGE_PROBE,
         fontProbeWidth: width,
+        fontCoverageReady: Boolean(fontCoverageReady),
+        computedFontFamily,
         missingSelectors: Object.freeze([...missingSelectors]),
       });
     },
@@ -293,6 +321,7 @@ export function installRuntimeLocalization({
       disposed = true;
       control.removeEventListener('click', onToggle);
       control.remove();
+      style.remove();
       for (const restore of originals.reverse()) restore();
       documentTarget.documentElement.lang = originalLanguage;
       delete documentTarget.documentElement.dataset.locale;
