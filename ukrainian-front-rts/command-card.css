@@ -1,0 +1,157 @@
+/* UFR-135 production command-card layout and states. */
+
+#abilities {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  overflow: hidden;
+  padding: 2px 6px 2px 2px;
+}
+
+.commandCardGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(82px, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.commandCardAction {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  padding: 18px 7px 17px;
+  overflow: hidden;
+}
+
+.commandCardAction[data-targeting='true'] {
+  border-image-source: url("assets/ui/skin/tab.svg");
+  box-shadow:
+    inset 0 0 0 2px var(--ui-color-objective),
+    0 0 0 2px rgb(213 173 79 / 26%);
+  filter: brightness(1.12);
+}
+
+.commandCardAction[data-targeting='true']::after {
+  content: 'TARGETING';
+  position: absolute;
+  left: 6px;
+  bottom: 4px;
+  color: var(--ui-color-selection);
+  font: 700 8px/1 var(--ui-data-font);
+  letter-spacing: .08em;
+}
+
+.commandGroupLabel {
+  position: absolute;
+  top: 4px;
+  left: 6px;
+  max-width: calc(100% - 12px);
+  overflow: hidden;
+  color: var(--ui-color-text-muted);
+  font: 700 8px/1 var(--ui-data-font);
+  letter-spacing: .08em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.commandHotkey {
+  position: absolute;
+  top: 4px;
+  right: 5px;
+  min-width: 16px;
+  padding: 2px 4px;
+  color: var(--ui-color-ink);
+  background: var(--ui-color-selection);
+  border: 1px solid rgb(255 255 255 / 34%);
+  box-shadow: 1px 1px 0 var(--ui-color-ink);
+  font: 800 9px/1 var(--ui-data-font);
+  text-align: center;
+  text-shadow: none;
+}
+
+.commandCardAction .commandTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commandCardAction .commandDescription {
+  display: -webkit-box;
+  max-height: 28px;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.commandDisabledReason {
+  position: absolute;
+  inset: auto 5px 4px;
+  overflow: hidden;
+  color: #ffd1c7;
+  font: 700 8px/1.1 var(--ui-data-font);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commandCardAction:disabled .abilityMeta,
+.commandCardAction:disabled .commandDescription {
+  visibility: hidden;
+}
+
+.commandGroup-targeting { background-color: #34413a; }
+.commandGroup-stance { background-color: #303c33; }
+.commandGroup-construction { background-color: #3d382b; }
+.commandGroup-production { background-color: #303a42; }
+.commandGroup-modernization { background-color: #373044; }
+
+.commandCardPager {
+  display: grid;
+  grid-template-columns: minmax(72px, 1fr) auto minmax(72px, 1fr);
+  gap: 6px;
+  align-items: center;
+  flex: 0 0 28px;
+}
+
+.commandCardPageButton {
+  min-height: 28px;
+  padding: 2px 8px;
+  font: 700 10px/1 var(--ui-data-font);
+}
+
+.commandCardPageStatus {
+  min-width: 48px;
+  color: var(--ui-color-text-muted);
+  font: 700 10px/1 var(--ui-data-font);
+  text-align: center;
+}
+
+@media (max-width: 1050px) {
+  .commandCardGrid { gap: 5px; }
+  .commandCardAction { padding-inline: 5px; }
+}
+
+@media (max-width: 760px) {
+  .commandCardGrid {
+    grid-template-columns: repeat(3, minmax(76px, 1fr));
+    grid-template-rows: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .commandCardAction[data-targeting='true'] { filter: none; }
+}
+
+@media (forced-colors: active) {
+  .commandHotkey {
+    color: ButtonText;
+    background: ButtonFace;
+    border-color: ButtonText;
+  }
+  .commandCardAction[data-targeting='true'] {
+    outline: 3px solid Highlight;
+    outline-offset: -3px;
+  }
+}
