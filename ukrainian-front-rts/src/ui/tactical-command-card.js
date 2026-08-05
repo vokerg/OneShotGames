@@ -85,7 +85,11 @@ export function installTacticalCommandCard(ui) {
     throw new TypeError('Tactical command card requires UI commandButton() and toast().');
   }
 
-  const disposeProductionCommandCard = installProductionCommandCard(ui);
+  let disposeCommandCard = () => {};
+  if (ui?.e?.abilities) {
+    const disposeProductionCommandCard = installProductionCommandCard(ui);
+    disposeCommandCard = disposeProductionCommandCard;
+  }
   const originalAppendUnitCommands = ui.appendUnitCommands;
   const originalCommandStateSignature = ui.commandStateSignature;
 
@@ -189,6 +193,6 @@ export function installTacticalCommandCard(ui) {
   return () => {
     ui.appendUnitCommands = originalAppendUnitCommands;
     ui.commandStateSignature = originalCommandStateSignature;
-    disposeProductionCommandCard();
+    disposeCommandCard();
   };
 }
