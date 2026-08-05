@@ -100,6 +100,18 @@ function render(fieldset, state, runtimeState) {
   }
 }
 
+function unavailableInstallation() {
+  let disposed = false;
+  const snapshot = () => deepFreeze({ unavailable: true, disposed });
+  const unchanged = () => snapshot();
+  const dispose = () => {
+    if (disposed) return false;
+    disposed = true;
+    return true;
+  };
+  return Object.freeze({ snapshot, update: unchanged, rebind: unchanged, unbind: unchanged, reset: unchanged, dispose });
+}
+
 export function installAccessibilitySettingsUI({
   form,
   storage = null,
@@ -108,8 +120,15 @@ export function installAccessibilitySettingsUI({
   pause = null,
   resume = null,
 } = {}) {
-  if (!form || typeof form.insertBefore !== 'function' || typeof form.addEventListener !== 'function') {
+  if (!form || typeof form.addEventListener !== 'function') {
     throw new TypeError('Accessibility settings UI requires the shared settings form.');
+  }
+  if (
+    typeof form.insertBefore !== 'function' ||
+    typeof documentTarget?.createElement !== 'function' ||
+    !documentTarget.documentElement
+  ) {
+    return unavailableInstallation();
   }
   const fieldset = buildFieldset(documentTarget);
   const insertionPoint = form.querySelector('#audioSettingsStatus') ?? form.querySelector('.audioSettingsActions') ?? null;
