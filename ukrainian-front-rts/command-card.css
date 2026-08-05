@@ -112,11 +112,11 @@
   grid-template-columns: minmax(72px, 1fr) auto minmax(72px, 1fr);
   gap: 6px;
   align-items: center;
-  flex: 0 0 28px;
+  flex: 0 0 32px;
 }
 
 .commandCardPageButton {
-  min-height: 28px;
+  min-height: var(--ui-control-compact, 32px);
   padding: 2px 8px;
   font: 700 10px/1 var(--ui-data-font);
 }
@@ -131,13 +131,6 @@
 @media (max-width: 1050px) {
   .commandCardGrid { gap: 5px; }
   .commandCardAction { padding-inline: 5px; }
-}
-
-@media (max-width: 760px) {
-  .commandCardGrid {
-    grid-template-columns: repeat(3, minmax(76px, 1fr));
-    grid-template-rows: repeat(4, minmax(0, 1fr));
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
