@@ -54,9 +54,21 @@ function audit(redistribution) {
 }
 
 test('redistribution provenance recognizes explicit permission and fails closed on denials', () => {
-  assert.equal(audit('allowed').ok, true);
-  assert.equal(audit('permitted with recipe and manifest').ok, true);
-  for (const phrase of ['redistribution prohibited', 'not permitted', 'no redistribution', 'restricted']) {
+  for (const phrase of [
+    'allowed',
+    'permitted with recipe and manifest',
+    'The hook metadata and subtitle may be redistributed with the project.',
+    'The generated asset can be redistributed with the project.',
+  ]) {
+    assert.equal(audit(phrase).ok, true, phrase);
+  }
+  for (const phrase of [
+    'redistribution prohibited',
+    'not permitted',
+    'no redistribution',
+    'restricted',
+    'may not be redistributed',
+  ]) {
     const result = audit(phrase);
     assert.equal(result.ok, false, phrase);
     assert.ok(result.errors.some((entry) => entry.code === 'redistribution-mismatch'), phrase);
