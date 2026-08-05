@@ -1,5 +1,6 @@
 import { BUILDING_TYPES, TEAM, UNIT_TYPES } from '../config.js';
 import { TACTICAL_COMMAND_KINDS } from '../core/tactical-command-contract.js';
+import { installProductionCommandCard } from './command-card.js';
 
 const COMMANDS = Object.freeze([
   Object.freeze({
@@ -84,6 +85,11 @@ export function installTacticalCommandCard(ui) {
     throw new TypeError('Tactical command card requires UI commandButton() and toast().');
   }
 
+  let disposeCommandCard = () => {};
+  if (ui?.e?.abilities) {
+    const disposeProductionCommandCard = installProductionCommandCard(ui);
+    disposeCommandCard = disposeProductionCommandCard;
+  }
   const originalAppendUnitCommands = ui.appendUnitCommands;
   const originalCommandStateSignature = ui.commandStateSignature;
 
@@ -106,14 +112,38 @@ export function installTacticalCommandCard(ui) {
     const damagedVehicleCount = playerUnits.filter((unit) => isDamagedVehicle(this.g, unit)).length;
     const repairFacilityCount = operationalRepairFacilities(this.g).length;
 
+    if (typeof this.g.armAttackGround === 'function') {
+      this.commandButton({
+        id: 'attack-ground',
+        title: 'Attack Ground',
+        description: 'Force-fire a battlefield point without requiring a visible target.',
+        meta: 'F',
+        hotkey: 'F',
+        group: 'targeting',
+        className: `command ${this.g.isAttackGroundArmed?.() ? 'stance-on' : ''}`,
+        disabled: armedCount === 0,
+        disabledReason: armedCount === 0 ? 'Select at least one armed Ukrainian unit.' : '',
+        targeting: Boolean(this.g.isAttackGroundArmed?.()),
+        onClick: () => {
+          if (this.g.armAttackGround()) notify('Force-fire armed: left-click a battlefield point.');
+          else notify('Select at least one armed Ukrainian unit.');
+        },
+      });
+    }
+
     for (const command of COMMANDS) {
       const disabled = command.kind === TACTICAL_COMMAND_KINDS.GUARD && armedCount === 0;
       this.commandButton({
+        id: command.kind,
         title: `${pendingKind === command.kind ? '✓ ' : ''}${command.title}`,
         description: command.description,
         meta: command.key,
+        hotkey: command.key,
+        group: 'targeting',
         className: `command ${pendingKind === command.kind ? 'stance-on' : ''}`,
         disabled,
+        disabledReason: disabled ? 'Select at least one armed Ukrainian unit to guard another entity.' : '',
+        targeting: pendingKind === command.kind,
         onClick: () => {
           if (this.g.armTacticalCommand(command.kind)) {
             notify(`${command.title} armed: right-click a valid target.`);
@@ -125,9 +155,12 @@ export function installTacticalCommandCard(ui) {
     }
 
     this.commandButton({
+      id: 'hold-position-order',
       title: 'Hold Position',
       description: 'Cancel movement and chasing while retaining local weapon response.',
       meta: 'H',
+      hotkey: 'H',
+      group: 'order',
       className: 'command',
       onClick: () => {
         this.g.holdSelected();
@@ -135,12 +168,21 @@ export function installTacticalCommandCard(ui) {
       },
     });
 
+    const repairDisabledReason = damagedVehicleCount === 0
+      ? 'Select at least one damaged vehicle.'
+      : repairFacilityCount === 0
+        ? 'No operational repair workshop is available.'
+        : '';
     this.commandButton({
+      id: 'return-for-repair',
       title: 'Return for Repair',
       description: 'Send damaged vehicles to the nearest operational repair workshop.',
       meta: 'R',
+      hotkey: 'R',
+      group: 'order',
       className: 'command',
-      disabled: damagedVehicleCount === 0 || repairFacilityCount === 0,
+      disabled: Boolean(repairDisabledReason),
+      disabledReason: repairDisabledReason,
       onClick: () => {
         this.g.returnSelectedForRepair();
         notify('Return-for-repair order issued.');
@@ -151,5 +193,6 @@ export function installTacticalCommandCard(ui) {
   return () => {
     ui.appendUnitCommands = originalAppendUnitCommands;
     ui.commandStateSignature = originalCommandStateSignature;
+    disposeCommandCard();
   };
 }
