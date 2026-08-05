@@ -84,6 +84,7 @@ export function createReplaySimulationRuntime({
       const tick = currentState(harness).tick;
       const result = harness.issueCommand(command);
       activeRecorder.recordCommand(tick, command, result);
+      lastChecksumTick = -1;
       return result;
     },
     recordChoice(choice) {
