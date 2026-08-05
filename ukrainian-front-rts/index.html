@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="economy-hud.css" />
     <link rel="stylesheet" href="selection-panel.css" />
+    <link rel="stylesheet" href="minimap-alerts.css" />
     <link rel="stylesheet" href="ui-skin.css" />
     <link rel="stylesheet" href="tech-tree-screen.css" />
   </head>
@@ -64,7 +65,22 @@
           </div>
         </section>
         <section id="abilities" aria-label="Unit and building commands"></section>
-        <section class="minimapFrame"><canvas id="minimap" width="220" height="138"></canvas></section>
+        <section class="minimapFrame" aria-label="Tactical minimap and alerts">
+          <div class="minimapCanvasFrame">
+            <canvas id="minimap" width="220" height="138" aria-label="Tactical minimap. Click to move the camera; click a ping to focus its alert."></canvas>
+            <div class="minimapLegend" aria-hidden="true">
+              <span class="ally">ally</span><span class="neutral">neutral</span><span class="hostile">hostile</span>
+            </div>
+          </div>
+          <fieldset id="minimapFilters" class="minimapFilters" aria-label="Minimap marker filters">
+            <label><input type="checkbox" data-minimap-filter="units" checked />Units</label>
+            <label><input type="checkbox" data-minimap-filter="buildings" checked />Buildings</label>
+            <label><input type="checkbox" data-minimap-filter="resources" checked />Resources</label>
+            <label><input type="checkbox" data-minimap-filter="allies" checked />Allies</label>
+            <label><input type="checkbox" data-minimap-filter="neutrals" checked />Neutral</label>
+          </fieldset>
+          <ol id="minimapAlertQueue" class="minimapAlertQueue empty" aria-label="Recent tactical alerts" aria-live="polite"></ol>
+        </section>
       </div>
 
       <div id="missionSelect">
@@ -88,7 +104,7 @@
           <div id="endgameStats"></div>
           <div class="endgameActions">
             <button id="retryMission" data-tooltip="Restart the current mission.">Retry Mission</button>
-            <button id="returnOperations" data-tooltip="Return to operation selection.">Return to Operations</button>
+            <button id="returnOperations" data-tooltip="Return to operation selection.</button>
           </div>
         </div>
       </div>
