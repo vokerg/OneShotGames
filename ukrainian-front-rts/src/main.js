@@ -62,6 +62,7 @@ import { installCombatReadabilityFeedback } from './ui/combat-readability-feedba
 import { createCombatReadabilityController } from './ui/combat-readability-runtime.js';
 import { installCommandCapacityFeedback } from './ui/command-capacity-feedback.js';
 import { installEconomyHudOverview } from './ui/economy-hud-overview.js';
+import { installMinimapAlerts } from './ui/minimap-alerts.js';
 import { installProductionExitFeedback } from './ui/production-exit-feedback.js';
 import { installSelectionPanel } from './ui/selection-panel.js';
 import { installStanceCommandCard } from './ui/stance-command-card.js';
@@ -205,6 +206,7 @@ const modules = [
   module('building-lifecycle-controls', () => installBuildingLifecycleControls({ game, ui })),
   module('combat-readability-feedback', () => installCombatReadabilityFeedback({ game, ui })),
   module('economy-hud-overview', () => installEconomyHudOverview({ game, ui })),
+  module('minimap-alerts', () => installMinimapAlerts({ game, ui, renderer, minimap })),
   module('tech-tree-screen', () => installTechTreeScreen({ game, ui })),
   module('construction-preview', () => installConstructionPreview({ game, renderer })),
   module('effects-atlas-renderer', () => installEffectsAtlasRenderer({ game, renderer })),

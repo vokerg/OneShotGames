@@ -1,0 +1,153 @@
+.minimapFrame {
+  position: relative;
+  display: block;
+  min-width: 0;
+  padding: 3px;
+}
+
+.minimapCanvasFrame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+#minimap {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  cursor: crosshair;
+}
+
+.minimapLegend {
+  position: absolute;
+  inset: auto 4px 4px auto;
+  display: flex;
+  gap: 5px;
+  padding: 2px 4px;
+  background: rgba(8, 11, 9, 0.82);
+  font-size: 8px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.minimapLegend span::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 3px;
+  vertical-align: 1px;
+  background: var(--marker-color);
+}
+
+.minimapLegend .ally { --marker-color: #62a9d8; }
+.minimapLegend .neutral { --marker-color: #d2bf79; }
+.minimapLegend .hostile { --marker-color: #d86b59; }
+
+.minimapFilters {
+  position: absolute;
+  z-index: 2;
+  top: 6px;
+  left: 6px;
+  right: 6px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px 4px;
+  margin: 0;
+  padding: 3px 4px;
+  border: 1px solid rgba(135, 146, 124, 0.72);
+  background: rgba(8, 11, 9, 0.84);
+  font-size: 7px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.minimapFilters label {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.minimapFilters input {
+  width: 10px;
+  height: 10px;
+  margin: 0;
+}
+
+.minimapAlertQueue {
+  position: absolute;
+  z-index: 6;
+  right: 0;
+  bottom: calc(100% + 8px);
+  display: grid;
+  align-content: start;
+  gap: 3px;
+  width: 220px;
+  max-height: 132px;
+  margin: 0;
+  padding: 3px;
+  overflow: auto;
+  border: 1px solid #65735f;
+  background: rgba(8, 11, 9, 0.9);
+  list-style: none;
+}
+
+.minimapAlertQueue.empty {
+  display: none;
+}
+
+.minimapAlert button {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 5px;
+  width: 100%;
+  min-height: 26px;
+  padding: 4px 5px;
+  border: 1px solid #65735f;
+  background: rgba(17, 21, 18, 0.96);
+  color: #d8dfcf;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.minimapAlert button:disabled {
+  cursor: default;
+  opacity: 0.72;
+}
+
+.minimapAlert button:focus-visible {
+  outline: 2px solid #f0d978;
+  outline-offset: 1px;
+}
+
+.minimapAlertKind {
+  align-self: start;
+  padding: 1px 3px;
+  background: #303a31;
+  color: #d8dfcf;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.kind-attack .minimapAlertKind { background: #7b2c22; color: #f3d1c9; }
+.kind-objective .minimapAlertKind { background: #66551f; color: #fff0a0; }
+.kind-production .minimapAlertKind { background: #235b48; color: #d6f4e7; }
+
+.minimapAlertText {
+  overflow: hidden;
+  font-size: 9px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .minimapAlert button {
+    transition: none;
+  }
+}
