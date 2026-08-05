@@ -1,0 +1,55 @@
+# One-use UFR-109 transfer helper. This file deletes itself after materialization.
+name: UFR-109 materialize generated assets
+
+on:
+  push:
+    branches:
+      - ufrts/UFR-109-gold-standard-unit
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: startsWith(github.event.head_commit.message, '[UFR-109] Stage generated asset payloads')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Reconstruct canonical generated files
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import base64
+          import gzip
+          import hashlib
+
+          files = {
+              '.ufr109-payload/art-src-manifest.json.gz.b64': ('ukrainian-front-rts/art-src/manifest.json', 'bac6245f5fa4206fe8414e8902f1f8805afc4d7c6c635238b4b530873a791ef4'),
+              '.ufr109-payload/template-unit.atlas.json.gz.b64': ('ukrainian-front-rts/assets/atlases/template-unit.atlas.json', 'c97a96dc7fbb2763da346998abdc557d47efc767f48d780e6bbec278155f242f'),
+              '.ufr109-payload/template-unit.source.json.gz.b64': ('ukrainian-front-rts/assets/atlases/template-unit.source.json', 'fb8dfba59ab097555b5fa4a88d6fb9e755334000723c69f0a35c9648ee74bc1f'),
+              '.ufr109-payload/template-unit.svg.gz.b64': ('ukrainian-front-rts/assets/atlases/template-unit.svg', 'c7299604e50acfb98f6271fbb1e1bde2aeaf97766da34444d5669b32b13633a8'),
+              '.ufr109-payload/art-sources-contact.svg.gz.b64': ('ukrainian-front-rts/assets/contact-sheets/art-sources.svg', '25892fe60d6c39db3690dee89b9e28dde4cee33b9c7ecdaf5dce7983c6a08a19'),
+              '.ufr109-payload/art-sources-manifest.json.gz.b64': ('ukrainian-front-rts/assets/manifests/art-sources.json', '4039c16fda041226b706f7fe4c6943a6cdf2ff0a210eadb45b89b0f5d5a4baf2'),
+          }
+          for payload_path, (target_path, expected_sha) in files.items():
+              payload = Path(payload_path).read_text(encoding='utf-8').strip()
+              data = gzip.decompress(base64.b64decode(payload, validate=True))
+              actual_sha = hashlib.sha256(data).hexdigest()
+              if actual_sha != expected_sha:
+                  raise SystemExit(f'{target_path}: expected {expected_sha}, got {actual_sha}')
+              target = Path(target_path)
+              target.parent.mkdir(parents=True, exist_ok=True)
+              target.write_bytes(data)
+          PY
+      - name: Commit canonical files and remove transfer helpers
+        shell: bash
+        run: |
+          rm -rf .ufr109-payload .github/workflows/ufr109-materialize.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "[UFR-109] Materialize deterministic generated outputs"
+          git push origin HEAD:${GITHUB_REF_NAME}

@@ -2,6 +2,12 @@ import {Game} from './game.js';
 import {Renderer} from './render.js';
 import './art-pass.js';
 import {TEAM,UNIT_TYPES} from './config.js';
+import {loadSpriteAtlas} from './render/sprite-atlas-runtime.js';
+import {
+ TEMPLATE_UNIT_DIRECTIONS,
+ TEMPLATE_UNIT_STATES,
+ loadTemplateUnitAtlas,
+} from './render/template-unit-atlas.js';
 
 const canvas=document.querySelector('#game');
 const game=new Game();
@@ -29,12 +35,45 @@ for(const [teamKey,types] of Object.entries(roster)){
 }
 
 game.camera={x:innerWidth/2-origin.x*.85,y:innerHeight/2-origin.y*.85,z:.85};
-let paused=false,facing=1,valueCheck=false,last=performance.now();
+let paused=false,facing=1,valueCheck=false,last=performance.now(),templateStateIndex=0;
+let templateRuntime=null,templateLoadError=null;
+
+async function loadTemplateReview(){
+ const fallback=await loadSpriteAtlas(new URL('../assets/atlases/fallback.atlas.json',import.meta.url));
+ templateRuntime=await loadTemplateUnitAtlas({fallbackRuntime:fallback});
+}
+loadTemplateReview().catch(error=>{templateLoadError=error;});
 
 function centerCamera(){
  const centerX=origin.x+4*145,centerY=origin.y+125;
  game.camera.x=innerWidth/2-centerX*game.camera.z;
  game.camera.y=innerHeight/2-centerY*game.camera.z;
+}
+
+function drawTemplateReview(now){
+ const q=renderer.x,state=TEMPLATE_UNIT_STATES[templateStateIndex];
+ const spacing=Math.min(88,Math.max(58,(canvas.width-120)/TEMPLATE_UNIT_DIRECTIONS.length));
+ const start=canvas.width/2-spacing*(TEMPLATE_UNIT_DIRECTIONS.length-1)/2;
+ const y=canvas.height-64;
+ q.save();
+ q.fillStyle='rgba(10,14,11,.84)';
+ q.fillRect(Math.round(start-spacing*.55),Math.round(y-58),Math.round(spacing*TEMPLATE_UNIT_DIRECTIONS.length),86);
+ q.textAlign='center';
+ q.font='bold 11px ui-monospace, monospace';
+ q.fillStyle='#f0cf71';
+ q.fillText(`UFR-109 TEMPLATE · ${state.toUpperCase()}`,Math.round(canvas.width/2),Math.round(y-43));
+ if(templateRuntime){
+  for(let index=0;index<TEMPLATE_UNIT_DIRECTIONS.length;index+=1){
+   const direction=TEMPLATE_UNIT_DIRECTIONS[index],x=start+index*spacing;
+   templateRuntime.drawAnimation(q,state,{x,y,elapsedMs:paused?0:now,direction,scale:1.05});
+   q.fillStyle='#c9c1a2';
+   q.fillText(direction.toUpperCase(),Math.round(x),Math.round(y+17));
+  }
+ }else{
+  q.fillStyle='#dfb49e';
+  q.fillText(templateLoadError?'TEMPLATE ATLAS FAILED TO LOAD':'LOADING TEMPLATE ATLAS…',Math.round(canvas.width/2),Math.round(y));
+ }
+ q.restore();
 }
 
 function drawLabels(){
@@ -62,7 +101,8 @@ function applyValueCheck(){
 function capture(){
  const stamp=new Date().toISOString().replace(/[:.]/g,'-');
  const link=document.createElement('a');
- link.download=`fields-of-resolve-roster-z${game.camera.z.toFixed(2)}-${paused?'still':'motion'}-${valueCheck?'value':'color'}-${stamp}.png`;
+ const state=TEMPLATE_UNIT_STATES[templateStateIndex];
+ link.download=`fields-of-resolve-roster-${state}-z${game.camera.z.toFixed(2)}-${paused?'still':'motion'}-${valueCheck?'value':'color'}-${stamp}.png`;
  link.href=canvas.toDataURL('image/png');
  link.click();
 }
@@ -76,6 +116,7 @@ addEventListener('keydown',event=>{
   facing*=-1;
   for(const unit of game.units)unit.angle=facing>0?-Math.PI/2:Math.PI/2;
  }
+ if(event.key.toLowerCase()==='t')templateStateIndex=(templateStateIndex+1)%TEMPLATE_UNIT_STATES.length;
  if(event.key.toLowerCase()==='v')valueCheck=!valueCheck;
  if(event.key.toLowerCase()==='s')capture();
  if(event.code==='Space'){
@@ -87,6 +128,6 @@ addEventListener('resize',centerCamera);
 
 function frame(now){
  const dt=Math.min(.033,(now-last)/1000);last=now;if(!paused)game.time+=dt;
- renderer.render();drawLabels();applyValueCheck();requestAnimationFrame(frame);
+ renderer.render();drawTemplateReview(now);drawLabels();applyValueCheck();requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
