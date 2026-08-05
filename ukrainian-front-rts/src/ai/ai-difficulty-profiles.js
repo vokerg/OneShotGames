@@ -1,4 +1,6 @@
 import { createAiDoctrineProfile } from './ai-contracts.js';
+import { planEconomy } from './economy-planner.js';
+import { planTacticalAi } from './tactical-ai.js';
 
 export const AI_DIFFICULTY_SCHEMA_VERSION = 1;
 export const DEFAULT_AI_DIFFICULTY_ID = 'regular';
@@ -137,11 +139,13 @@ export function projectObservedContactsForDifficulty({ contacts = [], tick = 0, 
   return Object.freeze(contacts
     .filter((contact) => {
       assertRecord(contact, 'contact');
-      const observedTick = assertInteger(contact.observedTick, 'contact.observedTick');
+      const observedTick = assertInteger(contact.observedTick ?? contact.lastSeenTick, 'contact observed tick');
       return observedTick <= latestVisibleTick;
     })
     .map((contact) => deepFreeze({ ...contact }))
-    .sort((left, right) => left.observedTick - right.observedTick || String(left.id).localeCompare(String(right.id))));
+    .sort((left, right) =>
+      (left.observedTick ?? left.lastSeenTick) - (right.observedTick ?? right.lastSeenTick)
+      || String(left.id).localeCompare(String(right.id))));
 }
 
 export function createDifficultyAdjustedDoctrineProfile({ doctrine, difficulty } = {}) {
@@ -190,5 +194,57 @@ export function createAiDifficultyRuntimePolicy({ doctrine, difficulty } = {}) {
     profile,
     doctrine: createDifficultyAdjustedDoctrineProfile({ doctrine, difficulty: profile }),
     economy: createAiEconomyDifficultyLimits(profile),
+  });
+}
+
+export function planEconomyForDifficulty({ snapshot, doctrine, difficulty } = {}) {
+  assertRecord(snapshot, 'snapshot');
+  const runtime = createAiDifficultyRuntimePolicy({ doctrine, difficulty });
+  const existingTargets = snapshot.targets && typeof snapshot.targets === 'object' ? snapshot.targets : {};
+  const constrainedSnapshot = {
+    ...snapshot,
+    targets: {
+      ...existingTargets,
+      reserveFraction: Math.max(existingTargets.reserveFraction ?? 0, runtime.economy.reserveRatio),
+    },
+  };
+  const plan = planEconomy(constrainedSnapshot, runtime.doctrine);
+  return deepFreeze({
+    ...plan,
+    actions: plan.actions.slice(0, runtime.economy.maximumConcurrentPlans),
+    difficulty: {
+      profileId: runtime.profile.id,
+      utilizationRatio: runtime.economy.utilizationRatio,
+      maximumConcurrentPlans: runtime.economy.maximumConcurrentPlans,
+    },
+  });
+}
+
+export function planTacticalAiForDifficulty({ difficulty, ...input } = {}) {
+  const runtime = createAiDifficultyRuntimePolicy({ doctrine: input.doctrine, difficulty });
+  const tick = input.tick ?? 0;
+  const knowledge = projectObservedContactsForDifficulty({
+    contacts: input.knowledge ?? [],
+    tick,
+    difficulty: runtime.profile,
+  });
+  const maximumCommands = Math.max(1, Math.round(2 + runtime.profile.planningQuality * 10));
+  const plan = planTacticalAi({
+    ...input,
+    doctrine: runtime.doctrine,
+    knowledge,
+    policy: {
+      ...(input.policy ?? {}),
+      maxCommands: Math.min(input.policy?.maxCommands ?? maximumCommands, maximumCommands),
+    },
+  });
+  return deepFreeze({
+    ...plan,
+    difficulty: {
+      profileId: runtime.profile.id,
+      observationDelayTicks: runtime.profile.observationDelayTicks,
+      reactionDelayTicks: runtime.profile.reactionDelayTicks,
+      planningQuality: runtime.profile.planningQuality,
+    },
   });
 }
