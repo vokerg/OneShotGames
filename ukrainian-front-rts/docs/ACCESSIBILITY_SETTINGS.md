@@ -23,7 +23,7 @@ Unknown schemas and future versions fail closed to repository defaults. Writes u
 
 The existing battlefield input installer keeps a read-only live binding view from the core action contract. A preference change therefore affects the next keyboard event without reinstalling input or replacing simulation methods. Explicit test-only binding overrides remain static.
 
-Focus loss raises `fields-of-resolve:accessibility-pause`; focus return raises `fields-of-resolve:accessibility-resume`. The runtime accepts explicit `pause` and `resume` callbacks from the authoritative menu/runtime owner. Until the active menu-stack branch exposes those callbacks on `main`, the mounted settings adapter records the preference, presents the focus-paused state, and emits the shared lifecycle request without monkey-patching `Game.update` or `src/app/runtime.js`.
+Focus loss raises `fields-of-resolve:accessibility-pause`; focus return raises `fields-of-resolve:accessibility-resume`. The menu composition owns the bridge from those events into the authoritative game runtime. `createGameRuntime()` tracks named pause reasons, so `accessibility-focus-loss` can overlap with a menu pause and focus return removes only the accessibility reason. Starting a mission clears stale reasons, and composition teardown releases only the focus reason it owns.
 
 ## Conflict policy
 
@@ -39,10 +39,11 @@ Run:
 node --test tests/accessibility/accessibility-settings.test.mjs
 node scripts/verify-accessibility-settings.mjs
 bash verify.sh
+node scripts/browser-accessibility-settings-smoke.mjs
 ```
 
-The focused suite covers normalization, future-schema fallback, persistence, live installed binding updates, duplicate-key rejection, explicit conflict replacement, unbinding, visual runtime application, focus-loss lifecycle callbacks, and exact teardown. The assembled browser smoke remains authoritative for the injected dialog controls and startup compatibility.
+The focused suite covers normalization, future-schema fallback, persistence, live installed binding updates, duplicate-key rejection, explicit conflict replacement, unbinding, visual runtime application, independent menu/focus pause ownership, lifecycle events, and exact teardown. The mounted Chromium smoke verifies the injected dialog, live root attributes, local persistence, attack-move rebinding, authoritative focus pause acquisition/release, preservation of pre-existing pause reasons, disabled-focus-pause behavior, and zero page failures.
 
-## Parallel boundary
+## Integration boundary
 
-This implementation deliberately does not edit `src/main.js`, `src/app/runtime.js`, `index.html`, shared styles, menu-stack modules, or viewport modules. UFR-139 owns the active menu/runtime seam and UFR-142 owns the active viewport/index seam. Authoritative pause callback wiring must be rebased onto the menu owner after that branch lands; no hidden simulation phase is introduced here.
+The branch was synchronized after UFR-139 landed, then integrated only through its public runtime and menu-composition ownership seams. It does not edit `index.html`, shared styles, viewport modules, campaign systems, gameplay rules, balance, or sibling games. UI styling is repository-owned and injected by the reversible accessibility runtime rather than competing with UFR-142's viewport stylesheet work.
