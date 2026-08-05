@@ -169,6 +169,15 @@ async function snapshot() {
     const localization = window.__fieldsOfResolveLocalization;
     const diagnostics = localization?.diagnostics?.();
     const topbar = document.querySelector('#topbar');
+    const topbarRect = topbar?.getBoundingClientRect();
+    const directChildBounds = topbar
+      ? [...topbar.children].map((child) => {
+          const rect = child.getBoundingClientRect();
+          return { id: child.id || child.className || child.tagName, left: rect.left, right: rect.right };
+        })
+      : [];
+    const topbarChildOverflow = Boolean(topbarRect && directChildBounds.some((rect) =>
+      rect.left < topbarRect.left - 0.5 || rect.right > topbarRect.right + 0.5));
     return {
       locale: localization?.locale,
       htmlLang: document.documentElement.lang,
@@ -183,7 +192,10 @@ async function snapshot() {
       minimapAria: document.querySelector('#minimap')?.getAttribute('aria-label'),
       missionButton: document.querySelector('.missionCard button')?.textContent,
       missionPacing: document.querySelector('.missionPacing')?.textContent,
-      topbarOverflow: Boolean(topbar && topbar.scrollWidth > topbar.clientWidth),
+      topbarChildOverflow,
+      topbarBounds: topbarRect ? { left: topbarRect.left, right: topbarRect.right, width: topbarRect.width } : null,
+      directChildBounds,
+      viewportOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
       diagnostics,
     };
   })())`));
@@ -214,6 +226,8 @@ try {
   assert(report.initial.toggleTarget === 'uk', 'English locale control must target Ukrainian.');
   assert(report.initial.persistedLocale === null, 'Initial locale should not persist until the player changes it.');
   assert(report.initial.diagnostics?.missingSelectors?.length === 0, `Missing English bindings: ${report.initial.diagnostics?.missingSelectors}`);
+  assert(report.initial.topbarChildOverflow === false, 'English top-bar controls exceed the top-bar bounds.');
+  assert(report.initial.viewportOverflow === false, 'English localization creates horizontal viewport overflow.');
 
   await evaluate(`document.querySelector('#localeToggle').click()`);
   await waitFor(
@@ -232,7 +246,8 @@ try {
   assert(report.ukrainian.diagnostics?.fontProbeWidth > 0, 'Cyrillic font probe did not render measurable text.');
   assert(report.ukrainian.diagnostics?.styleMounted === true, 'Localization font/style owner is not mounted.');
   assert(report.ukrainian.diagnostics?.missingSelectors?.length === 0, `Missing Ukrainian bindings: ${report.ukrainian.diagnostics?.missingSelectors}`);
-  assert(report.ukrainian.topbarOverflow === false, 'Ukrainian expansion overflows the 1920px top bar.');
+  assert(report.ukrainian.topbarChildOverflow === false, 'Ukrainian top-bar controls exceed the top-bar bounds.');
+  assert(report.ukrainian.viewportOverflow === false, 'Ukrainian localization creates horizontal viewport overflow.');
 
   await call('Page.reload', { ignoreCache: true });
   await waitFor(
