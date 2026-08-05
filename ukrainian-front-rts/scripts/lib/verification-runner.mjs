@@ -6,6 +6,7 @@ const JAVASCRIPT_EXTENSIONS = new Set(['.js', '.mjs']);
 
 export const VERIFICATION_COMMANDS = Object.freeze([
   Object.freeze({ id: 'tests', label: 'unit and simulation tests', script: 'scripts/run-tests.mjs' }),
+  Object.freeze({ id: 'test-pyramid', label: 'test pyramid contract', script: 'scripts/verify-test-pyramid.mjs' }),
   Object.freeze({ id: 'queue-fixtures', label: 'task queue validator fixtures', script: 'scripts/verify-task-queue.test.mjs' }),
   Object.freeze({ id: 'queue', label: 'task queue contract', script: 'scripts/verify-task-queue.mjs' }),
   Object.freeze({ id: 'content-schema', label: 'content schema contract', script: 'scripts/verify-content-schema.mjs' }),
