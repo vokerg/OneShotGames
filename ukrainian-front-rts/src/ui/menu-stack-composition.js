@@ -1,3 +1,8 @@
+import {
+  ACCESSIBILITY_FOCUS_PAUSE_REASON,
+  ACCESSIBILITY_PAUSE_EVENT,
+  ACCESSIBILITY_RESUME_EVENT,
+} from '../core/accessibility-events.js';
 import { installMenuStack } from './menu-stack.js';
 import { registerMenuPauseRuntime } from './menu-stack-model.js';
 
@@ -30,6 +35,16 @@ export function installMenuStackComposition({
 
   try {
     registerCleanup(registerMenuPauseRuntime(game, runtime));
+    const onAccessibilityPause = () => runtime.pause(ACCESSIBILITY_FOCUS_PAUSE_REASON);
+    const onAccessibilityResume = () => runtime.resume(ACCESSIBILITY_FOCUS_PAUSE_REASON);
+    documentTarget.addEventListener?.(ACCESSIBILITY_PAUSE_EVENT, onAccessibilityPause);
+    documentTarget.addEventListener?.(ACCESSIBILITY_RESUME_EVENT, onAccessibilityResume);
+    registerCleanup(() => {
+      documentTarget.removeEventListener?.(ACCESSIBILITY_PAUSE_EVENT, onAccessibilityPause);
+      documentTarget.removeEventListener?.(ACCESSIBILITY_RESUME_EVENT, onAccessibilityResume);
+      runtime.resume(ACCESSIBILITY_FOCUS_PAUSE_REASON);
+    });
+
     const onAudioSettingsKeyDown = (event) => {
       const settings = typeof audioSettings === 'function' ? audioSettings() : audioSettings;
       if (event.key !== 'Escape' || !settings?.snapshot?.().panelOpen) return;
