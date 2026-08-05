@@ -16,8 +16,9 @@ const projectRoot = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const read = (path) => readFile(resolve(projectRoot, path), 'utf8');
 const fail = (message) => { throw new Error(message); };
 
-const [stylesheet, tacticalInstaller, mainSource] = await Promise.all([
+const [stylesheet, commandCardSource, tacticalInstaller, mainSource] = await Promise.all([
   read(COMMAND_CARD_STYLESHEET),
+  read('src/ui/command-card.js'),
   read('src/ui/tactical-command-card.js'),
   read('src/main.js'),
 ]);
@@ -56,6 +57,16 @@ for (const [label, pattern] of requiredCss) {
   if (!pattern.test(stylesheet)) fail(`Command card stylesheet is missing ${label}.`);
 }
 
+if (!commandCardSource.includes("grid.setAttribute('role', 'toolbar')")) fail('Command card must expose toolbar semantics.');
+if (!commandCardSource.includes('button.dataset.commandRow') || !commandCardSource.includes('button.dataset.commandColumn')) {
+  fail('Command card must preserve deterministic grid geometry as data attributes.');
+}
+if (!commandCardSource.includes("button.setAttribute('aria-keyshortcuts', action.hotkey)")) {
+  fail('Command card must expose active hotkeys to assistive technology.');
+}
+if (commandCardSource.includes("setAttribute('aria-rowindex'") || commandCardSource.includes("setAttribute('aria-colindex'")) {
+  fail('Command card must not publish grid-only ARIA indices on native toolbar buttons.');
+}
 if (!tacticalInstaller.includes("import { installProductionCommandCard } from './command-card.js';")) {
   fail('Tactical command-card composition does not import the production command card.');
 }
