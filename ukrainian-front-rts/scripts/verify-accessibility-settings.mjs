@@ -16,12 +16,13 @@ import {
   TEXT_SCALE_OPTIONS,
   UI_SCALE_OPTIONS,
   normalizeAccessibilitySettings,
-} from '../src/accessibility/accessibility-settings.js';
+} from '../src/audio/accessibility-settings.js';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const audioUiPath = resolve(projectRoot, 'src/audio/audio-settings-ui.js');
-const accessibilityUiPath = resolve(projectRoot, 'src/accessibility/accessibility-settings-ui.js');
-const runtimePath = resolve(projectRoot, 'src/accessibility/accessibility-runtime.js');
+const accessibilityUiPath = resolve(projectRoot, 'src/audio/accessibility-settings-ui.js');
+const runtimePath = resolve(projectRoot, 'src/audio/accessibility-runtime.js');
+const coreActionMapPath = resolve(projectRoot, 'src/core/input-action-map.js');
 
 assert.equal(new Set(INPUT_ACTION_IDS).size, INPUT_ACTION_IDS.length, 'Input action IDs must be unique.');
 assert.deepEqual(Object.keys(INPUT_ACTION_LABELS).sort(), [...INPUT_ACTION_IDS].sort(), 'Every named action needs a settings label.');
@@ -34,10 +35,11 @@ assert.deepEqual(COLOR_VISION_PRESETS, ['standard', 'deuteranopia', 'protanopia'
 assert.deepEqual(CONTRAST_MODES, ['standard', 'high']);
 assert.deepEqual(CURSOR_SIZES, ['standard', 'large', 'extra-large']);
 
-const [audioUi, accessibilityUi, runtime] = await Promise.all([
+const [audioUi, accessibilityUi, runtime, coreActionMap] = await Promise.all([
   readFile(audioUiPath, 'utf8'),
   readFile(accessibilityUiPath, 'utf8'),
   readFile(runtimePath, 'utf8'),
+  readFile(coreActionMapPath, 'utf8'),
 ]);
 assert.match(audioUi, /installAccessibilitySettingsUI/);
 assert.match(audioUi, /accessibility\.reset\(\)/);
@@ -48,5 +50,7 @@ assert.match(runtime, /ACCESSIBILITY_PAUSE_EVENT/);
 assert.match(runtime, /setRuntimeActionBindings/);
 assert.match(runtime, /data-accessibility-reduced-motion/);
 assert.match(runtime, /data-accessibility-reduce-flashes/);
+assert.match(coreActionMap, /runtimeKeyBindingsView/);
+assert.match(coreActionMap, /rebindInputAction/);
 
 console.log(`Accessibility settings verification passed for ${INPUT_ACTION_IDS.length} named actions, ${UI_SCALE_OPTIONS.length} UI scales, ${TEXT_SCALE_OPTIONS.length} text scales, ${COLOR_VISION_PRESETS.length} color-vision presets, and ${CURSOR_SIZES.length} cursor sizes.`);
