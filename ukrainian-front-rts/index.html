@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="minimap-alerts.css" />
     <link rel="stylesheet" href="ui-skin.css" />
     <link rel="stylesheet" href="tech-tree-screen.css" />
+    <link rel="stylesheet" href="audio-settings.css" />
   </head>
   <body>
     <div id="shell">
@@ -24,6 +25,7 @@
         <div class="resource threat"><span>⚔</span><b id="waveStatus">staging</b><small>enemy assault</small></div>
         <button id="economyHudToggle" aria-controls="economyHud" aria-expanded="false" data-tooltip="Open the economy and production overview.">Economy</button>
         <button id="techTreeToggle" aria-controls="techTree" aria-expanded="false" data-tooltip="Open the dedicated modernization tree.">Tech Tree</button>
+        <button id="audioSettingsToggle" aria-controls="audioSettings" aria-expanded="false" data-tooltip="Open audio and hearing-accessibility settings.">Audio</button>
         <button id="objectivesBtn" data-tooltip="Show the current mission objectives.">Objectives</button>
       </div>
 
@@ -109,6 +111,86 @@
         </div>
       </div>
     </div>
+
+    <section id="audioSettings" class="hidden" role="dialog" aria-modal="true" aria-labelledby="audioSettingsTitle">
+      <div class="audioSettingsCard">
+        <header class="audioSettingsHeader">
+          <div><small>AUDIO & ACCESSIBILITY</small><h2 id="audioSettingsTitle">Sound Settings</h2></div>
+          <button id="audioSettingsClose" type="button" aria-label="Close audio settings">×</button>
+        </header>
+        <form id="audioSettingsForm">
+          <fieldset class="audioSettingsFieldset">
+            <legend>Mixer</legend>
+            <div class="audioSettingRow">
+              <label for="audioLevelMaster">Master</label>
+              <input id="audioLevelMaster" data-audio-level="master" type="range" min="0" max="100" step="1" />
+              <output data-audio-level-output="master" for="audioLevelMaster">100%</output>
+              <label class="audioSettingMute"><input data-audio-muted="master" type="checkbox" /> Mute</label>
+            </div>
+            <div class="audioSettingRow">
+              <label for="audioLevelMusic">Music</label>
+              <input id="audioLevelMusic" data-audio-level="music" type="range" min="0" max="100" step="1" />
+              <output data-audio-level-output="music" for="audioLevelMusic">80%</output>
+              <label class="audioSettingMute"><input data-audio-muted="music" type="checkbox" /> Mute</label>
+            </div>
+            <div class="audioSettingRow">
+              <label for="audioLevelSfx">Sound effects</label>
+              <input id="audioLevelSfx" data-audio-level="sfx" type="range" min="0" max="100" step="1" />
+              <output data-audio-level-output="sfx" for="audioLevelSfx">100%</output>
+              <label class="audioSettingMute"><input data-audio-muted="sfx" type="checkbox" /> Mute</label>
+            </div>
+            <div class="audioSettingRow">
+              <label for="audioLevelVoice">Voice</label>
+              <input id="audioLevelVoice" data-audio-level="voice" type="range" min="0" max="100" step="1" />
+              <output data-audio-level-output="voice" for="audioLevelVoice">100%</output>
+              <label class="audioSettingMute"><input data-audio-muted="voice" type="checkbox" /> Mute</label>
+            </div>
+            <div class="audioSettingRow">
+              <label for="audioLevelAmbience">Ambience</label>
+              <input id="audioLevelAmbience" data-audio-level="ambience" type="range" min="0" max="100" step="1" />
+              <output data-audio-level-output="ambience" for="audioLevelAmbience">80%</output>
+              <label class="audioSettingMute"><input data-audio-muted="ambience" type="checkbox" /> Mute</label>
+            </div>
+          </fieldset>
+
+          <fieldset class="audioSettingsFieldset">
+            <legend>Playback policy</legend>
+            <label class="audioSettingChoice">
+              <span>Dynamic range</span>
+              <select data-audio-setting="dynamicRangeMode">
+                <option value="full">Full — original mix</option>
+                <option value="reduced">Reduced — softer peaks</option>
+                <option value="night">Night — dialogue-forward quiet mix</option>
+              </select>
+            </label>
+            <label class="audioSettingChoice">
+              <span>When the tab is hidden</span>
+              <select data-audio-setting="backgroundPolicy">
+                <option value="pause">Pause audio</option>
+                <option value="mute">Continue muted</option>
+                <option value="continue">Continue playing</option>
+              </select>
+            </label>
+          </fieldset>
+
+          <fieldset class="audioSettingsFieldset">
+            <legend>Hearing accessibility</legend>
+            <label class="audioSettingChoice"><input data-audio-setting="subtitles" type="checkbox" /> <span>Show subtitles for spoken lines</span></label>
+            <label class="audioSettingChoice"><input data-audio-setting="speakerLabels" type="checkbox" /> <span>Show speaker labels with subtitles</span></label>
+            <label class="audioSettingChoice"><input data-audio-setting="visualCues" type="checkbox" /> <span>Show visual equivalents for important audio cues</span></label>
+            <button id="audioVisualCueTest" type="button">Test visual cue</button>
+          </fieldset>
+
+          <p id="audioSettingsStatus" role="status" aria-live="polite"></p>
+          <div class="audioSettingsActions">
+            <button id="audioSettingsReset" type="button">Restore defaults</button>
+            <button id="audioSettingsDone" type="button">Done</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <div id="audioVisualCue" class="hidden" role="status" aria-live="polite" aria-atomic="true"></div>
     <script type="module" src="src/main.js"></script>
   </body>
 </html>

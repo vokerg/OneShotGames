@@ -1,0 +1,129 @@
+#audioSettings {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(5 8 6 / 78%);
+  backdrop-filter: blur(2px);
+}
+
+#audioSettings.hidden { display: none; }
+
+.audioSettingsCard {
+  width: min(720px, calc(100vw - 32px));
+  max-height: min(820px, calc(100vh - 32px));
+  overflow: auto;
+  padding: 18px;
+  color: var(--ui-color-text, #f3e8c2);
+  background: var(--ui-color-panel, #202820);
+  border: 8px solid transparent;
+  border-image: url("assets/ui/skin/panel-accent.svg") 12 fill / 8px stretch;
+  box-shadow: var(--ui-shadow-heavy, 0 8px 24px rgb(0 0 0 / 72%));
+}
+
+.audioSettingsHeader,
+.audioSettingsActions,
+.audioSettingRow,
+.audioSettingChoice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.audioSettingsHeader {
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.audioSettingsHeader small,
+.audioSettingsFieldset > legend,
+.audioSettingRow label,
+.audioSettingChoice span {
+  color: var(--ui-color-text-muted, #c8bea1);
+}
+
+.audioSettingsHeader h2 { margin: 2px 0 0; }
+
+.audioSettingsFieldset {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding: 12px;
+  border: 1px solid rgb(213 173 79 / 38%);
+  background: rgb(0 0 0 / 14%);
+}
+
+.audioSettingsFieldset > legend {
+  padding: 0 6px;
+  font-weight: 700;
+  letter-spacing: .06em;
+}
+
+.audioSettingRow {
+  display: grid;
+  grid-template-columns: minmax(92px, 130px) minmax(150px, 1fr) 52px auto;
+}
+
+.audioSettingRow input[type='range'] { width: 100%; accent-color: var(--ui-color-objective, #d5ad4f); }
+.audioSettingRow output { font-family: var(--ui-data-font, monospace); text-align: right; }
+
+.audioSettingMute,
+.audioSettingChoice {
+  min-height: 32px;
+  cursor: pointer;
+}
+
+.audioSettingMute input,
+.audioSettingChoice input { width: 18px; height: 18px; accent-color: var(--ui-color-objective, #d5ad4f); }
+
+.audioSettingChoice select {
+  margin-left: auto;
+  min-width: 190px;
+  min-height: 32px;
+  color: var(--ui-color-text, #f3e8c2);
+  background: var(--ui-color-panel-deep, #111713);
+  border: 1px solid rgb(213 173 79 / 45%);
+  padding: 4px 8px;
+}
+
+.audioSettingsActions {
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+#audioSettingsStatus {
+  margin: 8px 0 14px;
+  color: var(--ui-color-text-muted, #c8bea1);
+}
+
+#audioVisualCue {
+  position: fixed;
+  top: 78px;
+  left: 50%;
+  z-index: 80;
+  transform: translateX(-50%);
+  max-width: min(620px, calc(100vw - 32px));
+  padding: 10px 16px;
+  border: 2px solid var(--ui-color-objective, #d5ad4f);
+  color: var(--ui-color-text, #f3e8c2);
+  background: rgb(17 23 19 / 94%);
+  box-shadow: var(--ui-shadow-soft, 0 4px 12px rgb(0 0 0 / 46%));
+  font-weight: 700;
+  text-align: center;
+  pointer-events: none;
+}
+
+#audioVisualCue[data-urgency='critical'] { border-color: var(--ui-color-danger, #d65c46); }
+#audioVisualCue.hidden { display: none; }
+body.audio-settings-open { overflow: hidden; }
+
+@media (max-width: 720px) {
+  #audioSettings { padding: 10px; }
+  .audioSettingsCard { width: calc(100vw - 20px); max-height: calc(100vh - 20px); padding: 12px; }
+  .audioSettingRow { grid-template-columns: 92px minmax(100px, 1fr) 48px; }
+  .audioSettingMute { grid-column: 2 / -1; }
+  .audioSettingChoice { align-items: flex-start; flex-direction: column; }
+  .audioSettingChoice select { width: 100%; margin-left: 0; }
+}
