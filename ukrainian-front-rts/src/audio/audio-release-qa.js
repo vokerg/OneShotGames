@@ -149,8 +149,10 @@ function normalizeInventoryRecord(value, family, index) {
 }
 
 function redistributionPolicy(value) {
-  const normalized = value.toLowerCase();
-  return normalized.includes('allow') || normalized.includes('permit') || normalized.includes('redistribut') ? 'allowed' : 'restricted';
+  const normalized = value.trim().toLowerCase();
+  const denied = /\b(?:prohibited|forbidden|restricted|disallowed)\b|\b(?:not|no)\s+(?:allowed|permitted|redistributable|redistribution)\b/.test(normalized);
+  if (denied) return 'restricted';
+  return /\b(?:allowed|permitted|redistributable)\b/.test(normalized) ? 'allowed' : 'restricted';
 }
 
 function issue(code, familyId, recordId, message) {
