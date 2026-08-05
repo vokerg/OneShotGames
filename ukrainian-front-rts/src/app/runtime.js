@@ -26,6 +26,7 @@ export function createGameRuntime({
   });
   let lastFrameAt = now();
   let frameHandle = null;
+  let paused = false;
 
   const startMission = (missionIndex, seed = simulationSeed) => {
     const activeSeed = deriveSimulationSeed(seed, missionIndex);
@@ -33,6 +34,7 @@ export function createGameRuntime({
     game.simulationSeed = activeSeed;
     game.start(missionIndex);
     simulationClock.reset();
+    paused = false;
     ui.setMission();
     ui.toast(`Mission deployed. First enemy assault in ${game.mission.waves.firstDelay} seconds.`);
     lastFrameAt = now();
@@ -43,7 +45,7 @@ export function createGameRuntime({
     lastFrameAt = frameAt;
 
     if (game.mission) {
-      simulationClock.advance(frameDeltaSeconds, (stepSeconds) => game.update(stepSeconds));
+      if (!paused) simulationClock.advance(frameDeltaSeconds, (stepSeconds) => game.update(stepSeconds));
       renderer.render();
       ui.refresh();
     }
@@ -63,5 +65,18 @@ export function createGameRuntime({
     frameHandle = null;
   };
 
-  return { startMission, start, stop, simulationClock };
+  const pause = () => {
+    paused = true;
+    return paused;
+  };
+
+  const resume = () => {
+    paused = false;
+    lastFrameAt = now();
+    return paused;
+  };
+
+  const isPaused = () => paused;
+
+  return { startMission, start, stop, pause, resume, isPaused, simulationClock };
 }
