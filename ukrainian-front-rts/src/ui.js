@@ -53,7 +53,10 @@ export class UI {
       this.commandSignature = '';
       if (this.startMission) this.buildMissionCards(this.startMission);
       if (this.g.mission) {
-        this.setMission();
+        const region = REGIONS[this.g.mission.region];
+        this.e.missionTitle.textContent = this.g.mission.title;
+        this.e.missionStory.textContent = `${region.name} — ${region.subtitle}. ${this.t('runtime.mission.storySeparator')} ${this.g.mission.story}`;
+        if (this.g.gameOver) this.lastOutcome = null;
         this.refresh();
       }
     });
