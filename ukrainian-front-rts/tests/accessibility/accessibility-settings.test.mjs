@@ -1,5 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { createGameRuntime } from '../../src/app/runtime.js';
+import {
+  ACCESSIBILITY_PAUSE_EVENT,
+  ACCESSIBILITY_RESUME_EVENT,
+} from '../../src/core/accessibility-events.js';
 import {
   DEFAULT_ACTION_BINDINGS,
   DEFAULT_KEY_BINDINGS,
@@ -157,6 +162,27 @@ test('rebinding reports conflicts, supports explicit replacement, and permits un
   assert.deepEqual(unbound[INPUT_ACTIONS.ATTACK_MOVE], []);
 });
 
+test('game runtime keeps independent pause reasons isolated', () => {
+  const runtime = createGameRuntime({
+    game: { mission: null },
+    renderer: { render() {} },
+    ui: { refresh() {} },
+    now: () => 100,
+    requestFrame: () => 1,
+    cancelFrame() {},
+  });
+  assert.equal(runtime.isPaused(), false);
+  runtime.pause('menu');
+  runtime.pause('accessibility-focus-loss');
+  assert.deepEqual(runtime.pauseReasons(), ['accessibility-focus-loss', 'menu']);
+  runtime.resume('accessibility-focus-loss');
+  assert.equal(runtime.isPaused(), true);
+  assert.deepEqual(runtime.pauseReasons(), ['menu']);
+  runtime.resume('menu');
+  assert.equal(runtime.isPaused(), false);
+  assert.throws(() => runtime.pause(''), /non-empty string/);
+});
+
 test('settings migrate safely, persist updates, and fail closed on future schemas', () => {
   const future = normalizeAccessibilitySettings({
     schema: ACCESSIBILITY_SETTINGS_SCHEMA,
@@ -184,6 +210,10 @@ test('runtime applies and restores visual state, bindings, and focus-loss lifecy
   const windowTarget = new FakeEventTarget();
   let pauses = 0;
   let resumes = 0;
+  let pauseEvents = 0;
+  let resumeEvents = 0;
+  documentTarget.addEventListener(ACCESSIBILITY_PAUSE_EVENT, () => { pauseEvents += 1; });
+  documentTarget.addEventListener(ACCESSIBILITY_RESUME_EVENT, () => { resumeEvents += 1; });
   const previous = setRuntimeKeyBindings(DEFAULT_KEY_BINDINGS);
   const runtime = createAccessibilityRuntime({
     documentTarget,
@@ -212,9 +242,11 @@ test('runtime applies and restores visual state, bindings, and focus-loss lifecy
     assert.equal(getRuntimeKeyBindings().z, INPUT_ACTIONS.ATTACK_MOVE);
     windowTarget.emit('blur');
     assert.equal(pauses, 1);
+    assert.equal(pauseEvents, 1);
     assert.equal(root.getAttribute('data-accessibility-focus-paused'), 'true');
     windowTarget.emit('focus');
     assert.equal(resumes, 1);
+    assert.equal(resumeEvents, 1);
     assert.equal(root.getAttribute('data-accessibility-focus-paused'), null);
     assert.equal(runtime.dispose(), true);
     assert.equal(root.getAttribute('data-accessibility-contrast'), null);
