@@ -68,7 +68,10 @@ export function createVisualPerformanceBudget(overrides = {}) {
   const budget = { ...DEFAULT_VISUAL_PERFORMANCE_BUDGET, ...overrides };
   finite(budget.targetFps, 'targetFps', 1);
   finite(budget.p95FrameMs, 'p95FrameMs', Number.EPSILON);
-  finite(budget.p99FrameMs, 'p99FrameMs', budget.p95FrameMs);
+  finite(budget.p99FrameMs, 'p99FrameMs', Number.EPSILON);
+  if (budget.p99FrameMs < budget.p95FrameMs) {
+    throw new RangeError('p99FrameMs must be greater than or equal to p95FrameMs');
+  }
   integer(budget.maxDrawCalls, 'maxDrawCalls');
   integer(budget.maxAtlasBatches, 'maxAtlasBatches');
   integer(budget.maxVisibleSprites, 'maxVisibleSprites');
