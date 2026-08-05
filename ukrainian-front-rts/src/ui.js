@@ -8,9 +8,9 @@ import {
   UNIT_TYPES,
   UPGRADES,
 } from './config.js';
+import { installRuntimeLocalization } from './localization/runtime-localization.js';
 import { installNotificationCenter } from './ui/notification-center.js';
 
-const RESOURCE_LABELS = { metal: 'metal', fuel: 'fuel', intel: 'intel' };
 const BUILD_ACTIONS = {
   buildDepot: 'depot',
   buildBarracks: 'barracks',
@@ -23,6 +23,7 @@ export class UI {
     this.to = null;
     this.lastOutcome = null;
     this.commandSignature = '';
+    this.startMission = null;
     this.e = {
       metal: document.querySelector('#metal'),
       fuel: document.querySelector('#fuel'),
@@ -46,6 +47,16 @@ export class UI {
       retry: document.querySelector('#retryMission'),
       operations: document.querySelector('#returnOperations'),
     };
+    this.localization = installRuntimeLocalization({ documentTarget: document });
+    this.t = (key, variables) => this.localization.t(key, variables);
+    this.disposeLocaleSubscription = this.localization.subscribe(() => {
+      this.commandSignature = '';
+      if (this.startMission) this.buildMissionCards(this.startMission);
+      if (this.g.mission) {
+        this.setMission();
+        this.refresh();
+      }
+    });
     this.disposeNotificationCenter = installNotificationCenter({ game, ui: this });
   }
 
@@ -55,6 +66,7 @@ export class UI {
   }
 
   buildMissionCards(start) {
+    this.startMission = start;
     this.e.cards.innerHTML = '';
     MISSIONS.forEach((mission, index) => {
       const card = document.createElement('div');
@@ -80,9 +92,13 @@ export class UI {
 
       const region = REGIONS[mission.region];
       const text = document.createElement('div');
-      text.innerHTML = `<h3>${mission.title}</h3><small>${region.name} · ${region.subtitle} · Ukraine vs Russia</small><p>${mission.story}</p><p class="missionPacing">First assault: ${mission.waves.firstDelay}s · ${mission.waves.maxWaves} planned waves</p>`;
+      const pacing = [
+        this.t('runtime.mission.firstAssault', { seconds: mission.waves.firstDelay }),
+        this.t('runtime.mission.plannedWaves', { count: mission.waves.maxWaves }),
+      ].join(' · ');
+      text.innerHTML = `<h3>${mission.title}</h3><small>${region.name} · ${region.subtitle} · ${this.t('runtime.mission.versus')}</small><p>${mission.story}</p><p class="missionPacing">${pacing}</p>`;
       const button = document.createElement('button');
-      button.textContent = 'Begin Operation';
+      button.textContent = this.t('runtime.mission.begin');
       button.onclick = () => {
         this.e.select.classList.add('hidden');
         start(index);
@@ -95,7 +111,7 @@ export class UI {
   setMission() {
     const region = REGIONS[this.g.mission.region];
     this.e.missionTitle.textContent = this.g.mission.title;
-    this.e.missionStory.textContent = `${region.name} — ${region.subtitle}. Ukraine versus Russia. ${this.g.mission.story}`;
+    this.e.missionStory.textContent = `${region.name} — ${region.subtitle}. ${this.t('runtime.mission.storySeparator')} ${this.g.mission.story}`;
     this.e.objectiveList.innerHTML = this.g.mission.objectives
       .map((objective, index) => `<li data-i="${index}">${objective}</li>`)
       .join('');
@@ -125,7 +141,7 @@ export class UI {
 
   formatCost(cost = {}) {
     return Object.entries(cost)
-      .map(([resource, amount]) => `${amount} ${RESOURCE_LABELS[resource] || resource}`)
+      .map(([resource, amount]) => `${amount} ${this.t(`resources.${resource}`)}`)
       .join(' · ');
   }
 
@@ -154,37 +170,43 @@ export class UI {
     const allAutoFire = combatUnits.length > 0 && combatUnits.every((unit) => unit.autoFire);
 
     this.commandButton({
-      title: 'Attack-Move',
-      description: 'Advance and engage contacts en route.',
+      title: this.t('runtime.commands.attackMove'),
+      description: this.t('runtime.commands.attackMoveDescription'),
       meta: 'Q',
       className: 'command',
       onClick: () => {
-        if (this.g.armAttackMove()) this.toast('Attack-move armed: right-click a destination.');
+        if (this.g.armAttackMove()) this.toast(this.t('runtime.commands.attackMoveArmed'));
         else this.toast(this.g.lastError);
       },
     });
     this.commandButton({
-      title: 'Stop',
-      description: 'Cancel current orders and reacquire locally.',
+      title: this.t('runtime.commands.stop'),
+      description: this.t('runtime.commands.stopDescription'),
       meta: 'X',
       className: 'command',
       onClick: () => {
-        if (this.g.stopSelected()) this.toast('Orders cancelled.');
+        if (this.g.stopSelected()) this.toast(this.t('runtime.commands.ordersCancelled'));
         else this.toast(this.g.lastError);
       },
     });
     this.commandButton({
-      title: `Auto-Fire: ${allAutoFire ? 'ON' : 'OFF'}`,
-      description: allAutoFire
-        ? 'Idle combat units automatically engage enemies.'
-        : 'Weapons remain silent until explicitly ordered.',
+      title: this.t('runtime.commands.autoFire', {
+        state: this.t(allAutoFire ? 'runtime.commands.on' : 'runtime.commands.off'),
+      }),
+      description: this.t(allAutoFire
+        ? 'runtime.commands.autoFireOnDescription'
+        : 'runtime.commands.autoFireOffDescription'),
       meta: 'T',
       className: `command ${allAutoFire ? 'stance-on' : 'stance-off'}`,
       disabled: !combatUnits.length,
       onClick: () => {
         const enabled = this.g.toggleAutoFire();
         if (enabled === false && this.g.lastError) this.toast(this.g.lastError);
-        else this.toast(`Auto-fire ${enabled ? 'enabled' : 'disabled'} for selected combat units.`);
+        else {
+          this.toast(this.t('runtime.commands.autoFireChanged', {
+            state: this.t(enabled ? 'runtime.commands.enabled' : 'runtime.commands.disabled'),
+          }));
+        }
         this.refresh();
       },
     });
@@ -207,9 +229,9 @@ export class UI {
         onClick: () => {
           if (this.g.useAbility(abilityId)) {
             if (buildType) {
-              this.toast(`Place ${BUILDING_TYPES[buildType].name}: left-click valid ground, right-click to cancel.`);
+              this.toast(this.t('runtime.commands.placeBuilding', { name: BUILDING_TYPES[buildType].name }));
             } else {
-              this.toast(`${ability.name} activated.`);
+              this.toast(this.t('runtime.commands.abilityActivated', { name: ability.name }));
             }
           } else {
             this.toast(this.g.lastError);
@@ -233,12 +255,12 @@ export class UI {
       this.commandButton({
         title: unit.name,
         description: unit.role,
-        meta: duplicateHero ? 'Already deployed' : this.formatCost(unit.cost),
+        meta: duplicateHero ? this.t('runtime.commands.alreadyDeployed') : this.formatCost(unit.cost),
         className: 'production-command',
         disabled: duplicateHero || building.underConstruction,
         onClick: () => {
           if (this.g.queue(typeId)) {
-            this.toast(`${unit.short || unit.name} added to the production queue.`);
+            this.toast(this.t('runtime.commands.addedToQueue', { name: unit.short || unit.name }));
           } else {
             this.toast(this.g.lastError);
           }
@@ -256,12 +278,17 @@ export class UI {
       this.commandButton({
         title: `${done ? '✓ ' : ''}${upgrade.name}`,
         description: upgrade.desc,
-        meta: done ? 'Researched' : locked ? 'Requires prior upgrade' : this.formatCost(upgrade.cost),
+        meta: done
+          ? this.t('runtime.commands.researched')
+          : locked
+            ? this.t('runtime.commands.requiresUpgrade')
+            : this.formatCost(upgrade.cost),
         className: done ? 'researched' : 'upgrade-command',
         disabled: done || Boolean(locked),
         onClick: () => {
-          if (this.g.research(upgradeId)) this.toast(`${upgrade.name} complete.`);
-          else this.toast(this.g.lastError);
+          if (this.g.research(upgradeId)) {
+            this.toast(this.t('runtime.commands.researchComplete', { name: upgrade.name }));
+          } else this.toast(this.g.lastError);
           this.refresh();
         },
       });
@@ -289,7 +316,7 @@ export class UI {
     const pendingBuild = this.g.pendingBuild
       ? `${this.g.pendingBuild.type}:${this.g.pendingBuild.workerId}`
       : 'none';
-    return `${this.g.gameOver ? 'over' : 'live'}::${pendingBuild}::${selected}::${upgrades}::${fieldedHeroes}`;
+    return `${this.g.gameOver ? 'over' : 'live'}::${pendingBuild}::${selected}::${upgrades}::${fieldedHeroes}::${this.localization.locale}`;
   }
 
   shouldRenderCommands(entities) {
@@ -316,43 +343,51 @@ export class UI {
   buildingStatus(building) {
     const type = BUILDING_TYPES[building.type];
     if (building.underConstruction) {
-      return `Construction ${Math.floor((building.hp / building.maxHp) * 100)}% · ${type.desc}`;
+      return `${this.t('runtime.selection.construction', {
+        percent: Math.floor((building.hp / building.maxHp) * 100),
+      })} · ${type.desc}`;
     }
-    if (!building.queue.length) return `${type.desc} · Production queue empty`;
+    if (!building.queue.length) return `${type.desc} · ${this.t('runtime.selection.queueEmpty')}`;
     const current = building.queue[0];
     const currentType = UNIT_TYPES[current.type];
     const queuedNames = building.queue.map((item) => UNIT_TYPES[item.type].short).join(' → ');
-    return `${type.desc} · Producing ${currentType.short} (${Math.ceil(current.left)}s) · Queue: ${queuedNames}`;
+    return `${type.desc} · ${this.t('runtime.selection.producing', {
+      name: currentType.short,
+      seconds: Math.ceil(current.left),
+    })} · ${this.t('runtime.selection.queue', { names: queuedNames })}`;
   }
 
   updateWaveStatus() {
     const waves = this.g.mission.waves;
     if (this.g.wave >= waves.maxWaves) {
-      this.e.wave.textContent = 'assault plan complete';
+      this.e.wave.textContent = this.t('runtime.wave.complete');
       return;
     }
     if (this.g.enemy.pausedForCap) {
-      this.e.wave.textContent = `wave ${this.g.wave + 1} held`;
+      this.e.wave.textContent = this.t('runtime.wave.held', { wave: this.g.wave + 1 });
       return;
     }
-    this.e.wave.textContent = `wave ${this.g.wave + 1} in ${Math.max(0, Math.ceil(this.g.enemy.clock))}s`;
+    this.e.wave.textContent = this.t('runtime.wave.countdown', {
+      wave: this.g.wave + 1,
+      seconds: Math.max(0, Math.ceil(this.g.enemy.clock)),
+    });
   }
 
   showEndgame() {
     if (!this.g.outcome || this.lastOutcome === this.g.outcome) return;
     this.lastOutcome = this.g.outcome;
     const victory = this.g.outcome === 'victory';
-    this.e.endgameTitle.textContent = victory ? 'Operation Complete' : 'Operational Defeat';
+    this.e.endgameTitle.textContent = this.t(victory ? 'runtime.endgame.victory' : 'runtime.endgame.defeat');
     this.e.endgameReason.textContent = this.g.endReason;
     const minutes = Math.floor(this.g.time / 60);
     const seconds = Math.floor(this.g.time % 60)
       .toString()
       .padStart(2, '0');
     this.e.endgameStats.innerHTML = `
-      <div><strong>${minutes}:${seconds}</strong><span>mission time</span></div>
-      <div><strong>${this.g.wave}/${this.g.mission.waves.maxWaves}</strong><span>assault waves</span></div>
-      <div><strong>${Math.floor(this.g.player.mined)}</strong><span>materiel recovered</span></div>
-      <div><strong>${this.g.player.objectives.filter(Boolean).length}/3</strong><span>objectives complete</span></div>
+      <div><strong>${minutes}:${seconds}</strong><span>${this.t('runtime.endgame.missionTime')}</span></div>
+      <div><strong>${this.g.wave}/${this.g.mission.waves.maxWaves}</strong><span>${this.t('runtime.endgame.assaultWaves')}</span></div>
+      <div><strong>${Math.floor(this.g.player.mined)}</strong><span>${this.t('runtime.endgame.materiel')}</span></div>
+      <div><strong>${this.g.player.objectives.filter(Boolean).length}/3</strong><span>${this.t('runtime.endgame.objectives')}</span></div>
     `;
     this.e.endgame.classList.toggle('victory', victory);
     this.e.endgame.classList.toggle('defeat', !victory);
@@ -379,16 +414,18 @@ export class UI {
     const renderCommands = this.shouldRenderCommands(entities);
 
     if (!entity) {
-      this.e.name.textContent = this.g.pendingBuild ? 'Choose Construction Site' : 'No unit selected';
+      this.e.name.textContent = this.t(this.g.pendingBuild
+        ? 'runtime.selection.chooseSite'
+        : 'runtime.selection.none');
       this.e.stats.textContent = this.g.pendingBuild
-        ? `Placing ${BUILDING_TYPES[this.g.pendingBuild.type].name}. Left-click valid ground; right-click or Esc cancels.`
-        : 'Select Ukrainian units or a facility. Engineers recover resources automatically and can place depots, barracks, and workshops.';
+        ? this.t('runtime.selection.placing', { name: BUILDING_TYPES[this.g.pendingBuild.type].name })
+        : this.t('runtime.selection.guidance');
       return;
     }
 
     if (entities.length > 1) {
       const units = entities.filter((candidate) => UNIT_TYPES[candidate.type]);
-      this.e.name.textContent = `Ukrainian Tactical Group (${entities.length})`;
+      this.e.name.textContent = this.t('runtime.selection.tacticalGroup', { count: entities.length });
       this.e.stats.textContent = this.selectionSummary(entities);
       if (renderCommands) this.appendUnitCommands(units);
       return;
@@ -400,8 +437,17 @@ export class UI {
 
     if (UNIT_TYPES[entity.type]) {
       const stats = entity.team === TEAM.UA ? this.g.unitStats(entity.type) : UNIT_TYPES[entity.type];
-      const stance = entity.autoFire ? 'Auto-fire ON' : 'Auto-fire OFF';
-      this.e.stats.textContent = `Combat strength ${Math.ceil(entity.hp)}/${Math.ceil(entity.maxHp)} · ${type.role || type.short || ''} · Firepower ${Math.round(stats.damage)} · Observation ${Math.round(stats.sight)} · ${stance}`;
+      const stance = this.t(entity.autoFire ? 'runtime.selection.autoFireOn' : 'runtime.selection.autoFireOff');
+      this.e.stats.textContent = [
+        this.t('runtime.selection.combatStrength', {
+          current: Math.ceil(entity.hp),
+          maximum: Math.ceil(entity.maxHp),
+        }),
+        type.role || type.short || '',
+        this.t('runtime.selection.firepower', { value: Math.round(stats.damage) }),
+        this.t('runtime.selection.observation', { value: Math.round(stats.sight) }),
+        stance,
+      ].filter(Boolean).join(' · ');
       if (renderCommands && entity.team === TEAM.UA) {
         this.appendUnitCommands([entity]);
         this.appendAbilities(entity);
@@ -409,7 +455,10 @@ export class UI {
       return;
     }
 
-    this.e.stats.textContent = `Structural strength ${Math.ceil(entity.hp)}/${Math.ceil(entity.maxHp)} · ${this.buildingStatus(entity)}`;
+    this.e.stats.textContent = `${this.t('runtime.selection.structuralStrength', {
+      current: Math.ceil(entity.hp),
+      maximum: Math.ceil(entity.maxHp),
+    })} · ${this.buildingStatus(entity)}`;
     if (renderCommands && entity.team === TEAM.UA) {
       this.appendProduction(entity);
       this.appendUpgrades(entity);
