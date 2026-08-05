@@ -8,6 +8,7 @@ import {
   UNIT_TYPES,
   UPGRADES,
 } from './config.js';
+import { installNotificationCenter } from './ui/notification-center.js';
 
 const RESOURCE_LABELS = { metal: 'metal', fuel: 'fuel', intel: 'intel' };
 const BUILD_ACTIONS = {
@@ -45,6 +46,7 @@ export class UI {
       retry: document.querySelector('#retryMission'),
       operations: document.querySelector('#returnOperations'),
     };
+    this.disposeNotificationCenter = installNotificationCenter({ game, ui: this });
   }
 
   setEndgameActions({ retry, operations }) {
