@@ -1,4 +1,4 @@
-import { installAccessibilitySettingsUI } from '../accessibility/accessibility-settings-ui.js';
+import { installAccessibilitySettingsUI } from './accessibility-settings-ui.js';
 import { DOMAIN_EVENT_TYPES } from '../core/events.js';
 import {
   AUDIO_BUS_IDS,
