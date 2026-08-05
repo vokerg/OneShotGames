@@ -3,6 +3,7 @@ import { createApplicationComposition } from './app/composition-registry.js';
 import { installControllerWithSimulationDelegates } from './app/controller-adapter.js';
 import { createGameRuntime } from './app/runtime.js';
 import './art-pass.js';
+import { createAudioMixer } from './audio/audio-mixer.js';
 import { createDestructionState, materializeWreck } from './combat/destruction-system.js';
 import { reconcileActiveRuntimeContent } from './content/runtime-content-reconciliation.js';
 import {
@@ -58,6 +59,7 @@ import { createTransportController } from './systems/transport-system.js';
 import { createVeterancyController } from './systems/veterancy-system.js';
 import { createWorkerGatherController } from './systems/worker-gather-system.js';
 import { UI } from './ui.js';
+import { installAudioSettingsAccessibility } from './audio/audio-settings-ui.js';
 import { installCombatReadabilityFeedback } from './ui/combat-readability-feedback.js';
 import { createCombatReadabilityController } from './ui/combat-readability-runtime.js';
 import { installCommandCapacityFeedback } from './ui/command-capacity-feedback.js';
@@ -91,6 +93,8 @@ const ui = new UI(game);
 const renderer = new Renderer(game, canvas, minimap, portrait);
 const runtime = createGameRuntime({ game, renderer, ui });
 const browserStorage = acquireBrowserStorage(window);
+const audioMixer = createAudioMixer();
+let audioSettingsAccessibility = null;
 
 const modules = [
   module('attack-ground-controller', () => createAttackGroundController(game)),
@@ -195,6 +199,20 @@ const modules = [
   module('combat-readability-controller', () => createCombatReadabilityController(game, {
     storage: browserStorage,
   })),
+  module('audio-settings-accessibility', () => {
+    const installed = installAudioSettingsAccessibility({
+      mixer: audioMixer,
+      events: game.events ?? game.domainEvents ?? null,
+      storage: browserStorage,
+      documentTarget: document,
+      windowTarget: window,
+    });
+    audioSettingsAccessibility = installed;
+    return () => {
+      if (audioSettingsAccessibility === installed) audioSettingsAccessibility = null;
+      installed.dispose();
+    };
+  }),
   module('production-queue-controls', () => installProductionQueueControls({ game, ui })),
   module('tactical-command-card', () => installTacticalCommandCard(ui)),
   module('stance-command-card', () => installStanceCommandCard(ui)),
@@ -247,7 +265,7 @@ const modules = [
 ];
 
 const composition = createApplicationComposition({
-  context: { game, ui, renderer, runtime },
+  context: { game, ui, renderer, runtime, audioMixer },
   modules,
 });
 composition.install();
@@ -258,6 +276,10 @@ window.__fieldsOfResolveComposition = Object.freeze({
   simulationPhases: () => SIMULATION_PHASES,
   simulationDelegates: () => simulationDelegateSnapshot(game),
   runtimeContent: () => runtimeContent,
+  audio: () => Object.freeze({
+    mixer: audioMixer.snapshot(),
+    settings: audioSettingsAccessibility?.snapshot() ?? null,
+  }),
 });
 
 addEventListener(

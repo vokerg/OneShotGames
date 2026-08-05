@@ -174,6 +174,54 @@ try {
     `document.readyState === 'complete' && document.querySelector('.missionCard button')`,
     'mission selection to become interactive',
   );
+  await waitFor(
+    `document.querySelector('#audioSettingsToggle') && window.__fieldsOfResolveComposition?.audio()?.settings?.settings?.settings`,
+    'audio settings composition to mount',
+  );
+
+  await evaluate(`(() => {
+    const toggle = document.querySelector('#audioSettingsToggle');
+    toggle.focus();
+    toggle.click();
+  })()`);
+  await waitFor(
+    `!document.querySelector('#audioSettings')?.classList.contains('hidden') && document.querySelector('#shell')?.inert === true`,
+    'audio settings modal isolation',
+  );
+  await evaluate(`(() => {
+    const slider = document.querySelector('[data-audio-level="music"]');
+    slider.value = '37';
+    slider.dispatchEvent(new Event('input', { bubbles: true }));
+  })()`);
+  await waitFor(
+    `window.__fieldsOfResolveComposition?.audio()?.settings?.settings?.settings?.levels?.music === 0.37 && JSON.parse(localStorage.getItem('fields-of-resolve.audio-settings.v1'))?.levels?.music === 0.37`,
+    'audio level persistence and diagnostics',
+  );
+  await evaluate(`document.querySelector('#audioVisualCueTest').click()`);
+  await waitFor(
+    `!document.querySelector('#audioVisualCue')?.classList.contains('hidden') && document.querySelector('#audioVisualCue')?.textContent.includes('Incoming attack')`,
+    'hearing-accessible visual cue',
+  );
+
+  const audioState = JSON.parse(await evaluate(`JSON.stringify({
+    mounted: Boolean(window.__fieldsOfResolveComposition?.audio()?.settings),
+    panelOpen: !document.querySelector('#audioSettings')?.classList.contains('hidden'),
+    shellIsolated: document.querySelector('#shell')?.inert === true && document.querySelector('#shell')?.getAttribute('aria-hidden') === 'true',
+    requestedMusic: window.__fieldsOfResolveComposition?.audio()?.settings?.settings?.settings?.levels?.music,
+    effectiveMusic: window.__fieldsOfResolveComposition?.audio()?.settings?.settings?.effectiveLevels?.music,
+    persistedMusic: JSON.parse(localStorage.getItem('fields-of-resolve.audio-settings.v1'))?.levels?.music,
+    visualCue: document.querySelector('#audioVisualCue')?.textContent,
+    visualCueUrgency: document.querySelector('#audioVisualCue')?.dataset?.urgency
+  })`));
+
+  await evaluate(`document.querySelector('#audioSettingsDone').click()`);
+  await waitFor(
+    `document.querySelector('#audioSettings')?.classList.contains('hidden') && document.querySelector('#shell')?.inert === false && document.activeElement === document.querySelector('#audioSettingsToggle')`,
+    'audio settings close and focus restoration',
+  );
+  audioState.panelClosed = true;
+  audioState.focusRestored = true;
+
   await evaluate(`document.querySelector('.missionCard button').click()`);
   await waitFor(
     `document.querySelector('#missionSelect')?.classList.contains('hidden') && document.querySelector('#missionTitle')?.textContent`,
@@ -186,6 +234,7 @@ try {
     canvas: document.querySelector('#game')?.width > 0 && document.querySelector('#game')?.height > 0,
     missionCards: document.querySelectorAll('.missionCard').length
   })`));
+  state.audio = audioState;
   const failures = events.filter((event) =>
     event.method === 'Runtime.exceptionThrown' ||
     event.method === 'Inspector.targetCrashed' ||
@@ -195,7 +244,18 @@ try {
   const warnings = events.filter((event) =>
     event.method === 'Log.entryAdded' && event.params?.entry?.level === 'warning',
   );
-  if (!state.title || !state.hidden || !state.canvas || state.missionCards < 1 || failures.length) {
+  const audioPassed =
+    state.audio.mounted &&
+    state.audio.panelOpen &&
+    state.audio.panelClosed &&
+    state.audio.shellIsolated &&
+    state.audio.focusRestored &&
+    state.audio.requestedMusic === 0.37 &&
+    state.audio.persistedMusic === 0.37 &&
+    state.audio.effectiveMusic === 0.37 &&
+    state.audio.visualCue?.includes('Incoming attack') &&
+    state.audio.visualCueUrgency === 'critical';
+  if (!state.title || !state.hidden || !state.canvas || state.missionCards < 1 || !audioPassed || failures.length) {
     try {
       const shot = await call('Page.captureScreenshot', { format: 'png' });
       await writeFile(join(artifacts, 'browser-startup-failure.png'), Buffer.from(shot.data, 'base64'));
@@ -209,7 +269,7 @@ try {
     join(artifacts, 'browser-startup-smoke.json'),
     JSON.stringify({ status: 'passed', state, warnings }, null, 2),
   );
-  console.log(`[browser-smoke] mission started: ${state.title}; warnings: ${warnings.length}`);
+  console.log(`[browser-smoke] mission started: ${state.title}; audio settings exercised; warnings: ${warnings.length}`);
 } catch (error) {
   await writeFile(join(artifacts, 'browser-startup.log'), `${logs.join('')}\n${error.stack}\n`);
   throw error;
