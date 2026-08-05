@@ -17,6 +17,7 @@ import {
   UI_SCALE_OPTIONS,
   normalizeAccessibilitySettings,
 } from '../src/audio/accessibility-settings.js';
+import { ACCESSIBILITY_REBINDABLE_KEYS } from '../src/audio/accessibility-settings-ui.js';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const audioUiPath = resolve(projectRoot, 'src/audio/audio-settings-ui.js');
@@ -37,6 +38,11 @@ assert.ok(TEXT_SCALE_OPTIONS.includes(1) && TEXT_SCALE_OPTIONS.some((value) => v
 assert.deepEqual(COLOR_VISION_PRESETS, ['standard', 'deuteranopia', 'protanopia', 'tritanopia']);
 assert.deepEqual(CONTRAST_MODES, ['standard', 'high']);
 assert.deepEqual(CURSOR_SIZES, ['standard', 'large', 'extra-large']);
+assert.equal(new Set(ACCESSIBILITY_REBINDABLE_KEYS).size, ACCESSIBILITY_REBINDABLE_KEYS.length, 'Rebinding keys must be unique.');
+assert.ok(ACCESSIBILITY_REBINDABLE_KEYS.length >= 65, 'Rebinding must cover standard non-modifier key families.');
+for (const key of ['a', '0', 'f12', 'arrowup', 'space', 'escape', 'delete', 'home', 'pagedown', '/', '\\', '`']) {
+  assert.ok(ACCESSIBILITY_REBINDABLE_KEYS.includes(key), `Missing rebinding key ${key}.`);
+}
 
 const [audioUi, accessibilityUi, accessibilityRuntime, gameRuntime, menuComposition, coreActionMap, lifecycle] = await Promise.all([
   readFile(audioUiPath, 'utf8'),
@@ -66,4 +72,4 @@ assert.match(coreActionMap, /runtimeKeyBindingsView/);
 assert.match(coreActionMap, /rebindInputAction/);
 assert.match(lifecycle, /accessibility-focus-loss/);
 
-console.log(`Accessibility settings verification passed for ${INPUT_ACTION_IDS.length} named actions, ${UI_SCALE_OPTIONS.length} UI scales, ${TEXT_SCALE_OPTIONS.length} text scales, ${COLOR_VISION_PRESETS.length} color-vision presets, ${CURSOR_SIZES.length} cursor sizes, and independent menu/focus pause ownership.`);
+console.log(`Accessibility settings verification passed for ${INPUT_ACTION_IDS.length} named actions, ${ACCESSIBILITY_REBINDABLE_KEYS.length} standard keys, ${UI_SCALE_OPTIONS.length} UI scales, ${TEXT_SCALE_OPTIONS.length} text scales, ${COLOR_VISION_PRESETS.length} color-vision presets, ${CURSOR_SIZES.length} cursor sizes, and independent menu/focus pause ownership.`);
