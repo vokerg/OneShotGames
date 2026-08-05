@@ -41,8 +41,11 @@ class FakeElement {
     this.children = [];
     this.listeners = new Map();
     this.items = [];
+    this.dataset = {};
+    this.attributes = {};
     this.disabled = false;
     this.clearCount = 0;
+    this.removed = false;
     this._innerHTML = '';
     this.textContent = '';
     this.className = '';
@@ -58,9 +61,21 @@ class FakeElement {
     return this._innerHTML;
   }
 
+  append(...children) {
+    this.children.push(...children);
+  }
+
   appendChild(child) {
     this.children.push(child);
     return child;
+  }
+
+  replaceChildren(...children) {
+    this.children = [...children];
+  }
+
+  setAttribute(name, value) {
+    this.attributes[name] = String(value);
   }
 
   addEventListener(type, handler) {
@@ -88,6 +103,10 @@ class FakeElement {
 
   querySelectorAll(selector) {
     return selector === 'li' ? this.items : [];
+  }
+
+  remove() {
+    this.removed = true;
   }
 }
 
