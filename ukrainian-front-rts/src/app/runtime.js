@@ -9,6 +9,14 @@ import {
   setSimulationSeed,
 } from '../core/random.js';
 
+const DEFAULT_PAUSE_REASON = 'default';
+
+function normalizePauseReason(reason) {
+  if (reason === undefined) return DEFAULT_PAUSE_REASON;
+  if (typeof reason !== 'string' || !reason.trim()) throw new TypeError('Runtime pause reason must be a non-empty string.');
+  return reason.trim();
+}
+
 export function createGameRuntime({
   game,
   renderer,
@@ -24,9 +32,12 @@ export function createGameRuntime({
     stepSeconds: simulationStepSeconds,
     maxFrameDeltaSeconds,
   });
+  const pauseReasons = new Set();
   let lastFrameAt = now();
   let frameHandle = null;
-  let paused = false;
+
+  const isPaused = () => pauseReasons.size > 0;
+  const pauseReasonSnapshot = () => Object.freeze([...pauseReasons].sort());
 
   const startMission = (missionIndex, seed = simulationSeed) => {
     const activeSeed = deriveSimulationSeed(seed, missionIndex);
@@ -34,7 +45,7 @@ export function createGameRuntime({
     game.simulationSeed = activeSeed;
     game.start(missionIndex);
     simulationClock.reset();
-    paused = false;
+    pauseReasons.clear();
     ui.setMission();
     ui.toast(`Mission deployed. First enemy assault in ${game.mission.waves.firstDelay} seconds.`);
     lastFrameAt = now();
@@ -45,7 +56,7 @@ export function createGameRuntime({
     lastFrameAt = frameAt;
 
     if (game.mission) {
-      if (!paused) simulationClock.advance(frameDeltaSeconds, (stepSeconds) => game.update(stepSeconds));
+      if (!isPaused()) simulationClock.advance(frameDeltaSeconds, (stepSeconds) => game.update(stepSeconds));
       renderer.render();
       ui.refresh();
     }
@@ -65,18 +76,25 @@ export function createGameRuntime({
     frameHandle = null;
   };
 
-  const pause = () => {
-    paused = true;
-    return paused;
+  const pause = (reason = DEFAULT_PAUSE_REASON) => {
+    pauseReasons.add(normalizePauseReason(reason));
+    return isPaused();
   };
 
-  const resume = () => {
-    paused = false;
-    lastFrameAt = now();
-    return paused;
+  const resume = (reason = DEFAULT_PAUSE_REASON) => {
+    pauseReasons.delete(normalizePauseReason(reason));
+    if (!isPaused()) lastFrameAt = now();
+    return isPaused();
   };
 
-  const isPaused = () => paused;
-
-  return { startMission, start, stop, pause, resume, isPaused, simulationClock };
+  return {
+    startMission,
+    start,
+    stop,
+    pause,
+    resume,
+    isPaused,
+    pauseReasons: pauseReasonSnapshot,
+    simulationClock,
+  };
 }
