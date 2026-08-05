@@ -19,8 +19,8 @@ import {
   createAccessibilitySettingsController,
   DEFAULT_ACCESSIBILITY_SETTINGS,
   normalizeAccessibilitySettings,
-} from '../../src/accessibility/accessibility-settings.js';
-import { createAccessibilityRuntime } from '../../src/accessibility/accessibility-runtime.js';
+} from '../../src/audio/accessibility-settings.js';
+import { createAccessibilityRuntime } from '../../src/audio/accessibility-runtime.js';
 
 class FakeEventTarget {
   constructor() {
