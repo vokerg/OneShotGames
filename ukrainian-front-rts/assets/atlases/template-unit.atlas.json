@@ -1,0 +1,4729 @@
+{
+  "schema": "fields-of-resolve.sprite-atlas",
+  "version": 1,
+  "id": "fields-of-resolve.template-unit",
+  "sampling": "nearest",
+  "image": {
+    "src": "template-unit.svg",
+    "width": 1020,
+    "height": 202,
+    "pixelRatio": 1
+  },
+  "directions": {
+    "order": [
+      "n",
+      "ne",
+      "e",
+      "se",
+      "s",
+      "sw",
+      "w",
+      "nw"
+    ],
+    "zero": "n",
+    "clockwise": true
+  },
+  "paletteTokens": {
+    "damage": "#d95f45",
+    "danger": "#ff4fa3",
+    "diagnostic-outline": "#ffffff",
+    "ink": "#111512",
+    "neutral-metal": "#9aa291",
+    "template-accent": "#e4ca54",
+    "template-base": "#50684c",
+    "template-deep": "#18271f",
+    "template-light": "#81956a",
+    "template-optic": "#4e8db2",
+    "template-shadow": "#293c30"
+  },
+  "frames": {
+    "missing": {
+      "id": "missing",
+      "rect": {
+        "x": 2,
+        "y": 2,
+        "w": 16,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 16,
+        "h": 16
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 8,
+        "y": 16
+      },
+      "attachments": {
+        "center": {
+          "x": 8,
+          "y": 8
+        }
+      },
+      "masks": {
+        "selection": {
+          "x": 1,
+          "y": 1,
+          "w": 14,
+          "h": 14
+        }
+      },
+      "tags": [
+        "fallback",
+        "diagnostic"
+      ]
+    },
+    "template.pathfinder-car.attack.e.f00": {
+      "id": "template.pathfinder-car.attack.e.f00",
+      "rect": {
+        "x": 20,
+        "y": 2,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 41,
+          "y": 24
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "e"
+      ]
+    },
+    "template.pathfinder-car.attack.e.f01": {
+      "id": "template.pathfinder-car.attack.e.f01",
+      "rect": {
+        "x": 70,
+        "y": 2,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 41,
+          "y": 24
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "e"
+      ]
+    },
+    "template.pathfinder-car.attack.e.f02": {
+      "id": "template.pathfinder-car.attack.e.f02",
+      "rect": {
+        "x": 120,
+        "y": 2,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 41,
+          "y": 24
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "e"
+      ]
+    },
+    "template.pathfinder-car.attack.n.f00": {
+      "id": "template.pathfinder-car.attack.n.f00",
+      "rect": {
+        "x": 170,
+        "y": 2,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "n"
+      ]
+    },
+    "template.pathfinder-car.attack.n.f01": {
+      "id": "template.pathfinder-car.attack.n.f01",
+      "rect": {
+        "x": 220,
+        "y": 2,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "n"
+      ]
+    },
+    "template.pathfinder-car.attack.n.f02": {
+      "id": "template.pathfinder-car.attack.n.f02",
+      "rect": {
+        "x": 270,
+        "y": 2,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "n"
+      ]
+    },
+    "template.pathfinder-car.attack.ne.f00": {
+      "id": "template.pathfinder-car.attack.ne.f00",
+      "rect": {
+        "x": 320,
+        "y": 2,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 36,
+          "y": 12
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "ne"
+      ]
+    },
+    "template.pathfinder-car.attack.ne.f01": {
+      "id": "template.pathfinder-car.attack.ne.f01",
+      "rect": {
+        "x": 370,
+        "y": 2,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 36,
+          "y": 12
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "ne"
+      ]
+    },
+    "template.pathfinder-car.attack.ne.f02": {
+      "id": "template.pathfinder-car.attack.ne.f02",
+      "rect": {
+        "x": 420,
+        "y": 2,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 36,
+          "y": 12
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "ne"
+      ]
+    },
+    "template.pathfinder-car.attack.nw.f00": {
+      "id": "template.pathfinder-car.attack.nw.f00",
+      "rect": {
+        "x": 470,
+        "y": 2,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 12,
+          "y": 12
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "nw"
+      ]
+    },
+    "template.pathfinder-car.attack.nw.f01": {
+      "id": "template.pathfinder-car.attack.nw.f01",
+      "rect": {
+        "x": 520,
+        "y": 2,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 12,
+          "y": 12
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "nw"
+      ]
+    },
+    "template.pathfinder-car.attack.nw.f02": {
+      "id": "template.pathfinder-car.attack.nw.f02",
+      "rect": {
+        "x": 570,
+        "y": 2,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 12,
+          "y": 12
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "nw"
+      ]
+    },
+    "template.pathfinder-car.attack.s.f00": {
+      "id": "template.pathfinder-car.attack.s.f00",
+      "rect": {
+        "x": 620,
+        "y": 2,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 41
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "s"
+      ]
+    },
+    "template.pathfinder-car.attack.s.f01": {
+      "id": "template.pathfinder-car.attack.s.f01",
+      "rect": {
+        "x": 670,
+        "y": 2,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 41
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "s"
+      ]
+    },
+    "template.pathfinder-car.attack.s.f02": {
+      "id": "template.pathfinder-car.attack.s.f02",
+      "rect": {
+        "x": 720,
+        "y": 2,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 41
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "s"
+      ]
+    },
+    "template.pathfinder-car.attack.se.f00": {
+      "id": "template.pathfinder-car.attack.se.f00",
+      "rect": {
+        "x": 770,
+        "y": 2,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 36,
+          "y": 36
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "se"
+      ]
+    },
+    "template.pathfinder-car.attack.se.f01": {
+      "id": "template.pathfinder-car.attack.se.f01",
+      "rect": {
+        "x": 820,
+        "y": 2,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 36,
+          "y": 36
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "se"
+      ]
+    },
+    "template.pathfinder-car.attack.se.f02": {
+      "id": "template.pathfinder-car.attack.se.f02",
+      "rect": {
+        "x": 870,
+        "y": 2,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 36,
+          "y": 36
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "se"
+      ]
+    },
+    "template.pathfinder-car.attack.sw.f00": {
+      "id": "template.pathfinder-car.attack.sw.f00",
+      "rect": {
+        "x": 920,
+        "y": 2,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 12,
+          "y": 36
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "sw"
+      ]
+    },
+    "template.pathfinder-car.attack.sw.f01": {
+      "id": "template.pathfinder-car.attack.sw.f01",
+      "rect": {
+        "x": 970,
+        "y": 2,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 12,
+          "y": 36
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "sw"
+      ]
+    },
+    "template.pathfinder-car.attack.sw.f02": {
+      "id": "template.pathfinder-car.attack.sw.f02",
+      "rect": {
+        "x": 2,
+        "y": 52,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 12,
+          "y": 36
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "sw"
+      ]
+    },
+    "template.pathfinder-car.attack.w.f00": {
+      "id": "template.pathfinder-car.attack.w.f00",
+      "rect": {
+        "x": 52,
+        "y": 52,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 7,
+          "y": 24
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "w"
+      ]
+    },
+    "template.pathfinder-car.attack.w.f01": {
+      "id": "template.pathfinder-car.attack.w.f01",
+      "rect": {
+        "x": 102,
+        "y": 52,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 7,
+          "y": 24
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "w"
+      ]
+    },
+    "template.pathfinder-car.attack.w.f02": {
+      "id": "template.pathfinder-car.attack.w.f02",
+      "rect": {
+        "x": 152,
+        "y": 52,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 7,
+          "y": 24
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "w"
+      ]
+    },
+    "template.pathfinder-car.damaged.f00": {
+      "id": "template.pathfinder-car.damaged.f00",
+      "rect": {
+        "x": 202,
+        "y": 52,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "damaged",
+        "shared"
+      ]
+    },
+    "template.pathfinder-car.damaged.f01": {
+      "id": "template.pathfinder-car.damaged.f01",
+      "rect": {
+        "x": 252,
+        "y": 52,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "damaged",
+        "shared"
+      ]
+    },
+    "template.pathfinder-car.death.f00": {
+      "id": "template.pathfinder-car.death.f00",
+      "rect": {
+        "x": 302,
+        "y": 52,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "death",
+        "shared"
+      ]
+    },
+    "template.pathfinder-car.death.f01": {
+      "id": "template.pathfinder-car.death.f01",
+      "rect": {
+        "x": 352,
+        "y": 52,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "death",
+        "shared"
+      ]
+    },
+    "template.pathfinder-car.death.f02": {
+      "id": "template.pathfinder-car.death.f02",
+      "rect": {
+        "x": 402,
+        "y": 52,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "death",
+        "shared"
+      ]
+    },
+    "template.pathfinder-car.death.f03": {
+      "id": "template.pathfinder-car.death.f03",
+      "rect": {
+        "x": 452,
+        "y": 52,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "death",
+        "shared"
+      ]
+    },
+    "template.pathfinder-car.death.f04": {
+      "id": "template.pathfinder-car.death.f04",
+      "rect": {
+        "x": 502,
+        "y": 52,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "death",
+        "shared"
+      ]
+    },
+    "template.pathfinder-car.death.f05": {
+      "id": "template.pathfinder-car.death.f05",
+      "rect": {
+        "x": 552,
+        "y": 52,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "death",
+        "shared"
+      ]
+    },
+    "template.pathfinder-car.hit.f00": {
+      "id": "template.pathfinder-car.hit.f00",
+      "rect": {
+        "x": 602,
+        "y": 52,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "hit",
+        "shared"
+      ]
+    },
+    "template.pathfinder-car.idle.f00": {
+      "id": "template.pathfinder-car.idle.f00",
+      "rect": {
+        "x": 652,
+        "y": 52,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "idle",
+        "shared"
+      ]
+    },
+    "template.pathfinder-car.idle.f01": {
+      "id": "template.pathfinder-car.idle.f01",
+      "rect": {
+        "x": 702,
+        "y": 52,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "idle",
+        "shared"
+      ]
+    },
+    "template.pathfinder-car.move.e.f00": {
+      "id": "template.pathfinder-car.move.e.f00",
+      "rect": {
+        "x": 752,
+        "y": 52,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 41,
+          "y": 24
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "e"
+      ]
+    },
+    "template.pathfinder-car.move.e.f01": {
+      "id": "template.pathfinder-car.move.e.f01",
+      "rect": {
+        "x": 802,
+        "y": 52,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 41,
+          "y": 24
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "e"
+      ]
+    },
+    "template.pathfinder-car.move.e.f02": {
+      "id": "template.pathfinder-car.move.e.f02",
+      "rect": {
+        "x": 852,
+        "y": 52,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 41,
+          "y": 24
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "e"
+      ]
+    },
+    "template.pathfinder-car.move.e.f03": {
+      "id": "template.pathfinder-car.move.e.f03",
+      "rect": {
+        "x": 902,
+        "y": 52,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 41,
+          "y": 24
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "e"
+      ]
+    },
+    "template.pathfinder-car.move.n.f00": {
+      "id": "template.pathfinder-car.move.n.f00",
+      "rect": {
+        "x": 952,
+        "y": 52,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "n"
+      ]
+    },
+    "template.pathfinder-car.move.n.f01": {
+      "id": "template.pathfinder-car.move.n.f01",
+      "rect": {
+        "x": 2,
+        "y": 102,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "n"
+      ]
+    },
+    "template.pathfinder-car.move.n.f02": {
+      "id": "template.pathfinder-car.move.n.f02",
+      "rect": {
+        "x": 52,
+        "y": 102,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "n"
+      ]
+    },
+    "template.pathfinder-car.move.n.f03": {
+      "id": "template.pathfinder-car.move.n.f03",
+      "rect": {
+        "x": 102,
+        "y": 102,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "n"
+      ]
+    },
+    "template.pathfinder-car.move.ne.f00": {
+      "id": "template.pathfinder-car.move.ne.f00",
+      "rect": {
+        "x": 152,
+        "y": 102,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 36,
+          "y": 12
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "ne"
+      ]
+    },
+    "template.pathfinder-car.move.ne.f01": {
+      "id": "template.pathfinder-car.move.ne.f01",
+      "rect": {
+        "x": 202,
+        "y": 102,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 36,
+          "y": 12
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "ne"
+      ]
+    },
+    "template.pathfinder-car.move.ne.f02": {
+      "id": "template.pathfinder-car.move.ne.f02",
+      "rect": {
+        "x": 252,
+        "y": 102,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 36,
+          "y": 12
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "ne"
+      ]
+    },
+    "template.pathfinder-car.move.ne.f03": {
+      "id": "template.pathfinder-car.move.ne.f03",
+      "rect": {
+        "x": 302,
+        "y": 102,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 36,
+          "y": 12
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "ne"
+      ]
+    },
+    "template.pathfinder-car.move.nw.f00": {
+      "id": "template.pathfinder-car.move.nw.f00",
+      "rect": {
+        "x": 352,
+        "y": 102,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 12,
+          "y": 12
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "nw"
+      ]
+    },
+    "template.pathfinder-car.move.nw.f01": {
+      "id": "template.pathfinder-car.move.nw.f01",
+      "rect": {
+        "x": 402,
+        "y": 102,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 12,
+          "y": 12
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "nw"
+      ]
+    },
+    "template.pathfinder-car.move.nw.f02": {
+      "id": "template.pathfinder-car.move.nw.f02",
+      "rect": {
+        "x": 452,
+        "y": 102,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 12,
+          "y": 12
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "nw"
+      ]
+    },
+    "template.pathfinder-car.move.nw.f03": {
+      "id": "template.pathfinder-car.move.nw.f03",
+      "rect": {
+        "x": 502,
+        "y": 102,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 12,
+          "y": 12
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "nw"
+      ]
+    },
+    "template.pathfinder-car.move.s.f00": {
+      "id": "template.pathfinder-car.move.s.f00",
+      "rect": {
+        "x": 552,
+        "y": 102,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 41
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "s"
+      ]
+    },
+    "template.pathfinder-car.move.s.f01": {
+      "id": "template.pathfinder-car.move.s.f01",
+      "rect": {
+        "x": 602,
+        "y": 102,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 41
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "s"
+      ]
+    },
+    "template.pathfinder-car.move.s.f02": {
+      "id": "template.pathfinder-car.move.s.f02",
+      "rect": {
+        "x": 652,
+        "y": 102,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 41
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "s"
+      ]
+    },
+    "template.pathfinder-car.move.s.f03": {
+      "id": "template.pathfinder-car.move.s.f03",
+      "rect": {
+        "x": 702,
+        "y": 102,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 41
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "s"
+      ]
+    },
+    "template.pathfinder-car.move.se.f00": {
+      "id": "template.pathfinder-car.move.se.f00",
+      "rect": {
+        "x": 752,
+        "y": 102,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 36,
+          "y": 36
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "se"
+      ]
+    },
+    "template.pathfinder-car.move.se.f01": {
+      "id": "template.pathfinder-car.move.se.f01",
+      "rect": {
+        "x": 802,
+        "y": 102,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 36,
+          "y": 36
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "se"
+      ]
+    },
+    "template.pathfinder-car.move.se.f02": {
+      "id": "template.pathfinder-car.move.se.f02",
+      "rect": {
+        "x": 852,
+        "y": 102,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 36,
+          "y": 36
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "se"
+      ]
+    },
+    "template.pathfinder-car.move.se.f03": {
+      "id": "template.pathfinder-car.move.se.f03",
+      "rect": {
+        "x": 902,
+        "y": 102,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 36,
+          "y": 36
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "se"
+      ]
+    },
+    "template.pathfinder-car.move.sw.f00": {
+      "id": "template.pathfinder-car.move.sw.f00",
+      "rect": {
+        "x": 952,
+        "y": 102,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 12,
+          "y": 36
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "sw"
+      ]
+    },
+    "template.pathfinder-car.move.sw.f01": {
+      "id": "template.pathfinder-car.move.sw.f01",
+      "rect": {
+        "x": 2,
+        "y": 152,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 12,
+          "y": 36
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "sw"
+      ]
+    },
+    "template.pathfinder-car.move.sw.f02": {
+      "id": "template.pathfinder-car.move.sw.f02",
+      "rect": {
+        "x": 52,
+        "y": 152,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 12,
+          "y": 36
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "sw"
+      ]
+    },
+    "template.pathfinder-car.move.sw.f03": {
+      "id": "template.pathfinder-car.move.sw.f03",
+      "rect": {
+        "x": 102,
+        "y": 152,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 12,
+          "y": 36
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "sw"
+      ]
+    },
+    "template.pathfinder-car.move.w.f00": {
+      "id": "template.pathfinder-car.move.w.f00",
+      "rect": {
+        "x": 152,
+        "y": 152,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 7,
+          "y": 24
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "w"
+      ]
+    },
+    "template.pathfinder-car.move.w.f01": {
+      "id": "template.pathfinder-car.move.w.f01",
+      "rect": {
+        "x": 202,
+        "y": 152,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 7,
+          "y": 24
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "w"
+      ]
+    },
+    "template.pathfinder-car.move.w.f02": {
+      "id": "template.pathfinder-car.move.w.f02",
+      "rect": {
+        "x": 252,
+        "y": 152,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 7,
+          "y": 24
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "w"
+      ]
+    },
+    "template.pathfinder-car.move.w.f03": {
+      "id": "template.pathfinder-car.move.w.f03",
+      "rect": {
+        "x": 302,
+        "y": 152,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 7,
+          "y": 24
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "w"
+      ]
+    },
+    "template.pathfinder-car.wreck.f00": {
+      "id": "template.pathfinder-car.wreck.f00",
+      "rect": {
+        "x": 352,
+        "y": 152,
+        "w": 48,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 48,
+        "h": 48
+      },
+      "offset": {
+        "x": 0,
+        "y": 0
+      },
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "wreck",
+        "shared"
+      ]
+    }
+  },
+  "animations": {
+    "attack": {
+      "id": "attack",
+      "loop": "once",
+      "defaultDurationMs": 100,
+      "frames": null,
+      "directions": {
+        "e": [
+          {
+            "frame": "template.pathfinder-car.attack.e.f00",
+            "durationMs": 80
+          },
+          {
+            "frame": "template.pathfinder-car.attack.e.f01",
+            "durationMs": 60
+          },
+          {
+            "frame": "template.pathfinder-car.attack.e.f02",
+            "durationMs": 120
+          }
+        ],
+        "n": [
+          {
+            "frame": "template.pathfinder-car.attack.n.f00",
+            "durationMs": 80
+          },
+          {
+            "frame": "template.pathfinder-car.attack.n.f01",
+            "durationMs": 60
+          },
+          {
+            "frame": "template.pathfinder-car.attack.n.f02",
+            "durationMs": 120
+          }
+        ],
+        "ne": [
+          {
+            "frame": "template.pathfinder-car.attack.ne.f00",
+            "durationMs": 80
+          },
+          {
+            "frame": "template.pathfinder-car.attack.ne.f01",
+            "durationMs": 60
+          },
+          {
+            "frame": "template.pathfinder-car.attack.ne.f02",
+            "durationMs": 120
+          }
+        ],
+        "nw": [
+          {
+            "frame": "template.pathfinder-car.attack.nw.f00",
+            "durationMs": 80
+          },
+          {
+            "frame": "template.pathfinder-car.attack.nw.f01",
+            "durationMs": 60
+          },
+          {
+            "frame": "template.pathfinder-car.attack.nw.f02",
+            "durationMs": 120
+          }
+        ],
+        "s": [
+          {
+            "frame": "template.pathfinder-car.attack.s.f00",
+            "durationMs": 80
+          },
+          {
+            "frame": "template.pathfinder-car.attack.s.f01",
+            "durationMs": 60
+          },
+          {
+            "frame": "template.pathfinder-car.attack.s.f02",
+            "durationMs": 120
+          }
+        ],
+        "se": [
+          {
+            "frame": "template.pathfinder-car.attack.se.f00",
+            "durationMs": 80
+          },
+          {
+            "frame": "template.pathfinder-car.attack.se.f01",
+            "durationMs": 60
+          },
+          {
+            "frame": "template.pathfinder-car.attack.se.f02",
+            "durationMs": 120
+          }
+        ],
+        "sw": [
+          {
+            "frame": "template.pathfinder-car.attack.sw.f00",
+            "durationMs": 80
+          },
+          {
+            "frame": "template.pathfinder-car.attack.sw.f01",
+            "durationMs": 60
+          },
+          {
+            "frame": "template.pathfinder-car.attack.sw.f02",
+            "durationMs": 120
+          }
+        ],
+        "w": [
+          {
+            "frame": "template.pathfinder-car.attack.w.f00",
+            "durationMs": 80
+          },
+          {
+            "frame": "template.pathfinder-car.attack.w.f01",
+            "durationMs": 60
+          },
+          {
+            "frame": "template.pathfinder-car.attack.w.f02",
+            "durationMs": 120
+          }
+        ]
+      }
+    },
+    "damaged": {
+      "id": "damaged",
+      "loop": "loop",
+      "defaultDurationMs": 100,
+      "frames": [
+        {
+          "frame": "template.pathfinder-car.damaged.f00",
+          "durationMs": 220
+        },
+        {
+          "frame": "template.pathfinder-car.damaged.f01",
+          "durationMs": 220
+        }
+      ],
+      "directions": null
+    },
+    "death": {
+      "id": "death",
+      "loop": "once",
+      "defaultDurationMs": 100,
+      "frames": [
+        {
+          "frame": "template.pathfinder-car.death.f00",
+          "durationMs": 90
+        },
+        {
+          "frame": "template.pathfinder-car.death.f01",
+          "durationMs": 90
+        },
+        {
+          "frame": "template.pathfinder-car.death.f02",
+          "durationMs": 100
+        },
+        {
+          "frame": "template.pathfinder-car.death.f03",
+          "durationMs": 110
+        },
+        {
+          "frame": "template.pathfinder-car.death.f04",
+          "durationMs": 120
+        },
+        {
+          "frame": "template.pathfinder-car.death.f05",
+          "durationMs": 140
+        }
+      ],
+      "directions": null
+    },
+    "hit": {
+      "id": "hit",
+      "loop": "once",
+      "defaultDurationMs": 100,
+      "frames": [
+        {
+          "frame": "template.pathfinder-car.hit.f00",
+          "durationMs": 100
+        }
+      ],
+      "directions": null
+    },
+    "idle": {
+      "id": "idle",
+      "loop": "loop",
+      "defaultDurationMs": 100,
+      "frames": [
+        {
+          "frame": "template.pathfinder-car.idle.f00",
+          "durationMs": 240
+        },
+        {
+          "frame": "template.pathfinder-car.idle.f01",
+          "durationMs": 240
+        }
+      ],
+      "directions": null
+    },
+    "move": {
+      "id": "move",
+      "loop": "loop",
+      "defaultDurationMs": 100,
+      "frames": null,
+      "directions": {
+        "e": [
+          {
+            "frame": "template.pathfinder-car.move.e.f00",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.e.f01",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.e.f02",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.e.f03",
+            "durationMs": 90
+          }
+        ],
+        "n": [
+          {
+            "frame": "template.pathfinder-car.move.n.f00",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.n.f01",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.n.f02",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.n.f03",
+            "durationMs": 90
+          }
+        ],
+        "ne": [
+          {
+            "frame": "template.pathfinder-car.move.ne.f00",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.ne.f01",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.ne.f02",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.ne.f03",
+            "durationMs": 90
+          }
+        ],
+        "nw": [
+          {
+            "frame": "template.pathfinder-car.move.nw.f00",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.nw.f01",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.nw.f02",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.nw.f03",
+            "durationMs": 90
+          }
+        ],
+        "s": [
+          {
+            "frame": "template.pathfinder-car.move.s.f00",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.s.f01",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.s.f02",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.s.f03",
+            "durationMs": 90
+          }
+        ],
+        "se": [
+          {
+            "frame": "template.pathfinder-car.move.se.f00",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.se.f01",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.se.f02",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.se.f03",
+            "durationMs": 90
+          }
+        ],
+        "sw": [
+          {
+            "frame": "template.pathfinder-car.move.sw.f00",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.sw.f01",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.sw.f02",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.sw.f03",
+            "durationMs": 90
+          }
+        ],
+        "w": [
+          {
+            "frame": "template.pathfinder-car.move.w.f00",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.w.f01",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.w.f02",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.w.f03",
+            "durationMs": 90
+          }
+        ]
+      }
+    },
+    "wreck": {
+      "id": "wreck",
+      "loop": "hold",
+      "defaultDurationMs": 100,
+      "frames": [
+        {
+          "frame": "template.pathfinder-car.wreck.f00",
+          "durationMs": 1000
+        }
+      ],
+      "directions": null
+    }
+  },
+  "fallback": {
+    "frame": "missing"
+  }
+}

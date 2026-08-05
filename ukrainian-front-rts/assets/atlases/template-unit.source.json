@@ -1,0 +1,3956 @@
+{
+  "schema": "fields-of-resolve.sprite-atlas-source",
+  "version": 1,
+  "id": "fields-of-resolve.template-unit",
+  "padding": 2,
+  "maxWidth": 1024,
+  "pixelRatio": 1,
+  "output": {
+    "image": "template-unit.svg",
+    "manifest": "template-unit.atlas.json"
+  },
+  "directions": {
+    "order": [
+      "n",
+      "ne",
+      "e",
+      "se",
+      "s",
+      "sw",
+      "w",
+      "nw"
+    ],
+    "zero": "n",
+    "clockwise": true
+  },
+  "paletteTokens": {
+    "damage": "#d95f45",
+    "danger": "#ff4fa3",
+    "diagnostic-outline": "#ffffff",
+    "ink": "#111512",
+    "neutral-metal": "#9aa291",
+    "template-accent": "#e4ca54",
+    "template-base": "#50684c",
+    "template-deep": "#18271f",
+    "template-light": "#81956a",
+    "template-optic": "#4e8db2",
+    "template-shadow": "#293c30"
+  },
+  "frames": [
+    {
+      "id": "missing",
+      "source": "../../art-src/diagnostic/fallback/diagnostic.fallback__missing__d00__f00.svg",
+      "width": 16,
+      "height": 16,
+      "anchor": {
+        "x": 8,
+        "y": 16
+      },
+      "attachments": {
+        "center": {
+          "x": 8,
+          "y": 8
+        }
+      },
+      "masks": {
+        "selection": {
+          "x": 1,
+          "y": 1,
+          "w": 14,
+          "h": 14
+        }
+      },
+      "tags": [
+        "fallback",
+        "diagnostic"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.attack.e.f00",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d02__f00.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 41,
+          "y": 24
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "e"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.attack.e.f01",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d02__f01.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 41,
+          "y": 24
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "e"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.attack.e.f02",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d02__f02.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 41,
+          "y": 24
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "e"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.attack.n.f00",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d00__f00.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "n"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.attack.n.f01",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d00__f01.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "n"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.attack.n.f02",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d00__f02.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "n"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.attack.ne.f00",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d01__f00.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 36,
+          "y": 12
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "ne"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.attack.ne.f01",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d01__f01.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 36,
+          "y": 12
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "ne"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.attack.ne.f02",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d01__f02.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 36,
+          "y": 12
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "ne"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.attack.nw.f00",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d07__f00.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 12,
+          "y": 12
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "nw"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.attack.nw.f01",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d07__f01.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 12,
+          "y": 12
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "nw"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.attack.nw.f02",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d07__f02.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 12,
+          "y": 12
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "nw"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.attack.s.f00",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d04__f00.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 41
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "s"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.attack.s.f01",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d04__f01.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 41
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "s"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.attack.s.f02",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d04__f02.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 41
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "s"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.attack.se.f00",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d03__f00.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 36,
+          "y": 36
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "se"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.attack.se.f01",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d03__f01.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 36,
+          "y": 36
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "se"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.attack.se.f02",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d03__f02.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 36,
+          "y": 36
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "se"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.attack.sw.f00",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d05__f00.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 12,
+          "y": 36
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "sw"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.attack.sw.f01",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d05__f01.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 12,
+          "y": 36
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "sw"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.attack.sw.f02",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d05__f02.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 12,
+          "y": 36
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "sw"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.attack.w.f00",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d06__f00.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 7,
+          "y": 24
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "w"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.attack.w.f01",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d06__f01.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 7,
+          "y": 24
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "w"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.attack.w.f02",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__attack__d06__f02.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 7,
+          "y": 24
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "attack",
+        "w"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.damaged.f00",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__damaged__d00__f00.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "damaged",
+        "shared"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.damaged.f01",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__damaged__d00__f01.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "damaged",
+        "shared"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.death.f00",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__death__d00__f00.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "death",
+        "shared"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.death.f01",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__death__d00__f01.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "death",
+        "shared"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.death.f02",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__death__d00__f02.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "death",
+        "shared"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.death.f03",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__death__d00__f03.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "death",
+        "shared"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.death.f04",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__death__d00__f04.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "death",
+        "shared"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.death.f05",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__death__d00__f05.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "death",
+        "shared"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.hit.f00",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__hit__d00__f00.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "hit",
+        "shared"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.idle.f00",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__idle__d00__f00.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "idle",
+        "shared"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.idle.f01",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__idle__d00__f01.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "idle",
+        "shared"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.e.f00",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d02__f00.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 41,
+          "y": 24
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "e"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.e.f01",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d02__f01.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 41,
+          "y": 24
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "e"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.e.f02",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d02__f02.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 41,
+          "y": 24
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "e"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.e.f03",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d02__f03.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 41,
+          "y": 24
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "e"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.n.f00",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d00__f00.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "n"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.n.f01",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d00__f01.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "n"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.n.f02",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d00__f02.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "n"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.n.f03",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d00__f03.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "n"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.ne.f00",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d01__f00.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 36,
+          "y": 12
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "ne"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.ne.f01",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d01__f01.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 36,
+          "y": 12
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "ne"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.ne.f02",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d01__f02.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 36,
+          "y": 12
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "ne"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.ne.f03",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d01__f03.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 36,
+          "y": 12
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "ne"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.nw.f00",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d07__f00.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 12,
+          "y": 12
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "nw"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.nw.f01",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d07__f01.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 12,
+          "y": 12
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "nw"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.nw.f02",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d07__f02.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 12,
+          "y": 12
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "nw"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.nw.f03",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d07__f03.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 12,
+          "y": 12
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "nw"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.s.f00",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d04__f00.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 41
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "s"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.s.f01",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d04__f01.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 41
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "s"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.s.f02",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d04__f02.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 41
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "s"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.s.f03",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d04__f03.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 41
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "s"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.se.f00",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d03__f00.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 36,
+          "y": 36
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "se"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.se.f01",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d03__f01.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 36,
+          "y": 36
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "se"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.se.f02",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d03__f02.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 36,
+          "y": 36
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "se"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.se.f03",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d03__f03.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 36,
+          "y": 36
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "se"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.sw.f00",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d05__f00.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 12,
+          "y": 36
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "sw"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.sw.f01",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d05__f01.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 12,
+          "y": 36
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "sw"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.sw.f02",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d05__f02.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 12,
+          "y": 36
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "sw"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.sw.f03",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d05__f03.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 12,
+          "y": 36
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "sw"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.w.f00",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d06__f00.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 7,
+          "y": 24
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "w"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.w.f01",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d06__f01.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 7,
+          "y": 24
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "w"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.w.f02",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d06__f02.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 7,
+          "y": 24
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "w"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.move.w.f03",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__move__d06__f03.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 7,
+          "y": 24
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "move",
+        "w"
+      ]
+    },
+    {
+      "id": "template.pathfinder-car.wreck.f00",
+      "source": "../../art-src/units/shared/template/template.pathfinder-car/template.pathfinder-car__wreck__d00__f00.svg",
+      "width": 48,
+      "height": 48,
+      "anchor": {
+        "x": 24,
+        "y": 44
+      },
+      "attachments": {
+        "center": {
+          "x": 24,
+          "y": 24
+        },
+        "effect": {
+          "x": 24,
+          "y": 18
+        },
+        "muzzle": {
+          "x": 24,
+          "y": 7
+        },
+        "selection": {
+          "x": 24,
+          "y": 40
+        },
+        "shadow": {
+          "x": 24,
+          "y": 39
+        }
+      },
+      "masks": {
+        "hit": {
+          "x": 4,
+          "y": 4,
+          "w": 40,
+          "h": 40
+        },
+        "selection": {
+          "x": 6,
+          "y": 8,
+          "w": 36,
+          "h": 34
+        }
+      },
+      "tags": [
+        "template",
+        "vehicle",
+        "wreck",
+        "shared"
+      ]
+    }
+  ],
+  "animations": {
+    "idle": {
+      "loop": "loop",
+      "defaultDurationMs": 100,
+      "frames": [
+        {
+          "frame": "template.pathfinder-car.idle.f00",
+          "durationMs": 240
+        },
+        {
+          "frame": "template.pathfinder-car.idle.f01",
+          "durationMs": 240
+        }
+      ]
+    },
+    "move": {
+      "loop": "loop",
+      "defaultDurationMs": 100,
+      "directions": {
+        "n": [
+          {
+            "frame": "template.pathfinder-car.move.n.f00",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.n.f01",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.n.f02",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.n.f03",
+            "durationMs": 90
+          }
+        ],
+        "ne": [
+          {
+            "frame": "template.pathfinder-car.move.ne.f00",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.ne.f01",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.ne.f02",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.ne.f03",
+            "durationMs": 90
+          }
+        ],
+        "e": [
+          {
+            "frame": "template.pathfinder-car.move.e.f00",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.e.f01",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.e.f02",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.e.f03",
+            "durationMs": 90
+          }
+        ],
+        "se": [
+          {
+            "frame": "template.pathfinder-car.move.se.f00",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.se.f01",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.se.f02",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.se.f03",
+            "durationMs": 90
+          }
+        ],
+        "s": [
+          {
+            "frame": "template.pathfinder-car.move.s.f00",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.s.f01",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.s.f02",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.s.f03",
+            "durationMs": 90
+          }
+        ],
+        "sw": [
+          {
+            "frame": "template.pathfinder-car.move.sw.f00",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.sw.f01",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.sw.f02",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.sw.f03",
+            "durationMs": 90
+          }
+        ],
+        "w": [
+          {
+            "frame": "template.pathfinder-car.move.w.f00",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.w.f01",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.w.f02",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.w.f03",
+            "durationMs": 90
+          }
+        ],
+        "nw": [
+          {
+            "frame": "template.pathfinder-car.move.nw.f00",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.nw.f01",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.nw.f02",
+            "durationMs": 90
+          },
+          {
+            "frame": "template.pathfinder-car.move.nw.f03",
+            "durationMs": 90
+          }
+        ]
+      }
+    },
+    "attack": {
+      "loop": "once",
+      "defaultDurationMs": 100,
+      "directions": {
+        "n": [
+          {
+            "frame": "template.pathfinder-car.attack.n.f00",
+            "durationMs": 80
+          },
+          {
+            "frame": "template.pathfinder-car.attack.n.f01",
+            "durationMs": 60
+          },
+          {
+            "frame": "template.pathfinder-car.attack.n.f02",
+            "durationMs": 120
+          }
+        ],
+        "ne": [
+          {
+            "frame": "template.pathfinder-car.attack.ne.f00",
+            "durationMs": 80
+          },
+          {
+            "frame": "template.pathfinder-car.attack.ne.f01",
+            "durationMs": 60
+          },
+          {
+            "frame": "template.pathfinder-car.attack.ne.f02",
+            "durationMs": 120
+          }
+        ],
+        "e": [
+          {
+            "frame": "template.pathfinder-car.attack.e.f00",
+            "durationMs": 80
+          },
+          {
+            "frame": "template.pathfinder-car.attack.e.f01",
+            "durationMs": 60
+          },
+          {
+            "frame": "template.pathfinder-car.attack.e.f02",
+            "durationMs": 120
+          }
+        ],
+        "se": [
+          {
+            "frame": "template.pathfinder-car.attack.se.f00",
+            "durationMs": 80
+          },
+          {
+            "frame": "template.pathfinder-car.attack.se.f01",
+            "durationMs": 60
+          },
+          {
+            "frame": "template.pathfinder-car.attack.se.f02",
+            "durationMs": 120
+          }
+        ],
+        "s": [
+          {
+            "frame": "template.pathfinder-car.attack.s.f00",
+            "durationMs": 80
+          },
+          {
+            "frame": "template.pathfinder-car.attack.s.f01",
+            "durationMs": 60
+          },
+          {
+            "frame": "template.pathfinder-car.attack.s.f02",
+            "durationMs": 120
+          }
+        ],
+        "sw": [
+          {
+            "frame": "template.pathfinder-car.attack.sw.f00",
+            "durationMs": 80
+          },
+          {
+            "frame": "template.pathfinder-car.attack.sw.f01",
+            "durationMs": 60
+          },
+          {
+            "frame": "template.pathfinder-car.attack.sw.f02",
+            "durationMs": 120
+          }
+        ],
+        "w": [
+          {
+            "frame": "template.pathfinder-car.attack.w.f00",
+            "durationMs": 80
+          },
+          {
+            "frame": "template.pathfinder-car.attack.w.f01",
+            "durationMs": 60
+          },
+          {
+            "frame": "template.pathfinder-car.attack.w.f02",
+            "durationMs": 120
+          }
+        ],
+        "nw": [
+          {
+            "frame": "template.pathfinder-car.attack.nw.f00",
+            "durationMs": 80
+          },
+          {
+            "frame": "template.pathfinder-car.attack.nw.f01",
+            "durationMs": 60
+          },
+          {
+            "frame": "template.pathfinder-car.attack.nw.f02",
+            "durationMs": 120
+          }
+        ]
+      }
+    },
+    "hit": {
+      "loop": "once",
+      "defaultDurationMs": 100,
+      "frames": [
+        {
+          "frame": "template.pathfinder-car.hit.f00",
+          "durationMs": 100
+        }
+      ]
+    },
+    "damaged": {
+      "loop": "loop",
+      "defaultDurationMs": 100,
+      "frames": [
+        {
+          "frame": "template.pathfinder-car.damaged.f00",
+          "durationMs": 220
+        },
+        {
+          "frame": "template.pathfinder-car.damaged.f01",
+          "durationMs": 220
+        }
+      ]
+    },
+    "death": {
+      "loop": "once",
+      "defaultDurationMs": 100,
+      "frames": [
+        {
+          "frame": "template.pathfinder-car.death.f00",
+          "durationMs": 90
+        },
+        {
+          "frame": "template.pathfinder-car.death.f01",
+          "durationMs": 90
+        },
+        {
+          "frame": "template.pathfinder-car.death.f02",
+          "durationMs": 100
+        },
+        {
+          "frame": "template.pathfinder-car.death.f03",
+          "durationMs": 110
+        },
+        {
+          "frame": "template.pathfinder-car.death.f04",
+          "durationMs": 120
+        },
+        {
+          "frame": "template.pathfinder-car.death.f05",
+          "durationMs": 140
+        }
+      ]
+    },
+    "wreck": {
+      "loop": "hold",
+      "defaultDurationMs": 100,
+      "frames": [
+        {
+          "frame": "template.pathfinder-car.wreck.f00",
+          "durationMs": 1000
+        }
+      ]
+    }
+  },
+  "fallback": {
+    "frame": "missing"
+  }
+}
