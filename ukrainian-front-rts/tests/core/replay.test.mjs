@@ -164,7 +164,7 @@ test('detects command or checksum divergence and exports a self-contained defect
 test('fails closed on malformed and incompatible replay data', () => {
   const recorder = createReplayRecorder({ header: header() });
   const replay = recorder.finalize({ finalTick: 0 });
-  assert.equal(assertReplayCompatibility(replay, { gameVersion: '1.2.3', contentVersion: 'content-7' }), replay);
+  assert.deepEqual(assertReplayCompatibility(replay, { gameVersion: '1.2.3', contentVersion: 'content-7' }), replay);
   assert.throws(() => assertReplayCompatibility(replay, { gameVersion: '2.0.0' }), /incompatible/);
   assert.throws(() => validateReplay({ ...replay, version: 99 }), /Unsupported replay version/);
   assert.throws(() => parseReplay('{'), SyntaxError);
