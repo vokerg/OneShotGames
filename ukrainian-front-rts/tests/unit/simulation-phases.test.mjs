@@ -63,7 +63,7 @@ function createPhaseFixture() {
       },
     ],
     buildings: [],
-    player: { objectives: [false, false, false] },
+    player: { metal: 0, fuel: 0, intel: 0, objectives: [false, false, false] },
     unitStats(type) {
       return UNIT_TYPES[type];
     },
@@ -109,6 +109,7 @@ test('simulation phase contract exposes the complete authoritative order', () =>
     'tactical-prepare',
     'stance-prepare',
     'units',
+    'repairs',
     'projectiles',
     'production',
     'research',

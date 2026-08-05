@@ -8,6 +8,7 @@ import { updateConstructionProgress } from './construction-progress-runtime.js';
 import { updateUnitsWithNavigation } from './navigation-movement-system.js';
 import { updateMissionScriptObjectivePhase } from './mission-script-system.js';
 import { updateProductionQueues } from './production-queue-system.js';
+import { updateFacilityRepairs } from './repair-runtime.js';
 import { updateResearchQueues } from './research-queue-runtime.js';
 
 function requirePositiveStep(stepSeconds) {
@@ -37,6 +38,10 @@ function runDelegatePhase(phase) {
 function updateUnits(game, stepSeconds) {
   updateUnitsWithNavigation(game, stepSeconds);
   updateConstructionProgress(game, stepSeconds);
+}
+
+function updateRepairs(game, stepSeconds) {
+  updateFacilityRepairs(game, stepSeconds);
 }
 
 function updateProjectiles(game, stepSeconds) {
@@ -102,6 +107,7 @@ const PHASES = Object.freeze([
     run: runDelegatePhase(SIMULATION_DELEGATE_PHASES.STANCE_PREPARE),
   }),
   Object.freeze({ id: 'units', run: updateUnits }),
+  Object.freeze({ id: 'repairs', run: updateRepairs }),
   Object.freeze({ id: 'projectiles', run: updateProjectiles }),
   Object.freeze({ id: 'production', run: updateProduction }),
   Object.freeze({ id: 'research', run: updateResearch }),
