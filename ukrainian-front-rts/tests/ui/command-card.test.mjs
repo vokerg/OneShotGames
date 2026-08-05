@@ -101,7 +101,7 @@ test('builds a frozen, grouped, deterministic 4x3 paged command-card model', () 
   assert.equal(model.actions.find((entry) => entry.title === 'Attack-Move').hotkey, 'Q');
   assert.equal(model.actions.find((entry) => entry.title === 'Attack-Move').targeting, true);
   assert.equal(model.actions.find((entry) => entry.title === 'Patrol').targeting, true);
-  assert.equal(model.actions.find((entry) => entry.title === 'Auto-Fire: ON').pressed, true);
+  assert.equal(model.allActions.find((entry) => entry.title === 'Auto-Fire: ON').pressed, true);
   assert.equal(model.allActions.at(-1).group, 'production');
   assert.equal(model.allActions.find((entry) => entry.title === 'Repair').disabledReason, 'No repair facility.');
   assert.ok(Object.isFrozen(model));
