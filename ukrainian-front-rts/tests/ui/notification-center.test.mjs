@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import { TEAM } from '../../src/config.js';
 import {
   NOTIFICATION_CENTER_SCHEMA,
   NOTIFICATION_CENTER_STYLESHEET,
@@ -78,7 +79,7 @@ class FakeDocument {
 }
 
 function entity(id, type, hp, overrides = {}) {
-  return { id, type, team: 'ua', hp, maxHp: 100, x: 100, y: 200, ...overrides };
+  return { id, type, team: TEAM.UA, hp, maxHp: 100, x: 100, y: 200, ...overrides };
 }
 
 function gameFixture() {
@@ -164,7 +165,7 @@ test('observation diff emits objective, attack, production, and research complet
   assert.match(notices.find((notice) => notice.kind === 'objective').message, /Secure the depot/);
   assert.match(notices.find((notice) => notice.kind === 'attack').message, /26 damage/);
   assert.match(notices.find((notice) => notice.kind === 'production').message, /T-64BV deployed/);
-  assert.match(notices.find((notice) => notice.kind === 'research').message, /Roof Protection/);
+  assert.match(notices.find((notice) => notice.kind === 'research').message, /Counter-UAS Roof Protection/);
   assert.equal(notices.find((notice) => notice.kind === 'attack').navigation.entityId, '1');
   assert.ok(Object.isFrozen(notices));
 });
