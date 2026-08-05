@@ -1,0 +1,158 @@
+#techTree {
+  position: fixed;
+  inset: 58px 24px 24px;
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  color: #f0ead8;
+  background:
+    linear-gradient(135deg, rgba(17, 25, 29, 0.98), rgba(34, 39, 34, 0.98)),
+    repeating-linear-gradient(0deg, transparent 0 3px, rgba(255, 255, 255, 0.018) 3px 4px);
+  border: 1px solid rgba(224, 199, 91, 0.48);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.72), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+#techTree.hidden { display: none; }
+
+.techTreeHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(224, 199, 91, 0.3);
+  background: rgba(8, 12, 14, 0.62);
+}
+
+.techTreeHeader small,
+.techTreeNodeEyebrow,
+.techTreeState {
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.techTreeHeader h2 { margin: 2px 0 0; }
+
+#techTreeClose {
+  min-width: 150px;
+  padding: 10px 14px;
+}
+
+#techTreeContent {
+  min-height: 0;
+  overflow: auto;
+  padding: 18px;
+}
+
+.techTreeResources {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(100px, 150px)) minmax(220px, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.techTreeResource,
+.techTreeFacility {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.techTreeResource strong { font-size: 1.1rem; }
+.techTreeResource span { color: #b8b3a3; text-transform: uppercase; font-size: 0.72rem; }
+.techTreeFacility { justify-content: flex-end; color: #b8d9aa; }
+.techTreeFacility.is-missing { color: #e1a28d; }
+
+.techTreeLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+  gap: 16px;
+  align-items: start;
+}
+
+.techTreeLanes { display: grid; gap: 12px; }
+
+.techTreeLane {
+  display: grid;
+  grid-template-columns: minmax(160px, 210px) minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.techTreeLaneHeader h3 { margin: 0 0 5px; color: #e0c75b; }
+.techTreeLaneHeader p { margin: 0; color: #aaa797; font-size: 0.78rem; line-height: 1.45; }
+
+.techTreeTrack {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+}
+
+.techTreeNode {
+  position: relative;
+  min-height: 104px;
+  overflow: hidden;
+  padding: 12px;
+  text-align: left;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(21, 27, 29, 0.9);
+  color: inherit;
+}
+
+.techTreeNode:hover,
+.techTreeNode[aria-pressed="true"] {
+  border-color: #e0c75b;
+  transform: translateY(-1px);
+}
+
+.techTreeNode strong { display: block; margin: 8px 0; line-height: 1.25; }
+.techTreeNode small { display: block; color: #bbb5a3; }
+.techTreeNodeEyebrow { color: #9e9989; font-size: 0.62rem; }
+.techTreeNode.state-locked { opacity: 0.55; filter: grayscale(0.55); }
+.techTreeNode.state-available { box-shadow: inset 3px 0 #e0c75b; }
+.techTreeNode.state-queued { box-shadow: inset 3px 0 #6ea5d1; }
+.techTreeNode.state-completed { box-shadow: inset 3px 0 #78aa6e; background: rgba(31, 55, 38, 0.72); }
+
+.techTreeProgress {
+  position: absolute;
+  inset: auto 0 0;
+  height: 4px;
+  background: linear-gradient(90deg, #6ea5d1 calc(var(--progress, 0) * 100%), rgba(255,255,255,0.08) 0);
+}
+
+.techTreeDetails {
+  position: sticky;
+  top: 0;
+  padding: 18px;
+  border: 1px solid rgba(224, 199, 91, 0.28);
+  background: rgba(7, 11, 13, 0.72);
+}
+
+.techTreeDetails h3 { margin: 10px 0 8px; font-size: 1.25rem; }
+.techTreeDetails p { color: #c6c0ae; line-height: 1.45; }
+.techTreeState { display: inline-block; padding: 4px 7px; font-size: 0.65rem; border: 1px solid currentColor; }
+.techTreeState.state-locked { color: #9f9b91; }
+.techTreeState.state-available { color: #e0c75b; }
+.techTreeState.state-queued { color: #85b4dc; }
+.techTreeState.state-completed { color: #8fc486; }
+.techTreeBlockingReasons { padding-left: 18px; color: #e1a28d; font-size: 0.78rem; }
+.techTreeResearchAction { width: 100%; margin-top: 8px; padding: 12px; }
+
+body.tech-tree-open #commandPanel,
+body.tech-tree-open #objectives,
+body.tech-tree-open #economyHud { pointer-events: none; }
+
+@media (max-width: 900px) {
+  #techTree { inset: 48px 8px 8px; }
+  .techTreeResources { grid-template-columns: repeat(3, 1fr); }
+  .techTreeFacility { grid-column: 1 / -1; justify-content: flex-start; }
+  .techTreeLayout { grid-template-columns: 1fr; }
+  .techTreeDetails { position: static; }
+  .techTreeLane { grid-template-columns: 1fr; }
+}
