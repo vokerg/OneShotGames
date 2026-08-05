@@ -1,6 +1,6 @@
 # Accessibility settings and key bindings
 
-UFR-141 extends the existing Audio & Accessibility dialog instead of creating a second settings surface. The runtime installer remains `src/audio/audio-settings-ui.js`; visual preferences, persistence, and binding policy live under `src/accessibility/`, while named gameplay actions remain owned by `src/input/action-map.js`.
+UFR-141 extends the existing Audio & Accessibility dialog instead of creating a second settings surface. The runtime installer remains `src/audio/audio-settings-ui.js`; visual preferences, persistence, and reversible DOM application live beside it in `src/audio/accessibility-*.js`. The shared named-action contract lives in `src/core/input-action-map.js` and is re-exported by `src/input/action-map.js` for existing input consumers.
 
 ## Persistent contract
 
@@ -21,7 +21,7 @@ Unknown schemas and future versions fail closed to repository defaults. Writes u
 
 `createAccessibilityRuntime()` applies reversible root attributes, custom properties, a repository-owned runtime stylesheet, and the active binding profile. Disposal restores every previous attribute, inline property, binding map, listener, and injected style.
 
-The existing battlefield input installer keeps a read-only live binding view. A preference change therefore affects the next keyboard event without reinstalling input or replacing simulation methods. Explicit test-only binding overrides remain static.
+The existing battlefield input installer keeps a read-only live binding view from the core action contract. A preference change therefore affects the next keyboard event without reinstalling input or replacing simulation methods. Explicit test-only binding overrides remain static.
 
 Focus loss raises `fields-of-resolve:accessibility-pause`; focus return raises `fields-of-resolve:accessibility-resume`. The runtime accepts explicit `pause` and `resume` callbacks from the authoritative menu/runtime owner. Until the active menu-stack branch exposes those callbacks on `main`, the mounted settings adapter records the preference, presents the focus-paused state, and emits the shared lifecycle request without monkey-patching `Game.update` or `src/app/runtime.js`.
 
