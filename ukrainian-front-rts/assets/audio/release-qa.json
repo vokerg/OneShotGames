@@ -1,0 +1,91 @@
+{
+  "schema": "fields-of-resolve.audio-release-qa",
+  "version": 1,
+  "releasePeakCeiling": 0.95,
+  "minimumHeadroomDb": 0.44,
+  "families": [
+    {
+      "id": "combat",
+      "bus": "sfx",
+      "kind": "manifest",
+      "sourcePath": "assets/audio/combat/manifest.json",
+      "owner": "combat SFX catalog and deterministic generator",
+      "license": "CC0-1.0",
+      "redistribution": "allowed",
+      "generatedTool": "scripts/build-combat-sfx.mjs",
+      "externalInputs": [],
+      "peakCeiling": 0.921,
+      "minimumRecords": 12
+    },
+    {
+      "id": "ui",
+      "bus": "sfx",
+      "kind": "manifest",
+      "sourcePath": "assets/audio/ui/manifest.json",
+      "owner": "UI SFX catalog and deterministic generator",
+      "license": "CC0-1.0",
+      "redistribution": "allowed",
+      "generatedTool": "scripts/build-ui-sfx.mjs",
+      "externalInputs": [],
+      "peakCeiling": 0.861,
+      "minimumRecords": 17
+    },
+    {
+      "id": "music",
+      "bus": "music",
+      "kind": "manifest",
+      "sourcePath": "assets/audio/music/manifest.json",
+      "owner": "adaptive score catalog and deterministic generator",
+      "license": "CC0-1.0",
+      "redistribution": "allowed",
+      "generatedTool": "scripts/build-adaptive-music.mjs",
+      "externalInputs": [],
+      "peakCeiling": 0.72,
+      "minimumRecords": 8
+    },
+    {
+      "id": "voice",
+      "bus": "voice",
+      "kind": "hook",
+      "sourcePath": "assets/audio/voice/manifest.json",
+      "owner": "voice hook, subtitle, and speaker provenance catalog",
+      "license": "CC0-1.0",
+      "redistribution": "allowed",
+      "generatedTool": "none",
+      "externalInputs": [],
+      "peakCeiling": null,
+      "minimumRecords": 8
+    },
+    {
+      "id": "ambience",
+      "bus": "ambience",
+      "kind": "procedural",
+      "sourcePath": "src/audio/biome-ambience.js",
+      "owner": "biome ambience deterministic synthesis",
+      "license": "CC0-1.0",
+      "redistribution": "allowed",
+      "generatedTool": "src/audio/biome-ambience.js",
+      "externalInputs": [],
+      "peakCeiling": 0.86,
+      "minimumRecords": 54
+    }
+  ],
+  "voiceBudgets": {
+    "total": 32,
+    "buses": {
+      "music": 2,
+      "sfx": 20,
+      "voice": 4,
+      "ambience": 2
+    },
+    "dropPolicy": "priority-oldest-id"
+  },
+  "campaignContexts": [
+    { "id": "menu", "musicStates": ["menu"], "ambienceBiomes": [] },
+    { "id": "briefing", "musicStates": ["briefing"], "ambienceBiomes": ["donbas", "zaporizhzhia", "kherson"] },
+    { "id": "battlefield-calm", "musicStates": ["calm"], "ambienceBiomes": ["donbas", "zaporizhzhia", "kherson"] },
+    { "id": "battlefield-pressure", "musicStates": ["tension", "battle", "crisis"], "ambienceBiomes": ["donbas", "zaporizhzhia", "kherson"] },
+    { "id": "debrief-victory", "musicStates": ["victory"], "ambienceBiomes": [] },
+    { "id": "debrief-defeat", "musicStates": ["defeat"], "ambienceBiomes": [] }
+  ]
+}
