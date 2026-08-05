@@ -16,6 +16,15 @@
   gap: 6px;
 }
 
+.notificationCenter:has(.notificationHistory:not(.hidden)) .notificationFeed {
+  display: none;
+}
+
+body:has(#missionSelect:not(.hidden)) .notificationCenter,
+body:has(#endgame:not(.hidden)) .notificationCenter {
+  display: none;
+}
+
 .notificationItem {
   position: relative;
   display: grid;
@@ -94,7 +103,7 @@
 }
 
 .notificationHistory {
-  max-height: min(68vh, 620px);
+  max-height: min(52vh, 480px);
   overflow: hidden;
   padding: 10px;
   background: rgb(16 20 18 / 98%);
@@ -121,7 +130,7 @@
 .notificationHistoryList {
   display: grid;
   gap: 6px;
-  max-height: calc(min(68vh, 620px) - 92px);
+  max-height: calc(min(52vh, 480px) - 92px);
   margin: 0 0 8px;
   padding: 0;
   overflow: auto;
@@ -133,6 +142,29 @@
 }
 
 .notificationHistoryClear { width: 100%; }
+
+@media (min-width: 761px) {
+  body:has(#objectives:not(.hidden)) .notificationCenter,
+  body:has(#economyHud:not(.hidden)) .notificationCenter {
+    right: auto;
+    left: 14px;
+  }
+}
+
+@media (max-width: 760px) {
+  body:has(#objectives:not(.hidden)) .notificationCenter,
+  body:has(#economyHud:not(.hidden)) .notificationCenter {
+    display: none;
+  }
+
+  .notificationHistory {
+    max-height: min(40vh, 360px);
+  }
+
+  .notificationHistoryList {
+    max-height: calc(min(40vh, 360px) - 92px);
+  }
+}
 
 @media (max-width: 720px) {
   .notificationCenter {
