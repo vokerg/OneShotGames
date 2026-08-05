@@ -15,8 +15,12 @@ import { createAccessibilityRuntime } from './accessibility-runtime.js';
 
 export const ACCESSIBILITY_REBINDABLE_KEYS = Object.freeze([
   ...'abcdefghijklmnopqrstuvwxyz'.split(''),
+  ...'0123456789'.split(''),
+  ...Array.from({ length: 12 }, (_value, index) => `f${index + 1}`),
   'arrowup', 'arrowdown', 'arrowleft', 'arrowright',
-  'escape', 'tab', 'enter', 'backspace',
+  'space', 'escape', 'tab', 'enter', 'backspace', 'delete', 'insert',
+  'home', 'end', 'pageup', 'pagedown',
+  '-', '=', '[', ']', ';', "'", ',', '.', '/', '\\', '`',
 ]);
 
 function deepFreeze(value) {
@@ -40,12 +44,30 @@ function displayKey(value) {
     arrowdown: 'Arrow Down',
     arrowleft: 'Arrow Left',
     arrowright: 'Arrow Right',
+    space: 'Space',
     escape: 'Escape',
     tab: 'Tab',
     enter: 'Enter',
     backspace: 'Backspace',
+    delete: 'Delete',
+    insert: 'Insert',
+    home: 'Home',
+    end: 'End',
+    pageup: 'Page Up',
+    pagedown: 'Page Down',
+    '-': 'Minus',
+    '=': 'Equals',
+    '[': 'Left bracket',
+    ']': 'Right bracket',
+    ';': 'Semicolon',
+    "'": 'Quote',
+    ',': 'Comma',
+    '.': 'Period',
+    '/': 'Slash',
+    '\\': 'Backslash',
+    '`': 'Backquote',
   });
-  return labels[key] ?? (key.length === 1 ? key.toUpperCase() : key || 'Unbound');
+  return labels[key] ?? (key.length === 1 ? key.toUpperCase() : key.toUpperCase() || 'Unbound');
 }
 
 function buildFieldset(documentTarget) {
@@ -65,7 +87,7 @@ function buildFieldset(documentTarget) {
       <label class="audioSettingChoice"><input data-accessibility-setting="reduceFlashes" type="checkbox" /> <span>Reduce screen flashes and alert pulses</span></label>
       <label class="audioSettingChoice"><input data-accessibility-setting="pauseOnFocusLoss" type="checkbox" /> <span>Request pause when the game loses focus</span></label>
     </div>
-    <div class="accessibilityBindingsHeader"><strong>Key bindings</strong><small> Choose a key, then Assign. A conflicting assignment requires a second confirmation.</small></div>
+    <div class="accessibilityBindingsHeader"><strong>Key bindings</strong><small> Choose a standard non-modifier key, then Assign. A conflicting assignment requires a second confirmation.</small></div>
     <div class="accessibilityBindings" role="group" aria-label="Gameplay key bindings">
       ${INPUT_ACTION_IDS.map((action) => `
         <div class="accessibilityBindingRow">
