@@ -1,13 +1,16 @@
 import {
+  ACCESSIBILITY_PAUSE_EVENT,
+  ACCESSIBILITY_RESUME_EVENT,
+} from '../core/accessibility-events.js';
+import {
   DEFAULT_KEY_BINDINGS,
   setRuntimeActionBindings,
   setRuntimeKeyBindings,
 } from '../core/input-action-map.js';
 import { normalizeAccessibilitySettings } from './accessibility-settings.js';
 
+export { ACCESSIBILITY_PAUSE_EVENT, ACCESSIBILITY_RESUME_EVENT } from '../core/accessibility-events.js';
 export const ACCESSIBILITY_STYLE_ID = 'fields-of-resolve-accessibility-runtime';
-export const ACCESSIBILITY_PAUSE_EVENT = 'fields-of-resolve:accessibility-pause';
-export const ACCESSIBILITY_RESUME_EVENT = 'fields-of-resolve:accessibility-resume';
 
 const ATTRIBUTE_NAMES = Object.freeze([
   'data-accessibility-color-vision',
@@ -131,9 +134,13 @@ export function createAccessibilityRuntime({
   let settings = normalizeAccessibilitySettings();
   let disposed = false;
   let focusPaused = false;
-  const pauseSupported = Boolean(pause && resume);
+  const pauseSupported = Boolean(pause && resume) || typeof doc.dispatchEvent === 'function';
 
   const snapshot = () => deepFreeze({ settings, focusPaused, pauseSupported, disposed });
+  const requestResume = (reason) => {
+    resume?.(reason);
+    dispatch(doc, ACCESSIBILITY_RESUME_EVENT, { reason, supported: pauseSupported });
+  };
   const apply = (value) => {
     if (disposed) throw new Error('Accessibility runtime is disposed.');
     settings = normalizeAccessibilitySettings(value);
@@ -150,8 +157,7 @@ export function createAccessibilityRuntime({
     if (!settings.pauseOnFocusLoss && focusPaused) {
       focusPaused = false;
       root.removeAttribute('data-accessibility-focus-paused');
-      resume?.('preference-disabled');
-      dispatch(doc, ACCESSIBILITY_RESUME_EVENT, { reason: 'preference-disabled', supported: pauseSupported });
+      requestResume('preference-disabled');
     }
     return snapshot();
   };
@@ -160,15 +166,14 @@ export function createAccessibilityRuntime({
     if (disposed || !settings.pauseOnFocusLoss || focusPaused) return;
     focusPaused = true;
     root.setAttribute('data-accessibility-focus-paused', 'true');
-    if (pause) pause('focus-loss');
+    pause?.('focus-loss');
     dispatch(doc, ACCESSIBILITY_PAUSE_EVENT, { reason: 'focus-loss', supported: pauseSupported });
   };
   const onFocus = () => {
     if (disposed || !focusPaused) return;
     focusPaused = false;
     root.removeAttribute('data-accessibility-focus-paused');
-    if (resume) resume('focus-return');
-    dispatch(doc, ACCESSIBILITY_RESUME_EVENT, { reason: 'focus-return', supported: pauseSupported });
+    requestResume('focus-return');
   };
   win.addEventListener('blur', onBlur);
   win.addEventListener('focus', onFocus);
@@ -179,8 +184,7 @@ export function createAccessibilityRuntime({
     win.removeEventListener('focus', onFocus);
     if (focusPaused) {
       focusPaused = false;
-      resume?.('dispose');
-      dispatch(doc, ACCESSIBILITY_RESUME_EVENT, { reason: 'dispose', supported: pauseSupported });
+      requestResume('dispose');
     }
     for (const [name, value] of Object.entries(previousAttributes)) {
       if (value === null || value === undefined) root.removeAttribute(name);
