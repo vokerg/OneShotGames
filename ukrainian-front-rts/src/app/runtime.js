@@ -1,3 +1,5 @@
+import { acquireBrowserStorage } from './browser-capabilities.js';
+import { installGameMenu } from './menu-runtime.js';
 import {
   createFixedStepClock,
   FIXED_SIMULATION_STEP_SECONDS,
@@ -19,23 +21,46 @@ export function createGameRuntime({
   now = () => performance.now(),
   requestFrame = window.requestAnimationFrame.bind(window),
   cancelFrame = window.cancelAnimationFrame.bind(window),
+  documentTarget = globalThis.document ?? null,
+  windowTarget = globalThis.window ?? null,
+  installMenu = installGameMenu,
 }) {
   const simulationClock = createFixedStepClock({
     stepSeconds: simulationStepSeconds,
     maxFrameDeltaSeconds,
   });
+  const pauseReasons = new Set();
   let lastFrameAt = now();
   let frameHandle = null;
+  let menuRuntime = null;
+
+  const resetClock = () => {
+    simulationClock.reset();
+    lastFrameAt = now();
+  };
+
+  const pause = (reason = 'manual') => {
+    pauseReasons.add(reason);
+    simulationClock.reset();
+    return pauseReasons.size;
+  };
+
+  const resume = (reason = 'manual') => {
+    pauseReasons.delete(reason);
+    resetClock();
+    return pauseReasons.size;
+  };
+
+  const isPaused = () => pauseReasons.size > 0;
 
   const startMission = (missionIndex, seed = simulationSeed) => {
     const activeSeed = deriveSimulationSeed(seed, missionIndex);
     setSimulationSeed(activeSeed);
     game.simulationSeed = activeSeed;
     game.start(missionIndex);
-    simulationClock.reset();
+    resetClock();
     ui.setMission();
     ui.toast(`Mission deployed. First enemy assault in ${game.mission.waves.firstDelay} seconds.`);
-    lastFrameAt = now();
   };
 
   const frame = (frameAt) => {
@@ -43,7 +68,9 @@ export function createGameRuntime({
     lastFrameAt = frameAt;
 
     if (game.mission) {
-      simulationClock.advance(frameDeltaSeconds, (stepSeconds) => game.update(stepSeconds));
+      if (!isPaused()) {
+        simulationClock.advance(frameDeltaSeconds, (stepSeconds) => game.update(stepSeconds));
+      }
       renderer.render();
       ui.refresh();
     }
@@ -51,17 +78,38 @@ export function createGameRuntime({
     frameHandle = requestFrame(frame);
   };
 
-  const start = () => {
-    if (frameHandle !== null) return;
-    lastFrameAt = now();
-    frameHandle = requestFrame(frame);
+  const runtime = {
+    startMission,
+    pause,
+    resume,
+    isPaused,
+    resetClock,
+    start() {
+      if (frameHandle !== null) return;
+      if (!menuRuntime && documentTarget && windowTarget && typeof installMenu === 'function') {
+        menuRuntime = installMenu({
+          game,
+          ui,
+          runtime,
+          storage: acquireBrowserStorage(windowTarget),
+          documentTarget,
+          windowTarget,
+        });
+      }
+      resetClock();
+      frameHandle = requestFrame(frame);
+    },
+    stop() {
+      if (frameHandle !== null) {
+        cancelFrame(frameHandle);
+        frameHandle = null;
+      }
+      menuRuntime?.dispose();
+      menuRuntime = null;
+      pauseReasons.clear();
+    },
+    simulationClock,
   };
 
-  const stop = () => {
-    if (frameHandle === null) return;
-    cancelFrame(frameHandle);
-    frameHandle = null;
-  };
-
-  return { startMission, start, stop, simulationClock };
+  return Object.freeze(runtime);
 }
