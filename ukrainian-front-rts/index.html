@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="economy-hud.css" />
     <link rel="stylesheet" href="selection-panel.css" />
     <link rel="stylesheet" href="ui-skin.css" />
+    <link rel="stylesheet" href="tech-tree-screen.css" />
   </head>
   <body>
     <div id="shell">
@@ -21,6 +22,7 @@
         <div class="resource"><span>♟</span><b id="pop">0/0</b><small>command</small></div>
         <div class="resource threat"><span>⚔</span><b id="waveStatus">staging</b><small>enemy assault</small></div>
         <button id="economyHudToggle" aria-controls="economyHud" aria-expanded="false" data-tooltip="Open the economy and production overview.">Economy</button>
+        <button id="techTreeToggle" aria-controls="techTree" aria-expanded="false" data-tooltip="Open the dedicated modernization tree.">Tech Tree</button>
         <button id="objectivesBtn" data-tooltip="Show the current mission objectives.">Objectives</button>
       </div>
 
@@ -37,6 +39,14 @@
         </header>
         <div id="economyHudContent"></div>
       </aside>
+
+      <section id="techTree" class="hidden" role="dialog" aria-modal="true" aria-labelledby="techTreeTitle">
+        <header class="techTreeHeader">
+          <div><small>FORCE MODERNIZATION</small><h2 id="techTreeTitle">Ukrainian Technology Tree</h2></div>
+          <button id="techTreeClose" type="button" data-tooltip="Close the technology tree and return to the battlefield.">Back to Battlefield</button>
+        </header>
+        <div id="techTreeContent"></div>
+      </section>
 
       <div id="message"></div>
 
@@ -83,6 +93,6 @@
         </div>
       </div>
     </div>
-    <script type="module" src="src/main.js"></script>
+    <script type="module" src="src/bootstrap.js"></script>
   </body>
 </html>
