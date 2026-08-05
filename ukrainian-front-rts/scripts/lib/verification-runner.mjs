@@ -21,6 +21,7 @@ export const VERIFICATION_COMMANDS = Object.freeze([
   Object.freeze({ id: 'campaign-art', label: 'deterministic campaign art assets', script: 'scripts/verify-campaign-art.mjs' }),
   Object.freeze({ id: 'biome-ambience', label: 'deterministic biome ambience', script: 'scripts/verify-biome-ambience.mjs' }),
   Object.freeze({ id: 'sprite-atlases', label: 'sprite atlas sources and manifests', script: 'scripts/verify-sprite-atlases.mjs' }),
+  Object.freeze({ id: 'building-art', label: 'deterministic building atlas assets', script: 'scripts/verify-building-art.mjs' }),
   Object.freeze({ id: 'effects-art', label: 'deterministic effects atlas and renderer', script: 'scripts/verify-effects-art.mjs' }),
   Object.freeze({ id: 'combat-sfx', label: 'deterministic combat sound effects', script: 'scripts/verify-combat-sfx.mjs' }),
   Object.freeze({ id: 'ui-sfx', label: 'deterministic UI sound effects', script: 'scripts/verify-ui-sfx.mjs' }),
