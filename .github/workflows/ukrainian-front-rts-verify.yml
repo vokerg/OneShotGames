@@ -44,6 +44,9 @@ jobs:
       - name: Browser startup and mission smoke
         if: always()
         run: node scripts/browser-startup-smoke.mjs
+      - name: Browser audio autoplay and resume smoke
+        if: always()
+        run: node scripts/browser-audio-release-smoke.mjs
       - name: Generate completion evidence audit
         if: always()
         run: node scripts/generate-completion-audit.mjs --output artifacts/completion-evidence-audit.md
