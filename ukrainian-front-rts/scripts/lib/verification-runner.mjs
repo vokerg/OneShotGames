@@ -24,6 +24,7 @@ export const VERIFICATION_COMMANDS = Object.freeze([
   Object.freeze({ id: 'sprite-atlases', label: 'sprite atlas sources and manifests', script: 'scripts/verify-sprite-atlases.mjs' }),
   Object.freeze({ id: 'building-art', label: 'deterministic building atlas assets', script: 'scripts/verify-building-art.mjs' }),
   Object.freeze({ id: 'effects-art', label: 'deterministic effects atlas and renderer', script: 'scripts/verify-effects-art.mjs' }),
+  Object.freeze({ id: 'visual-regression', label: 'deterministic visual regression scenes', script: 'scripts/verify-visual-regression.mjs' }),
   Object.freeze({ id: 'combat-sfx', label: 'deterministic combat sound effects', script: 'scripts/verify-combat-sfx.mjs' }),
   Object.freeze({ id: 'ui-sfx', label: 'deterministic UI sound effects', script: 'scripts/verify-ui-sfx.mjs' }),
   Object.freeze({ id: 'adaptive-music', label: 'deterministic adaptive music', script: 'scripts/verify-adaptive-music.mjs' }),
