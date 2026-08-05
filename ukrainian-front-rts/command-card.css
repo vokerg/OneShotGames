@@ -10,8 +10,8 @@
 
 .commandCardGrid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(82px, 1fr));
-  grid-template-rows: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(var(--ui-target-min, 32px), 1fr));
   gap: 6px;
   min-height: 0;
   flex: 1 1 auto;
@@ -19,7 +19,7 @@
 
 .commandCardAction {
   min-width: 0;
-  min-height: 0;
+  min-height: var(--ui-target-min, 32px);
   height: 100%;
   padding: 18px 7px 17px;
   overflow: hidden;
