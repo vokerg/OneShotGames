@@ -29,6 +29,7 @@ export const VERIFICATION_COMMANDS = Object.freeze([
   Object.freeze({ id: 'adaptive-music', label: 'deterministic adaptive music', script: 'scripts/verify-adaptive-music.mjs' }),
   Object.freeze({ id: 'voice-hooks', label: 'voice hooks and provenance', script: 'scripts/verify-voice-hooks.mjs' }),
   Object.freeze({ id: 'audio-settings', label: 'audio settings and hearing accessibility', script: 'scripts/verify-audio-settings.mjs' }),
+  Object.freeze({ id: 'localization', label: 'English and Ukrainian localization', script: 'scripts/verify-localization.mjs' }),
   Object.freeze({
     id: 'runtime-composition',
     label: 'runtime composition ownership',
