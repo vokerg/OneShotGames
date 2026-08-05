@@ -144,9 +144,10 @@
 .techTreeBlockingReasons { padding-left: 18px; color: #e1a28d; font-size: 0.78rem; }
 .techTreeResearchAction { width: 100%; margin-top: 8px; padding: 12px; }
 
-body.tech-tree-open #commandPanel,
-body.tech-tree-open #objectives,
-body.tech-tree-open #economyHud { pointer-events: none; }
+body.tech-tree-open #shell > :not(#techTree) {
+  pointer-events: none;
+  user-select: none;
+}
 
 @media (max-width: 900px) {
   #techTree { inset: 48px 8px 8px; }
