@@ -6,8 +6,8 @@ import {
   serializeCampaignSave,
 } from './campaign-save-service.js';
 
-export const RELEASED_CAMPAIGN_PROFILE_VERSIONS = Object.freeze([CAMPAIGN_PROFILE_VERSION]);
-export const RELEASED_CAMPAIGN_SAVE_VERSIONS = Object.freeze([0, CAMPAIGN_SAVE_VERSION]);
+export const RELEASED_CAMPAIGN_PROFILE_VERSIONS = Object.freeze([1]);
+export const RELEASED_CAMPAIGN_SAVE_VERSIONS = Object.freeze([0, 1]);
 
 export const CAMPAIGN_SAVE_MIGRATIONS = Object.freeze({
   0(candidate) {
@@ -24,6 +24,13 @@ export const CAMPAIGN_SAVE_MIGRATIONS = Object.freeze({
     };
   },
 });
+
+if (RELEASED_CAMPAIGN_PROFILE_VERSIONS.at(-1) !== CAMPAIGN_PROFILE_VERSION) {
+  throw new Error('Released campaign profile registry must end at the current profile version.');
+}
+if (RELEASED_CAMPAIGN_SAVE_VERSIONS.at(-1) !== CAMPAIGN_SAVE_VERSION) {
+  throw new Error('Released campaign save registry must end at the current save version.');
+}
 
 export function migrateSerializedCampaignSave(serialized, { expectedSlotId = null } = {}) {
   if (typeof serialized !== 'string' || !serialized.trim()) {
