@@ -116,6 +116,19 @@ test('hint state persists seen and dismissed hints and resets deterministically'
   assert.equal(restored.snapshot().remainingHintIds.length, TUTORIAL_STEPS.length);
 });
 
+test('malformed stored hint identifiers are normalized without leaking invalid values', () => {
+  const storage = createStorage({
+    'fields-of-resolve:onboarding-help:v1': JSON.stringify({
+      version: 1,
+      dismissedHintIds: [TUTORIAL_STEPS[0].id, 42, '', null],
+      seenHintIds: [TUTORIAL_STEPS[1].id, false, '  '],
+    }),
+  });
+  const snapshot = createOnboardingHelpState({ storage }).snapshot();
+  assert.deepEqual(snapshot.dismissedHintIds, ['42', TUTORIAL_STEPS[0].id].sort());
+  assert.deepEqual(snapshot.seenHintIds, [TUTORIAL_STEPS[1].id, 'false'].sort());
+});
+
 test('installation exposes F1 help, contextual prompts, reset, and exact teardown', () => {
   const windowTarget = new FakeWindow();
   const documentTarget = new FakeDocument();
@@ -158,4 +171,47 @@ test('installation exposes F1 help, contextual prompts, reset, and exact teardow
   assert.equal(dispose(), false);
   assert.equal(ONBOARDING_GLOBAL in windowTarget, false);
   assert.deepEqual(calls.at(-1), ['dispose']);
+});
+
+test('installation refreshes bindings and cancels a pending first-time hint', () => {
+  const windowTarget = new FakeWindow();
+  const documentTarget = new FakeDocument();
+  let bindings = { q: 'attackMove' };
+  let scheduled = null;
+  const cancellations = [];
+  const hints = [];
+  const dispose = installOnboardingHelp({
+    windowTarget,
+    documentTarget,
+    storage: createStorage(),
+    keyBindings: () => bindings,
+    schedule(callback) { scheduled = callback; return 17; },
+    cancelSchedule(handle) { cancellations.push(handle); },
+    createView() {
+      return {
+        open() {},
+        close() { return true; },
+        showHint(step) { hints.push(step.id); return true; },
+        hideHint() {},
+        isOpen() { return false; },
+        dispose() {},
+      };
+    },
+  });
+
+  let attackMove = windowTarget[ONBOARDING_GLOBAL]
+    .search('', { category: 'controls' })
+    .find((entry) => entry.action === 'attackMove');
+  assert.deepEqual(attackMove.keys, ['Q']);
+
+  bindings = { f: 'attackMove' };
+  attackMove = windowTarget[ONBOARDING_GLOBAL]
+    .search('', { category: 'controls' })
+    .find((entry) => entry.action === 'attackMove');
+  assert.deepEqual(attackMove.keys, ['F']);
+
+  assert.equal(dispose(), true);
+  assert.deepEqual(cancellations, [17]);
+  scheduled();
+  assert.deepEqual(hints, []);
 });
