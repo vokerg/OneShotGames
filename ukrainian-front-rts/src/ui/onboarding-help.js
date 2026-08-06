@@ -4,23 +4,26 @@ import {
   INPUT_ACTION_LABELS,
   getRuntimeKeyBindings,
 } from '../core/input-action-map.js';
+import { createLocalizer } from '../localization/localization.js';
+import { ONBOARDING_HELP_CATALOGS } from '../localization/onboarding-help-catalogs.js';
 
 export const ONBOARDING_HELP_VERSION = 1;
 export const ONBOARDING_STORAGE_KEY = 'fields-of-resolve:onboarding-help:v1';
 export const ONBOARDING_GLOBAL = '__fieldsOfResolveOnboarding';
 export const ONBOARDING_CONTEXT_EVENT = 'fields-of-resolve:onboarding-context';
+export const ONBOARDING_LOCALE_EVENT = 'fields-of-resolve:localechange';
 
-const GLOSSARY = Object.freeze([
-  ['Attack-move', 'Advance toward a point while automatically engaging threats encountered along the route.'],
-  ['Command capacity', 'The force-size limit supplied by headquarters and command structures.'],
-  ['Control group', 'A saved selection recalled with a number key; assign with Control plus that number.'],
-  ['Fog of war', 'Areas outside friendly vision where current hostile positions are hidden.'],
-  ['Garrison', 'Units placed inside a compatible structure for protection or firing positions.'],
-  ['Rally point', 'The destination assigned to newly produced units.'],
-  ['Reconnaissance', 'Information gathering that reveals terrain, threats, and targets before committing forces.'],
-  ['Stance', 'A persistent behavior policy such as hold position or auto-fire.'],
-  ['Suppression', 'Combat pressure that reduces a unit’s immediate effectiveness and freedom of movement.'],
-  ['Veterancy', 'Experience earned through battlefield actions that improves a unit within defined limits.'],
+const GLOSSARY_IDS = Object.freeze([
+  'attackMove',
+  'commandCapacity',
+  'controlGroup',
+  'fogOfWar',
+  'garrison',
+  'rallyPoint',
+  'reconnaissance',
+  'stance',
+  'suppression',
+  'veterancy',
 ]);
 
 const TOPIC_SELECTORS = Object.freeze([
@@ -42,9 +45,8 @@ function canonicalText(value) {
   return String(value ?? '').trim();
 }
 
-function normalizeStoredIds(value) {
-  if (!Array.isArray(value)) return [];
-  return [...new Set(value.map(canonicalText).filter(Boolean))];
+function camelId(value) {
+  return canonicalText(value).replace(/-([a-z])/g, (_match, letter) => letter.toUpperCase());
 }
 
 function normalizeKeyLabel(key) {
@@ -63,9 +65,9 @@ function normalizeKeyLabel(key) {
 
 function tokens(value) {
   return canonicalText(value)
-    .toLowerCase()
+    .toLocaleLowerCase()
     .normalize('NFKD')
-    .split(/[^a-z0-9]+/)
+    .split(/[^\p{L}\p{N}]+/u)
     .filter(Boolean);
 }
 
@@ -78,7 +80,7 @@ function entrySearchText(entry) {
     ...(entry.details ?? []),
     ...(entry.tags ?? []),
     ...(entry.keys ?? []),
-  ].join(' ').toLowerCase();
+  ].join(' ').toLocaleLowerCase();
 }
 
 function readState(storage, storageKey) {
@@ -101,46 +103,59 @@ function writeState(storage, storageKey, state) {
   }
 }
 
-export function createControlReference(keyBindings = getRuntimeKeyBindings()) {
+function defaultTranslator() {
+  return createLocalizer(ONBOARDING_HELP_CATALOGS, { locale: 'en' }).t;
+}
+
+export function createControlReference(keyBindings = getRuntimeKeyBindings(), { translate = defaultTranslator() } = {}) {
   const keysByAction = Object.fromEntries(INPUT_ACTION_IDS.map((action) => [action, []]));
   for (const [key, action] of Object.entries(keyBindings ?? {})) {
     if (keysByAction[action] && !keysByAction[action].includes(key)) keysByAction[action].push(key);
   }
-  return deepFreeze(INPUT_ACTION_IDS.map((action) => ({
-    id: `control-${action}`,
-    category: 'controls',
-    title: INPUT_ACTION_LABELS[action] ?? action,
-    summary: keysByAction[action].length
-      ? `Current binding: ${keysByAction[action].map(normalizeKeyLabel).join(' or ')}.`
-      : 'This action is currently unbound.',
-    details: [],
-    tags: ['keyboard', 'controls', action],
-    keys: keysByAction[action].map(normalizeKeyLabel),
-    action,
-  })));
+  return deepFreeze(INPUT_ACTION_IDS.map((action) => {
+    const keys = keysByAction[action].map(normalizeKeyLabel);
+    return {
+      id: `control-${action}`,
+      category: 'controls',
+      title: translate(`onboarding.actions.${action}`) || INPUT_ACTION_LABELS[action] || action,
+      summary: keys.length
+        ? translate('onboarding.ui.currentBinding', { keys: keys.join(' / ') })
+        : translate('onboarding.ui.unbound'),
+      details: [],
+      tags: ['keyboard', 'controls', action, INPUT_ACTION_LABELS[action] ?? action],
+      keys,
+      action,
+    };
+  }));
 }
 
-export function createOnboardingHelpCatalog({ keyBindings = getRuntimeKeyBindings() } = {}) {
-  const tutorials = TUTORIAL_STEPS.map((step) => ({
-    id: `guide-${step.id}`,
-    category: 'guide',
-    topic: step.topic,
-    title: step.title,
-    summary: step.prompt,
-    details: [...step.hints],
-    tags: [step.topic, ...step.events],
-    keys: [],
-  }));
-  const glossary = GLOSSARY.map(([term, definition]) => ({
-    id: `glossary-${term.toLowerCase().replaceAll(/[^a-z0-9]+/g, '-')}`,
+export function createOnboardingHelpCatalog({
+  keyBindings = getRuntimeKeyBindings(),
+  translate = defaultTranslator(),
+} = {}) {
+  const tutorials = TUTORIAL_STEPS.map((step) => {
+    const messageId = camelId(step.id);
+    return {
+      id: `guide-${step.id}`,
+      category: 'guide',
+      topic: step.topic,
+      title: translate(`onboarding.tutorials.${messageId}.title`),
+      summary: translate(`onboarding.tutorials.${messageId}.prompt`),
+      details: step.hints.map((_hint, index) => translate(`onboarding.tutorials.${messageId}.hint${index + 1}`)),
+      tags: [step.topic, ...step.events, step.title, step.prompt, ...step.hints],
+      keys: [],
+    };
+  });
+  const glossary = GLOSSARY_IDS.map((id) => ({
+    id: `glossary-${id}`,
     category: 'glossary',
-    title: term,
-    summary: definition,
+    title: translate(`onboarding.glossary.${id}.term`),
+    summary: translate(`onboarding.glossary.${id}.definition`),
     details: [],
-    tags: ['glossary', term],
+    tags: ['glossary', id],
     keys: [],
   }));
-  return deepFreeze([...tutorials, ...createControlReference(keyBindings), ...glossary]);
+  return deepFreeze([...tutorials, ...createControlReference(keyBindings, { translate }), ...glossary]);
 }
 
 export function searchOnboardingHelp(catalog, query = '', { category = 'all' } = {}) {
@@ -151,7 +166,7 @@ export function searchOnboardingHelp(catalog, query = '', { category = 'all' } =
     .map((entry) => {
       const haystack = entrySearchText(entry);
       const matched = searchTokens.filter((token) => haystack.includes(token));
-      const title = entry.title.toLowerCase();
+      const title = entry.title.toLocaleLowerCase();
       const score = searchTokens.length === 0
         ? 0
         : matched.reduce((total, token) => total + (title.includes(token) ? 4 : 1), 0);
@@ -170,8 +185,8 @@ export function createOnboardingHelpState({
   const stored = readState(storage, storageKey);
   let state = {
     version: ONBOARDING_HELP_VERSION,
-    dismissedHintIds: normalizeStoredIds(stored?.dismissedHintIds),
-    seenHintIds: normalizeStoredIds(stored?.seenHintIds),
+    dismissedHintIds: [...new Set(stored?.dismissedHintIds ?? [])].filter(String),
+    seenHintIds: [...new Set(stored?.seenHintIds ?? [])].filter(String),
   };
 
   const persist = () => writeState(storage, storageKey, state);
@@ -224,15 +239,15 @@ function editableTarget(target) {
   return tag === 'input' || tag === 'textarea' || tag === 'select' || Boolean(target?.isContentEditable);
 }
 
-function createDefaultView({ documentTarget, getCatalog, state }) {
+function createDefaultView({ documentTarget, catalog: initialCatalog, state, translate: initialTranslate }) {
+  let catalog = initialCatalog;
+  let translate = initialTranslate;
   const topbar = documentTarget.querySelector('#topbar');
   const button = documentTarget.createElement('button');
   button.type = 'button';
-  button.textContent = 'Help';
   button.dataset.onboardingHelpToggle = '';
   button.setAttribute('aria-expanded', 'false');
   button.setAttribute('aria-controls', 'onboardingHelp');
-  button.setAttribute('data-tooltip', 'Open help and control reference (F1).');
   topbar?.append(button);
 
   const panel = documentTarget.createElement('section');
@@ -244,13 +259,13 @@ function createDefaultView({ documentTarget, getCatalog, state }) {
   panel.style.cssText = 'position:fixed;inset:4vh 5vw;z-index:5000;overflow:auto;padding:20px;border:2px solid #b89b62;background:#171914;color:#f4f0df;box-shadow:0 18px 60px #000b;font:15px/1.45 system-ui,sans-serif;';
   panel.innerHTML = `
     <header style="display:flex;justify-content:space-between;gap:16px;align-items:start">
-      <div><small style="color:#d9b76c;letter-spacing:.08em">FIELD MANUAL</small><h2 id="onboardingHelpTitle" style="margin:.25rem 0">Help, glossary, and controls</h2></div>
-      <button type="button" data-help-close aria-label="Close help">×</button>
+      <div><small data-help-eyebrow style="color:#d9b76c;letter-spacing:.08em"></small><h2 id="onboardingHelpTitle" style="margin:.25rem 0"></h2></div>
+      <button type="button" data-help-close>×</button>
     </header>
     <div style="display:flex;flex-wrap:wrap;gap:10px;margin:14px 0">
-      <label style="flex:1;min-width:220px">Search <input data-help-search type="search" autocomplete="off" style="width:100%" /></label>
-      <label>Section <select data-help-category><option value="all">All</option><option value="guide">Guides</option><option value="controls">Controls</option><option value="glossary">Glossary</option></select></label>
-      <button type="button" data-help-reset>Reset first-time hints</button>
+      <label style="flex:1;min-width:220px"><span data-help-search-label></span> <input data-help-search type="search" autocomplete="off" style="width:100%" /></label>
+      <label><span data-help-section-label></span> <select data-help-category><option value="all"></option><option value="guide"></option><option value="controls"></option><option value="glossary"></option></select></label>
+      <button type="button" data-help-reset></button>
     </div>
     <p data-help-status role="status" aria-live="polite"></p>
     <div data-help-results></div>`;
@@ -262,17 +277,17 @@ function createDefaultView({ documentTarget, getCatalog, state }) {
   hint.setAttribute('role', 'status');
   hint.setAttribute('aria-live', 'polite');
   hint.style.cssText = 'position:fixed;right:18px;bottom:180px;z-index:4500;width:min(360px,calc(100vw - 36px));padding:14px;border:1px solid #b89b62;background:#171914;color:#f4f0df;box-shadow:0 8px 28px #0009;font:14px/1.4 system-ui,sans-serif;';
-  hint.innerHTML = '<strong data-hint-title></strong><p data-hint-prompt></p><div style="display:flex;gap:8px"><button type="button" data-hint-open>Open guide</button><button type="button" data-hint-dismiss>Dismiss</button><button type="button" data-hint-dismiss-all>Dismiss all</button></div>';
+  hint.innerHTML = '<strong data-hint-title></strong><p data-hint-prompt></p><div style="display:flex;gap:8px"><button type="button" data-hint-open></button><button type="button" data-hint-dismiss></button><button type="button" data-hint-dismiss-all></button></div>';
   documentTarget.body.append(hint);
 
   const search = panel.querySelector('[data-help-search]');
   const category = panel.querySelector('[data-help-category]');
   const results = panel.querySelector('[data-help-results]');
   const status = panel.querySelector('[data-help-status]');
-  let activeHint = null;
+  let activeHintId = null;
 
   function renderResults() {
-    const matches = searchOnboardingHelp(getCatalog(), search.value, { category: category.value });
+    const matches = searchOnboardingHelp(catalog, search.value, { category: category.value });
     results.replaceChildren(...matches.map((entry) => {
       const article = documentTarget.createElement('article');
       article.dataset.helpEntry = entry.id;
@@ -286,7 +301,7 @@ function createDefaultView({ documentTarget, getCatalog, state }) {
       article.append(title, summary);
       if (entry.keys?.length) {
         const keys = documentTarget.createElement('p');
-        keys.textContent = `Keys: ${entry.keys.join(' / ')}`;
+        keys.textContent = translate('onboarding.ui.keys', { keys: entry.keys.join(' / ') });
         keys.style.margin = '4px 0 0';
         article.append(keys);
       }
@@ -301,14 +316,42 @@ function createDefaultView({ documentTarget, getCatalog, state }) {
       }
       return article;
     }));
-    status.textContent = `${matches.length} help ${matches.length === 1 ? 'entry' : 'entries'} shown.`;
+    status.textContent = translate('onboarding.ui.entries', { count: matches.length });
+  }
+
+  function renderActiveHint() {
+    if (!activeHintId) return;
+    const entry = catalog.find((candidate) => candidate.id === `guide-${activeHintId}`);
+    if (!entry) {
+      hideHint();
+      return;
+    }
+    hint.querySelector('[data-hint-title]').textContent = entry.title;
+    hint.querySelector('[data-hint-prompt]').textContent = entry.summary;
+  }
+
+  function applyLabels() {
+    button.textContent = translate('onboarding.ui.help');
+    button.setAttribute('data-tooltip', translate('onboarding.ui.helpTooltip'));
+    panel.querySelector('[data-help-eyebrow]').textContent = translate('onboarding.ui.eyebrow');
+    panel.querySelector('#onboardingHelpTitle').textContent = translate('onboarding.ui.title');
+    panel.querySelector('[data-help-close]').setAttribute('aria-label', translate('onboarding.ui.close'));
+    panel.querySelector('[data-help-search-label]').textContent = translate('onboarding.ui.search');
+    panel.querySelector('[data-help-section-label]').textContent = translate('onboarding.ui.section');
+    category.querySelector('option[value="all"]').textContent = translate('onboarding.ui.all');
+    category.querySelector('option[value="guide"]').textContent = translate('onboarding.ui.guides');
+    category.querySelector('option[value="controls"]').textContent = translate('onboarding.ui.controls');
+    category.querySelector('option[value="glossary"]').textContent = translate('onboarding.ui.glossary');
+    panel.querySelector('[data-help-reset]').textContent = translate('onboarding.ui.resetHints');
+    hint.querySelector('[data-hint-open]').textContent = translate('onboarding.ui.openGuide');
+    hint.querySelector('[data-hint-dismiss]').textContent = translate('onboarding.ui.dismiss');
+    hint.querySelector('[data-hint-dismiss-all]').textContent = translate('onboarding.ui.dismissAll');
   }
 
   function open({ query = '', entryId = null } = {}) {
     panel.hidden = false;
     button.setAttribute('aria-expanded', 'true');
     search.value = query;
-    if (entryId) category.value = 'all';
     renderResults();
     const target = entryId ? panel.querySelector(`[data-help-entry="${entryId}"]`) : null;
     (target ?? search).focus?.();
@@ -325,15 +368,14 @@ function createDefaultView({ documentTarget, getCatalog, state }) {
 
   function showHint(step) {
     if (!step) return false;
-    activeHint = step;
-    hint.querySelector('[data-hint-title]').textContent = step.title;
-    hint.querySelector('[data-hint-prompt]').textContent = step.prompt;
+    activeHintId = step.id;
+    renderActiveHint();
     hint.hidden = false;
     return true;
   }
 
   function hideHint() {
-    activeHint = null;
+    activeHintId = null;
     hint.hidden = true;
   }
 
@@ -343,20 +385,21 @@ function createDefaultView({ documentTarget, getCatalog, state }) {
   panel.querySelector('[data-help-close]').addEventListener('click', close);
   panel.querySelector('[data-help-reset]').addEventListener('click', () => {
     state.reset();
-    status.textContent = 'First-time hints reset.';
+    status.textContent = translate('onboarding.ui.hintsReset');
   });
   hint.querySelector('[data-hint-open]').addEventListener('click', () => {
-    if (activeHint) open({ entryId: `guide-${activeHint.id}` });
+    if (activeHintId) open({ entryId: `guide-${activeHintId}` });
     hideHint();
   });
   hint.querySelector('[data-hint-dismiss]').addEventListener('click', () => {
-    if (activeHint) state.dismiss(activeHint.id);
+    if (activeHintId) state.dismiss(activeHintId);
     hideHint();
   });
   hint.querySelector('[data-hint-dismiss-all]').addEventListener('click', () => {
     state.dismissAll();
     hideHint();
   });
+  applyLabels();
   renderResults();
 
   return Object.freeze({
@@ -365,6 +408,13 @@ function createDefaultView({ documentTarget, getCatalog, state }) {
     showHint,
     hideHint,
     isOpen: () => !panel.hidden,
+    setLocale(next) {
+      catalog = next.catalog;
+      translate = next.translate;
+      applyLabels();
+      renderResults();
+      renderActiveHint();
+    },
     dispose() {
       panel.remove();
       hint.remove();
@@ -377,9 +427,9 @@ export function installOnboardingHelp({
   windowTarget = globalThis.window,
   documentTarget = globalThis.document,
   storage = windowTarget?.localStorage ?? null,
-  keyBindings = getRuntimeKeyBindings,
+  keyBindings = null,
   schedule = (callback) => windowTarget.setTimeout(callback, 600),
-  cancelSchedule = (handle) => windowTarget?.clearTimeout?.(handle),
+  cancelSchedule = (handle) => windowTarget.clearTimeout?.(handle),
   createView = createDefaultView,
 } = {}) {
   if (!windowTarget?.addEventListener || !windowTarget?.removeEventListener) {
@@ -389,18 +439,34 @@ export function installOnboardingHelp({
     throw new TypeError('Onboarding help requires a document with a body.');
   }
   if (typeof createView !== 'function') throw new TypeError('Onboarding help createView must be a function.');
-  if (typeof schedule !== 'function') throw new TypeError('Onboarding help schedule must be a function.');
-  if (typeof cancelSchedule !== 'function') throw new TypeError('Onboarding help cancelSchedule must be a function.');
-  const resolveKeyBindings = () => typeof keyBindings === 'function' ? keyBindings() : keyBindings;
-  const getCatalog = () => createOnboardingHelpCatalog({ keyBindings: resolveKeyBindings() });
-  const catalog = getCatalog();
+  const bindingProvider = typeof keyBindings === 'function'
+    ? keyBindings
+    : keyBindings
+      ? () => keyBindings
+      : getRuntimeKeyBindings;
+  const localizer = createLocalizer(ONBOARDING_HELP_CATALOGS, {
+    locale: documentTarget.documentElement?.lang ?? 'en',
+  });
   const state = createOnboardingHelpState({ storage });
-  const view = createView({ documentTarget, catalog, getCatalog, state });
+  let catalog = createOnboardingHelpCatalog({ keyBindings: bindingProvider(), translate: localizer.t });
+  const view = createView({ documentTarget, catalog, state, translate: localizer.t });
   const previousGlobal = windowTarget[ONBOARDING_GLOBAL];
   let disposed = false;
-  let scheduleHandle = null;
+  let scheduledHintHandle = null;
+
+  function refreshCatalog() {
+    catalog = createOnboardingHelpCatalog({ keyBindings: bindingProvider(), translate: localizer.t });
+    view.setLocale?.({ catalog, translate: localizer.t });
+    return catalog;
+  }
+
+  function open(options) {
+    refreshCatalog();
+    return view.open(options);
+  }
 
   function notify(topic, { includeSeen = false } = {}) {
+    refreshCatalog();
     const step = state.hintForTopic(topic, { includeSeen });
     if (!step) return false;
     state.markSeen(step.id);
@@ -417,7 +483,7 @@ export function installOnboardingHelp({
   const onKeyDown = (event) => {
     if (event.key === 'F1' && !editableTarget(event.target)) {
       event.preventDefault?.();
-      view.isOpen() ? view.close() : view.open();
+      view.isOpen() ? view.close() : open();
       return;
     }
     if (event.key === 'Escape' && view.isOpen()) {
@@ -430,40 +496,47 @@ export function installOnboardingHelp({
     if (topic) notify(topic);
   };
   const onContext = (event) => notify(event?.detail?.topic);
+  const onLocaleChange = (event) => {
+    if (localizer.setLocale(event?.detail?.locale)) refreshCatalog();
+  };
 
   windowTarget.addEventListener('keydown', onKeyDown, true);
   documentTarget.addEventListener('click', onClick, true);
+  documentTarget.addEventListener(ONBOARDING_LOCALE_EVENT, onLocaleChange);
   windowTarget.addEventListener(ONBOARDING_CONTEXT_EVENT, onContext);
   windowTarget[ONBOARDING_GLOBAL] = Object.freeze({
-    open: view.open,
+    open,
     close: view.close,
     notify,
     reset: state.reset,
-    snapshot: () => deepFreeze({ state: state.snapshot(), catalogSize: getCatalog().length, open: view.isOpen() }),
-    search: (query, options) => searchOnboardingHelp(getCatalog(), query, options),
+    snapshot: () => deepFreeze({ state: state.snapshot(), catalogSize: catalog.length, open: view.isOpen(), locale: localizer.locale }),
+    search(query, options) {
+      refreshCatalog();
+      return searchOnboardingHelp(catalog, query, options);
+    },
   });
-  scheduleHandle = schedule(() => {
+  let scheduleCompleted = false;
+  scheduledHintHandle = schedule(() => {
+    scheduleCompleted = true;
+    scheduledHintHandle = null;
     if (disposed) return;
+    refreshCatalog();
     const step = state.nextHint();
     if (step) {
       state.markSeen(step.id);
       view.showHint(step);
     }
   });
+  if (scheduleCompleted) scheduledHintHandle = null;
 
   return () => {
     if (disposed) return false;
     disposed = true;
-    if (scheduleHandle !== null && scheduleHandle !== undefined) {
-      try {
-        cancelSchedule(scheduleHandle);
-      } catch {
-        // Teardown must continue even when a host timer implementation rejects cancellation.
-      }
-      scheduleHandle = null;
-    }
+    if (scheduledHintHandle !== null && scheduledHintHandle !== undefined) cancelSchedule(scheduledHintHandle);
+    scheduledHintHandle = null;
     windowTarget.removeEventListener('keydown', onKeyDown, true);
     documentTarget.removeEventListener('click', onClick, true);
+    documentTarget.removeEventListener(ONBOARDING_LOCALE_EVENT, onLocaleChange);
     windowTarget.removeEventListener(ONBOARDING_CONTEXT_EVENT, onContext);
     view.dispose();
     if (windowTarget[ONBOARDING_GLOBAL]?.notify === notify) {
