@@ -5,7 +5,7 @@ import {
   runBalanceBatch,
 } from '../core/balance-snapshot.js';
 
-const RESOURCE_KEYS = Object.freeze(['supply', 'intel', 'fuel', 'munitions', 'materials']);
+const RESOURCE_KEYS = Object.freeze(['metal', 'fuel', 'intel', 'supply', 'munitions', 'materials']);
 
 function countByTeam(entities, team) {
   return (entities || []).filter((entity) => entity.team === team && entity.hp > 0).length;
