@@ -30,7 +30,7 @@ function fakeHarnessFactory() {
           gameOver: false,
           outcome: null,
           endReason: null,
-          player: { supply: 100, intel: 20, fuel: 10, objectives: ['hold'] },
+          player: { metal: 100, intel: 20, fuel: 10, objectives: ['hold'] },
           units: [
             { id: 1, team: TEAM.UA, type: 'uaInfantry', x: 10, y: 10, hp: 100, kills: 0 },
             { id: 2, team: TEAM.RU, type: 'ruInfantry', x: 100, y: 100, hp: 100, kills: 0 },
@@ -51,7 +51,7 @@ function fakeHarnessFactory() {
       advanceTicks(count) {
         state.tick += count;
         state.time = state.tick / 30;
-        state.player.supply += 25;
+        state.player.metal += 25;
         state.units[0].kills = 1;
         state.units = state.units.filter((unit) => unit.team !== TEAM.RU);
         state.buildings = state.buildings.filter((building) => building.team !== TEAM.RU);
@@ -142,6 +142,8 @@ test('headless balance trial drives commands and captures combat and economy met
   assert.equal(combat.metrics.commandAccepted, 1);
   assert.equal(combat.metrics.ruUnitsEnd, 0);
   assert.equal(combat.metrics.uaKills, 1);
+  assert.equal(combat.metrics.playerResourcesStart, 130);
+  assert.equal(combat.metrics.playerResourcesEnd, 155);
   assert.equal(combat.metrics.playerResourceDelta, 25);
 
   const economy = runHeadlessBalanceTrial({
@@ -153,6 +155,7 @@ test('headless balance trial drives commands and captures combat and economy met
   });
   assert.equal(economy.outcome, 'win');
   assert.equal(economy.metrics.commandAccepted, 1);
+  assert.equal(economy.metrics.playerResourcesStart, 130);
   assert.equal(economy.metrics.playerResourcesEnd, 155);
 });
 
