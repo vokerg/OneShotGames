@@ -138,6 +138,44 @@ test('runtime recording replays to the same outcome and supports seek/step/scrub
   assert.equal(session.scrub(1).state.tick, replay.finalTick);
 });
 
+test('same-tick choices retain a final checksum after the choice event', () => {
+  const runtime = createReplaySimulationRuntime({
+    harness: createFakeHarness(),
+    gameVersion: '1.2.3',
+    buildCommit: 'abc1234',
+    contentVersion: 'content-7',
+    checksumIntervalTicks: 1,
+  });
+  runtime.startScenario({ missionIndex: 0, seed: 42 });
+  runtime.recordChoice({ id: 'doctrine', value: 'mobile' });
+  const replay = runtime.finalize();
+
+  assert.deepEqual(replay.events.map((event) => event.type), ['checksum', 'choice', 'checksum']);
+  assert.equal(replay.events.at(-1).label, 'final-state');
+  assert.equal(replay.events.at(-1).tick, 0);
+});
+
+test('assembled simulation harness records and replays deterministic mission ticks', () => {
+  const runtime = createReplaySimulationRuntime({
+    gameVersion: 'test',
+    buildCommit: 'test-head',
+    contentVersion: 'test-content',
+    checksumIntervalTicks: 1,
+  });
+  runtime.startScenario({ missionIndex: 0, seed: 7301 });
+  runtime.advanceTicks(2);
+  const recordedState = runtime.snapshot();
+  const replay = runtime.finalize();
+  const playback = playReplay(replay, {
+    gameVersion: 'test',
+    contentVersion: 'test-content',
+  });
+
+  assert.equal(playback.completed, true);
+  assert.deepEqual(playback.divergences, []);
+  assert.equal(checksumReplayState(playback.state), checksumReplayState(recordedState));
+});
+
 test('detects command or checksum divergence and exports a self-contained defect report', () => {
   const runtime = createReplaySimulationRuntime({
     harness: createFakeHarness(),
