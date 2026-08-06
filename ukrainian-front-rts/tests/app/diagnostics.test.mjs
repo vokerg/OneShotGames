@@ -32,6 +32,14 @@ class FakeWindow extends EventTarget {
   }
 }
 
+class WindowErrorEvent extends Event {
+  constructor(error) {
+    super('error');
+    this.error = error;
+    this.message = error?.message ?? String(error);
+  }
+}
+
 class RejectionEvent extends Event {
   constructor(reason) {
     super('unhandledrejection', { cancelable: true });
@@ -141,7 +149,7 @@ test('diagnostics capture window errors and prevent unhandled rejection leakage'
 
   const dispose = diagnostics.install();
   assert.equal(typeof windowTarget[RUNTIME_DIAGNOSTICS_GLOBAL].snapshot, 'function');
-  windowTarget.dispatchEvent(new ErrorEvent('error', { error: new Error('window boom') }));
+  windowTarget.dispatchEvent(new WindowErrorEvent(new Error('window boom')));
   assert.equal(rendered[0].report.phase, 'window-error');
 
   const rejection = new RejectionEvent(new Error('promise boom'));
