@@ -36,10 +36,19 @@ export async function verifyUkrainianInfantryArt(projectRoot) {
   assert(JSON.stringify(catalog.canonicalUnitIds) === JSON.stringify(EXPECTED_CANONICAL_IDS), 'canonical Ukrainian infantry coverage drifted');
   assert(JSON.stringify(catalog.states) === JSON.stringify(UKRAINIAN_INFANTRY_REQUIRED_STATES), 'state coverage is incomplete');
   assert(JSON.stringify(catalog.directions) === JSON.stringify(UKRAINIAN_INFANTRY_DIRECTIONS), 'direction coverage is incomplete');
+  const minimumFrames = Object.freeze({ idle: 2, move: 6, attack: 3, hit: 2, damaged: 2, death: 5, wreck: 1 });
+  for (const [state, minimum] of Object.entries(minimumFrames)) {
+    const definition = source.states[state];
+    assert(definition.frames >= minimum, `${state} must meet the art-bible minimum of ${minimum} frames`);
+  }
+  assert(source.states.idle.durationsMs.every((value) => value >= 160 && value <= 320), 'idle timing must stay inside the art-bible range');
+  assert(source.states.move.durationsMs.every((value) => value >= 80 && value <= 130), 'movement timing must stay inside the art-bible range');
+  assert(source.states.attack.durationsMs.every((value) => value >= 40 && value <= 120), 'attack timing must stay inside the art-bible range');
+  assert(source.states.death.durationsMs.slice(0, -1).every((value) => value >= 60 && value <= 140), 'death transition timing must stay inside the art-bible range');
   assert(catalog.counts.units === 7, 'expected seven canonical Ukrainian infantry/support identities');
-  assert(catalog.counts.battleFrames === 840, 'expected 840 directional battlefield frames');
+  assert(catalog.counts.battleFrames === 1176, 'expected 1176 directional battlefield frames');
   assert(catalog.counts.animations === 49, 'expected 49 state animations');
-  assert(catalog.counts.totalFrames === 855, 'expected 855 total atlas frames');
+  assert(catalog.counts.totalFrames === 1191, 'expected 1191 total atlas frames');
   assert(Object.keys(manifest.frames).length === catalog.counts.totalFrames, 'manifest frame count does not match catalog');
   assert(Object.keys(manifest.animations).length === catalog.counts.animations, 'manifest animation count does not match catalog');
   assert(generated.svg.includes('shape-rendering="crispEdges"'), 'atlas SVG must request crisp-edge rendering');
