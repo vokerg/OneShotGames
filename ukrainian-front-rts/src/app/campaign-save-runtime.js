@@ -2,6 +2,7 @@ import {
   CAMPAIGN_SAVE_STATUSES,
   createCampaignSaveService,
 } from '../core/campaign-save-service.js';
+import { CAMPAIGN_SAVE_MIGRATIONS } from '../core/campaign-save-migrations.js';
 import { migrateRuntimeContentReferences } from '../content/runtime-content-reconciliation.js';
 
 export const CAMPAIGN_RUNTIME_SAVE_STATUSES = Object.freeze({
@@ -76,7 +77,12 @@ export function createCampaignSaveRuntime({
     throw new TypeError('Campaign save service options must be an object.');
   }
 
-  const service = createCampaignSaveService({ storage, now, ...saveServiceOptions });
+  const service = createCampaignSaveService({
+    storage,
+    now,
+    migrations: CAMPAIGN_SAVE_MIGRATIONS,
+    ...saveServiceOptions,
+  });
 
   function capturedSaveOptions(options = {}) {
     if (!options || typeof options !== 'object' || Array.isArray(options)) {
