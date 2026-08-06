@@ -1,0 +1,108 @@
+{
+  "schema": "fields-of-resolve.ukrainian-infantry-art-source",
+  "version": 1,
+  "id": "fields-of-resolve.ukrainian-infantry",
+  "frame": { "width": 48, "height": 48, "columns": 20 },
+  "directions": ["n", "ne", "e", "se", "s", "sw", "w", "nw"],
+  "states": {
+    "idle": { "frames": 2, "durationsMs": [420, 420], "loop": "loop" },
+    "move": { "frames": 4, "durationsMs": [115, 115, 115, 115], "loop": "loop" },
+    "attack": { "frames": 3, "durationsMs": [70, 90, 150], "loop": "once" },
+    "hit": { "frames": 1, "durationsMs": [150], "loop": "once" },
+    "damaged": { "frames": 1, "durationsMs": [480], "loop": "loop" },
+    "death": { "frames": 3, "durationsMs": [110, 130, 360], "loop": "once" },
+    "wreck": { "frames": 1, "durationsMs": [1000], "loop": "hold" }
+  },
+  "paletteTokens": {
+    "ink": "#111512",
+    "shadow": "#202820",
+    "uniform-base": "#50684c",
+    "uniform-light": "#81956a",
+    "uniform-dark": "#293c30",
+    "equipment": "#9aa291",
+    "ukrainian-blue": "#4e8db2",
+    "ukrainian-yellow": "#e4ca54",
+    "damage": "#d95f45",
+    "medical": "#d7d9cf",
+    "medical-mark": "#9d3835",
+    "engineer": "#b48142",
+    "recon": "#6ba0a0",
+    "air-defense": "#7889a8",
+    "command": "#d0b96c"
+  },
+  "units": [
+    {
+      "id": "ua.combat-engineers",
+      "displayName": "Ukrainian Combat Engineer Section",
+      "shortName": "Combat Engineers",
+      "role": "engineer",
+      "aliases": ["uaEngineer"],
+      "equipment": "tool",
+      "accent": "engineer"
+    },
+    {
+      "id": "ua.line-infantry",
+      "displayName": "Ukrainian Mechanized Infantry Squad",
+      "shortName": "Mechanized Squad",
+      "role": "line-infantry",
+      "aliases": ["uaInfantry"],
+      "equipment": "rifle",
+      "accent": "ukrainian-yellow"
+    },
+    {
+      "id": "ua.anti-armor-team",
+      "displayName": "Ukrainian Anti-Armor Team",
+      "shortName": "Anti-Armor Team",
+      "role": "anti-armor",
+      "aliases": ["uaAntiArmor"],
+      "equipment": "launcher",
+      "accent": "damage"
+    },
+    {
+      "id": "ua.recon-team",
+      "displayName": "Ukrainian Reconnaissance Team",
+      "shortName": "Recon Team",
+      "role": "reconnaissance",
+      "aliases": ["uaRecon"],
+      "equipment": "optic",
+      "accent": "recon"
+    },
+    {
+      "id": "ua.casevac-team",
+      "displayName": "Ukrainian CASEVAC Team",
+      "shortName": "CASEVAC Team",
+      "role": "medical",
+      "aliases": ["uaMedic"],
+      "equipment": "medical",
+      "accent": "medical-mark"
+    },
+    {
+      "id": "ua.mobile-sam",
+      "displayName": "Ukrainian Mobile Air-Defense Section",
+      "shortName": "Mobile Air Defense",
+      "role": "air-defense",
+      "aliases": ["uaAirDefense"],
+      "equipment": "sam",
+      "accent": "air-defense"
+    },
+    {
+      "id": "ua.command-team",
+      "displayName": "Ukrainian Command Support Team",
+      "shortName": "Command Team",
+      "role": "command-support",
+      "aliases": ["uaCommand"],
+      "equipment": "radio",
+      "accent": "command"
+    }
+  ],
+  "provenance": {
+    "creator": "Fields of Resolve contributors with OpenAI-assisted deterministic vector generation",
+    "createdAt": "2026-08-06",
+    "source": "Original fictional Ukrainian faction silhouettes authored for this repository",
+    "license": "CC0-1.0",
+    "redistribution": "allowed",
+    "externalInputs": [],
+    "publicFigures": [],
+    "humanCorrections": "Pending maintainer visual review in Art Lab and visual-regression captures."
+  }
+}
