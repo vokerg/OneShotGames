@@ -2,9 +2,12 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { TUTORIAL_STEPS } from '../../src/content/campaign/tutorial-prologue.js';
+import { ONBOARDING_HELP_CATALOGS } from '../../src/localization/onboarding-help-catalogs.js';
+import { createLocalizer, validateCatalogs } from '../../src/localization/localization.js';
 import {
   ONBOARDING_CONTEXT_EVENT,
   ONBOARDING_GLOBAL,
+  ONBOARDING_LOCALE_EVENT,
   createControlReference,
   createOnboardingHelpCatalog,
   createOnboardingHelpState,
@@ -30,6 +33,7 @@ class FakeDocument extends EventTarget {
   constructor() {
     super();
     this.body = {};
+    this.documentElement = { lang: 'en' };
   }
   createElement() { return {}; }
 }
@@ -45,6 +49,13 @@ class ContextEvent extends Event {
   constructor(topic) {
     super(ONBOARDING_CONTEXT_EVENT);
     this.detail = { topic };
+  }
+}
+
+class LocaleEvent extends Event {
+  constructor(locale) {
+    super(ONBOARDING_LOCALE_EVENT);
+    this.detail = { locale };
   }
 }
 
@@ -67,6 +78,20 @@ test('catalog combines every tutorial step, current controls, and glossary entri
     ['Q'],
   );
   assert.equal(Object.isFrozen(catalog), true);
+});
+
+test('English and Ukrainian help catalogs are structurally valid and searchable', () => {
+  const validation = validateCatalogs(ONBOARDING_HELP_CATALOGS);
+  assert.equal(validation.valid, true, validation.errors.join('\n'));
+
+  const localizer = createLocalizer(ONBOARDING_HELP_CATALOGS, { locale: 'uk' });
+  const catalog = createOnboardingHelpCatalog({
+    keyBindings: { q: 'attackMove' },
+    translate: localizer.t,
+  });
+  assert.equal(catalog.find((entry) => entry.id === 'guide-select-units').title, 'Переберіть командування');
+  assert.equal(catalog.find((entry) => entry.action === 'attackMove').title, 'Атака в русі');
+  assert.equal(searchOnboardingHelp(catalog, 'туман війни')[0].title, 'Туман війни');
 });
 
 test('control reference reports multiple live bindings and unbound actions', () => {
@@ -129,7 +154,7 @@ test('malformed stored hint identifiers are normalized without leaking invalid v
   assert.deepEqual(snapshot.seenHintIds, [TUTORIAL_STEPS[1].id, 'false'].sort());
 });
 
-test('installation exposes F1 help, contextual prompts, reset, and exact teardown', () => {
+test('installation exposes F1 help, contextual prompts, reset, locale updates, and exact teardown', () => {
   const windowTarget = new FakeWindow();
   const documentTarget = new FakeDocument();
   const storage = createStorage();
@@ -149,6 +174,7 @@ test('installation exposes F1 help, contextual prompts, reset, and exact teardow
         showHint(step) { calls.push(['hint', step.topic]); return true; },
         hideHint() { calls.push(['hide']); },
         isOpen() { return open; },
+        setLocale(next) { calls.push(['locale', next.catalog[0].title]); },
         dispose() { calls.push(['dispose']); },
       };
     },
@@ -164,6 +190,9 @@ test('installation exposes F1 help, contextual prompts, reset, and exact teardow
 
   windowTarget.dispatchEvent(new ContextEvent('minimap'));
   assert.equal(calls.some(([kind, topic]) => kind === 'hint' && topic === 'minimap'), true);
+  documentTarget.dispatchEvent(new LocaleEvent('uk'));
+  assert.equal(windowTarget[ONBOARDING_GLOBAL].snapshot().locale, 'uk');
+  assert.equal(calls.some(([kind, title]) => kind === 'locale' && title === 'Переберіть командування'), true);
   windowTarget[ONBOARDING_GLOBAL].reset();
   assert.equal(windowTarget[ONBOARDING_GLOBAL].snapshot().catalogSize > TUTORIAL_STEPS.length, true);
 
