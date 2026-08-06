@@ -80,12 +80,12 @@ function replacementOptions(slotId) {
 }
 
 test('declares every released save and campaign profile schema', () => {
-  assert.deepEqual(RELEASED_CAMPAIGN_SAVE_VERSIONS, [0, CAMPAIGN_SAVE_VERSION]);
-  assert.deepEqual(RELEASED_CAMPAIGN_PROFILE_VERSIONS, [CAMPAIGN_PROFILE_VERSION]);
-  for (const version of RELEASED_CAMPAIGN_SAVE_VERSIONS) {
-    if (version < CAMPAIGN_SAVE_VERSION) {
-      assert.equal(typeof CAMPAIGN_SAVE_MIGRATIONS[version], 'function');
-    }
+  assert.deepEqual(RELEASED_CAMPAIGN_SAVE_VERSIONS, [0, 1]);
+  assert.deepEqual(RELEASED_CAMPAIGN_PROFILE_VERSIONS, [1]);
+  assert.equal(RELEASED_CAMPAIGN_SAVE_VERSIONS.at(-1), CAMPAIGN_SAVE_VERSION);
+  assert.equal(RELEASED_CAMPAIGN_PROFILE_VERSIONS.at(-1), CAMPAIGN_PROFILE_VERSION);
+  for (let version = RELEASED_CAMPAIGN_SAVE_VERSIONS[0]; version < CAMPAIGN_SAVE_VERSION; version += 1) {
+    assert.equal(typeof CAMPAIGN_SAVE_MIGRATIONS[version], 'function');
   }
 });
 
@@ -208,6 +208,28 @@ test('does not rewrite the active slot when migration backup persistence fails',
   assert.equal(loaded.status, CAMPAIGN_SAVE_STATUSES.STORAGE_ERROR);
   assert.match(loaded.error, /migration persistence failed.*quota exceeded/);
   assert.equal(storage.getItem(activeKey), legacy);
+});
+
+test('does not overwrite a different existing migration backup', () => {
+  const legacy = legacySave('backup-conflict');
+  const activeKey = `${ACTIVE_KEY_PREFIX}backup-conflict`;
+  const backupKey = createCampaignSaveBackupKey('backup-conflict', 0);
+  const storage = createMemoryCampaignStorage({
+    [activeKey]: legacy,
+    [backupKey]: 'different legacy contents',
+  });
+  const service = createCampaignSaveService({
+    storage,
+    now: () => 100,
+    migrations: CAMPAIGN_SAVE_MIGRATIONS,
+  });
+
+  const loaded = service.loadSlot('backup-conflict');
+
+  assert.equal(loaded.status, CAMPAIGN_SAVE_STATUSES.STORAGE_ERROR);
+  assert.match(loaded.error, /backup conflict/);
+  assert.equal(storage.getItem(activeKey), legacy);
+  assert.equal(storage.getItem(backupKey), 'different legacy contents');
 });
 
 test('rejects future and malformed serialized migration inputs without replacement data', () => {
