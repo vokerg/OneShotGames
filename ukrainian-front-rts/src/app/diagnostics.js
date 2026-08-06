@@ -1,6 +1,10 @@
+import { createLocalizer } from '../localization/localization.js';
+import { RUNTIME_DIAGNOSTICS_CATALOGS } from '../localization/runtime-diagnostics-catalogs.js';
+
 export const RUNTIME_DIAGNOSTICS_VERSION = 1;
 export const RUNTIME_DIAGNOSTICS_GLOBAL = '__fieldsOfResolveDiagnostics';
 export const RUNTIME_STORAGE_PREFIX = 'fields-of-resolve:';
+export const RUNTIME_DIAGNOSTICS_LOCALE_EVENT = 'fields-of-resolve:localechange';
 
 const MAX_MESSAGE_LENGTH = 2_000;
 const MAX_STACK_LENGTH = 12_000;
@@ -179,11 +183,11 @@ export function serializeRuntimeRecoveryBundle(bundle, { space = 2 } = {}) {
   return `${JSON.stringify(canonicalize(bundle), null, space)}\n`;
 }
 
-function defaultCopyText(text, { documentTarget, windowTarget }) {
+function defaultCopyText(text, { documentTarget, windowTarget, translate }) {
   const clipboard = windowTarget?.navigator?.clipboard;
   if (clipboard?.writeText) return clipboard.writeText(text);
   if (!documentTarget?.createElement || !documentTarget?.body) {
-    throw new Error('Clipboard access is unavailable.');
+    throw new Error(translate('diagnostics.ui.clipboardUnavailable'));
   }
   const textarea = documentTarget.createElement('textarea');
   textarea.value = text;
@@ -194,15 +198,15 @@ function defaultCopyText(text, { documentTarget, windowTarget }) {
   textarea.select();
   const copied = documentTarget.execCommand?.('copy');
   textarea.remove();
-  if (!copied) throw new Error('Clipboard copy failed.');
+  if (!copied) throw new Error(translate('diagnostics.ui.clipboardFailed'));
   return true;
 }
 
-function defaultDownloadText(filename, text, { documentTarget, windowTarget }) {
+function defaultDownloadText(filename, text, { documentTarget, windowTarget, translate }) {
   const BlobType = windowTarget?.Blob ?? globalThis.Blob;
   const URLType = windowTarget?.URL ?? globalThis.URL;
   if (!BlobType || !URLType?.createObjectURL || !documentTarget?.createElement) {
-    throw new Error('File download is unavailable.');
+    throw new Error(translate('diagnostics.ui.downloadUnavailable'));
   }
   const url = URLType.createObjectURL(new BlobType([text], { type: 'application/json' }));
   try {
@@ -213,12 +217,13 @@ function defaultDownloadText(filename, text, { documentTarget, windowTarget }) {
     documentTarget.body?.append(anchor);
     anchor.click();
     anchor.remove();
+    return true;
   } finally {
     URLType.revokeObjectURL(url);
   }
 }
 
-function installDefaultFatalView({ documentTarget, report, actions }) {
+function installDefaultFatalView({ documentTarget, report, actions, translate }) {
   if (!documentTarget?.createElement || !documentTarget?.body) return () => {};
   const previous = documentTarget.querySelector?.('[data-runtime-diagnostics]');
   previous?.remove?.();
@@ -230,34 +235,55 @@ function installDefaultFatalView({ documentTarget, report, actions }) {
   root.style.cssText = 'position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;padding:24px;background:#111d;color:#f4f0df;font:16px/1.45 system-ui,sans-serif;';
   root.innerHTML = `
     <div style="width:min(760px,100%);max-height:90vh;overflow:auto;border:2px solid #b89b62;background:#171914;padding:24px;box-shadow:0 18px 60px #000b">
-      <p style="margin:0;color:#d9b76c;font-weight:700;letter-spacing:.08em">FIELDS OF RESOLVE — RECOVERY MODE</p>
-      <h1 id="runtimeDiagnosticsTitle" style="margin:.35rem 0">The operation could not continue</h1>
+      <p data-diagnostics-eyebrow style="margin:0;color:#d9b76c;font-weight:700;letter-spacing:.08em"></p>
+      <h1 id="runtimeDiagnosticsTitle" style="margin:.35rem 0"></h1>
       <p data-diagnostics-message></p>
       <p data-diagnostics-status role="status" aria-live="polite"></p>
-      <details><summary>Technical report</summary><pre data-diagnostics-report style="white-space:pre-wrap;word-break:break-word;max-height:35vh;overflow:auto;background:#090b08;padding:12px"></pre></details>
+      <details><summary data-diagnostics-technical></summary><pre data-diagnostics-report style="white-space:pre-wrap;word-break:break-word;max-height:35vh;overflow:auto;background:#090b08;padding:12px"></pre></details>
       <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:18px">
-        <button type="button" data-action="copy">Copy debug report</button>
-        <button type="button" data-action="export">Export saves and settings</button>
-        <button type="button" data-action="reset">Export, then reset local data</button>
-        <button type="button" data-action="reload">Reload application</button>
+        <button type="button" data-action="copy"></button>
+        <button type="button" data-action="export"></button>
+        <button type="button" data-action="reset"></button>
+        <button type="button" data-action="reload"></button>
       </div>
     </div>`;
   const reportText = JSON.stringify(report, null, 2);
+  root.querySelector('[data-diagnostics-eyebrow]').textContent = translate('diagnostics.ui.eyebrow');
+  root.querySelector('#runtimeDiagnosticsTitle').textContent = translate('diagnostics.ui.title');
   root.querySelector('[data-diagnostics-message]').textContent = `${report.error.name}: ${report.error.message}`;
+  root.querySelector('[data-diagnostics-technical]').textContent = translate('diagnostics.ui.technicalReport');
   root.querySelector('[data-diagnostics-report]').textContent = reportText;
+  root.querySelector('[data-action="copy"]').textContent = translate('diagnostics.ui.copyReport');
+  root.querySelector('[data-action="export"]').textContent = translate('diagnostics.ui.exportRecovery');
+  root.querySelector('[data-action="reset"]').textContent = translate('diagnostics.ui.exportAndReset');
+  root.querySelector('[data-action="reload"]').textContent = translate('diagnostics.ui.reload');
   const status = root.querySelector('[data-diagnostics-status]');
   const run = async (label, action) => {
-    status.textContent = `${label}…`;
+    status.textContent = translate('diagnostics.ui.working', { label });
     try {
       const result = await action();
-      status.textContent = typeof result === 'string' ? result : `${label} complete.`;
+      status.textContent = typeof result === 'string'
+        ? result
+        : translate('diagnostics.ui.complete', { label });
     } catch (error) {
-      status.textContent = `${label} failed: ${normalizeRuntimeError(error).message}`;
+      status.textContent = translate('diagnostics.ui.failed', {
+        label,
+        error: normalizeRuntimeError(error).message,
+      });
     }
   };
-  root.querySelector('[data-action="copy"]').addEventListener('click', () => void run('Copy', actions.copyReport));
-  root.querySelector('[data-action="export"]').addEventListener('click', () => void run('Export', actions.exportRecovery));
-  root.querySelector('[data-action="reset"]').addEventListener('click', () => void run('Export and reset', actions.exportAndReset));
+  root.querySelector('[data-action="copy"]').addEventListener('click', () => void run(
+    translate('diagnostics.ui.copyLabel'),
+    actions.copyReport,
+  ));
+  root.querySelector('[data-action="export"]').addEventListener('click', () => void run(
+    translate('diagnostics.ui.exportLabel'),
+    actions.exportRecovery,
+  ));
+  root.querySelector('[data-action="reset"]').addEventListener('click', () => void run(
+    translate('diagnostics.ui.resetLabel'),
+    actions.exportAndReset,
+  ));
   root.querySelector('[data-action="reload"]').addEventListener('click', () => actions.reload());
   documentTarget.body.append(root);
   root.querySelector('[data-action="copy"]')?.focus?.();
@@ -275,16 +301,25 @@ export function createRuntimeDiagnostics({
   copyText = null,
   downloadText = null,
   renderFatal = null,
-  confirmReset = (message) => windowTarget?.confirm?.(message) ?? false,
   reload = () => windowTarget?.location?.reload?.(),
 } = {}) {
   if (!windowTarget?.addEventListener || !windowTarget?.removeEventListener) {
     throw new TypeError('Runtime diagnostics require a window-like event target.');
   }
   if (typeof now !== 'function') throw new TypeError('Runtime diagnostics now must be a function.');
-  if (typeof confirmReset !== 'function') throw new TypeError('Runtime diagnostics confirmReset must be a function.');
-  const copy = copyText ?? ((text) => defaultCopyText(text, { documentTarget, windowTarget }));
-  const download = downloadText ?? ((filename, text) => defaultDownloadText(filename, text, { documentTarget, windowTarget }));
+  const localizer = createLocalizer(RUNTIME_DIAGNOSTICS_CATALOGS, {
+    locale: documentTarget?.documentElement?.lang ?? 'en',
+  });
+  const copy = copyText ?? ((text) => defaultCopyText(text, {
+    documentTarget,
+    windowTarget,
+    translate: localizer.t,
+  }));
+  const download = downloadText ?? ((filename, text) => defaultDownloadText(filename, text, {
+    documentTarget,
+    windowTarget,
+    translate: localizer.t,
+  }));
   const render = renderFatal ?? ((model) => installDefaultFatalView({ documentTarget, ...model }));
   let installed = false;
   let currentReport = null;
@@ -298,26 +333,31 @@ export function createRuntimeDiagnostics({
     const bundle = createRuntimeRecoveryBundle({ report: currentReport, storage, now });
     const text = serializeRuntimeRecoveryBundle(bundle);
     await download(`fields-of-resolve-recovery-${bundle.exportedAt}.json`, text);
-    return `Exported ${Object.keys(bundle.storage.entries).length} local data entries.`;
+    return localizer.t('diagnostics.ui.exportedEntries', {
+      count: Object.keys(bundle.storage.entries).length,
+    });
   };
   const exportAndReset = async () => {
     const exported = await exportRecovery();
-    const confirmed = await confirmReset(
-      'Confirm reset only after the recovery file appears in your downloads. Cancel to keep local data unchanged.',
-    );
-    if (!confirmed) return `${exported} Reset cancelled; local data was not changed.`;
     const removed = resetRuntimeRecoveryData(storage);
-    return `${exported} Reset ${removed} local data entries. Reload to restart cleanly.`;
+    return `${exported} ${localizer.t('diagnostics.ui.resetEntries', { count: removed })}`;
   };
   const actions = Object.freeze({
     copyReport: async () => {
       await copy(reportText());
-      return 'Debug report copied.';
+      return localizer.t('diagnostics.ui.copied');
     },
     exportRecovery,
     exportAndReset,
     reload,
   });
+
+  function renderCurrentReport() {
+    removeView?.();
+    removeView = currentReport
+      ? render({ report: currentReport, actions, translate: localizer.t }) ?? null
+      : null;
+  }
 
   function showFatal(error, phase = 'runtime') {
     currentReport = createRuntimeDebugReport({
@@ -328,8 +368,7 @@ export function createRuntimeDiagnostics({
       performance: resolveCandidate(performance),
       now,
     });
-    removeView?.();
-    removeView = render({ report: currentReport, actions }) ?? null;
+    renderCurrentReport();
     return currentReport;
   }
 
@@ -340,6 +379,10 @@ export function createRuntimeDiagnostics({
     event?.preventDefault?.();
     showFatal(event?.reason ?? 'Unhandled promise rejection.', 'unhandled-rejection');
   };
+  const onLocaleChange = (event) => {
+    if (!localizer.setLocale(event?.detail?.locale)) return;
+    if (currentReport) renderCurrentReport();
+  };
 
   function snapshot() {
     return deepFreeze({
@@ -348,6 +391,7 @@ export function createRuntimeDiagnostics({
       fatal: currentReport !== null,
       report: currentReport,
       recoverableEntries: safeCall(() => Object.keys(collectRuntimeRecoveryData(storage).entries).length, 0),
+      locale: localizer.locale,
     });
   }
 
@@ -356,19 +400,20 @@ export function createRuntimeDiagnostics({
     installed = true;
     windowTarget.addEventListener('error', onError);
     windowTarget.addEventListener('unhandledrejection', onUnhandledRejection);
+    documentTarget?.addEventListener?.(RUNTIME_DIAGNOSTICS_LOCALE_EVENT, onLocaleChange);
     previousGlobal = windowTarget[RUNTIME_DIAGNOSTICS_GLOBAL];
     windowTarget[RUNTIME_DIAGNOSTICS_GLOBAL] = Object.freeze({ snapshot, showFatal });
     return dispose;
   }
 
   function dispose() {
-    if (!installed && !removeView && currentReport === null) return false;
+    if (!installed && !removeView) return false;
     windowTarget.removeEventListener('error', onError);
     windowTarget.removeEventListener('unhandledrejection', onUnhandledRejection);
+    documentTarget?.removeEventListener?.(RUNTIME_DIAGNOSTICS_LOCALE_EVENT, onLocaleChange);
     installed = false;
     removeView?.();
     removeView = null;
-    currentReport = null;
     if (windowTarget[RUNTIME_DIAGNOSTICS_GLOBAL]?.snapshot === snapshot) {
       if (previousGlobal === undefined) delete windowTarget[RUNTIME_DIAGNOSTICS_GLOBAL];
       else windowTarget[RUNTIME_DIAGNOSTICS_GLOBAL] = previousGlobal;
