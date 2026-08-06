@@ -8,7 +8,7 @@ UFR-156 adds a browser-bootstrap diagnostics boundary. It does not own gameplay 
 - `src/app/diagnostics-bootstrap.js` installs the boundary before renderer and game startup.
 - `src/render/viewport-runtime-bootstrap.js` imports the diagnostics bootstrap first so startup/import failures are visible rather than leaving a blank page.
 
-The diagnostics service is dependency-free and tears down its listeners, global diagnostic handle, and fatal view on `pagehide`.
+The diagnostics service is dependency-free and tears down its listeners, global diagnostic handle, fatal report, and fatal view on `pagehide`.
 
 ## Assertion policy
 
@@ -35,7 +35,7 @@ The fatal screen provides:
 4. **Export, then reset local data**;
 5. **Reload application**.
 
-The reset action is fail-safe: export must finish successfully before any application-owned local-storage entry is deleted. It removes only keys beginning with `fields-of-resolve:` and leaves unrelated site data untouched.
+The reset action is fail-safe within browser constraints: the recovery export action must return successfully, then the player must explicitly confirm that the recovery file is visible in downloads before any application-owned local-storage entry is deleted. Cancelling confirmation leaves storage unchanged. Reset removes only keys beginning with `fields-of-resolve:` and leaves unrelated site data untouched.
 
 ## Diagnostic report boundary
 
@@ -50,10 +50,11 @@ The separate recovery bundle contains the report plus raw application-owned loca
 3. Verify the alert-dialog receives focus and the technical report expands.
 4. Verify copy produces valid JSON.
 5. Verify export downloads a `fields-of-resolve-recovery-<timestamp>.json` file containing only `fields-of-resolve:` storage keys.
-6. Add an unrelated local-storage key, run export-and-reset, and confirm the unrelated key remains.
-7. Block downloads, run export-and-reset, and confirm application data is not removed.
-8. Reload and confirm the application starts from clean local state after a successful reset.
+6. Add an unrelated local-storage key, run export-and-reset, cancel the confirmation, and confirm all local data remains.
+7. Run export-and-reset again, confirm only after the recovery file appears, and verify application-owned keys are removed while the unrelated key remains.
+8. Block downloads or make the export action fail, run export-and-reset, and confirm the confirmation is not shown and application data is not removed.
+9. Reload and confirm the application starts from clean local state after a confirmed reset.
 
 ## Evidence boundary
 
-Automated tests cover invariant semantics, bounded reports, privacy exclusions, storage filtering, canonical recovery serialization, application-only reset, global error/rejection capture, exact disposal, and export-before-reset failure safety. Browser smoke confirms the bootstrap remains compatible with normal startup. Human interaction with download and clipboard policies is required for `PLAYER_VERIFIED` evidence.
+Automated tests cover invariant semantics, bounded reports, privacy exclusions, storage filtering, canonical recovery serialization, application-only reset, global error/rejection capture, exact disposal, export failure safety, confirmation cancellation, and confirmed reset. Browser smoke confirms the bootstrap remains compatible with normal startup. Human interaction with download, confirmation, and clipboard policies is required for `PLAYER_VERIFIED` evidence.
