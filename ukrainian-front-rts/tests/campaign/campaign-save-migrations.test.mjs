@@ -150,7 +150,7 @@ test('leaves current saves canonical and does not create a redundant backup', ()
   assert.equal(storage.getItem(activeKey), current);
 });
 
-test('reports future save and profile schemas plus malformed data without destructive overwrite', () => {
+test('reports future schemas and malformed data without destructive overwrite', () => {
   const future = JSON.stringify({ version: CAMPAIGN_SAVE_VERSION + 1, slotId: 'future' });
   const futureProfile = JSON.stringify({
     version: CAMPAIGN_SAVE_VERSION,
@@ -162,13 +162,27 @@ test('reports future save and profile schemas plus malformed data without destru
     profile: { ...profile(), version: CAMPAIGN_PROFILE_VERSION + 1 },
     missionState: null,
   });
+  const profileWithoutVersion = profile();
+  delete profileWithoutVersion.version;
+  const malformedProfile = JSON.stringify({
+    version: CAMPAIGN_SAVE_VERSION,
+    slotId: 'malformed-profile',
+    kind: 'manual',
+    label: 'Malformed profile',
+    createdAt: 10,
+    updatedAt: 10,
+    profile: profileWithoutVersion,
+    missionState: null,
+  });
   const corrupt = '{';
   const futureKey = `${ACTIVE_KEY_PREFIX}future`;
   const futureProfileKey = `${ACTIVE_KEY_PREFIX}future-profile`;
+  const malformedProfileKey = `${ACTIVE_KEY_PREFIX}malformed-profile`;
   const corruptKey = `${ACTIVE_KEY_PREFIX}corrupt`;
   const storage = createMemoryCampaignStorage({
     [futureKey]: future,
     [futureProfileKey]: futureProfile,
+    [malformedProfileKey]: malformedProfile,
     [corruptKey]: corrupt,
   });
   const service = createCampaignSaveService({
@@ -197,6 +211,14 @@ test('reports future save and profile schemas plus malformed data without destru
     /Refusing to overwrite.*unsupported-version/,
   );
   assert.equal(storage.getItem(futureProfileKey), futureProfile);
+
+  const malformedProfileResult = service.loadSlot('malformed-profile');
+  assert.equal(malformedProfileResult.status, CAMPAIGN_SAVE_STATUSES.CORRUPT);
+  assert.throws(
+    () => service.saveSlot(replacementOptions('malformed-profile')),
+    /Refusing to overwrite.*corrupt/,
+  );
+  assert.equal(storage.getItem(malformedProfileKey), malformedProfile);
 
   const corruptResult = service.loadSlot('corrupt');
   assert.equal(corruptResult.status, CAMPAIGN_SAVE_STATUSES.CORRUPT);
