@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { validateSpriteAtlasManifest } from '../src/render/sprite-atlas-manifest.js';
 import { packSpriteAtlasFile } from './pack-sprite-atlas.mjs';
 import { probeImageDimensions } from './lib/sprite-atlas-packer.mjs';
+import { verifyUkrainianInfantryArt } from './verify-ukrainian-infantry-art.mjs';
 
 export async function verifySpriteAtlases(projectRoot) {
   const root = resolve(projectRoot);
@@ -31,14 +32,18 @@ export async function verifySpriteAtlases(projectRoot) {
       throw new Error(`${path}: image dimensions ${dimensions.width}x${dimensions.height} do not match manifest ${manifest.image.width}x${manifest.image.height}.`);
     }
   }
-  return Object.freeze({ sources: sources.length, manifests: manifests.length });
+  const ukrainianInfantry = await verifyUkrainianInfantryArt(root);
+  return Object.freeze({ sources: sources.length, manifests: manifests.length, ukrainianInfantry });
 }
 
 const invokedPath = process.argv[1] ? resolve(process.argv[1]) : null;
 if (invokedPath === fileURLToPath(import.meta.url)) {
   const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
   verifySpriteAtlases(projectRoot)
-    .then(({ sources, manifests }) => console.log(`[sprite-atlas] verified ${sources} source spec(s) and ${manifests} manifest(s)`))
+    .then(({ sources, manifests, ukrainianInfantry }) => console.log(
+      `[sprite-atlas] verified ${sources} source spec(s), ${manifests} manifest(s), `
+      + `${ukrainianInfantry.units} Ukrainian infantry identities`,
+    ))
     .catch((error) => {
       console.error(`[sprite-atlas] ${error.message}`);
       process.exitCode = 1;
