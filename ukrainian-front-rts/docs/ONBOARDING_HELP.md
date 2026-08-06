@@ -21,7 +21,7 @@ The feature does not wrap or replace `Game` methods, issue commands, change tuto
 - Filter to a single section.
 - Use **Reset first-time hints** to replay onboarding prompts.
 
-The control section reflects the current runtime key bindings, including rebinding and unbound actions. It does not maintain a second key map.
+The control section reflects the current runtime key bindings, including rebinding and unbound actions. It does not maintain a second key map. The catalog resolves the live binding profile whenever help is rendered or searched, so an already-installed help surface does not retain stale labels after a rebind.
 
 ## First-time and contextual hints
 
@@ -59,21 +59,22 @@ Disposal removes:
 
 - the F1 and Escape listener;
 - contextual click and custom-event listeners;
+- the pending first-time-hint timer;
 - the top-bar Help button;
 - the help dialog and hint surface;
 - the global diagnostic API.
 
-No timers continue after disposal, and no simulation or command state is retained.
+Timer cancellation is best-effort and cannot interrupt the rest of teardown if a host implementation rejects cancellation. No timer callback can display a hint after disposal, and no simulation or command state is retained.
 
 ## Verification
 
 Focused tests cover:
 
 - complete tutorial/control/glossary catalog composition;
-- live binding inversion and unbound actions;
+- live binding inversion, post-install rebinding, and unbound actions;
 - multi-token search and category filtering;
-- deterministic persistence, dismiss, dismiss-all, and reset behavior;
-- first-run hint scheduling;
+- deterministic persistence, malformed-storage normalization, dismiss, dismiss-all, and reset behavior;
+- first-run hint scheduling and timer cancellation;
 - F1 opening, contextual custom events, global API, and exact teardown.
 
 The assembled browser smoke verifies that the new bootstrap coexists with normal startup and mission selection. Manual player verification should additionally check top-bar layout, focus movement, search interaction, hint placement at supported viewport sizes, and current rebound keys.
