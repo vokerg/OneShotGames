@@ -1,3 +1,4 @@
+import '../app/diagnostics-bootstrap.js';
 import { Renderer } from '../render.js';
 import { installRendererViewportPatch } from './viewport-runtime.js';
 
