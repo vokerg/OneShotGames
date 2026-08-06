@@ -23,7 +23,11 @@ function roleLabel(stats) {
 
 function drawMuzzleFlash(renderer, runtime, resolved, entity, state, scale, x, y) {
   if (state !== 'attack' || Number(entity.flash) <= 0) return;
-  const point = runtime.attachment(resolved.frameId, 'muzzle', { x, y, scale });
+  const point = runtime.attachment(resolved.frameId, 'muzzle', {
+    x,
+    y,
+    scale,
+  });
   if (!point) return;
   const context = renderer.x;
   context.save();
@@ -59,7 +63,11 @@ export function installUkrainianInfantryArtPass(
     throw new TypeError('Renderer must expose unit and portrait methods before atlas installation.');
   }
 
-  const state = { status: 'loading', runtime: null, error: null };
+  const state = {
+    status: 'loading',
+    runtime: null,
+    error: null,
+  };
   Promise.resolve()
     .then(() => loadAtlas())
     .then((runtime) => {
@@ -72,7 +80,9 @@ export function installUkrainianInfantryArtPass(
     });
 
   function atlasUnit(entity) {
-    const stats = entity?.team === TEAM.UA ? this.g?.unitStats?.(entity.type) : null;
+    const stats = entity?.team === TEAM.UA
+      ? this.g?.unitStats?.(entity.type)
+      : null;
     const unitId = supportsAtlas(entity, stats)
       ? resolveUkrainianInfantryAtlasUnitId(entity.type, stats)
       : null;
@@ -100,7 +110,9 @@ export function installUkrainianInfantryArtPass(
   }
 
   function atlasPortrait(entity) {
-    const stats = entity?.team === TEAM.UA ? this.g?.unitStats?.(entity.type) : null;
+    const stats = entity?.team === TEAM.UA
+      ? this.g?.unitStats?.(entity.type)
+      : null;
     const unitId = supportsAtlas(entity, stats)
       ? resolveUkrainianInfantryAtlasUnitId(entity.type, stats)
       : null;
