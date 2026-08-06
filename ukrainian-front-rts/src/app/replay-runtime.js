@@ -88,7 +88,9 @@ export function createReplaySimulationRuntime({
       return result;
     },
     recordChoice(choice) {
-      return requireRecorder().recordChoice(currentState(harness).tick, choice);
+      const event = requireRecorder().recordChoice(currentState(harness).tick, choice);
+      lastChecksumTick = -1;
+      return event;
     },
     advanceTicks(count = 1) {
       integer(count, 'count');
