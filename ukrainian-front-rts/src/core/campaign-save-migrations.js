@@ -1,9 +1,12 @@
+import { CAMPAIGN_PROFILE_VERSION } from './campaign-profile.js';
 import {
   CAMPAIGN_SAVE_VERSION,
+  createCampaignSaveBackupKey,
   deserializeCampaignSave,
   serializeCampaignSave,
 } from './campaign-save-service.js';
 
+export const RELEASED_CAMPAIGN_PROFILE_VERSIONS = Object.freeze([CAMPAIGN_PROFILE_VERSION]);
 export const RELEASED_CAMPAIGN_SAVE_VERSIONS = Object.freeze([0, CAMPAIGN_SAVE_VERSION]);
 
 export const CAMPAIGN_SAVE_MIGRATIONS = Object.freeze({
@@ -21,14 +24,6 @@ export const CAMPAIGN_SAVE_MIGRATIONS = Object.freeze({
     };
   },
 });
-
-export function createCampaignSaveBackupKey(slotId, sourceVersion) {
-  if (typeof slotId !== 'string' || !slotId) throw new TypeError('Backup slot ID must be non-empty.');
-  if (!Number.isInteger(sourceVersion) || sourceVersion < 0) {
-    throw new TypeError('Backup source version must be a non-negative integer.');
-  }
-  return `fields-of-resolve:campaign-save-backup:v${sourceVersion}:${encodeURIComponent(slotId)}`;
-}
 
 export function migrateSerializedCampaignSave(serialized, { expectedSlotId = null } = {}) {
   if (typeof serialized !== 'string' || !serialized.trim()) {
