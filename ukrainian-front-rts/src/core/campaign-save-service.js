@@ -96,9 +96,13 @@ function cloneCanonicalJson(value, label, seen = new Set()) {
 
 function normalizeProfile(profile) {
   if (profile && typeof profile === 'object' && !Array.isArray(profile) &&
-      Object.getPrototypeOf(profile) === Object.prototype &&
-      Number.isInteger(profile.version) && profile.version >= 0 && profile.version !== CAMPAIGN_PROFILE_VERSION) {
-    throw new UnsupportedCampaignProfileVersionError(profile.version);
+      Object.getPrototypeOf(profile) === Object.prototype) {
+    if (!Number.isInteger(profile.version) || profile.version < 0) {
+      throw new TypeError('Campaign profile version must be a non-negative integer.');
+    }
+    if (profile.version !== CAMPAIGN_PROFILE_VERSION) {
+      throw new UnsupportedCampaignProfileVersionError(profile.version);
+    }
   }
   return JSON.parse(serializeCampaignProfile(validateCampaignProfile(profile)));
 }
