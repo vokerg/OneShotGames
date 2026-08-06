@@ -5,6 +5,7 @@ import {
 
 export const CAMPAIGN_SAVE_VERSION = 1;
 export const DEFAULT_AUTOSAVE_SLOT_ID = 'autosave';
+export const CAMPAIGN_SAVE_BACKUP_KEY_PREFIX = 'fields-of-resolve:campaign-save-backup:';
 export const CAMPAIGN_SAVE_KINDS = Object.freeze({
   MANUAL: 'manual',
   AUTOSAVE: 'autosave',
@@ -167,6 +168,32 @@ function slotIdFromKey(prefix, key) {
   }
 }
 
+function parseSerializedCampaignSave(serialized) {
+  if (typeof serialized !== 'string' || !serialized.trim()) {
+    throw new TypeError('Serialized campaign save must be a non-empty JSON string.');
+  }
+  try {
+    return JSON.parse(serialized);
+  } catch (error) {
+    throw new SyntaxError(`Campaign save JSON is invalid: ${error.message}`);
+  }
+}
+
+export function createCampaignSaveBackupKey(
+  slotId,
+  sourceVersion,
+  keyPrefix = CAMPAIGN_SAVE_BACKUP_KEY_PREFIX,
+) {
+  const id = assertIdentifier(slotId, 'Campaign save backup slot ID', SLOT_ID_PATTERN);
+  if (!Number.isInteger(sourceVersion) || sourceVersion < 0) {
+    throw new TypeError('Campaign save backup source version must be a non-negative integer.');
+  }
+  if (typeof keyPrefix !== 'string' || !keyPrefix) {
+    throw new TypeError('Campaign save backup keyPrefix must be a non-empty string.');
+  }
+  return `${keyPrefix}v${sourceVersion}:${encodeURIComponent(id)}`;
+}
+
 export function createCampaignStorageAdapter(storage) {
   if (!storage || typeof storage.getItem !== 'function' || typeof storage.setItem !== 'function' ||
       typeof storage.removeItem !== 'function') {
@@ -232,30 +259,40 @@ export function serializeCampaignSave(save) {
 }
 
 export function deserializeCampaignSave(serialized, options = {}) {
-  if (typeof serialized !== 'string' || !serialized.trim()) {
-    throw new TypeError('Serialized campaign save must be a non-empty JSON string.');
-  }
-  let parsed;
-  try {
-    parsed = JSON.parse(serialized);
-  } catch (error) {
-    throw new SyntaxError(`Campaign save JSON is invalid: ${error.message}`);
-  }
-  return normalizeEnvelope(parsed, options);
+  return normalizeEnvelope(parseSerializedCampaignSave(serialized), options);
 }
 
 export function createCampaignSaveService({
   storage,
   now,
   keyPrefix = DEFAULT_KEY_PREFIX,
+  backupKeyPrefix = CAMPAIGN_SAVE_BACKUP_KEY_PREFIX,
   migrations = {},
   autosaveSlotId = DEFAULT_AUTOSAVE_SLOT_ID,
 }) {
   const adapter = createCampaignStorageAdapter(storage);
   if (typeof now !== 'function') throw new TypeError('Campaign save service requires an injected now() clock.');
   if (typeof keyPrefix !== 'string' || !keyPrefix) throw new TypeError('Campaign save keyPrefix must be a non-empty string.');
+  if (typeof backupKeyPrefix !== 'string' || !backupKeyPrefix) {
+    throw new TypeError('Campaign save backupKeyPrefix must be a non-empty string.');
+  }
+  if (backupKeyPrefix === keyPrefix) {
+    throw new Error('Campaign save backupKeyPrefix must differ from keyPrefix.');
+  }
   assertIdentifier(autosaveSlotId, 'Autosave slot ID', SLOT_ID_PATTERN);
   assertPlainObject(migrations, 'Campaign save migrations');
+
+  function persistMigration(id, sourceVersion, sourceSerialized, save) {
+    const backupKey = createCampaignSaveBackupKey(id, sourceVersion, backupKeyPrefix);
+    const existingBackup = adapter.getItem(backupKey);
+    if (existingBackup !== null && existingBackup !== undefined && String(existingBackup) !== sourceSerialized) {
+      throw new Error(`Campaign save migration backup conflict for slot ${id} version ${sourceVersion}.`);
+    }
+    if (existingBackup === null || existingBackup === undefined) {
+      adapter.setItem(backupKey, sourceSerialized);
+    }
+    adapter.setItem(slotKey(keyPrefix, id), serializeCampaignSave(save));
+  }
 
   function loadSlot(slotId) {
     const id = assertIdentifier(slotId, 'Campaign save slot ID', SLOT_ID_PATTERN);
@@ -266,16 +303,31 @@ export function createCampaignSaveService({
       return result(CAMPAIGN_SAVE_STATUSES.STORAGE_ERROR, id, { error: errorMessage(error) });
     }
     if (serialized === null || serialized === undefined) return result(CAMPAIGN_SAVE_STATUSES.MISSING, id);
+
+    const sourceSerialized = String(serialized);
+    let source;
+    let save;
     try {
-      return result(CAMPAIGN_SAVE_STATUSES.OK, id, {
-        save: deserializeCampaignSave(String(serialized), { expectedSlotId: id, migrations }),
-      });
+      source = parseSerializedCampaignSave(sourceSerialized);
+      save = normalizeEnvelope(source, { expectedSlotId: id, migrations });
     } catch (error) {
       const status = error instanceof UnsupportedCampaignSaveVersionError
         ? CAMPAIGN_SAVE_STATUSES.UNSUPPORTED_VERSION
         : CAMPAIGN_SAVE_STATUSES.CORRUPT;
       return result(status, id, { error: errorMessage(error) });
     }
+
+    if (source.version < CAMPAIGN_SAVE_VERSION) {
+      try {
+        persistMigration(id, source.version, sourceSerialized, save);
+      } catch (error) {
+        return result(CAMPAIGN_SAVE_STATUSES.STORAGE_ERROR, id, {
+          error: `Campaign save migration persistence failed: ${errorMessage(error)}`,
+        });
+      }
+    }
+
+    return result(CAMPAIGN_SAVE_STATUSES.OK, id, { save });
   }
 
   function saveSlot({
@@ -291,6 +343,12 @@ export function createCampaignSaveService({
     const existing = loadSlot(id);
     if (existing.status === CAMPAIGN_SAVE_STATUSES.STORAGE_ERROR) {
       throw new Error(`Campaign save storage read failed: ${existing.error}`);
+    }
+    if (existing.status === CAMPAIGN_SAVE_STATUSES.CORRUPT ||
+        existing.status === CAMPAIGN_SAVE_STATUSES.UNSUPPORTED_VERSION) {
+      throw new Error(
+        `Refusing to overwrite campaign save slot ${id} with status ${existing.status}: ${existing.error}`,
+      );
     }
     const save = createCampaignSaveEnvelope({
       slotId: id,
