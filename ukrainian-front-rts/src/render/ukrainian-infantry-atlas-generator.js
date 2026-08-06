@@ -89,17 +89,26 @@ function roleMark(unit, palette) {
 
 function stateTransform(state, frameIndex) {
   if (state === 'move') {
-    const phases = [-2, 0, 2, 0];
+    const phases = [-2, -1, 1, 2, 1, -1];
     const phase = phases[frameIndex % phases.length];
     return { bodyY: Math.abs(phase) * -0.5, leftLeg: phase, rightLeg: -phase, lean: phase * 0.5, opacity: 1 };
   }
   if (state === 'attack') {
     return { bodyY: 0, leftLeg: 0, rightLeg: 0, lean: [0, -2, 1][frameIndex] ?? 0, recoil: [0, 3, 1][frameIndex] ?? 0, opacity: 1 };
   }
-  if (state === 'hit') return { bodyY: 1, leftLeg: -1, rightLeg: 1, lean: 6, opacity: 1, hit: true };
-  if (state === 'damaged') return { bodyY: 2, leftLeg: -1, rightLeg: 1, lean: 3, opacity: 0.92, damaged: true };
-  if (state === 'death') return { bodyY: frameIndex * 3, leftLeg: 0, rightLeg: 0, lean: frameIndex * 28, opacity: 1 - frameIndex * 0.18, death: true };
-  if (state === 'wreck') return { bodyY: 8, leftLeg: 0, rightLeg: 0, lean: 88, opacity: 0.62, wreck: true };
+  if (state === 'hit') return { bodyY: frameIndex === 0 ? 1 : 0, leftLeg: -1, rightLeg: 1, lean: frameIndex === 0 ? 6 : 3, opacity: 1, hit: true };
+  if (state === 'damaged') return { bodyY: frameIndex === 0 ? 2 : 1, leftLeg: -1, rightLeg: 1, lean: frameIndex === 0 ? 3 : 2, opacity: frameIndex === 0 ? 0.9 : 0.94, damaged: true };
+  if (state === 'death') {
+    const sequence = [
+      { bodyY: 1, lean: 10, opacity: 1, prone: false },
+      { bodyY: 3, lean: 28, opacity: 0.95, prone: false },
+      { bodyY: 6, lean: 52, opacity: 0.85, prone: true },
+      { bodyY: 8, lean: 75, opacity: 0.72, prone: true },
+      { bodyY: 9, lean: 88, opacity: 0.62, prone: true },
+    ];
+    return { leftLeg: 0, rightLeg: 0, death: true, ...sequence[frameIndex] };
+  }
+  if (state === 'wreck') return { bodyY: 9, leftLeg: 0, rightLeg: 0, lean: 88, opacity: 0.55, wreck: true, prone: true };
   return { bodyY: frameIndex % 2 ? -0.5 : 0, leftLeg: 0, rightLeg: 0, lean: 0, opacity: 1 };
 }
 
@@ -116,11 +125,11 @@ function renderBattleFrame(unit, state, frameIndex, palette) {
     : motion.damaged
       ? `<path d="M15 23l5-3 4 4-3 7-7-2z" fill="${palette.damage}" opacity=".62"/>`
       : '';
-  const prone = motion.death || motion.wreck;
+  const prone = motion.prone === true;
   const body = prone
     ? `<rect x="12" y="22" width="25" height="11" rx="2" fill="${uniform}"/><rect x="16" y="19" width="10" height="8" fill="${light}"/><circle cx="37" cy="27" r="6" fill="${light}"/>`
     : `<rect x="16" y="17" width="16" height="20" rx="2" fill="${uniform}"/><rect x="17" y="18" width="6" height="17" fill="${light}"/><rect x="25" y="19" width="6" height="16" fill="${palette['uniform-dark']}"/><path d="M17 16q7-9 14 0v4H17z" fill="${light}"/><rect x="19" y="14" width="10" height="5" fill="${light}"/><rect x="16" y="35" width="6" height="8" fill="${palette.ink}" transform="translate(${motion.leftLeg} 0)"/><rect x="26" y="35" width="6" height="8" fill="${palette.ink}" transform="translate(${motion.rightLeg} 0)"/>`;
-  return `<g opacity="${motion.opacity}"><ellipse cx="24" cy="41" rx="13" ry="4" fill="${palette.ink}" opacity=".45"/><g transform="translate(0 ${motion.bodyY}) rotate(${motion.lean} 24 28)">${body}${roleMark(unit, palette)}<rect x="30" y="29" width="5" height="7" fill="${palette['ukrainian-blue']}"/><rect x="30" y="33" width="5" height="3" fill="${palette['ukrainian-yellow']}"/>${damage}${muzzle}</g></g>`;
+  return `<g opacity="${motion.opacity}"><ellipse cx="24" cy="41" rx="13" ry="4" fill="${palette.ink}" opacity=".45"/><g transform="translate(0 ${motion.bodyY + (motion.recoil ?? 0)}) rotate(${motion.lean} 24 28)">${body}${roleMark(unit, palette)}<rect x="30" y="29" width="5" height="7" fill="${palette['ukrainian-blue']}"/><rect x="30" y="33" width="5" height="3" fill="${palette['ukrainian-yellow']}"/>${damage}${muzzle}</g></g>`;
 }
 
 function renderPortrait(unit, palette) {
