@@ -1,5 +1,7 @@
 import { readViewportMetrics } from '../core/viewport-model.js';
 
+const LOCALE_CHANGE_EVENT = 'fields-of-resolve:localechange';
+
 function createElement(documentTarget, tagName, attributes = {}) {
   const element = documentTarget.createElement(tagName);
   for (const [name, value] of Object.entries(attributes)) {
@@ -69,14 +71,30 @@ export function installViewportRuntime({
     'aria-live': 'polite',
     className: 'viewportNotice hidden',
   });
-  minimumNotice.innerHTML =
-    '<strong>Viewport too small</strong><span>Use at least 960 × 600 CSS pixels or enter fullscreen for the complete command interface.</span>';
+  const noticeHeading = createElement(documentTarget, 'strong', {
+    textContent: 'Viewport too small',
+  });
+  const noticeBody = createElement(documentTarget, 'span', {
+    textContent: 'Use at least 960 × 600 CSS pixels or enter fullscreen for the complete command interface.',
+  });
+  minimumNotice.append(noticeHeading, noticeBody);
   shell.append(minimumNotice);
 
   let disposed = false;
   let frameHandle = null;
   let metrics = readViewportMetrics(windowTarget, documentTarget);
   let fullscreenError = null;
+
+  const localized = (key, fallback, variables) => {
+    const translate = windowTarget.__fieldsOfResolveLocalization?.t;
+    if (typeof translate !== 'function') return fallback;
+    try {
+      const value = translate(key, variables);
+      return typeof value === 'string' ? value : fallback;
+    } catch {
+      return fallback;
+    }
+  };
 
   const apply = () => {
     frameHandle = null;
@@ -89,12 +107,25 @@ export function installViewportRuntime({
     root.style.setProperty('--viewport-dpr', String(metrics.pixelRatio));
 
     minimumNotice.classList.toggle('hidden', !metrics.belowMinimum);
+    noticeHeading.textContent = localized('runtime.viewport.noticeHeading', 'Viewport too small');
+    noticeBody.textContent = localized(
+      'runtime.viewport.noticeBody',
+      'Use at least 960 × 600 CSS pixels or enter fullscreen for the complete command interface.',
+    );
     fullscreenButton.setAttribute('aria-pressed', String(metrics.fullscreen));
     fullscreenButton.setAttribute(
       'aria-label',
-      metrics.fullscreen ? 'Exit fullscreen battlefield view' : 'Enter fullscreen battlefield view',
+      metrics.fullscreen
+        ? localized('runtime.viewport.exitFullscreenAria', 'Exit fullscreen battlefield view')
+        : localized('runtime.viewport.enterFullscreenAria', 'Enter fullscreen battlefield view'),
     );
-    fullscreenButton.textContent = metrics.fullscreen ? 'Exit Fullscreen' : 'Fullscreen';
+    fullscreenButton.setAttribute(
+      'data-tooltip',
+      localized('runtime.viewport.fullscreenTooltip', 'Enter or leave fullscreen battlefield view.'),
+    );
+    fullscreenButton.textContent = metrics.fullscreen
+      ? localized('runtime.viewport.exitFullscreen', 'Exit Fullscreen')
+      : localized('runtime.viewport.fullscreen', 'Fullscreen');
 
     const event = typeof windowTarget.CustomEvent === 'function'
       ? new windowTarget.CustomEvent('ufr:viewport-change', { detail: metrics })
@@ -115,7 +146,11 @@ export function installViewportRuntime({
     } catch (error) {
       fullscreenError = error instanceof Error ? error.message : String(error);
       fullscreenButton.dataset.fullscreenError = 'true';
-      fullscreenButton.title = `Fullscreen unavailable: ${fullscreenError}`;
+      fullscreenButton.title = localized(
+        'runtime.viewport.unavailable',
+        `Fullscreen unavailable: ${fullscreenError}`,
+        { error: fullscreenError },
+      );
     } finally {
       schedule();
     }
@@ -134,6 +169,7 @@ export function installViewportRuntime({
   visualViewport?.addEventListener?.('resize', schedule);
   documentTarget.addEventListener('fullscreenchange', clearFullscreenError);
   documentTarget.addEventListener('fullscreenerror', schedule);
+  documentTarget.addEventListener(LOCALE_CHANGE_EVENT, schedule);
   fullscreenButton.addEventListener('click', toggleFullscreen);
 
   apply();
@@ -156,6 +192,7 @@ export function installViewportRuntime({
       visualViewport?.removeEventListener?.('resize', schedule);
       documentTarget.removeEventListener('fullscreenchange', clearFullscreenError);
       documentTarget.removeEventListener('fullscreenerror', schedule);
+      documentTarget.removeEventListener(LOCALE_CHANGE_EVENT, schedule);
       fullscreenButton.removeEventListener('click', toggleFullscreen);
       fullscreenButton.remove();
       minimumNotice.remove();
