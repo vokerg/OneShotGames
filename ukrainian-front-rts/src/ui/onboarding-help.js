@@ -45,6 +45,11 @@ function canonicalText(value) {
   return String(value ?? '').trim();
 }
 
+function normalizeHintIds(value) {
+  if (!Array.isArray(value)) return [];
+  return [...new Set(value.map(canonicalText).filter(Boolean))];
+}
+
 function camelId(value) {
   return canonicalText(value).replace(/-([a-z])/g, (_match, letter) => letter.toUpperCase());
 }
@@ -185,8 +190,8 @@ export function createOnboardingHelpState({
   const stored = readState(storage, storageKey);
   let state = {
     version: ONBOARDING_HELP_VERSION,
-    dismissedHintIds: [...new Set(stored?.dismissedHintIds ?? [])].filter(String),
-    seenHintIds: [...new Set(stored?.seenHintIds ?? [])].filter(String),
+    dismissedHintIds: normalizeHintIds(stored?.dismissedHintIds),
+    seenHintIds: normalizeHintIds(stored?.seenHintIds),
   };
 
   const persist = () => writeState(storage, storageKey, state);
