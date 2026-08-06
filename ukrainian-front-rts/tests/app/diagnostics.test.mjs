@@ -160,13 +160,16 @@ test('diagnostics capture window errors and prevent unhandled rejection leakage'
 
   assert.equal(dispose(), true);
   assert.equal(RUNTIME_DIAGNOSTICS_GLOBAL in windowTarget, false);
+  assert.equal(diagnostics.snapshot().fatal, false);
 });
 
-test('export-and-reset never deletes data when export fails', async () => {
+test('export-and-reset preserves data until export succeeds and the player confirms', async () => {
   const storage = createStorage({ 'fields-of-resolve:campaign-save:autosave': 'save' });
   const windowTarget = new FakeWindow();
   const downloads = [];
+  const confirmations = [];
   let failDownload = true;
+  let confirmReset = false;
   const diagnostics = createRuntimeDiagnostics({
     windowTarget,
     documentTarget: null,
@@ -178,15 +181,27 @@ test('export-and-reset never deletes data when export fails', async () => {
       downloads.push({ filename, text });
       if (failDownload) throw new Error('download blocked');
     },
+    confirmReset: async (message) => {
+      confirmations.push(message);
+      return confirmReset;
+    },
   });
   diagnostics.showFatal(new Error('fatal'), 'test');
 
   await assert.rejects(() => diagnostics.actions.exportAndReset(), /download blocked/);
   assert.equal(storage.getItem('fields-of-resolve:campaign-save:autosave'), 'save');
+  assert.equal(confirmations.length, 0);
 
   failDownload = false;
-  const message = await diagnostics.actions.exportAndReset();
-  assert.match(message, /Reset 1 local data entries/);
+  const cancelled = await diagnostics.actions.exportAndReset();
+  assert.match(cancelled, /Reset cancelled/);
+  assert.equal(storage.getItem('fields-of-resolve:campaign-save:autosave'), 'save');
+  assert.equal(confirmations.length, 1);
+
+  confirmReset = true;
+  const reset = await diagnostics.actions.exportAndReset();
+  assert.match(reset, /Reset 1 local data entries/);
   assert.equal(storage.getItem('fields-of-resolve:campaign-save:autosave'), null);
-  assert.equal(downloads.length, 2);
+  assert.equal(confirmations.length, 2);
+  assert.equal(downloads.length, 3);
 });
