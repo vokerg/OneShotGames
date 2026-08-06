@@ -10,64 +10,125 @@ export const UKRAINIAN_INFANTRY_SOURCE_URL = new URL(
   import.meta.url,
 );
 
-const ACTIVE_TYPE_ALIASES = Object.freeze({
+export const UKRAINIAN_INFANTRY_STATES = UKRAINIAN_INFANTRY_REQUIRED_STATES;
+export const UKRAINIAN_INFANTRY_UNIT_IDS = Object.freeze([
+  'ua.combat-engineers',
+  'ua.line-infantry',
+  'ua.anti-armor-team',
+  'ua.recon-team',
+  'ua.casevac-team',
+  'ua.mobile-sam',
+  'ua.command-team',
+]);
+export const UKRAINIAN_INFANTRY_TYPE_ALIASES = Object.freeze({
+  'ua.combat-engineers': 'ua.combat-engineers',
   uaEngineer: 'ua.combat-engineers',
+  'ua.line-infantry': 'ua.line-infantry',
   uaInfantry: 'ua.line-infantry',
-  uaMedic: 'ua.casevac-team',
+  'ua.anti-armor-team': 'ua.anti-armor-team',
   uaAntiArmor: 'ua.anti-armor-team',
+  'ua.recon-team': 'ua.recon-team',
   uaRecon: 'ua.recon-team',
+  'ua.casevac-team': 'ua.casevac-team',
+  uaMedic: 'ua.casevac-team',
+  'ua.mobile-sam': 'ua.mobile-sam',
   uaAirDefense: 'ua.mobile-sam',
+  'ua.command-team': 'ua.command-team',
   uaCommand: 'ua.command-team',
 });
 
-const ROLE_FALLBACKS = Object.freeze({
+const ROLE_TO_UNIT_ID = Object.freeze({
   engineer: 'ua.combat-engineers',
   worker: 'ua.combat-engineers',
-  medic: 'ua.casevac-team',
-  medical: 'ua.casevac-team',
-  reconnaissance: 'ua.recon-team',
-  recon: 'ua.recon-team',
-  'anti-armor': 'ua.anti-armor-team',
-  'air-defense': 'ua.mobile-sam',
-  command: 'ua.command-team',
-  'command-support': 'ua.command-team',
   infantry: 'ua.line-infantry',
   'line-infantry': 'ua.line-infantry',
+  'anti-armor': 'ua.anti-armor-team',
+  reconnaissance: 'ua.recon-team',
+  recon: 'ua.recon-team',
+  medic: 'ua.casevac-team',
+  medical: 'ua.casevac-team',
+  'air-defense': 'ua.mobile-sam',
+  'command-support': 'ua.command-team',
+  command: 'ua.command-team',
 });
+
+function candidateStrings(type, stats) {
+  return [type, stats?.id, stats?.rosterNodeId, stats?.visual]
+    .filter((value) => typeof value === 'string' && value.length > 0);
+}
 
 function svgDataUrl(svg) {
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
 
-export function ukrainianInfantryDirectionFromAngle(angle) {
-  if (!Number.isFinite(angle)) return UKRAINIAN_INFANTRY_DIRECTIONS[0];
-  const turn = Math.PI * 2;
-  const normalized = ((angle + Math.PI / 2) % turn + turn) % turn;
-  const index = Math.round(normalized / (turn / UKRAINIAN_INFANTRY_DIRECTIONS.length))
-    % UKRAINIAN_INFANTRY_DIRECTIONS.length;
-  return UKRAINIAN_INFANTRY_DIRECTIONS[index];
-}
-
-export function ukrainianInfantryVisualState(entity, stats = {}, gameTime = 0) {
-  if (!entity || entity.hp <= 0) return 'wreck';
-  if (entity.deathStartedAt != null) {
-    return gameTime - entity.deathStartedAt > 0.5 ? 'wreck' : 'death';
+export function resolveUkrainianInfantryAtlasUnitId(type, stats = null) {
+  for (const candidate of candidateStrings(type, stats)) {
+    const resolved = UKRAINIAN_INFANTRY_TYPE_ALIASES[candidate];
+    if (resolved) return resolved;
   }
-  if (entity.hitFlash > 0 || entity.lastHitAt === gameTime) return 'hit';
-  if (entity.flash > 0) return 'attack';
-  if (entity.hp < entity.maxHp * 0.42) return 'damaged';
-  if (entity.order || entity.target) return 'move';
-  return stats.defaultVisualState && UKRAINIAN_INFANTRY_REQUIRED_STATES.includes(stats.defaultVisualState)
-    ? stats.defaultVisualState
-    : 'idle';
+  for (const candidate of [stats?.roleId, stats?.role, stats?.archetype]) {
+    if (typeof candidate !== 'string') continue;
+    const normalized = candidate.trim().toLowerCase().replaceAll('_', '-');
+    if (ROLE_TO_UNIT_ID[normalized]) return ROLE_TO_UNIT_ID[normalized];
+  }
+  if (stats?.worker === true) return 'ua.combat-engineers';
+  if (stats?.medic === true) return 'ua.casevac-team';
+  return null;
 }
 
 export function resolveUkrainianInfantryIdentity(type, stats = {}, catalog = null) {
-  const aliases = catalog?.aliases ?? ACTIVE_TYPE_ALIASES;
-  if (typeof type === 'string' && aliases[type]) return aliases[type];
-  if (typeof type === 'string' && catalog?.canonicalUnitIds?.includes(type)) return type;
-  const role = stats.role ?? stats.archetype ?? (stats.worker ? 'worker' : stats.medic ? 'medic' : null);
-  return ROLE_FALLBACKS[role] ?? (stats.armor || stats.air ? null : 'ua.line-infantry');
+  const catalogResolved = typeof type === 'string' ? catalog?.aliases?.[type] : null;
+  return catalogResolved ?? resolveUkrainianInfantryAtlasUnitId(type, stats);
+}
+
+export function ukrainianInfantryDirectionFromAngle(angleRadians) {
+  if (!Number.isFinite(angleRadians)) return UKRAINIAN_INFANTRY_DIRECTIONS[0];
+  const index = Math.round((angleRadians + Math.PI / 2) / (Math.PI / 4));
+  const normalized = ((index % UKRAINIAN_INFANTRY_DIRECTIONS.length)
+    + UKRAINIAN_INFANTRY_DIRECTIONS.length) % UKRAINIAN_INFANTRY_DIRECTIONS.length;
+  return UKRAINIAN_INFANTRY_DIRECTIONS[normalized];
+}
+
+export function ukrainianInfantryStateForEntity(entity) {
+  if (!entity || typeof entity !== 'object') return 'idle';
+  if (entity.wreck === true || entity.destroyed === true) return 'wreck';
+  if (entity.dying === true || entity.death === true || entity.hp <= 0) return 'death';
+  if (Number(entity.flash) > 0 || entity.firing === true) return 'attack';
+  if (entity.hit === true || entity.hitFlash === true || Number(entity.recentHit) > 0) return 'hit';
+  const hp = Number(entity.hp);
+  const maxHp = Number(entity.maxHp);
+  if (Number.isFinite(hp) && Number.isFinite(maxHp) && maxHp > 0 && hp / maxHp < 0.48) return 'damaged';
+  if (entity.order || entity.moving === true || Math.hypot(Number(entity.vx) || 0, Number(entity.vy) || 0) > 0.01) return 'move';
+  return 'idle';
+}
+
+export function ukrainianInfantryVisualState(entity) {
+  return ukrainianInfantryStateForEntity(entity);
+}
+
+export function ukrainianInfantryAnimationId(unitId, state = 'idle') {
+  const resolvedUnitId = UKRAINIAN_INFANTRY_TYPE_ALIASES[unitId] ?? unitId;
+  const resolvedState = UKRAINIAN_INFANTRY_STATES.includes(state) ? state : 'idle';
+  return `${resolvedUnitId}.${resolvedState}`;
+}
+
+export function ukrainianInfantryPortraitFrameId(unitId) {
+  const resolvedUnitId = UKRAINIAN_INFANTRY_TYPE_ALIASES[unitId] ?? unitId;
+  return `${resolvedUnitId}.portrait`;
+}
+
+export function ukrainianInfantryIconFrameId(unitId) {
+  const resolvedUnitId = UKRAINIAN_INFANTRY_TYPE_ALIASES[unitId] ?? unitId;
+  return `${resolvedUnitId}.icon`;
+}
+
+export function ukrainianInfantryAnimationElapsedMs(entity, state, gameTimeSeconds = 0) {
+  if (state === 'attack') {
+    const flash = Math.max(0, Math.min(0.1, Number(entity?.flash) || 0));
+    return (1 - flash / 0.1) * 300;
+  }
+  if (state === 'hit') return Math.max(0, (1 - Math.min(1, Number(entity?.recentHit) || 0)) * 150);
+  return Math.max(0, Number(gameTimeSeconds) || 0) * 1000;
 }
 
 export async function loadUkrainianInfantryAtlas({
@@ -84,10 +145,7 @@ export async function loadUkrainianInfantryAtlas({
   const generated = generateUkrainianInfantryAtlas(await response.json());
   const manifest = {
     ...generated.manifestObject,
-    image: {
-      ...generated.manifestObject.image,
-      src: svgDataUrl(generated.svg),
-    },
+    image: { ...generated.manifestObject.image, src: svgDataUrl(generated.svg) },
   };
   const runtime = await loadSpriteAtlas(manifest, { fetchImpl, imageFactory, fallbackRuntime });
   return Object.freeze({
@@ -97,5 +155,3 @@ export async function loadUkrainianInfantryAtlas({
     generatedSvgBytes: generated.svg.length,
   });
 }
-
-export { ACTIVE_TYPE_ALIASES as UKRAINIAN_INFANTRY_ACTIVE_TYPE_ALIASES };
