@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   RUNTIME_DIAGNOSTICS_GLOBAL,
+  RUNTIME_DIAGNOSTICS_LOCALE_EVENT,
   RuntimeInvariantError,
   assertRuntimeInvariant,
   collectRuntimeRecoveryData,
@@ -12,6 +13,8 @@ import {
   resetRuntimeRecoveryData,
   serializeRuntimeRecoveryBundle,
 } from '../../src/app/diagnostics.js';
+import { RUNTIME_DIAGNOSTICS_CATALOGS } from '../../src/localization/runtime-diagnostics-catalogs.js';
+import { validateCatalogs } from '../../src/localization/localization.js';
 
 function createStorage(initial = {}) {
   const values = new Map(Object.entries(initial));
@@ -32,6 +35,13 @@ class FakeWindow extends EventTarget {
   }
 }
 
+class FakeDocument extends EventTarget {
+  constructor() {
+    super();
+    this.documentElement = { lang: 'en' };
+  }
+}
+
 class WindowErrorEvent extends Event {
   constructor(error) {
     super('error');
@@ -44,6 +54,13 @@ class RejectionEvent extends Event {
   constructor(reason) {
     super('unhandledrejection', { cancelable: true });
     this.reason = reason;
+  }
+}
+
+class LocaleEvent extends Event {
+  constructor(locale) {
+    super(RUNTIME_DIAGNOSTICS_LOCALE_EVENT);
+    this.detail = { locale };
   }
 }
 
@@ -131,6 +148,36 @@ test('reset removes only application-owned keys', () => {
   assert.deepEqual(storage.snapshot(), { unrelated: 'keep' });
 });
 
+test('English and Ukrainian recovery catalogs validate and rerender an active fatal view', () => {
+  const validation = validateCatalogs(RUNTIME_DIAGNOSTICS_CATALOGS);
+  assert.equal(validation.valid, true, validation.errors.join('\n'));
+
+  const windowTarget = new FakeWindow();
+  const documentTarget = new FakeDocument();
+  const rendered = [];
+  const diagnostics = createRuntimeDiagnostics({
+    windowTarget,
+    documentTarget,
+    storage: createStorage(),
+    now: () => 250,
+    renderFatal(model) {
+      rendered.push(model);
+      return () => rendered.push({ removed: true });
+    },
+    copyText: async () => true,
+    downloadText: async () => true,
+  });
+
+  diagnostics.install();
+  diagnostics.showFatal(new Error('localized failure'), 'test');
+  assert.equal(rendered[0].translate('diagnostics.ui.title'), 'The operation could not continue');
+
+  documentTarget.dispatchEvent(new LocaleEvent('uk'));
+  assert.equal(rendered[2].translate('diagnostics.ui.title'), 'Операцію неможливо продовжити');
+  assert.equal(diagnostics.snapshot().locale, 'uk');
+  diagnostics.dispose();
+});
+
 test('diagnostics capture window errors and prevent unhandled rejection leakage', () => {
   const windowTarget = new FakeWindow();
   const rendered = [];
@@ -200,7 +247,7 @@ test('export-and-reset preserves data until export succeeds and the player confi
 
   confirmReset = true;
   const reset = await diagnostics.actions.exportAndReset();
-  assert.match(reset, /Reset 1 local data entries/);
+  assert.match(reset, /Reset 1 local data entry/);
   assert.equal(storage.getItem('fields-of-resolve:campaign-save:autosave'), null);
   assert.equal(confirmations.length, 2);
   assert.equal(downloads.length, 3);
