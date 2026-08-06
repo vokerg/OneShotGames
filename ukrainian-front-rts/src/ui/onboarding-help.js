@@ -42,6 +42,11 @@ function canonicalText(value) {
   return String(value ?? '').trim();
 }
 
+function normalizeStoredIds(value) {
+  if (!Array.isArray(value)) return [];
+  return [...new Set(value.map(canonicalText).filter(Boolean))];
+}
+
 function normalizeKeyLabel(key) {
   const value = canonicalText(key).toLowerCase();
   const labels = {
@@ -165,8 +170,8 @@ export function createOnboardingHelpState({
   const stored = readState(storage, storageKey);
   let state = {
     version: ONBOARDING_HELP_VERSION,
-    dismissedHintIds: [...new Set(stored?.dismissedHintIds ?? [])].filter(String),
-    seenHintIds: [...new Set(stored?.seenHintIds ?? [])].filter(String),
+    dismissedHintIds: normalizeStoredIds(stored?.dismissedHintIds),
+    seenHintIds: normalizeStoredIds(stored?.seenHintIds),
   };
 
   const persist = () => writeState(storage, storageKey, state);
@@ -219,7 +224,7 @@ function editableTarget(target) {
   return tag === 'input' || tag === 'textarea' || tag === 'select' || Boolean(target?.isContentEditable);
 }
 
-function createDefaultView({ documentTarget, catalog, state, onClose }) {
+function createDefaultView({ documentTarget, getCatalog, state }) {
   const topbar = documentTarget.querySelector('#topbar');
   const button = documentTarget.createElement('button');
   button.type = 'button';
@@ -267,7 +272,7 @@ function createDefaultView({ documentTarget, catalog, state, onClose }) {
   let activeHint = null;
 
   function renderResults() {
-    const matches = searchOnboardingHelp(catalog, search.value, { category: category.value });
+    const matches = searchOnboardingHelp(getCatalog(), search.value, { category: category.value });
     results.replaceChildren(...matches.map((entry) => {
       const article = documentTarget.createElement('article');
       article.dataset.helpEntry = entry.id;
@@ -303,6 +308,7 @@ function createDefaultView({ documentTarget, catalog, state, onClose }) {
     panel.hidden = false;
     button.setAttribute('aria-expanded', 'true');
     search.value = query;
+    if (entryId) category.value = 'all';
     renderResults();
     const target = entryId ? panel.querySelector(`[data-help-entry="${entryId}"]`) : null;
     (target ?? search).focus?.();
@@ -314,7 +320,6 @@ function createDefaultView({ documentTarget, catalog, state, onClose }) {
     panel.hidden = true;
     button.setAttribute('aria-expanded', 'false');
     button.focus?.();
-    onClose?.();
     return true;
   }
 
@@ -372,8 +377,9 @@ export function installOnboardingHelp({
   windowTarget = globalThis.window,
   documentTarget = globalThis.document,
   storage = windowTarget?.localStorage ?? null,
-  keyBindings = getRuntimeKeyBindings(),
+  keyBindings = getRuntimeKeyBindings,
   schedule = (callback) => windowTarget.setTimeout(callback, 600),
+  cancelSchedule = (handle) => windowTarget?.clearTimeout?.(handle),
   createView = createDefaultView,
 } = {}) {
   if (!windowTarget?.addEventListener || !windowTarget?.removeEventListener) {
@@ -383,11 +389,16 @@ export function installOnboardingHelp({
     throw new TypeError('Onboarding help requires a document with a body.');
   }
   if (typeof createView !== 'function') throw new TypeError('Onboarding help createView must be a function.');
-  const catalog = createOnboardingHelpCatalog({ keyBindings });
+  if (typeof schedule !== 'function') throw new TypeError('Onboarding help schedule must be a function.');
+  if (typeof cancelSchedule !== 'function') throw new TypeError('Onboarding help cancelSchedule must be a function.');
+  const resolveKeyBindings = () => typeof keyBindings === 'function' ? keyBindings() : keyBindings;
+  const getCatalog = () => createOnboardingHelpCatalog({ keyBindings: resolveKeyBindings() });
+  const catalog = getCatalog();
   const state = createOnboardingHelpState({ storage });
-  const view = createView({ documentTarget, catalog, state });
-  let previousGlobal = windowTarget[ONBOARDING_GLOBAL];
+  const view = createView({ documentTarget, catalog, getCatalog, state });
+  const previousGlobal = windowTarget[ONBOARDING_GLOBAL];
   let disposed = false;
+  let scheduleHandle = null;
 
   function notify(topic, { includeSeen = false } = {}) {
     const step = state.hintForTopic(topic, { includeSeen });
@@ -428,10 +439,10 @@ export function installOnboardingHelp({
     close: view.close,
     notify,
     reset: state.reset,
-    snapshot: () => deepFreeze({ state: state.snapshot(), catalogSize: catalog.length, open: view.isOpen() }),
-    search: (query, options) => searchOnboardingHelp(catalog, query, options),
+    snapshot: () => deepFreeze({ state: state.snapshot(), catalogSize: getCatalog().length, open: view.isOpen() }),
+    search: (query, options) => searchOnboardingHelp(getCatalog(), query, options),
   });
-  schedule(() => {
+  scheduleHandle = schedule(() => {
     if (disposed) return;
     const step = state.nextHint();
     if (step) {
@@ -443,6 +454,14 @@ export function installOnboardingHelp({
   return () => {
     if (disposed) return false;
     disposed = true;
+    if (scheduleHandle !== null && scheduleHandle !== undefined) {
+      try {
+        cancelSchedule(scheduleHandle);
+      } catch {
+        // Teardown must continue even when a host timer implementation rejects cancellation.
+      }
+      scheduleHandle = null;
+    }
     windowTarget.removeEventListener('keydown', onKeyDown, true);
     documentTarget.removeEventListener('click', onClick, true);
     windowTarget.removeEventListener(ONBOARDING_CONTEXT_EVENT, onContext);
