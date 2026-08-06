@@ -46,8 +46,8 @@ test('UFR-110 generator is deterministic and covers the complete canonical famil
   assert.deepEqual(first.catalogObject.directions, UKRAINIAN_INFANTRY_DIRECTIONS);
   assert.deepEqual(first.catalogObject.counts, {
     units: 7,
-    battleFrames: 840,
-    totalFrames: 855,
+    battleFrames: 1176,
+    totalFrames: 1191,
     animations: 49,
   });
 });
