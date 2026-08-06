@@ -2,16 +2,85 @@
   "schema": "fields-of-resolve.ukrainian-infantry-art-source",
   "version": 1,
   "id": "fields-of-resolve.ukrainian-infantry",
-  "frame": { "width": 48, "height": 48, "columns": 20 },
-  "directions": ["n", "ne", "e", "se", "s", "sw", "w", "nw"],
+  "frame": {
+    "width": 48,
+    "height": 48,
+    "columns": 20
+  },
+  "directions": [
+    "n",
+    "ne",
+    "e",
+    "se",
+    "s",
+    "sw",
+    "w",
+    "nw"
+  ],
   "states": {
-    "idle": { "frames": 2, "durationsMs": [420, 420], "loop": "loop" },
-    "move": { "frames": 4, "durationsMs": [115, 115, 115, 115], "loop": "loop" },
-    "attack": { "frames": 3, "durationsMs": [70, 90, 150], "loop": "once" },
-    "hit": { "frames": 1, "durationsMs": [150], "loop": "once" },
-    "damaged": { "frames": 1, "durationsMs": [480], "loop": "loop" },
-    "death": { "frames": 3, "durationsMs": [110, 130, 360], "loop": "once" },
-    "wreck": { "frames": 1, "durationsMs": [1000], "loop": "hold" }
+    "idle": {
+      "frames": 2,
+      "durationsMs": [
+        260,
+        320
+      ],
+      "loop": "loop"
+    },
+    "move": {
+      "frames": 6,
+      "durationsMs": [
+        105,
+        105,
+        105,
+        105,
+        105,
+        105
+      ],
+      "loop": "loop"
+    },
+    "attack": {
+      "frames": 3,
+      "durationsMs": [
+        70,
+        80,
+        110
+      ],
+      "loop": "once"
+    },
+    "hit": {
+      "frames": 2,
+      "durationsMs": [
+        80,
+        140
+      ],
+      "loop": "once"
+    },
+    "damaged": {
+      "frames": 2,
+      "durationsMs": [
+        260,
+        320
+      ],
+      "loop": "loop"
+    },
+    "death": {
+      "frames": 5,
+      "durationsMs": [
+        90,
+        100,
+        110,
+        130,
+        420
+      ],
+      "loop": "once"
+    },
+    "wreck": {
+      "frames": 1,
+      "durationsMs": [
+        1000
+      ],
+      "loop": "hold"
+    }
   },
   "paletteTokens": {
     "ink": "#111512",
@@ -36,7 +105,9 @@
       "displayName": "Ukrainian Combat Engineer Section",
       "shortName": "Combat Engineers",
       "role": "engineer",
-      "aliases": ["uaEngineer"],
+      "aliases": [
+        "uaEngineer"
+      ],
       "equipment": "tool",
       "accent": "engineer"
     },
@@ -45,7 +116,9 @@
       "displayName": "Ukrainian Mechanized Infantry Squad",
       "shortName": "Mechanized Squad",
       "role": "line-infantry",
-      "aliases": ["uaInfantry"],
+      "aliases": [
+        "uaInfantry"
+      ],
       "equipment": "rifle",
       "accent": "ukrainian-yellow"
     },
@@ -54,7 +127,9 @@
       "displayName": "Ukrainian Anti-Armor Team",
       "shortName": "Anti-Armor Team",
       "role": "anti-armor",
-      "aliases": ["uaAntiArmor"],
+      "aliases": [
+        "uaAntiArmor"
+      ],
       "equipment": "launcher",
       "accent": "damage"
     },
@@ -63,7 +138,9 @@
       "displayName": "Ukrainian Reconnaissance Team",
       "shortName": "Recon Team",
       "role": "reconnaissance",
-      "aliases": ["uaRecon"],
+      "aliases": [
+        "uaRecon"
+      ],
       "equipment": "optic",
       "accent": "recon"
     },
@@ -72,7 +149,9 @@
       "displayName": "Ukrainian CASEVAC Team",
       "shortName": "CASEVAC Team",
       "role": "medical",
-      "aliases": ["uaMedic"],
+      "aliases": [
+        "uaMedic"
+      ],
       "equipment": "medical",
       "accent": "medical-mark"
     },
@@ -81,7 +160,9 @@
       "displayName": "Ukrainian Mobile Air-Defense Section",
       "shortName": "Mobile Air Defense",
       "role": "air-defense",
-      "aliases": ["uaAirDefense"],
+      "aliases": [
+        "uaAirDefense"
+      ],
       "equipment": "sam",
       "accent": "air-defense"
     },
@@ -90,7 +171,9 @@
       "displayName": "Ukrainian Command Support Team",
       "shortName": "Command Team",
       "role": "command-support",
-      "aliases": ["uaCommand"],
+      "aliases": [
+        "uaCommand"
+      ],
       "equipment": "radio",
       "accent": "command"
     }
