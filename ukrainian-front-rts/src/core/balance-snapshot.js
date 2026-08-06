@@ -6,7 +6,47 @@ export const BALANCE_OUTCOMES = Object.freeze(['win', 'loss', 'draw', 'timeout',
 
 const BATCH_KINDS = new Set(BALANCE_BATCH_KINDS);
 const OUTCOMES = new Set(BALANCE_OUTCOMES);
-const PRIVATE_KEY = /(^|[-_])(email|e-mail|name|username|user-id|userid|ip|address|device|cookie|token|session)([-_]|$)/i;
+const PRIVATE_KEY_TOKENS = new Set([
+  'account',
+  'address',
+  'auth',
+  'authorization',
+  'cookie',
+  'credential',
+  'device',
+  'email',
+  'ip',
+  'location',
+  'name',
+  'password',
+  'phone',
+  'profile',
+  'secret',
+  'session',
+  'telephone',
+  'token',
+  'username',
+]);
+const PRIVATE_COMPACT_KEYS = new Set([
+  'accountid',
+  'auth token',
+  'clientid',
+  'deviceid',
+  'displayname',
+  'emailaddress',
+  'ipaddress',
+  'networkaddress',
+  'playerid',
+  'playername',
+  'profileid',
+  'refreshtoken',
+  'sessionid',
+  'sessiontoken',
+  'userid',
+  'useragent',
+  'useremail',
+  'username',
+].map((key) => key.replaceAll(' ', '')));
 
 function deepFreeze(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
@@ -41,6 +81,20 @@ function canonicalize(value) {
   );
 }
 
+function privacyKeyParts(key) {
+  return String(key)
+    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+}
+
+function isPrivateBalanceKey(key) {
+  const parts = privacyKeyParts(key);
+  if (parts.some((part) => PRIVATE_KEY_TOKENS.has(part))) return true;
+  return PRIVATE_COMPACT_KEYS.has(parts.join(''));
+}
+
 export function assertPrivacySafeBalanceData(value, path = 'balance data') {
   if (Array.isArray(value)) {
     value.forEach((child, index) => assertPrivacySafeBalanceData(child, `${path}[${index}]`));
@@ -48,7 +102,7 @@ export function assertPrivacySafeBalanceData(value, path = 'balance data') {
   }
   if (!value || typeof value !== 'object') return true;
   for (const [key, child] of Object.entries(value)) {
-    if (PRIVATE_KEY.test(key)) throw new Error(`${path}.${key} is not allowed in privacy-safe balance output.`);
+    if (isPrivateBalanceKey(key)) throw new Error(`${path}.${key} is not allowed in privacy-safe balance output.`);
     assertPrivacySafeBalanceData(child, `${path}.${key}`);
   }
   return true;
