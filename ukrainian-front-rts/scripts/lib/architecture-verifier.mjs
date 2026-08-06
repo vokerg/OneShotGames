@@ -135,7 +135,7 @@ function layerOf(path) {
   if (CONTRACT_MODULES.has(path)) return 'contract';
   if (path === 'src/config.js' || path.startsWith('src/content/')) return 'config';
   if (path === 'src/content-schema.js') return 'schema';
-  if (path === 'src/ui.js' || path.startsWith('src/ui/')) return 'ui';
+  if (path === 'src/ui.js' || path.startsWith('src/ui/') || path.startsWith('src/localization/')) return 'ui';
   if (['src/render.js', 'src/art-pass.js', 'src/environment-art-pass.js'].includes(path) || path.startsWith('src/render/')) return 'render';
   if (SYSTEM_NAMESPACES.some((namespace) => path.startsWith(`src/${namespace}/`))) return 'systems';
   for (const layer of ['core', 'navigation', 'systems', 'ai', 'app', 'input', 'audio']) {
@@ -152,8 +152,9 @@ function resolvedImport(sourcePath, specifier) {
 }
 
 function ownsDom(path) {
-  return path === 'src/main.js' || path === 'src/art-lab.js' || path === 'src/ui.js' || path.startsWith('src/ui/') || path === 'src/render.js' ||
-    path === 'src/art-pass.js' || path === 'src/environment-art-pass.js' ||
+  return path === 'src/main.js' || path === 'src/art-lab.js' || path === 'src/ui.js' || path.startsWith('src/ui/') ||
+    path.startsWith('src/localization/') ||
+    path === 'src/render.js' || path === 'src/art-pass.js' || path === 'src/environment-art-pass.js' ||
     path === 'src/app/runtime.js' || path.startsWith('src/input/') ||
     path.startsWith('src/render/') || path.startsWith('src/audio/');
 }
