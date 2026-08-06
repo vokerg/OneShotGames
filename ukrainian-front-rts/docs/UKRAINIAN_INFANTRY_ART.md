@@ -4,9 +4,9 @@ UFR-110 defines the complete original Ukrainian infantry/support battlefield fam
 
 ## Canonical coverage
 
-The source manifest covers combat engineers, line/mechanized infantry, anti-armor, reconnaissance, CASEVAC/medical, mobile air defense, and command support. Each identity provides eight clockwise directions and `idle`, `move`, `attack`, `hit`, `damaged`, `death`, and `wreck` states, plus a portrait and compact icon.
+The source manifest covers combat engineers, line/mechanized infantry, anti-armor, reconnaissance, CASEVAC/medical, mobile air defense, and command support. Each identity provides eight clockwise directions and `idle`, `move`, `attack`, `hit`, `damaged`, `death`, and `wreck` states, plus a portrait and compact icon. Frame counts meet the art-bible production minima: six-frame movement, two-frame hit and damaged reactions, and five-frame death sequences.
 
-The deterministic generator expands the compact reviewed source into 840 battlefield frames, 855 total frames, and 49 directional animations. Geometry is built from reusable SVG definitions and crisp-edge `<use>` placement; no remote references, embedded scripts, raster payloads, external likenesses, or public figures are used.
+The deterministic generator expands the compact reviewed source into 1,176 battlefield frames, 1,191 total frames, and 49 directional animations. Geometry is built from reusable SVG definitions and crisp-edge `<use>` placement; no remote references, embedded scripts, raster payloads, external likenesses, or public figures are used.
 
 ## Runtime composition
 
