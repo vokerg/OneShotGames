@@ -275,12 +275,14 @@ export function createRuntimeDiagnostics({
   copyText = null,
   downloadText = null,
   renderFatal = null,
+  confirmReset = (message) => windowTarget?.confirm?.(message) ?? false,
   reload = () => windowTarget?.location?.reload?.(),
 } = {}) {
   if (!windowTarget?.addEventListener || !windowTarget?.removeEventListener) {
     throw new TypeError('Runtime diagnostics require a window-like event target.');
   }
   if (typeof now !== 'function') throw new TypeError('Runtime diagnostics now must be a function.');
+  if (typeof confirmReset !== 'function') throw new TypeError('Runtime diagnostics confirmReset must be a function.');
   const copy = copyText ?? ((text) => defaultCopyText(text, { documentTarget, windowTarget }));
   const download = downloadText ?? ((filename, text) => defaultDownloadText(filename, text, { documentTarget, windowTarget }));
   const render = renderFatal ?? ((model) => installDefaultFatalView({ documentTarget, ...model }));
@@ -300,6 +302,10 @@ export function createRuntimeDiagnostics({
   };
   const exportAndReset = async () => {
     const exported = await exportRecovery();
+    const confirmed = await confirmReset(
+      'Confirm reset only after the recovery file appears in your downloads. Cancel to keep local data unchanged.',
+    );
+    if (!confirmed) return `${exported} Reset cancelled; local data was not changed.`;
     const removed = resetRuntimeRecoveryData(storage);
     return `${exported} Reset ${removed} local data entries. Reload to restart cleanly.`;
   };
@@ -356,12 +362,13 @@ export function createRuntimeDiagnostics({
   }
 
   function dispose() {
-    if (!installed && !removeView) return false;
+    if (!installed && !removeView && currentReport === null) return false;
     windowTarget.removeEventListener('error', onError);
     windowTarget.removeEventListener('unhandledrejection', onUnhandledRejection);
     installed = false;
     removeView?.();
     removeView = null;
+    currentReport = null;
     if (windowTarget[RUNTIME_DIAGNOSTICS_GLOBAL]?.snapshot === snapshot) {
       if (previousGlobal === undefined) delete windowTarget[RUNTIME_DIAGNOSTICS_GLOBAL];
       else windowTarget[RUNTIME_DIAGNOSTICS_GLOBAL] = previousGlobal;
