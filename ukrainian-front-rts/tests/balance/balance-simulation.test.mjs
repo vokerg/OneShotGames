@@ -30,7 +30,7 @@ function fakeHarnessFactory() {
           gameOver: false,
           outcome: null,
           endReason: null,
-          player: { metal: 100, intel: 20, fuel: 10, objectives: ['hold'] },
+          player: { supply: 100, intel: 20, fuel: 10, objectives: ['hold'] },
           units: [
             { id: 1, team: TEAM.UA, type: 'uaInfantry', x: 10, y: 10, hp: 100, kills: 0 },
             { id: 2, team: TEAM.RU, type: 'ruInfantry', x: 100, y: 100, hp: 100, kills: 0 },
@@ -51,7 +51,7 @@ function fakeHarnessFactory() {
       advanceTicks(count) {
         state.tick += count;
         state.time = state.tick / 30;
-        state.player.metal += 25;
+        state.player.supply += 25;
         state.units[0].kills = 1;
         state.units = state.units.filter((unit) => unit.team !== TEAM.RU);
         state.buildings = state.buildings.filter((building) => building.team !== TEAM.RU);
@@ -89,7 +89,7 @@ test('balance batches are deterministic and aggregate outcomes, timing, and metr
   assert.equal(Object.isFrozen(first.metrics.survivingUnits), true);
 });
 
-test('privacy-safe snapshots reject personal identifiers anywhere in exported data', () => {
+test('privacy-safe snapshots reject delimited and camelCase personal identifiers recursively', () => {
   assert.throws(
     () => runBalanceBatch({
       id: 'unsafe-context',
@@ -104,6 +104,23 @@ test('privacy-safe snapshots reject personal identifiers anywhere in exported da
     () => assertPrivacySafeBalanceData({ session_token: 'secret' }),
     /not allowed/,
   );
+  assert.throws(
+    () => assertPrivacySafeBalanceData({ nested: [{ emailAddress: 'operator@example.test' }] }),
+    /emailAddress is not allowed/,
+  );
+  assert.throws(
+    () => assertPrivacySafeBalanceData({ userId: '123' }),
+    /userId is not allowed/,
+  );
+  assert.throws(
+    () => assertPrivacySafeBalanceData({ sessionToken: 'secret' }),
+    /sessionToken is not allowed/,
+  );
+  assert.doesNotThrow(() => assertPrivacySafeBalanceData({
+    missionId: 'operation-1',
+    sourceRevision: 'abc123',
+    matchup: { leftFaction: 'ua', rightFaction: 'ru' },
+  }));
 });
 
 test('balance snapshots serialize canonically and remain source-revision scoped', () => {
