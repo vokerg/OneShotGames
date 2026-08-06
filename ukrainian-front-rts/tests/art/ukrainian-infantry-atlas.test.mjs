@@ -84,6 +84,7 @@ test('runtime identity, direction, and visual-state adapters preserve safe fallb
   assert.equal(ukrainianInfantryVisualState({ hp: 100, maxHp: 100, flash: 0, order: { kind: 'move' } }, {}, 0), 'move');
 });
 
+
 test('renderer art pass installs once, draws eligible UA infantry, and restores exact fallbacks', async () => {
   class Renderer {
     unit() { return 'fallback-unit'; }
