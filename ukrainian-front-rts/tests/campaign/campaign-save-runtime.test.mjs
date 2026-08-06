@@ -3,6 +3,8 @@ import test from 'node:test';
 
 import {
   CAMPAIGN_SAVE_STATUSES,
+  CAMPAIGN_SAVE_VERSION,
+  createCampaignSaveBackupKey,
 } from '../../src/core/campaign-save-service.js';
 import {
   createCampaignSaveRuntime,
@@ -91,6 +93,36 @@ test('autosave and Continue restore the newest valid captured state', () => {
   assert.equal(result.status, CAMPAIGN_SAVE_STATUSES.OK);
   assert.equal(result.slotId, 'autosave');
   assert.equal(restored.missionState.operationId, 'zaporizhzhia');
+});
+
+test('runtime applies the released save migration registry and preserves the original backup', () => {
+  const storage = createLocalStorageFixture();
+  const legacy = JSON.stringify({
+    version: 0,
+    slotId: 'legacy-runtime',
+    timestamp: 30,
+    profile: profileFor(),
+    missionState: null,
+  });
+  storage.setItem('fields-of-resolve:campaign-save:legacy-runtime', legacy);
+  let restored = null;
+  const runtime = createCampaignSaveRuntime({
+    storage,
+    now: () => 100,
+    captureState: () => ({ profile: profileFor(), missionState: null }),
+    restoreState: (state) => { restored = state; },
+  });
+
+  const result = runtime.loadSlot('legacy-runtime');
+
+  assert.equal(result.status, CAMPAIGN_SAVE_STATUSES.OK);
+  assert.equal(result.save.version, CAMPAIGN_SAVE_VERSION);
+  assert.equal(restored.profile.profileId, 'commander');
+  assert.equal(storage.getItem(createCampaignSaveBackupKey('legacy-runtime', 0)), legacy);
+  assert.equal(
+    JSON.parse(storage.getItem('fields-of-resolve:campaign-save:legacy-runtime')).version,
+    CAMPAIGN_SAVE_VERSION,
+  );
 });
 
 test('missing or corrupt loads never invoke the runtime restorer', () => {
