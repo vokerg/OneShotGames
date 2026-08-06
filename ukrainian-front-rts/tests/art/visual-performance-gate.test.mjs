@@ -65,6 +65,17 @@ test('culls offscreen sprites and groups stable atlas batches', () => {
   ], { x: 0, y: 0, width: 100, height: 100 })));
 });
 
+test('supports negative world and viewport coordinates during culling', () => {
+  const plan = createAtlasRenderPlan([
+    { id: 'visible', atlasId: 'units', frameId: 'idle', x: -24, y: -12, width: 16, height: 16 },
+    { id: 'hidden', atlasId: 'units', frameId: 'idle', x: 20, y: 20, width: 8, height: 8 },
+  ], { x: -32, y: -32, width: 32, height: 32 });
+
+  assert.equal(plan.visibleSprites, 1);
+  assert.equal(plan.culledSprites, 1);
+  assert.equal(plan.batches[0].drawables[0].id, 'visible');
+});
+
 test('deduplicates texture memory while accounting for atlas metadata', () => {
   const memory = estimateAtlasMemory([
     manifest('units-a', 'shared.png'),
