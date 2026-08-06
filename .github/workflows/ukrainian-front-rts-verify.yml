@@ -13,50 +13,11 @@ on:
       - '.github/workflows/ukrainian-front-rts-verify.yml'
 
 permissions:
-  contents: write
+  contents: read
   pull-requests: read
 
 jobs:
-  materialize-ufr110:
-    if: github.event_name == 'pull_request' && github.head_ref == 'ufrts/UFR-110-ua-infantry-atlas'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Restore reviewed implementation payload
-        shell: bash
-        run: |
-          cat .github/ufr110-payload/part-* > /tmp/ufr110-transfer.b64
-          base64 --decode /tmp/ufr110-transfer.b64 > /tmp/ufr110-transfer.tgz
-          echo "fb2a6c80f0fe2eb83fec09821796222f673ca35ba754e73afeab57eca9b39c3e  /tmp/ufr110-transfer.tgz" | sha256sum --check --strict
-          tar -xzf /tmp/ufr110-transfer.tgz -C .
-      - name: Generate and verify canonical outputs
-        shell: bash
-        run: |
-          cd ukrainian-front-rts
-          node scripts/build-ukrainian-infantry-atlas.mjs
-          node scripts/verify-ukrainian-infantry-art.mjs
-          node --test tests/art/ukrainian-infantry-atlas.test.mjs
-      - name: Replace transfer files with implementation
-        shell: bash
-        run: |
-          rm -rf .github/ufr110-payload .github/workflows/ufr110-materialize.yml
-          git fetch origin main
-          git checkout origin/main -- .github/workflows/ukrainian-front-rts-verify.yml
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "Implement UFR-110 Ukrainian infantry atlas"
-          git push origin "HEAD:${GITHUB_HEAD_REF}"
-
   verify:
-    if: github.event_name != 'pull_request' || github.head_ref != 'ufrts/UFR-110-ua-infantry-atlas'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
