@@ -42,7 +42,7 @@ The default suite produces three batches:
 
 ## Privacy boundary
 
-The pipeline collects no player identity, account, network, device, cookie, session, or free-form event data. Snapshot construction recursively rejects keys associated with personal identifiers. Output is tied to a source revision rather than a person or workstation.
+The pipeline collects no player identity, account, network, device, cookie, session, or free-form event data. Snapshot construction recursively rejects keys associated with personal identifiers. Validation normalizes delimiter-separated and camelCase field names, so nested fields such as `user_email`, `emailAddress`, `userId`, and `sessionToken` are rejected consistently. Output is tied to a source revision rather than a person or workstation.
 
 ## Interpretation
 
@@ -50,4 +50,4 @@ Batch output is evidence, not an automatic balance decision. Compare snapshots p
 
 ## Verification
 
-Focused coverage validates deterministic seeds and output, outcome/rate aggregation, timing and metric summaries, privacy rejection, canonical serialization, real harness adapter behavior through a deterministic fake harness, and the three-batch default suite. The repository-wide verifier discovers the test automatically.
+Focused coverage validates deterministic seeds and output, outcome/rate aggregation, timing and metric summaries, recursive privacy rejection across common naming conventions, canonical serialization, real harness adapter behavior through a deterministic fake harness, and the three-batch default suite. The repository-wide verifier discovers the test automatically.
