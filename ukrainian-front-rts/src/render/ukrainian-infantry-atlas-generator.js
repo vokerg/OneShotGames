@@ -8,6 +8,14 @@ function assert(condition, message) {
   if (!condition) throw new TypeError(message);
 }
 
+function escapeXml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;');
+}
+
 function stableJson(value) {
   return `${JSON.stringify(value)}\n`;
 }
@@ -86,7 +94,7 @@ function stateTransform(state, frameIndex) {
     return { bodyY: Math.abs(phase) * -0.5, leftLeg: phase, rightLeg: -phase, lean: phase * 0.5, opacity: 1 };
   }
   if (state === 'attack') {
-    return { bodyY: 0, leftLeg: 0, rightLeg: 0, lean: [0, -2, 1][frameIndex] ?? 0, opacity: 1 };
+    return { bodyY: 0, leftLeg: 0, rightLeg: 0, lean: [0, -2, 1][frameIndex] ?? 0, recoil: [0, 3, 1][frameIndex] ?? 0, opacity: 1 };
   }
   if (state === 'hit') return { bodyY: 1, leftLeg: -1, rightLeg: 1, lean: 6, opacity: 1, hit: true };
   if (state === 'damaged') return { bodyY: 2, leftLeg: -1, rightLeg: 1, lean: 3, opacity: 0.92, damaged: true };
@@ -97,6 +105,7 @@ function stateTransform(state, frameIndex) {
 
 function renderBattleFrame(unit, state, frameIndex, palette) {
   const motion = stateTransform(state, frameIndex);
+  const accent = palette[unit.accent];
   const uniform = motion.damaged || motion.death || motion.wreck ? palette['uniform-dark'] : palette['uniform-base'];
   const light = motion.damaged || motion.wreck ? palette.shadow : palette['uniform-light'];
   const muzzle = state === 'attack' && frameIndex === 1
@@ -139,9 +148,9 @@ function frameRecord(id, x, y, width, height, tags, attachments = {}) {
     },
     masks: {
       hit: { x: 6, y: 5, w: width - 12, h: height - 9 },
-      selection: { x: 7, y: 12, w: width - 14, h: height - 15 },
+      selection: { x: 7, y: 12, w: width - 14, h: height - 15 }
     },
-    tags,
+    tags
   };
 }
 
@@ -163,7 +172,7 @@ export function generateUkrainianInfantryAtlas(sourceValue) {
   let index = 0;
 
   const missingCell = makeCell(index++, columns, width, height);
-  definitions.push('<g id="missing-frame"><rect width="48" height="48" fill="#ff4fa3"/><path d="M6 6l36 36M42 6L6 42" stroke="#fff" stroke-width="5"/><rect x="2" y="2" width="44" height="44" fill="none" stroke="#111512" stroke-width="3"/></g>');
+  definitions.push(`<g id="missing-frame"><rect width="48" height="48" fill="#ff4fa3"/><path d="M6 6l36 36M42 6L6 42" stroke="#fff" stroke-width="5"/><rect x="2" y="2" width="44" height="44" fill="none" stroke="#111512" stroke-width="3"/></g>`);
   cells.push({ x: missingCell.x, y: missingCell.y, definition: 'missing-frame', angle: 0 });
   frames.missing = frameRecord('missing', missingCell.x, missingCell.y, width, height, ['fallback', 'diagnostic']);
 
@@ -180,7 +189,15 @@ export function generateUkrainianInfantryAtlas(sourceValue) {
           const id = `${unit.id}.${state}.${direction}.f${String(frameIndex).padStart(2, '0')}`;
           const cell = makeCell(index++, columns, width, height);
           const muzzle = rotatePoint(24, 3, DIRECTION_ANGLES[directionIndex]);
-          frames[id] = frameRecord(id, cell.x, cell.y, width, height, ['ukraine', 'infantry', unit.role, state, direction], { muzzle });
+          frames[id] = frameRecord(
+            id,
+            cell.x,
+            cell.y,
+            width,
+            height,
+            ['ukraine', 'infantry', unit.role, state, direction],
+            { muzzle }
+          );
           directions[direction].push({ frame: id, durationMs: definition.durationsMs[frameIndex] });
           const definitionId = `${unit.id.replaceAll('.', '-')}-${state}-f${frameIndex}`;
           if (!definitionIds.has(definitionId)) {
@@ -194,7 +211,7 @@ export function generateUkrainianInfantryAtlas(sourceValue) {
         id: `${unit.id}.${state}`,
         loop: definition.loop,
         defaultDurationMs: definition.durationsMs[0],
-        directions,
+        directions
       };
     }
 
@@ -225,7 +242,7 @@ export function generateUkrainianInfantryAtlas(sourceValue) {
     paletteTokens: source.paletteTokens,
     frames,
     animations,
-    fallback: { frame: 'missing' },
+    fallback: { frame: 'missing' }
   };
 
   const contactWidth = 7 * 150;
@@ -253,8 +270,8 @@ export function generateUkrainianInfantryAtlas(sourceValue) {
       units: source.units.length,
       battleFrames: Object.values(frames).filter((frame) => frame.tags.includes('infantry') && !frame.tags.includes('portrait') && !frame.tags.includes('icon')).length,
       totalFrames: Object.keys(frames).length,
-      animations: Object.keys(animations).length,
-    },
+      animations: Object.keys(animations).length
+    }
   };
 
   return Object.freeze({
@@ -264,7 +281,7 @@ export function generateUkrainianInfantryAtlas(sourceValue) {
     svg,
     contactSheet,
     catalog: stableJson(catalog),
-    catalogObject: catalog,
+    catalogObject: catalog
   });
 }
 
