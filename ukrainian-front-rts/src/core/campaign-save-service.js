@@ -1,4 +1,5 @@
 import {
+  CAMPAIGN_PROFILE_VERSION,
   serializeCampaignProfile,
   validateCampaignProfile,
 } from './campaign-profile.js';
@@ -27,6 +28,14 @@ class UnsupportedCampaignSaveVersionError extends Error {
   constructor(version) {
     super(`Unsupported campaign save version: ${version}`);
     this.name = 'UnsupportedCampaignSaveVersionError';
+    this.version = version;
+  }
+}
+
+class UnsupportedCampaignProfileVersionError extends Error {
+  constructor(version) {
+    super(`Unsupported campaign profile version: ${version}`);
+    this.name = 'UnsupportedCampaignProfileVersionError';
     this.version = version;
   }
 }
@@ -86,6 +95,10 @@ function cloneCanonicalJson(value, label, seen = new Set()) {
 }
 
 function normalizeProfile(profile) {
+  if (profile && typeof profile === 'object' && !Array.isArray(profile) &&
+      Object.getPrototypeOf(profile) === Object.prototype && profile.version !== CAMPAIGN_PROFILE_VERSION) {
+    throw new UnsupportedCampaignProfileVersionError(profile.version);
+  }
   return JSON.parse(serializeCampaignProfile(validateCampaignProfile(profile)));
 }
 
@@ -283,7 +296,11 @@ export function createCampaignSaveService({
   assertPlainObject(migrations, 'Campaign save migrations');
 
   function persistMigration(id, sourceVersion, sourceSerialized, save) {
+    const activeKey = slotKey(keyPrefix, id);
     const backupKey = createCampaignSaveBackupKey(id, sourceVersion, backupKeyPrefix);
+    if (backupKey === activeKey) {
+      throw new Error(`Campaign save migration backup key collides with active slot ${id}.`);
+    }
     const existingBackup = adapter.getItem(backupKey);
     if (existingBackup !== null && existingBackup !== undefined && String(existingBackup) !== sourceSerialized) {
       throw new Error(`Campaign save migration backup conflict for slot ${id} version ${sourceVersion}.`);
@@ -291,7 +308,7 @@ export function createCampaignSaveService({
     if (existingBackup === null || existingBackup === undefined) {
       adapter.setItem(backupKey, sourceSerialized);
     }
-    adapter.setItem(slotKey(keyPrefix, id), serializeCampaignSave(save));
+    adapter.setItem(activeKey, serializeCampaignSave(save));
   }
 
   function loadSlot(slotId) {
@@ -311,7 +328,8 @@ export function createCampaignSaveService({
       source = parseSerializedCampaignSave(sourceSerialized);
       save = normalizeEnvelope(source, { expectedSlotId: id, migrations });
     } catch (error) {
-      const status = error instanceof UnsupportedCampaignSaveVersionError
+      const status = error instanceof UnsupportedCampaignSaveVersionError ||
+          error instanceof UnsupportedCampaignProfileVersionError
         ? CAMPAIGN_SAVE_STATUSES.UNSUPPORTED_VERSION
         : CAMPAIGN_SAVE_STATUSES.CORRUPT;
       return result(status, id, { error: errorMessage(error) });
