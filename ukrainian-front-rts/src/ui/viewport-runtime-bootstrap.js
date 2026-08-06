@@ -1,3 +1,4 @@
+import './onboarding-help-bootstrap.js';
 import { installViewportRuntime } from './viewport-runtime.js';
 
 const viewportRuntime = installViewportRuntime({
