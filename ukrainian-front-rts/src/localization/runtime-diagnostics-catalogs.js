@@ -21,6 +21,8 @@ const ENGLISH_MESSAGES = {
         one: 'Exported {count} local data entry.',
         other: 'Exported {count} local data entries.',
       },
+      confirmReset: 'The recovery export has been prepared. Reset all Fields of Resolve local data now?',
+      resetCancelled: 'Reset cancelled; local data was not changed.',
       resetEntries: {
         one: 'Reset {count} local data entry. Reload to restart cleanly.',
         other: 'Reset {count} local data entries. Reload to restart cleanly.',
@@ -55,6 +57,8 @@ const UKRAINIAN_MESSAGES = {
         many: 'Експортовано {count} записів локальних даних.',
         other: 'Експортовано {count} запису локальних даних.',
       },
+      confirmReset: 'Експорт відновлення підготовлено. Скинути всі локальні дані «Полів рішучості» зараз?',
+      resetCancelled: 'Скидання скасовано; локальні дані не змінено.',
       resetEntries: {
         one: 'Скинуто {count} запис локальних даних. Перезавантажте застосунок для чистого запуску.',
         few: 'Скинуто {count} записи локальних даних. Перезавантажте застосунок для чистого запуску.',
