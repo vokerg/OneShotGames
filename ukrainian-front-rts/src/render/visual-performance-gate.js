@@ -14,6 +14,11 @@ function record(value, label) {
   return value;
 }
 
+function number(value, label) {
+  if (!Number.isFinite(value)) throw new RangeError(`${label} must be a finite number`);
+  return value;
+}
+
 function finite(value, label, minimum = 0) {
   if (!Number.isFinite(value) || value < minimum) throw new RangeError(`${label} must be a finite number >= ${minimum}`);
   return value;
@@ -48,6 +53,23 @@ function overlaps(viewport, drawable) {
     && bottom > viewport.y
     && drawable.x < viewport.x + viewport.width
     && drawable.y < viewport.y + viewport.height;
+}
+
+function normalizeVisualFrameSample(sample, label = 'sample') {
+  const value = record(sample, label);
+  return freeze({
+    sceneId: text(value.sceneId, `${label}.sceneId`),
+    frameMs: finite(value.frameMs, `${label}.frameMs`),
+    drawCalls: integer(value.drawCalls, `${label}.drawCalls`),
+    atlasBatches: integer(value.atlasBatches, `${label}.atlasBatches`),
+    visibleSprites: integer(value.visibleSprites, `${label}.visibleSprites`),
+    culledSprites: integer(value.culledSprites, `${label}.culledSprites`),
+    proceduralFallbacks: integer(value.proceduralFallbacks, `${label}.proceduralFallbacks`),
+    textureBytes: integer(value.textureBytes, `${label}.textureBytes`),
+    decodedAssetBytes: integer(value.decodedAssetBytes, `${label}.decodedAssetBytes`),
+    degradedAtlases: integer(value.degradedAtlases, `${label}.degradedAtlases`),
+    smoothingEnabled: Boolean(value.smoothingEnabled),
+  });
 }
 
 export const DEFAULT_VISUAL_PERFORMANCE_BUDGET = freeze({
@@ -86,8 +108,8 @@ export function createAtlasRenderPlan(drawables = [], viewport = {}) {
   if (!Array.isArray(drawables)) throw new TypeError('drawables must be an array');
   const bounds = record(viewport, 'viewport');
   const normalizedViewport = freeze({
-    x: finite(bounds.x ?? 0, 'viewport.x'),
-    y: finite(bounds.y ?? 0, 'viewport.y'),
+    x: number(bounds.x ?? 0, 'viewport.x'),
+    y: number(bounds.y ?? 0, 'viewport.y'),
     width: finite(bounds.width, 'viewport.width', Number.EPSILON),
     height: finite(bounds.height, 'viewport.height', Number.EPSILON),
   });
@@ -99,8 +121,8 @@ export function createAtlasRenderPlan(drawables = [], viewport = {}) {
       atlasId: text(item.atlasId, `drawables[${index}].atlasId`),
       frameId: text(item.frameId, `drawables[${index}].frameId`),
       layer: integer(item.layer ?? 0, `drawables[${index}].layer`),
-      x: finite(item.x, `drawables[${index}].x`),
-      y: finite(item.y, `drawables[${index}].y`),
+      x: number(item.x, `drawables[${index}].x`),
+      y: number(item.y, `drawables[${index}].y`),
       width: finite(item.width, `drawables[${index}].width`, Number.EPSILON),
       height: finite(item.height, `drawables[${index}].height`, Number.EPSILON),
       proceduralFallback: Boolean(item.proceduralFallback),
@@ -169,27 +191,24 @@ export function createVisualFrameSample({
 } = {}) {
   record(renderPlan, 'renderPlan');
   record(memory, 'memory');
-  return freeze({
-    sceneId: text(sceneId, 'sceneId'),
-    frameMs: finite(frameMs, 'frameMs'),
-    drawCalls: integer(renderPlan.drawCalls, 'renderPlan.drawCalls'),
-    atlasBatches: integer(renderPlan.atlasBatches, 'renderPlan.atlasBatches'),
-    visibleSprites: integer(renderPlan.visibleSprites, 'renderPlan.visibleSprites'),
-    culledSprites: integer(renderPlan.culledSprites, 'renderPlan.culledSprites'),
-    proceduralFallbacks: integer(renderPlan.proceduralFallbacks, 'renderPlan.proceduralFallbacks'),
-    textureBytes: integer(memory.textureBytes, 'memory.textureBytes'),
-    decodedAssetBytes: integer(memory.decodedAssetBytes, 'memory.decodedAssetBytes'),
-    degradedAtlases: integer(degradedAtlases, 'degradedAtlases'),
-    smoothingEnabled: Boolean(smoothingEnabled),
+  return normalizeVisualFrameSample({
+    sceneId,
+    frameMs,
+    drawCalls: renderPlan.drawCalls,
+    atlasBatches: renderPlan.atlasBatches,
+    visibleSprites: renderPlan.visibleSprites,
+    culledSprites: renderPlan.culledSprites,
+    proceduralFallbacks: renderPlan.proceduralFallbacks,
+    textureBytes: memory.textureBytes,
+    decodedAssetBytes: memory.decodedAssetBytes,
+    degradedAtlases,
+    smoothingEnabled,
   });
 }
 
 export function summarizeVisualPerformance(samples = []) {
   if (!Array.isArray(samples) || !samples.length) throw new TypeError('samples must be a non-empty array');
-  const normalized = samples.map((sample, index) => {
-    record(sample, `samples[${index}]`);
-    return createVisualFrameSample(sample);
-  });
+  const normalized = samples.map((sample, index) => normalizeVisualFrameSample(sample, `samples[${index}]`));
   const frameTimes = normalized.map((sample) => sample.frameMs).sort((a, b) => a - b);
   const maximum = (field) => Math.max(...normalized.map((sample) => sample[field]));
   return freeze({
