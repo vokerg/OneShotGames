@@ -61,6 +61,9 @@ jobs:
       - name: Browser accessibility settings and focus pause smoke
         if: always()
         run: node scripts/browser-accessibility-settings-smoke.mjs
+      - name: Browser localization smoke
+        if: always()
+        run: node scripts/browser-localization-smoke.mjs
       - name: Generate completion evidence audit
         if: always()
         run: node scripts/generate-completion-audit.mjs --output artifacts/completion-evidence-audit.md
