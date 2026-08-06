@@ -150,13 +150,25 @@ test('leaves current saves canonical and does not create a redundant backup', ()
   assert.equal(storage.getItem(activeKey), current);
 });
 
-test('reports future and malformed saves with actionable messages and refuses destructive overwrite', () => {
+test('reports future save and profile schemas plus malformed data without destructive overwrite', () => {
   const future = JSON.stringify({ version: CAMPAIGN_SAVE_VERSION + 1, slotId: 'future' });
+  const futureProfile = JSON.stringify({
+    version: CAMPAIGN_SAVE_VERSION,
+    slotId: 'future-profile',
+    kind: 'manual',
+    label: 'Future profile',
+    createdAt: 10,
+    updatedAt: 10,
+    profile: { ...profile(), version: CAMPAIGN_PROFILE_VERSION + 1 },
+    missionState: null,
+  });
   const corrupt = '{';
   const futureKey = `${ACTIVE_KEY_PREFIX}future`;
+  const futureProfileKey = `${ACTIVE_KEY_PREFIX}future-profile`;
   const corruptKey = `${ACTIVE_KEY_PREFIX}corrupt`;
   const storage = createMemoryCampaignStorage({
     [futureKey]: future,
+    [futureProfileKey]: futureProfile,
     [corruptKey]: corrupt,
   });
   const service = createCampaignSaveService({
@@ -173,6 +185,18 @@ test('reports future and malformed saves with actionable messages and refuses de
     /Refusing to overwrite.*unsupported-version/,
   );
   assert.equal(storage.getItem(futureKey), future);
+
+  const futureProfileResult = service.loadSlot('future-profile');
+  assert.equal(futureProfileResult.status, CAMPAIGN_SAVE_STATUSES.UNSUPPORTED_VERSION);
+  assert.equal(
+    futureProfileResult.error,
+    `Unsupported campaign profile version: ${CAMPAIGN_PROFILE_VERSION + 1}`,
+  );
+  assert.throws(
+    () => service.saveSlot(replacementOptions('future-profile')),
+    /Refusing to overwrite.*unsupported-version/,
+  );
+  assert.equal(storage.getItem(futureProfileKey), futureProfile);
 
   const corruptResult = service.loadSlot('corrupt');
   assert.equal(corruptResult.status, CAMPAIGN_SAVE_STATUSES.CORRUPT);
@@ -230,6 +254,28 @@ test('does not overwrite a different existing migration backup', () => {
   assert.match(loaded.error, /backup conflict/);
   assert.equal(storage.getItem(activeKey), legacy);
   assert.equal(storage.getItem(backupKey), 'different legacy contents');
+});
+
+test('rejects custom storage prefixes that collide for a migration source', () => {
+  const legacy = legacySave('collision');
+  const keyPrefix = 'custom:v0:';
+  const backupKeyPrefix = 'custom:';
+  const activeKey = `${keyPrefix}collision`;
+  const storage = createMemoryCampaignStorage({ [activeKey]: legacy });
+  const service = createCampaignSaveService({
+    storage,
+    now: () => 100,
+    keyPrefix,
+    backupKeyPrefix,
+    migrations: CAMPAIGN_SAVE_MIGRATIONS,
+  });
+
+  const loaded = service.loadSlot('collision');
+
+  assert.equal(loaded.status, CAMPAIGN_SAVE_STATUSES.STORAGE_ERROR);
+  assert.match(loaded.error, /backup key collides with active slot/);
+  assert.equal(storage.getItem(activeKey), legacy);
+  assert.deepEqual(storage.keys(), [activeKey]);
 });
 
 test('rejects future and malformed serialized migration inputs without replacement data', () => {
