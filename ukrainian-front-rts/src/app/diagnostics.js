@@ -300,6 +300,7 @@ export function createRuntimeDiagnostics({
   performance = () => windowTarget?.__fieldsOfResolvePerformance ?? null,
   copyText = null,
   downloadText = null,
+  confirmReset = (message) => windowTarget?.confirm?.(message) ?? false,
   renderFatal = null,
   reload = () => windowTarget?.location?.reload?.(),
 } = {}) {
@@ -307,6 +308,7 @@ export function createRuntimeDiagnostics({
     throw new TypeError('Runtime diagnostics require a window-like event target.');
   }
   if (typeof now !== 'function') throw new TypeError('Runtime diagnostics now must be a function.');
+  if (typeof confirmReset !== 'function') throw new TypeError('Runtime diagnostics confirmReset must be a function.');
   const localizer = createLocalizer(RUNTIME_DIAGNOSTICS_CATALOGS, {
     locale: documentTarget?.documentElement?.lang ?? 'en',
   });
@@ -339,6 +341,8 @@ export function createRuntimeDiagnostics({
   };
   const exportAndReset = async () => {
     const exported = await exportRecovery();
+    const confirmed = await confirmReset(localizer.t('diagnostics.ui.confirmReset'));
+    if (!confirmed) return `${exported} ${localizer.t('diagnostics.ui.resetCancelled')}`;
     const removed = resetRuntimeRecoveryData(storage);
     return `${exported} ${localizer.t('diagnostics.ui.resetEntries', { count: removed })}`;
   };
@@ -414,6 +418,7 @@ export function createRuntimeDiagnostics({
     installed = false;
     removeView?.();
     removeView = null;
+    currentReport = null;
     if (windowTarget[RUNTIME_DIAGNOSTICS_GLOBAL]?.snapshot === snapshot) {
       if (previousGlobal === undefined) delete windowTarget[RUNTIME_DIAGNOSTICS_GLOBAL];
       else windowTarget[RUNTIME_DIAGNOSTICS_GLOBAL] = previousGlobal;
