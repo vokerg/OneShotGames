@@ -38,6 +38,23 @@ function clamp(value, minimum, maximum) {
   return Math.min(maximum, Math.max(minimum, value));
 }
 
+function remainingResourcesForActions(resources, actions) {
+  assertRecord(resources, 'snapshot.resources');
+  const remaining = Object.fromEntries(Object.keys(resources).sort().map((resourceId) => {
+    const amount = resources[resourceId];
+    if (!Number.isFinite(amount) || amount < 0) {
+      throw new RangeError(`snapshot.resources.${resourceId} must be finite and >= 0`);
+    }
+    return [resourceId, amount];
+  }));
+  for (const action of actions) {
+    for (const [resourceId, amount] of Object.entries(action.cost ?? {})) {
+      remaining[resourceId] = (remaining[resourceId] ?? 0) - amount;
+    }
+  }
+  return remaining;
+}
+
 export function createAiDifficultyProfile({
   id,
   displayNameKey,
@@ -209,9 +226,11 @@ export function planEconomyForDifficulty({ snapshot, doctrine, difficulty } = {}
     },
   };
   const plan = planEconomy(constrainedSnapshot, runtime.doctrine);
+  const actions = plan.actions.slice(0, runtime.economy.maximumConcurrentPlans);
   return deepFreeze({
     ...plan,
-    actions: plan.actions.slice(0, runtime.economy.maximumConcurrentPlans),
+    actions,
+    remainingResources: remainingResourcesForActions(snapshot.resources, actions),
     difficulty: {
       profileId: runtime.profile.id,
       utilizationRatio: runtime.economy.utilizationRatio,
