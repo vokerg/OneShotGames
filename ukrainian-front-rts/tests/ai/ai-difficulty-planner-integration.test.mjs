@@ -41,6 +41,10 @@ function economySnapshot() {
   };
 }
 
+function expectedRemainingSupplies(plan) {
+  return 1000 - plan.actions.reduce((total, action) => total + (action.cost.supplies ?? 0), 0);
+}
+
 test('economy integration constrains plan concurrency while preserving real prices and resources', () => {
   const recruit = planEconomyForDifficulty({ snapshot: economySnapshot(), doctrine, difficulty: 'recruit' });
   const commander = planEconomyForDifficulty({ snapshot: economySnapshot(), doctrine, difficulty: 'commander' });
@@ -53,6 +57,9 @@ test('economy integration constrains plan concurrency while preserving real pric
   assert.deepEqual(recruit.actions[0].cost, { supplies: 1 });
   assert.equal(recruit.budgetPlan.resources.supplies, 1000);
   assert.equal(commander.budgetPlan.resources.supplies, 1000);
+  assert.equal(recruit.remainingResources.supplies, expectedRemainingSupplies(recruit));
+  assert.equal(commander.remainingResources.supplies, expectedRemainingSupplies(commander));
+  assert.ok(recruit.remainingResources.supplies > commander.remainingResources.supplies);
 });
 
 test('tactical integration delays only observed contacts and feeds adjusted doctrine into the real planner', () => {
