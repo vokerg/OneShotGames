@@ -1,0 +1,269 @@
+import { createAiDoctrineProfile } from './ai-contracts.js';
+import { planEconomy } from './economy-planner.js';
+import { planTacticalAi } from './tactical-ai.js';
+
+export const AI_DIFFICULTY_SCHEMA_VERSION = 1;
+export const DEFAULT_AI_DIFFICULTY_ID = 'regular';
+
+const PLAIN_OBJECT = Object.getPrototypeOf({});
+
+function deepFreeze(value) {
+  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
+  for (const child of Object.values(value)) deepFreeze(child);
+  return Object.freeze(value);
+}
+
+function assertRecord(value, label) {
+  if (!value || typeof value !== 'object' || Array.isArray(value) || Object.getPrototypeOf(value) !== PLAIN_OBJECT) {
+    throw new TypeError(`${label} must be a plain object`);
+  }
+}
+
+function assertId(value, label) {
+  if (typeof value !== 'string' || !value.trim()) throw new TypeError(`${label} must be a non-empty string`);
+  return value.trim();
+}
+
+function assertInteger(value, label, minimum = 0) {
+  if (!Number.isInteger(value) || value < minimum) throw new RangeError(`${label} must be an integer >= ${minimum}`);
+  return value;
+}
+
+function assertUnitInterval(value, label) {
+  if (!Number.isFinite(value) || value < 0 || value > 1) throw new RangeError(`${label} must be between 0 and 1`);
+  return value;
+}
+
+function clamp(value, minimum, maximum) {
+  return Math.min(maximum, Math.max(minimum, value));
+}
+
+function remainingResourcesForActions(resources, actions) {
+  assertRecord(resources, 'snapshot.resources');
+  const remaining = Object.fromEntries(Object.keys(resources).sort().map((resourceId) => {
+    const amount = resources[resourceId];
+    if (!Number.isFinite(amount) || amount < 0) {
+      throw new RangeError(`snapshot.resources.${resourceId} must be finite and >= 0`);
+    }
+    return [resourceId, amount];
+  }));
+  for (const action of actions) {
+    for (const [resourceId, amount] of Object.entries(action.cost ?? {})) {
+      remaining[resourceId] = (remaining[resourceId] ?? 0) - amount;
+    }
+  }
+  return remaining;
+}
+
+export function createAiDifficultyProfile({
+  id,
+  displayNameKey,
+  observationDelayTicks = 0,
+  reactionDelayTicks = 0,
+  planningQuality = 0.75,
+  riskTolerance = 0.5,
+  economyEfficiency = 0.85,
+  informationPolicy = 'observed-only',
+  resourceMultiplier = 1,
+  damageMultiplier = 1,
+  healthMultiplier = 1,
+} = {}) {
+  if (informationPolicy !== 'observed-only') {
+    throw new RangeError('informationPolicy must be observed-only');
+  }
+  for (const [label, value] of Object.entries({ resourceMultiplier, damageMultiplier, healthMultiplier })) {
+    if (value !== 1) throw new RangeError(`${label} must remain 1; default AI profiles cannot use hidden stat cheats`);
+  }
+
+  return deepFreeze({
+    schemaVersion: AI_DIFFICULTY_SCHEMA_VERSION,
+    id: assertId(id, 'id'),
+    displayNameKey: assertId(displayNameKey, 'displayNameKey'),
+    informationPolicy,
+    observationDelayTicks: assertInteger(observationDelayTicks, 'observationDelayTicks'),
+    reactionDelayTicks: assertInteger(reactionDelayTicks, 'reactionDelayTicks'),
+    planningQuality: assertUnitInterval(planningQuality, 'planningQuality'),
+    riskTolerance: assertUnitInterval(riskTolerance, 'riskTolerance'),
+    economyEfficiency: assertUnitInterval(economyEfficiency, 'economyEfficiency'),
+    fairness: deepFreeze({
+      resourceMultiplier,
+      damageMultiplier,
+      healthMultiplier,
+      fullMapVision: false,
+      ignoresFogOfWar: false,
+    }),
+  });
+}
+
+const PROFILE_LIST = [
+  createAiDifficultyProfile({
+    id: 'recruit',
+    displayNameKey: 'difficulty.recruit',
+    observationDelayTicks: 45,
+    reactionDelayTicks: 45,
+    planningQuality: 0.45,
+    riskTolerance: 0.3,
+    economyEfficiency: 0.6,
+  }),
+  createAiDifficultyProfile({
+    id: 'regular',
+    displayNameKey: 'difficulty.regular',
+    observationDelayTicks: 20,
+    reactionDelayTicks: 24,
+    planningQuality: 0.7,
+    riskTolerance: 0.48,
+    economyEfficiency: 0.8,
+  }),
+  createAiDifficultyProfile({
+    id: 'veteran',
+    displayNameKey: 'difficulty.veteran',
+    observationDelayTicks: 8,
+    reactionDelayTicks: 12,
+    planningQuality: 0.88,
+    riskTolerance: 0.58,
+    economyEfficiency: 0.93,
+  }),
+  createAiDifficultyProfile({
+    id: 'commander',
+    displayNameKey: 'difficulty.commander',
+    observationDelayTicks: 0,
+    reactionDelayTicks: 6,
+    planningQuality: 1,
+    riskTolerance: 0.66,
+    economyEfficiency: 1,
+  }),
+];
+
+export const AI_DIFFICULTY_PROFILES = deepFreeze(Object.fromEntries(PROFILE_LIST.map((profile) => [profile.id, profile])));
+export const AI_DIFFICULTY_IDS = Object.freeze(PROFILE_LIST.map((profile) => profile.id));
+
+export function resolveAiDifficultyProfile(value = DEFAULT_AI_DIFFICULTY_ID) {
+  if (typeof value === 'string') {
+    const profile = AI_DIFFICULTY_PROFILES[value];
+    if (!profile) throw new RangeError(`unknown AI difficulty profile: ${value}`);
+    return profile;
+  }
+  assertRecord(value, 'difficulty profile');
+  return createAiDifficultyProfile(value);
+}
+
+export function projectObservedContactsForDifficulty({ contacts = [], tick = 0, difficulty } = {}) {
+  const profile = resolveAiDifficultyProfile(difficulty);
+  const currentTick = assertInteger(tick, 'tick');
+  if (!Array.isArray(contacts)) throw new TypeError('contacts must be an array');
+  const latestVisibleTick = currentTick - profile.observationDelayTicks;
+
+  return Object.freeze(contacts
+    .filter((contact) => {
+      assertRecord(contact, 'contact');
+      const observedTick = assertInteger(contact.observedTick ?? contact.lastSeenTick, 'contact observed tick');
+      return observedTick <= latestVisibleTick;
+    })
+    .map((contact) => deepFreeze({ ...contact }))
+    .sort((left, right) =>
+      (left.observedTick ?? left.lastSeenTick) - (right.observedTick ?? right.lastSeenTick)
+      || String(left.id).localeCompare(String(right.id))));
+}
+
+export function createDifficultyAdjustedDoctrineProfile({ doctrine, difficulty } = {}) {
+  assertRecord(doctrine, 'doctrine');
+  const profile = resolveAiDifficultyProfile(difficulty);
+  const qualityPenalty = Math.round((1 - profile.planningQuality) * doctrine.decisionIntervalTicks);
+  const decisionIntervalTicks = Math.max(
+    1,
+    doctrine.decisionIntervalTicks + profile.reactionDelayTicks + qualityPenalty,
+  );
+
+  return createAiDoctrineProfile({
+    id: `${doctrine.id}:${profile.id}`,
+    factionId: doctrine.factionId,
+    strategy: doctrine.strategy,
+    decisionIntervalTicks,
+    decisionOffsetTicks: doctrine.decisionOffsetTicks % decisionIntervalTicks,
+    contactStaleAfterTicks: doctrine.contactStaleAfterTicks + profile.observationDelayTicks,
+    contactForgetAfterTicks: doctrine.contactForgetAfterTicks + profile.observationDelayTicks,
+    riskTolerance: clamp((doctrine.riskTolerance + profile.riskTolerance) / 2, 0, 1),
+    retreatThreshold: clamp(doctrine.retreatThreshold + (0.5 - profile.planningQuality) * 0.2, 0.1, 0.9),
+    informationPolicy: profile.informationPolicy,
+    budgetWeights: doctrine.budgetWeights,
+    goalWeights: doctrine.goalWeights,
+  });
+}
+
+export function createAiEconomyDifficultyLimits(difficulty) {
+  const profile = resolveAiDifficultyProfile(difficulty);
+  return deepFreeze({
+    schemaVersion: AI_DIFFICULTY_SCHEMA_VERSION,
+    profileId: profile.id,
+    utilizationRatio: profile.economyEfficiency,
+    maximumConcurrentPlans: Math.max(1, Math.round(1 + profile.economyEfficiency * 5)),
+    reserveRatio: Number(((1 - profile.economyEfficiency) * 0.2).toFixed(3)),
+    resourceMultiplier: 1,
+    costMultiplier: 1,
+    buildTimeMultiplier: 1,
+  });
+}
+
+export function createAiDifficultyRuntimePolicy({ doctrine, difficulty } = {}) {
+  const profile = resolveAiDifficultyProfile(difficulty);
+  return deepFreeze({
+    schemaVersion: AI_DIFFICULTY_SCHEMA_VERSION,
+    profile,
+    doctrine: createDifficultyAdjustedDoctrineProfile({ doctrine, difficulty: profile }),
+    economy: createAiEconomyDifficultyLimits(profile),
+  });
+}
+
+export function planEconomyForDifficulty({ snapshot, doctrine, difficulty } = {}) {
+  assertRecord(snapshot, 'snapshot');
+  const runtime = createAiDifficultyRuntimePolicy({ doctrine, difficulty });
+  const existingTargets = snapshot.targets && typeof snapshot.targets === 'object' ? snapshot.targets : {};
+  const constrainedSnapshot = {
+    ...snapshot,
+    targets: {
+      ...existingTargets,
+      reserveFraction: Math.max(existingTargets.reserveFraction ?? 0, runtime.economy.reserveRatio),
+    },
+  };
+  const plan = planEconomy(constrainedSnapshot, runtime.doctrine);
+  const actions = plan.actions.slice(0, runtime.economy.maximumConcurrentPlans);
+  return deepFreeze({
+    ...plan,
+    actions,
+    remainingResources: remainingResourcesForActions(snapshot.resources, actions),
+    difficulty: {
+      profileId: runtime.profile.id,
+      utilizationRatio: runtime.economy.utilizationRatio,
+      maximumConcurrentPlans: runtime.economy.maximumConcurrentPlans,
+    },
+  });
+}
+
+export function planTacticalAiForDifficulty({ difficulty, ...input } = {}) {
+  const runtime = createAiDifficultyRuntimePolicy({ doctrine: input.doctrine, difficulty });
+  const tick = input.tick ?? 0;
+  const knowledge = projectObservedContactsForDifficulty({
+    contacts: input.knowledge ?? [],
+    tick,
+    difficulty: runtime.profile,
+  });
+  const maximumCommands = Math.max(1, Math.round(2 + runtime.profile.planningQuality * 10));
+  const plan = planTacticalAi({
+    ...input,
+    doctrine: runtime.doctrine,
+    knowledge,
+    policy: {
+      ...(input.policy ?? {}),
+      maxCommands: Math.min(input.policy?.maxCommands ?? maximumCommands, maximumCommands),
+    },
+  });
+  return deepFreeze({
+    ...plan,
+    difficulty: {
+      profileId: runtime.profile.id,
+      observationDelayTicks: runtime.profile.observationDelayTicks,
+      reactionDelayTicks: runtime.profile.reactionDelayTicks,
+      planningQuality: runtime.profile.planningQuality,
+    },
+  });
+}
