@@ -4,8 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
 
-const repositoryRoot = path.dirname(fileURLToPath(import.meta.url));
-const gameRoot = path.join(repositoryRoot, "01-balti-city-walk");
+const siteRoot = path.dirname(fileURLToPath(import.meta.url));
 const port = Number.parseInt(process.env.PORT ?? "8080", 10);
 const host = process.env.HOST ?? "127.0.0.1";
 
@@ -17,6 +16,7 @@ const contentTypes = new Map([
   [".css", "text/css; charset=utf-8"],
   [".html", "text/html; charset=utf-8"],
   [".js", "text/javascript; charset=utf-8"],
+  [".mjs", "text/javascript; charset=utf-8"],
   [".json", "application/json; charset=utf-8"],
   [".map", "application/json; charset=utf-8"],
   [".png", "image/png"],
@@ -24,6 +24,12 @@ const contentTypes = new Map([
   [".jpeg", "image/jpeg"],
   [".svg", "image/svg+xml"],
   [".webp", "image/webp"],
+  [".ico", "image/x-icon"],
+  [".mp3", "audio/mpeg"],
+  [".wav", "audio/wav"],
+  [".ogg", "audio/ogg"],
+  [".webm", "video/webm"],
+  [".woff2", "font/woff2"],
 ]);
 
 function openBrowser(url) {
@@ -47,10 +53,10 @@ function openBrowser(url) {
 async function resolveFile(requestPath) {
   const decodedPath = decodeURIComponent(requestPath);
   const requested = decodedPath === "/" ? "/index.html" : decodedPath;
-  const candidate = path.resolve(gameRoot, `.${requested}`);
-  const rootPrefix = `${gameRoot}${path.sep}`;
+  const candidate = path.resolve(siteRoot, `.${requested}`);
+  const rootPrefix = `${siteRoot}${path.sep}`;
 
-  if (candidate !== gameRoot && !candidate.startsWith(rootPrefix)) return null;
+  if (candidate !== siteRoot && !candidate.startsWith(rootPrefix)) return null;
 
   const candidateStats = await stat(candidate);
   return candidateStats.isDirectory() ? path.join(candidate, "index.html") : candidate;
@@ -97,7 +103,7 @@ server.on("error", (error) => {
 
 server.listen(port, host, () => {
   const url = `http://${host}:${port}`;
-  console.log(`Bălți City Walk is running at ${url}`);
+  console.log(`OneShot Games launcher is running at ${url}`);
   console.log("Press Ctrl+C to stop.");
   openBrowser(url);
 });
