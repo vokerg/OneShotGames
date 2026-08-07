@@ -1,0 +1,10 @@
+.top-actions { flex-wrap: wrap; justify-content: flex-end; }
+.quiz-prompt { margin: 0 0 .75rem; padding: .7rem .8rem; border-left: 2px solid var(--amber, #e9c46a); background: rgba(233,196,106,.06); }
+.locked-entry { opacity: .55; }
+.modal-body section { padding: .75rem 0; border-bottom: 1px solid rgba(157,247,184,.14); }
+.modal-body section:last-child { border-bottom: 0; }
+.modal-body .tag { letter-spacing: .04em; }
+@media (max-width: 860px) {
+  .top-actions { gap: .25rem; }
+  .top-actions .ghost { font-size: .72rem; padding-inline: .35rem; }
+}
