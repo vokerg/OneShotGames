@@ -169,7 +169,7 @@ export function installViewportRuntime({
   visualViewport?.addEventListener?.('resize', schedule);
   documentTarget.addEventListener('fullscreenchange', clearFullscreenError);
   documentTarget.addEventListener('fullscreenerror', schedule);
-  documentTarget.addEventListener(LOCALE_CHANGE_EVENT, schedule);
+  documentTarget.addEventListener(LOCALE_CHANGE_EVENT, apply);
   fullscreenButton.addEventListener('click', toggleFullscreen);
 
   apply();
@@ -192,7 +192,7 @@ export function installViewportRuntime({
       visualViewport?.removeEventListener?.('resize', schedule);
       documentTarget.removeEventListener('fullscreenchange', clearFullscreenError);
       documentTarget.removeEventListener('fullscreenerror', schedule);
-      documentTarget.removeEventListener(LOCALE_CHANGE_EVENT, schedule);
+      documentTarget.removeEventListener(LOCALE_CHANGE_EVENT, apply);
       fullscreenButton.removeEventListener('click', toggleFullscreen);
       fullscreenButton.remove();
       minimumNotice.remove();

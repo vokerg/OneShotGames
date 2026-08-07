@@ -78,6 +78,14 @@ class FakeElement {
     this.attributes[name] = String(value);
   }
 
+  getAttribute(name) {
+    return this.attributes[name] ?? null;
+  }
+
+  removeAttribute(name) {
+    delete this.attributes[name];
+  }
+
   addEventListener(type, handler) {
     const handlers = this.listeners.get(type) || [];
     handlers.push(handler);
@@ -136,10 +144,15 @@ function createUiDocument() {
   ];
   const elements = Object.fromEntries(selectors.map((selector) => [selector, new FakeElement()]));
   elements['#objectiveList'].items = [new FakeElement(), new FakeElement(), new FakeElement()];
+  const documentElement = new FakeElement();
+  documentElement.lang = 'en';
+  documentElement.getAttribute = (name) => documentElement.attributes[name] ?? null;
+  documentElement.removeAttribute = (name) => { delete documentElement.attributes[name]; };
   return {
     elements,
     document: {
       body: new FakeElement(),
+      documentElement,
       querySelector: (selector) => elements[selector],
       createElement: () => new FakeElement(),
     },

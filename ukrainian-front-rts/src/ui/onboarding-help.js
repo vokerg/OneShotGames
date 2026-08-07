@@ -68,10 +68,15 @@ function normalizeKeyLabel(key) {
   return labels[value] ?? (value.length === 1 ? value.toUpperCase() : value);
 }
 
-function tokens(value) {
+function normalizeSearchText(value) {
   return canonicalText(value)
     .toLocaleLowerCase()
     .normalize('NFKD')
+    .replace(/\p{M}+/gu, '');
+}
+
+function tokens(value) {
+  return normalizeSearchText(value)
     .split(/[^\p{L}\p{N}]+/u)
     .filter(Boolean);
 }
@@ -169,7 +174,7 @@ export function searchOnboardingHelp(catalog, query = '', { category = 'all' } =
   return deepFreeze(catalog
     .filter((entry) => category === 'all' || entry.category === category)
     .map((entry) => {
-      const haystack = entrySearchText(entry);
+      const haystack = normalizeSearchText(entrySearchText(entry));
       const matched = searchTokens.filter((token) => haystack.includes(token));
       const title = entry.title.toLocaleLowerCase();
       const score = searchTokens.length === 0
