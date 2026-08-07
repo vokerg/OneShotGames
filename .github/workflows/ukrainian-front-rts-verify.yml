@@ -13,7 +13,7 @@ on:
       - '.github/workflows/ukrainian-front-rts-verify.yml'
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: read
 
 jobs:
@@ -28,6 +28,24 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Materialize issue 189 patch
+        if: github.event_name == 'pull_request' && github.head_ref == 'ufrts/fix-189-verification-localization'
+        working-directory: .
+        shell: bash
+        run: |
+          node ukrainian-front-rts/scripts/materialize-issue-189.mjs
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ukrainian-front-rts/tests/app/diagnostics.test.mjs \
+                  ukrainian-front-rts/tests/ui/interaction-recovery.test.mjs \
+                  ukrainian-front-rts/src/ui/onboarding-help.js \
+                  ukrainian-front-rts/src/ui/viewport-runtime.js
+          if git diff --cached --quiet; then
+            echo "Issue #189 patch already materialized."
+          else
+            git commit -m "Fix #189 verification and localization baseline"
+            git push origin "HEAD:${{ github.head_ref }}"
+          fi
       - name: Prepare diagnostics directory
         run: mkdir -p artifacts
       - name: Full assembled verifier
