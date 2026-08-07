@@ -19,7 +19,11 @@ import {
 
 const TILE = 32;
 const ECONOMY_PLAN_INTERVAL_SECONDS = 5;
-const ABSTRACT_GATHER_RATE = 12;
+const WORKER_GATHER_RATE = 18;
+const WORKER_CARRY_CAPACITY = 40;
+const RESOURCE_INTERACTION_RANGE = 35;
+const RESOURCE_DROPOFF_RANGE = 70;
+const BASE_COMMAND_CAPACITY = 12;
 
 const CANONICAL_FACTION_PRESENTATION = Object.freeze({
   ukraine: Object.freeze({ ...FACTIONS[TEAM.UA] }),
@@ -32,6 +36,10 @@ function cloneResources(resources) {
 
 function clamp(value, minimum, maximum) {
   return Math.min(maximum, Math.max(minimum, value));
+}
+
+function distanceBetween(left, right) {
+  return Math.hypot(left.x - right.x, left.y - right.y);
 }
 
 function deterministicTerrain(seed) {
@@ -74,7 +82,12 @@ function baseLayout(game, faction, team, origin, mirror = 1) {
     const [dx, dy] = offsets[index] ?? [index * 35, 0];
     const unit = game.addUnit(type, team, origin.x + mirror * dx, origin.y + dy);
     unit.factionId = faction.id;
-    if (type === faction.workerType && team === TEAM.RU) unit.skirmishEconomyWorker = true;
+    if (type === faction.workerType && team === TEAM.RU) {
+      unit.skirmishEconomyWorker = true;
+      unit.skirmishEconomyReturning = false;
+      unit.aiControl = false;
+      unit.autoFire = false;
+    }
   });
   return hq;
 }
@@ -147,29 +160,97 @@ function enemyResourceSites(game, state) {
   const origin = state.map.enemyStart;
   return game.nodes
     .filter((node) => node.amount > 0)
-    .map((node) => ({ node, distance: Math.hypot(node.x - origin.x, node.y - origin.y) }))
-    .sort((left, right) => left.distance - right.distance || left.node.skirmishId.localeCompare(right.node.skirmishId))
-    .slice(0, 3);
+    .map((node) => ({ node, distance: distanceBetween(node, origin) }))
+    .sort((left, right) => left.distance - right.distance || left.node.skirmishId.localeCompare(right.node.skirmishId));
+}
+
+function chooseEnemyResourceSite(game, state, worker, workerIndex) {
+  const current = game.nodes.find((node) => node.skirmishId === worker.skirmishEconomySite && node.amount > 0);
+  if (current) return current;
+  const candidates = game.nodes
+    .filter((node) => node.amount > 0)
+    .map((node) => ({ node, distance: distanceBetween(node, worker) }))
+    .sort((left, right) => left.distance - right.distance || left.node.skirmishId.localeCompare(right.node.skirmishId));
+  if (!candidates.length) return null;
+  const choice = candidates[Math.min(workerIndex, candidates.length - 1)].node;
+  worker.skirmishEconomySite = choice.skirmishId;
+  return choice;
 }
 
 function gatherEnemyResources(game, state, stepSeconds) {
-  const workers = game.units.filter((unit) =>
-    unit.team === TEAM.RU &&
-    unit.type === state.enemyFaction.workerType &&
-    unit.hp > 0,
-  );
+  const workers = game.units
+    .filter((unit) =>
+      unit.team === TEAM.RU &&
+      unit.type === state.enemyFaction.workerType &&
+      unit.hp > 0,
+    )
+    .sort((left, right) => left.id - right.id);
   if (!workers.length) return;
-  const sites = enemyResourceSites(game, state);
-  if (!sites.length) return;
+
   workers.forEach((worker, index) => {
-    const site = sites[index % sites.length]?.node;
-    if (!site || site.amount <= 0) return;
-    const gathered = Math.min(site.amount, ABSTRACT_GATHER_RATE * stepSeconds);
-    site.amount -= gathered;
-    state.enemyResources[site.kind] = (state.enemyResources[site.kind] ?? 0) + gathered;
-    state.enemyGathered += gathered;
-    worker.skirmishEconomySite = site.skirmishId;
+    if (worker.skirmishEconomyReturning || worker.carry >= WORKER_CARRY_CAPACITY) {
+      worker.skirmishEconomyReturning = true;
+      if (!game.buildings.includes(game.ruHQ)) {
+        worker.order = null;
+        return;
+      }
+      if (distanceBetween(worker, game.ruHQ) <= RESOURCE_DROPOFF_RANGE) {
+        if (worker.carry > 0 && worker.carryKind) {
+          state.enemyResources[worker.carryKind] = (state.enemyResources[worker.carryKind] ?? 0) + worker.carry;
+          state.enemyGathered += worker.carry;
+        }
+        worker.carry = 0;
+        worker.carryKind = null;
+        worker.skirmishEconomyReturning = false;
+        worker.skirmishEconomySite = null;
+      } else {
+        worker.target = null;
+        worker.order = { kind: 'move', x: game.ruHQ.x, y: game.ruHQ.y };
+        return;
+      }
+    }
+
+    const site = chooseEnemyResourceSite(game, state, worker, index);
+    if (!site) {
+      worker.order = null;
+      return;
+    }
+    if (distanceBetween(worker, site) > RESOURCE_INTERACTION_RANGE) {
+      worker.target = null;
+      worker.order = { kind: 'move', x: site.x, y: site.y };
+      return;
+    }
+
+    const gathered = Math.min(
+      site.amount,
+      WORKER_GATHER_RATE * stepSeconds,
+      WORKER_CARRY_CAPACITY - worker.carry,
+    );
+    site.amount = Math.max(0, site.amount - gathered);
+    worker.carry += gathered;
+    worker.carryKind = site.kind;
+    worker.order = null;
+    worker.target = null;
+    if (worker.carry >= WORKER_CARRY_CAPACITY || site.amount <= 0) {
+      worker.skirmishEconomyReturning = true;
+      worker.order = { kind: 'move', x: game.ruHQ.x, y: game.ruHQ.y };
+    }
   });
+}
+
+function enemyCommandCapacity(game) {
+  const buildings = game.buildings.filter((building) => building.team === TEAM.RU && building.hp > 0);
+  const units = game.units.filter((unit) => unit.team === TEAM.RU && unit.hp > 0);
+  const maximum = BASE_COMMAND_CAPACITY + buildings.reduce((total, building) => {
+    if (building.underConstruction || building.capacityGranted === false) return total;
+    return total + Math.max(0, Number(BUILDING_TYPES[building.type]?.pop) || 0);
+  }, 0);
+  const fielded = units.reduce((total, unit) => total + Math.max(0, Number(UNIT_TYPES[unit.type]?.pop) || 0), 0);
+  const queued = buildings.reduce((total, building) => total + (building.queue ?? []).reduce(
+    (queueTotal, item) => queueTotal + Math.max(0, Number(UNIT_TYPES[item.type]?.pop) || 0),
+    0,
+  ), 0);
+  return Object.freeze({ used: fielded + queued, maximum });
 }
 
 function enemyEconomySnapshot(game, state) {
@@ -188,17 +269,20 @@ function enemyEconomySnapshot(game, state) {
     depleted: node.amount <= 0,
     claimed: true,
   }));
+  const capacity = enemyCommandCapacity(game);
   const trainable = Object.values(state.enemyFaction.production).flat();
-  const unitOptions = [...new Set(trainable)].map((type, index) => ({
-    id: type,
-    kind: 'unit',
-    priority: (trainable.length - index) + (UNIT_TYPES[type]?.armor ? 4 : 0),
-    cost: state.enemyFaction.costs[type] ?? {},
-    available: productionBuildings.some((building) => canFactionProduce(state.enemyFaction, building.type, type)) &&
-      (buildingQueueSpace(productionBuildings, state.enemyFaction, type) > 0),
-  }));
-  const enemyUnits = game.units.filter((unit) => unit.team === TEAM.RU && unit.hp > 0);
-  const depots = enemyBuildings.filter((building) => building.type === 'depot').length;
+  const unitOptions = [...new Set(trainable)].map((type, index) => {
+    const pop = Math.max(0, Number(UNIT_TYPES[type]?.pop) || 0);
+    return {
+      id: type,
+      kind: 'unit',
+      priority: (trainable.length - index) + (UNIT_TYPES[type]?.armor ? 4 : 0),
+      cost: state.enemyFaction.costs[type] ?? {},
+      available: productionBuildings.some((building) => canFactionProduce(state.enemyFaction, building.type, type)) &&
+        buildingQueueSpace(productionBuildings, state.enemyFaction, type) > 0 &&
+        capacity.used + pop <= capacity.maximum,
+    };
+  });
   return {
     tick: state.economyTick,
     factionId: state.enemyFaction.id,
@@ -211,7 +295,7 @@ function enemyEconomySnapshot(game, state) {
     buildOptions: [],
     unitOptions,
     researchOptions: [],
-    capacity: { used: enemyUnits.length, maximum: 18 + depots * 8 },
+    capacity,
     targets: {
       desiredBases: 1,
       desiredProductionBuildings: Math.max(1, Math.min(2, productionBuildings.length || 1)),
@@ -229,6 +313,11 @@ function buildingQueueSpace(buildings, faction, type) {
 }
 
 function queueEnemyUnit(game, state, type) {
+  const stats = UNIT_TYPES[type];
+  if (!stats) return false;
+  const capacity = enemyCommandCapacity(game);
+  const pop = Math.max(0, Number(stats.pop) || 0);
+  if (capacity.used + pop > capacity.maximum) return false;
   const building = game.buildings
     .filter((candidate) =>
       candidate.team === TEAM.RU &&
@@ -244,12 +333,18 @@ function queueEnemyUnit(game, state, type) {
     left: duration,
     duration,
     cost: cloneResources(state.enemyFaction.costs[type] ?? {}),
-    pop: 0,
+    pop,
     reserved: false,
     started: false,
     skirmishAi: true,
   });
   return true;
+}
+
+function spendEnemyResources(state, cost) {
+  for (const [resource, amount] of Object.entries(cost ?? {})) {
+    state.enemyResources[resource] = Math.max(0, (state.enemyResources[resource] ?? 0) - amount);
+  }
 }
 
 function planEnemyEconomy(game, state) {
@@ -260,9 +355,10 @@ function planEnemyEconomy(game, state) {
     difficulty: state.setup.difficultyId,
   });
   state.lastEconomyPlan = plan;
-  state.enemyResources = cloneResources(plan.remainingResources);
   for (const action of plan.actions) {
-    if (action.type === 'train-unit') queueEnemyUnit(game, state, action.optionId);
+    if (action.type === 'train-unit' && queueEnemyUnit(game, state, action.optionId)) {
+      spendEnemyResources(state, action.cost);
+    }
   }
   state.economyTick += 1;
 }
@@ -285,6 +381,7 @@ function updateSkirmishAi(game, stepSeconds) {
   const windowSeconds = tacticalReactionWindowSeconds(state.setup.difficultyId);
   const tacticalWindowOpen = state.tacticalAccumulator >= windowSeconds;
   if (tacticalWindowOpen) state.tacticalAccumulator %= windowSeconds;
+  state.tacticalWindowOpen = tacticalWindowOpen;
   game.setTacticalAiEnabled?.(tacticalWindowOpen);
   return Object.freeze({
     difficultyId: state.setup.difficultyId,
@@ -343,7 +440,7 @@ function initializeSkirmish(game, setup) {
   game.player = {
     ...cloneResources(setup.startingResources),
     pop: 0,
-    cap: 12,
+    cap: BASE_COMMAND_CAPACITY,
     mined: 0,
     objectives: [false],
     upgrades: new Set(),
@@ -371,6 +468,7 @@ function initializeSkirmish(game, setup) {
     enemyGathered: 0,
     economyAccumulator: 0,
     tacticalAccumulator: tacticalReactionWindowSeconds(setup.difficultyId),
+    tacticalWindowOpen: true,
     economyTick: 0,
     lastEconomyPlan: null,
     enemyDoctrine: createAiDoctrineProfile({
@@ -393,6 +491,7 @@ export function installSkirmishFramework(game) {
   const originalStart = game.start;
   const originalQueue = game.queue?.bind(game);
   const originalBuildingCanProduce = game.buildingCanProduce?.bind(game);
+  const originalNearestEnemy = game.nearestEnemy?.bind(game);
   const disposeDelegate = registerSimulationDelegate(game, {
     phase: SIMULATION_DELEGATE_PHASES.STEP_BEGIN,
     id: 'skirmish-ai-economy',
@@ -425,6 +524,15 @@ export function installSkirmishFramework(game) {
       return customPlayerQueue(game, type);
     };
   }
+  if (originalNearestEnemy) {
+    game.nearestEnemy = (unit, range) => {
+      if (game.skirmish && unit?.team === TEAM.RU) {
+        if (unit.skirmishEconomyWorker) return null;
+        if (!game.skirmish.tacticalWindowOpen) return null;
+      }
+      return originalNearestEnemy(unit, range);
+    };
+  }
   game.skirmishProductionTypes = (buildingType) => {
     if (!game.skirmish) return null;
     return factionProductionTypes(SKIRMISH_FACTIONS[game.skirmish.setup.playerFactionId], buildingType);
@@ -436,6 +544,7 @@ export function installSkirmishFramework(game) {
       mapId: game.skirmish.map.id,
       enemyResources: cloneResources(game.skirmish.enemyResources),
       enemyGathered: game.skirmish.enemyGathered,
+      enemyCapacity: enemyCommandCapacity(game),
       economyTick: game.skirmish.economyTick,
       lastEconomyPlan: game.skirmish.lastEconomyPlan,
     });
@@ -447,6 +556,7 @@ export function installSkirmishFramework(game) {
     game.start = originalStart;
     if (originalQueue) game.queue = originalQueue;
     if (originalBuildingCanProduce) game.buildingCanProduce = originalBuildingCanProduce;
+    if (originalNearestEnemy) game.nearestEnemy = originalNearestEnemy;
     delete game.startSkirmish;
     delete game.skirmishProductionTypes;
     delete game.skirmishSnapshot;
