@@ -136,10 +136,15 @@ function createUiDocument() {
   ];
   const elements = Object.fromEntries(selectors.map((selector) => [selector, new FakeElement()]));
   elements['#objectiveList'].items = [new FakeElement(), new FakeElement(), new FakeElement()];
+  const documentElement = new FakeElement();
+  documentElement.lang = 'en';
+  documentElement.getAttribute = (name) => documentElement.attributes[name] ?? null;
+  documentElement.removeAttribute = (name) => { delete documentElement.attributes[name]; };
   return {
     elements,
     document: {
       body: new FakeElement(),
+      documentElement,
       querySelector: (selector) => elements[selector],
       createElement: () => new FakeElement(),
     },

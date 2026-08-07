@@ -200,7 +200,7 @@ test('export-and-reset preserves data until export succeeds and the player confi
 
   confirmReset = true;
   const reset = await diagnostics.actions.exportAndReset();
-  assert.match(reset, /Reset 1 local data entries/);
+  assert.match(reset, /Reset 1 local data entry\./);
   assert.equal(storage.getItem('fields-of-resolve:campaign-save:autosave'), null);
   assert.equal(confirmations.length, 2);
   assert.equal(downloads.length, 3);
