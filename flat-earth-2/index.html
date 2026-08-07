@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#08110d" />
+  <title>Плоская Земля II // Южный контур</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="shell" aria-label="Текстовая игра Плоская Земля II">
+    <div class="crt-glow" aria-hidden="true"></div>
+    <header class="topbar">
+      <div>
+        <span class="brand">FE-II // SOUTHERN CIRCUIT</span>
+        <span class="status-dot" aria-hidden="true"></span>
+      </div>
+      <div class="top-actions">
+        <button id="journalBtn" class="ghost" type="button">[J] журнал</button>
+        <button id="evidenceBtn" class="ghost" type="button">[E] улики</button>
+        <button id="helpBtn" class="ghost" type="button">[?] помощь</button>
+      </div>
+    </header>
+
+    <section class="screen">
+      <aside class="sidebar" aria-label="Состояние расследования">
+        <div class="meter">
+          <span>ДЕЛО</span>
+          <strong id="chapter">00</strong>
+        </div>
+        <div class="meter">
+          <span>УЛИКИ</span>
+          <strong id="evidenceCount">0/6</strong>
+        </div>
+        <div class="meter">
+          <span>РИСК</span>
+          <strong id="heat">LOW</strong>
+        </div>
+        <div class="meter">
+          <span>МЕТОД</span>
+          <strong id="rigor">0</strong>
+        </div>
+        <div class="mini-map" id="miniMap" aria-hidden="true"></div>
+        <div class="sidebar-note">
+          Все секретные операции, документы и персонажи — художественный вымысел.
+          Реальные наблюдаемые факты отмечены в материалах игры.
+        </div>
+      </aside>
+
+      <section class="terminal-wrap">
+        <div id="terminal" class="terminal" role="log" aria-live="polite" aria-relevant="additions">
+          <div id="output" class="output"></div>
+          <div id="visual" class="visual hidden" aria-live="off"></div>
+          <div id="choices" class="choices" aria-label="Варианты действий"></div>
+          <form id="puzzleForm" class="puzzle-form hidden" autocomplete="off">
+            <label id="puzzleLabel" for="puzzleInput">ВВОД:</label>
+            <div class="prompt-row">
+              <span class="prompt">&gt;</span>
+              <input id="puzzleInput" spellcheck="false" autocomplete="off" />
+              <button type="submit">ENTER</button>
+            </div>
+            <div id="puzzleHint" class="puzzle-hint"></div>
+          </form>
+          <div class="cursor-line" aria-hidden="true"><span>&gt;</span><span class="block-cursor"></span></div>
+        </div>
+      </section>
+    </section>
+
+    <footer class="footer">
+      <span id="saveState">AUTOSAVE: READY</span>
+      <span>1–9 выбор · ↑↓ навигация · ENTER подтвердить · J журнал · E улики</span>
+    </footer>
+  </main>
+
+  <dialog id="modal">
+    <div class="modal-head">
+      <strong id="modalTitle">АРХИВ</strong>
+      <button id="modalClose" type="button">ESC</button>
+    </div>
+    <div id="modalBody" class="modal-body"></div>
+  </dialog>
+
+  <script src="story.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
