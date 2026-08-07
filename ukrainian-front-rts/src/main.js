@@ -28,6 +28,7 @@ import { Renderer } from './render.js';
 import { installCombatReadabilityOverlay } from './render/combat-readability-overlay.js';
 import { installConstructionPreview } from './render/construction-preview.js';
 import { installEffectsAtlasRenderer } from './render/effects-atlas-renderer.js';
+import { installSkirmishFramework } from './skirmish/skirmish-runtime.js';
 import {
   createBuildingLifecycleController,
   updateBuildingCaptures,
@@ -69,6 +70,7 @@ import { installMenuStackComposition } from './ui/menu-stack-composition.js';
 import { installMinimapAlerts } from './ui/minimap-alerts.js';
 import { installProductionExitFeedback } from './ui/production-exit-feedback.js';
 import { installSelectionPanel } from './ui/selection-panel.js';
+import { installSkirmishSetup } from './ui/skirmish-setup.js';
 import { installStanceCommandCard } from './ui/stance-command-card.js';
 import { installTacticalCommandCard } from './ui/tactical-command-card.js';
 import { installTechTreeScreen } from './ui/tech-tree-screen.js';
@@ -147,6 +149,7 @@ const modules = [
       },
     ],
   })),
+  module('skirmish-framework', () => installSkirmishFramework(game)),
   module('stance-controller', () => installControllerWithSimulationDelegates({
     game,
     name: 'stance-controller',
@@ -238,6 +241,7 @@ const modules = [
     documentTarget: document,
     windowTarget: window,
   })),
+  module('skirmish-setup', () => installSkirmishSetup({ game, ui, documentTarget: document })),
   module('construction-preview', () => installConstructionPreview({ game, renderer })),
   module('effects-atlas-renderer', () => installEffectsAtlasRenderer({ game, renderer })),
   module('combat-readability-overlay', () => installCombatReadabilityOverlay({ game, renderer })),
