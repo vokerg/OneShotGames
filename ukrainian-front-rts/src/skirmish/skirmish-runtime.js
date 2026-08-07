@@ -509,8 +509,8 @@ export function installSkirmishFramework(game) {
   };
   game.startSkirmish = (value = {}) => {
     const setup = normalizeSkirmishSetup(value);
+    game.start(0);
     applyFactionPresentation(setup);
-    originalStart.call(game, 0);
     return initializeSkirmish(game, setup);
   };
   game.buildingCanProduce = (building, type) => {
