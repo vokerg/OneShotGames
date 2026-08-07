@@ -63,16 +63,24 @@ The expedition is designed around a single compact run:
 
 The station order is not forced, so the moving illumination, available battery, freeze state, and current wind can change the optimal route.
 
+## Visual direction
+
+The presentation is generated entirely in code. The Canvas art layer builds the Disc from layered ocean texture, land relief, a rotating firmament, local sunlight and terminator glow, aurora, animated Ice Wall geometry, snow drift, distinct station silhouettes, observatory lighting, the survey sledge and motion trails.
+
+A separate polish layer adds optical-glass depth, instrument chrome, a cinematic briefing screen, subtle pointer parallax, success/risk flashes, responsive layout and reduced-motion behavior. No third-party art assets are required.
+
 ## Implementation
 
-- `index.html` — HUD, briefing, field log, and ending UI.
-- `styles.css` — responsive expedition-terminal presentation.
+- `index.html` — HUD, briefing, field log, visual chrome, and ending UI.
+- `styles.css` — base responsive expedition-terminal presentation.
+- `polish.css` — final cinematic/glass/depth pass and interaction-state styling.
+- `polish.mjs` — subtle pointer-driven glass and briefing parallax.
 - `physics.mjs` — pure world/cosmology functions: solar track, local illumination, temperature, firmament rotation, freeze/thaw lanes, gnomon direction, and rim wind.
-- `game.mjs` — input, resource simulation, objectives, rendering, narrative state, and endings.
+- `art.mjs` — deterministic Canvas rendering for terrain, atmosphere, celestial motion, stations, the Ice Wall, particles and the sledge.
+- `game.mjs` — input, resource simulation, objectives, interaction and narrative state.
 - `run.py` — dependency-free Python standard-library launcher.
 - `tests/physics.test.mjs` — deterministic tests for the core cosmology mechanics.
-
-All map geometry, land silhouettes, stars, effects, and UI graphics are generated in code. No third-party art is bundled.
+- `tests/art.test.mjs` — smoke coverage for creation of the art system.
 
 ## Verification
 
@@ -80,7 +88,10 @@ From the repository root:
 
 ```bash
 node --check flat-earth-last-meridian/physics.mjs
+node --check flat-earth-last-meridian/art.mjs
 node --check flat-earth-last-meridian/game.mjs
+node --check flat-earth-last-meridian/polish.mjs
 node --test flat-earth-last-meridian/tests/physics.test.mjs
+node --test flat-earth-last-meridian/tests/art.test.mjs
 python3 -m py_compile flat-earth-last-meridian/run.py
 ```
