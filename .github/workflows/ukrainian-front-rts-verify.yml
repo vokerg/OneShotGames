@@ -25,6 +25,8 @@ jobs:
         working-directory: ukrainian-front-rts
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
