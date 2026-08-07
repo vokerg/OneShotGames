@@ -1,0 +1,1 @@
+Pages deployment intentionally uses the repository-level GitHub Pages source configuration (main branch, repository root). Do not add a second custom Pages deployment workflow unless the Pages source is also switched to GitHub Actions.
