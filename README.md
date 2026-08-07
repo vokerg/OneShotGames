@@ -37,7 +37,7 @@ No third-party photographs are bundled. All geometry and textures are generated 
 
 - Bălți municipal overview of monuments: https://balti.md/monumente-istorie-intruchipata-in-piatra/
 - Wikimedia Commons — central Bălți: https://commons.wikimedia.org/wiki/Category:Centru,_B%C4%83l%C8%9Bi
-- #diez photo walk along Bălți's pedestrian street: https://diez.md/2018/07/10/galerie-foto-ce-poti-vedea-plimbandu-te-pe-cea-mai-mare-strada-pietonala-din-moldova-situata-orasul-balti/
+- #diez photo walk along Bălți's pedestrian street: https://diez.md/2018/07/10/galerie-foto-ce-poti-vedea-plimbandu-te-pe-cea-mai-mare-strada-pietonala-din-balti-situata-orasul-balti/
 - Historical and architectural monuments of Bălți: https://aboutmoldova.md/en/view_free.php?id=361
 
 ## Scope
@@ -45,6 +45,17 @@ No third-party photographs are bundled. All geometry and textures are generated 
 This first pass intentionally has no objectives, scoring, inventory or fail state. The entire interaction is walking and looking around.
 
 ## Other games
+
+### Flat Earth: Last Meridian
+
+Cross a circular Disc in a solar-assisted survey sledge while a low local Sun carries daylight and warmth around the central pole. Restore three meridian stations, exploit night-frozen routes, navigate by the rotating firmament, survive the outward wind at the Ice Wall, and decide what the final observatory should look at.
+
+```bash
+cd flat-earth-last-meridian
+python3 run.py
+```
+
+See [`flat-earth-last-meridian/README.md`](flat-earth-last-meridian/README.md) for the cosmology mechanics, controls, verification commands, and fiction disclaimer.
 
 ### Cat & Two Balconies
 
