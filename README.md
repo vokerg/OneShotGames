@@ -34,15 +34,9 @@ Individual per-game launch scripts continue to work as before.
 
 ## GitHub Pages
 
-The repository includes `.github/workflows/pages.yml`. After this change reaches `main`, GitHub Actions uploads the repository as a static Pages artifact and deploys it to the `github-pages` environment.
+GitHub Pages is configured to publish directly from the repository's `main` branch at the repository root. GitHub's built-in Pages workflow handles the deployment automatically after pushes to `main`, so no custom Pages deployment workflow is required in this repository.
 
-One-time repository setup may be required if Pages has never been enabled:
-
-1. Open **Settings → Pages**.
-2. Under **Build and deployment**, set **Source** to **GitHub Actions**.
-3. Push or merge to `main` (or run the Pages workflow manually).
-
-For the repository `vokerg/OneShotGames`, the default project-site URL is expected to be:
+The public project-site URL is:
 
 `https://vokerg.github.io/OneShotGames/`
 
