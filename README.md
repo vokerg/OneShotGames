@@ -109,7 +109,7 @@ See [`ukrainian-front-rts/README.md`](ukrainian-front-rts/README.md) for control
 
 ### Flat Earth II // Southern Circuit
 
-Play a Russian-language old-school terminal investigation built around a real Santiago → Sydney southern route, branching evidence trails, puzzles, procedural SVG dossier art, autosave, keyboard controls and four endings. The intelligence-agency conspiracy is explicitly fictional; the route and astronomy clues are documented separately as reproducible observations.
+Play a Russian-language old-school terminal investigation expanded into a full campaign: 74 scenes, four reorderable research tracks, three deep-lab branches, 14 multi-step quizzes, 8 free-input puzzles, 12 evidence types, 10 flat-Earth claim cards, procedural SVG dossier art, hardened autosave and six endings. The intelligence-agency conspiracy is explicitly fictional; the route, astronomy, Antarctica, shadow, Coriolis and optical-method clues are documented separately as reproducible observations.
 
 Run it with:
 
@@ -117,7 +117,7 @@ Run it with:
 python3 flat-earth-2/run.py
 ```
 
-See [`flat-earth-2/README.md`](flat-earth-2/README.md) for controls and campaign structure, and [`flat-earth-2/RESEARCH.md`](flat-earth-2/RESEARCH.md) for the factual/fiction boundary and research references.
+See [`flat-earth-2/README.md`](flat-earth-2/README.md) for controls and campaign structure, [`flat-earth-2/RESEARCH.md`](flat-earth-2/RESEARCH.md) for the factual/fiction boundary, and [`flat-earth-2/SELF_REVIEW.md`](flat-earth-2/SELF_REVIEW.md) for the expanded verification pass.
 
 ## Recovery audit
 
