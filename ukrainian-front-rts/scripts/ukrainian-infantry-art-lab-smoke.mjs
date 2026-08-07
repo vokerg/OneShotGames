@@ -266,10 +266,13 @@ try {
   if (review.canvas.width < 1280 || review.canvas.height < 720) reviewFailures.push(`unexpected canvas ${review.canvas.width}x${review.canvas.height}`);
 
   await delay(350);
+  await evaluate(`document.querySelector('.panel')?.classList.add('hidden')`);
+  await waitFor(`document.querySelector('.panel')?.classList.contains('hidden')`, 'the Art Lab instructions to clear the review surface');
   const screenshots = [];
-  screenshots.push(await capture('command-move-east-color.png'));
 
   await dispatchKey('u', 'KeyU');
+  screenshots.push(await capture('command-move-east-color.png'));
+
   await dispatchKey('u', 'KeyU');
   await dispatchKey('r', 'KeyR');
   await dispatchKey('r', 'KeyR');
@@ -280,7 +283,7 @@ try {
   await dispatchKey('v', 'KeyV');
   await dispatchKey('3', 'Digit3');
   for (let index = 0; index < 3; index += 1) await dispatchKey('u', 'KeyU');
-  for (let index = 0; index < 4; index += 1) await dispatchKey('r', 'KeyR');
+  for (let index = 0; index < 3; index += 1) await dispatchKey('r', 'KeyR');
   await dispatchKey(' ', 'Space');
   screenshots.push(await capture('inspection-death-northwest-still.png'));
 
