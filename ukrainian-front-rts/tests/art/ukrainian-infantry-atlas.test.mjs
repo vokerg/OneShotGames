@@ -13,6 +13,7 @@ import { TEAM } from '../../src/config.js';
 import { installUkrainianInfantryArtPass } from '../../src/render/ukrainian-infantry-art-pass.js';
 import {
   resolveUkrainianInfantryIdentity,
+  UKRAINIAN_INFANTRY_DIRECTIONS as RUNTIME_UKRAINIAN_INFANTRY_DIRECTIONS,
   ukrainianInfantryDirectionFromAngle,
   ukrainianInfantryVisualState,
 } from '../../src/render/ukrainian-infantry-atlas.js';
@@ -44,6 +45,7 @@ test('UFR-110 generator is deterministic and covers the complete canonical famil
   ]);
   assert.deepEqual(first.catalogObject.states, UKRAINIAN_INFANTRY_REQUIRED_STATES);
   assert.deepEqual(first.catalogObject.directions, UKRAINIAN_INFANTRY_DIRECTIONS);
+  assert.deepEqual(RUNTIME_UKRAINIAN_INFANTRY_DIRECTIONS, UKRAINIAN_INFANTRY_DIRECTIONS);
   assert.deepEqual(first.catalogObject.counts, {
     units: 7,
     battleFrames: 1176,
