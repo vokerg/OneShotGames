@@ -38,7 +38,7 @@ export function daylightAt(x, y, elapsedSeconds) {
 }
 
 export function edgePressureAt(x, y) {
-  return smoothstep(0.64, ICE_WALL_RADIUS, Math.hypot(x, y));
+  return smoothstep(0.60, ICE_WALL_RADIUS, Math.hypot(x, y));
 }
 
 export function ambientTemperatureAt(x, y, elapsedSeconds) {
