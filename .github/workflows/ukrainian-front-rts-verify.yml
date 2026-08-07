@@ -52,6 +52,9 @@ jobs:
       - name: Browser startup and mission smoke
         if: always()
         run: node scripts/browser-startup-smoke.mjs
+      - name: UFR-110 Ukrainian infantry Art Lab browser review
+        if: always()
+        run: node scripts/ukrainian-infantry-art-lab-smoke.mjs
       - name: Visual regression review capture
         if: always()
         run: node scripts/visual-regression-smoke.mjs
