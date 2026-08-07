@@ -109,7 +109,7 @@ See [`ukrainian-front-rts/README.md`](ukrainian-front-rts/README.md) for control
 
 ### Flat Earth II // Southern Circuit
 
-Play a Russian-language old-school terminal investigation expanded into a full campaign: 74 scenes, four reorderable research tracks, three deep-lab branches, 14 multi-step quizzes, 8 free-input puzzles, 12 evidence types, 10 flat-Earth claim cards, procedural SVG dossier art, hardened autosave and six endings. The intelligence-agency conspiracy is explicitly fictional; the route, astronomy, Antarctica, shadow, Coriolis and optical-method clues are documented separately as reproducible observations.
+Play a Russian-language old-school terminal investigation expanded into a full campaign: 76 scenes, four reorderable research tracks, three deep-lab branches, 14 multi-step quizzes, 10 free-input puzzles, 12 evidence types, 10 flat-Earth claim cards, procedural SVG dossier art, hardened autosave and six endings. The intelligence-agency conspiracy is explicitly fictional; the route, astronomy, Antarctica, shadow, Coriolis and optical-method clues are documented separately as reproducible observations.
 
 Run it with:
 
