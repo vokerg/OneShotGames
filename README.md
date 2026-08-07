@@ -24,7 +24,6 @@ Individual per-game launch scripts continue to work as before.
 
 - **Bălți City Walk** — voxel-style 3D walking scene (`01-balti-city-walk/`)
 - **Cat & Two Balconies** — timing / apartment-cooling arcade game (`cat-and-two-balconies/`)
-- **Flat Earth: Last Meridian** — polar survey expedition across a circular Disc with moving local daylight, rotating firmament and an encircling Ice Wall (`flat-earth-last-meridian/`)
 - **Outbreak Directive** — outbreak-response strategy simulation (`outbreak-directive/`)
 - **Red Fortress** — browser raycasting shooter (`red-fortress/`)
 - **Way of the Ninja: Momentum Trial** — momentum platformer (`the-way-of-the-ninja/`)
