@@ -5,6 +5,8 @@ import {
   UKRAINIAN_INFANTRY_REQUIRED_STATES,
 } from './ukrainian-infantry-atlas-generator.js';
 
+export { UKRAINIAN_INFANTRY_DIRECTIONS };
+
 export const UKRAINIAN_INFANTRY_SOURCE_URL = new URL(
   '../../art-src/units/ukraine/infantry/ukrainian-infantry-source.json',
   import.meta.url,
