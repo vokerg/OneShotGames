@@ -1,1 +1,0 @@
-GitHub Pages is configured at the repository level to publish from the `main` branch and repository root. The repository intentionally does not include a custom Pages deployment workflow while that source mode is active.
