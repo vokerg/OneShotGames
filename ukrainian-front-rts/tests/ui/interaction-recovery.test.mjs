@@ -78,6 +78,14 @@ class FakeElement {
     this.attributes[name] = String(value);
   }
 
+  getAttribute(name) {
+    return this.attributes[name] ?? null;
+  }
+
+  removeAttribute(name) {
+    delete this.attributes[name];
+  }
+
   addEventListener(type, handler) {
     const handlers = this.listeners.get(type) || [];
     handlers.push(handler);
