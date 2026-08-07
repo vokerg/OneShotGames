@@ -103,6 +103,38 @@ test('runtime starts a Russia-as-player skirmish without changing player-team ow
   assert.equal(FACTIONS[TEAM.RU].id, 'russia');
 });
 
+test('startSkirmish runs start wrappers installed after the framework before initializing the match', () => {
+  const previousWidth = globalThis.innerWidth;
+  const previousHeight = globalThis.innerHeight;
+  globalThis.innerWidth = 1280;
+  globalThis.innerHeight = 720;
+  const game = new Game();
+  const dispose = installSkirmishFramework(game);
+  const frameworkStart = game.start;
+  let lateResetCalls = 0;
+  game.start = (...args) => {
+    const result = frameworkStart(...args);
+    lateResetCalls += 1;
+    game.lateControllerState = 'reset';
+    return result;
+  };
+  game.lateControllerState = 'dirty';
+  try {
+    game.startSkirmish(DEFAULT_SKIRMISH_SETUP);
+    assert.equal(lateResetCalls, 1);
+    assert.equal(game.lateControllerState, 'reset');
+    assert.equal(game.mission.mode, 'skirmish');
+    assert.equal(game.playerFactionId, 'ukraine');
+  } finally {
+    dispose();
+    delete game.lateControllerState;
+    if (previousWidth === undefined) delete globalThis.innerWidth;
+    else globalThis.innerWidth = previousWidth;
+    if (previousHeight === undefined) delete globalThis.innerHeight;
+    else globalThis.innerHeight = previousHeight;
+  }
+});
+
 test('AI workers must physically gather and return finite map resources before the AI wallet is credited', () => {
   const previousWidth = globalThis.innerWidth;
   const previousHeight = globalThis.innerHeight;
