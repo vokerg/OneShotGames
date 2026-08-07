@@ -21,12 +21,13 @@ Main problems found:
 
 ### Campaign depth
 
-- 25 → 74 scenes.
-- 1 → 8 free-input puzzles.
+- 25 → 76 scenes.
+- 1 → 10 free-input puzzles.
 - Added 14 multi-step quizzes.
 - Added four reorderable investigation tracks and three mandatory deep labs.
 - Added 10 claim cards and 12 evidence categories.
 - 4 → 6 endings.
+- Added cross-evidence puzzles: a model/observation matrix, a hexadecimal RELAY transform, and a four-source THE VAULT key that forces recall across earlier investigation threads.
 
 ### HORIZON reconstruction
 
@@ -66,7 +67,7 @@ Added dedicated material for southern routes, Antarctica, 24-hour sunlight, sout
 
 A full careful simulated path ends around:
 
-- `МЕТОД = 90`;
+- `МЕТОД = 94`;
 - `ДОВЕРИЕ = 17`;
 - `РИСК = 0`;
 - 12/12 evidence;
@@ -88,7 +89,7 @@ A simulated medium-careful dossier still qualifies for the canonical ending; a n
 - all node/choice/puzzle/quiz references;
 - effect registries and requirement flags;
 - minimum campaign size and text volume;
-- 74/74 static graph reachability;
+- 76/76 static graph reachability;
 - all 8 intro-completion states;
 - all 16 Sydney-track combinations;
 - all 8 deep-lab combinations;
@@ -106,7 +107,7 @@ During this review a one-off **headless Chromium DOM E2E** was also run without 
 - The repository intentionally has no committed headless-browser dependency. The review environment ran a Chromium DOM E2E, but the checked-in default verification remains dependency-free and focuses on story/engine/DOM contracts rather than pixel-level rendering.
 - Procedural SVG art is intentionally atmospheric rather than a simulation.
 - Most branches eventually reconverge because this is a authored campaign, not a generative RPG. Replay value comes from order, evidence quality, role hints, relay route, risk/trust outcomes and endings rather than completely separate 70-scene storylines.
-- Exact playtime cannot be guaranteed. The content target is a deliberate 45–75 minute first investigation; fast readers who already know answers can finish faster.
+- Exact playtime cannot be guaranteed. The content target is a deliberate 50–85 minute first investigation; fast readers who already know answers can finish faster.
 
 ## Current review result
 

@@ -5,6 +5,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 require("./story-v2-core.js");
 require("./story-v2-horizon.js");
+require("./story-v2-challenges.js");
 require("./story-v2-endings.js");
 const story = global.FE2_STORY_V2;
 const engine = require("./logic-v2.js");
@@ -53,7 +54,7 @@ function validateRequirements(where, req = {}) {
 const indexHtml = fs.readFileSync(path.join(__dirname, "index.html"), "utf8");
 const requiredDomIds = ["terminal","output","visual","choices","puzzleForm","puzzleLabel","puzzleInput","puzzleHint","chapter","evidenceCount","claimCount","heat","rigor","trust","progress","saveState","journalBtn","evidenceBtn","claimBtn","mapBtn","helpBtn","modal","modalTitle","modalBody","modalClose"];
 for (const id of requiredDomIds) if (!indexHtml.includes(`id="${id}"`)) errors.push(`index.html missing required DOM id #${id}`);
-const requiredScripts = ["story-v2-core.js","story-v2-horizon.js","story-v2-endings.js","logic-v2.js","game-v2.js"];
+const requiredScripts = ["story-v2-core.js","story-v2-horizon.js","story-v2-challenges.js","story-v2-endings.js","logic-v2.js","game-v2.js"];
 let previousScriptOffset = -1;
 for (const src of requiredScripts) {
   if (!fs.existsSync(path.join(__dirname, src))) errors.push(`missing browser asset ${src}`);
@@ -113,7 +114,7 @@ for (const [id, node] of Object.entries(nodes)) {
 
 for (const flag of requiredFlags) if (!grantedFlags.has(flag)) errors.push(`required flag is never granted: ${flag}`);
 if (quizCount < 14) errors.push(`expected >=14 quizzes, found ${quizCount}`);
-if (puzzleCount < 8) errors.push(`expected >=8 free-input puzzles, found ${puzzleCount}`);
+if (puzzleCount < 10) errors.push(`expected >=10 free-input puzzles, found ${puzzleCount}`);
 if (endingCount !== 6) errors.push(`expected 6 endings, found ${endingCount}`);
 
 // Static reachability ignores requirements. It catches orphaned scenes without exploding
@@ -239,7 +240,7 @@ try {
   chooseNext("witness_start"); chooseIndex(0); solvePuzzle(); perfectQuiz(); chooseNext("sydney_hub");
 
   chooseNext("claimboard_gate"); chooseNext("claimboard_bonus"); chooseNext("model_room"); chooseNext("model_quiz");
-  perfectQuiz(); chooseIndex(0); solvePuzzle(); chooseNext("deep_lab_hub");
+  perfectQuiz(); solvePuzzle(); chooseIndex(0); solvePuzzle(); chooseNext("deep_lab_hub");
 
   chooseNext("sun_perspective"); chooseNext("sun_quiz"); perfectQuiz(); chooseNext("deep_lab_hub");
   chooseNext("laser_lab"); chooseNext("laser_quiz"); perfectQuiz(); chooseNext("deep_lab_hub");
@@ -248,7 +249,7 @@ try {
   chooseNext("atlas_layer2"); chooseNext("atlas_source_quiz"); perfectQuiz();
   chooseIndex(0); chooseIndex(0); solvePuzzle(); chooseNext("relay_social");
   chooseIndex(0); chooseNext("network_quiz"); perfectQuiz(); chooseIndex(0);
-  solvePuzzle(); chooseIndex(0); perfectQuiz(); chooseIndex(0); chooseNext("final_audit"); perfectQuiz();
+  solvePuzzle(); chooseIndex(0); perfectQuiz(); solvePuzzle(); chooseIndex(0); chooseNext("final_audit"); perfectQuiz();
 
   if (gold.node !== "final_decision") errors.push(`gold path ended at ${gold.node}`);
   const finalTargets = eligibleAt("final_decision", gold).map((c) => c.next);
