@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { AI_DIFFICULTY_IDS } from '../src/ai/ai-difficulty-profiles.js';
-import { FACTIONS, TEAM } from '../src/config.js';
+import { BUILDING_TYPES, FACTIONS, TEAM, UNIT_TYPES } from '../src/config.js';
 import { Game } from '../src/game.js';
 import {
   DEFAULT_SKIRMISH_SETUP,
@@ -18,6 +18,20 @@ function resourceTotals(map) {
     totals[node.kind] = (totals[node.kind] ?? 0) + node.amount;
     return totals;
   }, {});
+}
+
+function enemyExpectedCapacity(game) {
+  const maximum = 12 + game.buildings
+    .filter((building) => building.team === TEAM.RU && building.hp > 0 && !building.underConstruction && building.capacityGranted !== false)
+    .reduce((total, building) => total + (BUILDING_TYPES[building.type]?.pop ?? 0), 0);
+  const fielded = game.units
+    .filter((unit) => unit.team === TEAM.RU && unit.hp > 0)
+    .reduce((total, unit) => total + (UNIT_TYPES[unit.type]?.pop ?? 0), 0);
+  const queued = game.buildings
+    .filter((building) => building.team === TEAM.RU && building.hp > 0)
+    .flatMap((building) => building.queue ?? [])
+    .reduce((total, item) => total + (UNIT_TYPES[item.type]?.pop ?? 0), 0);
+  return { used: fielded + queued, maximum };
 }
 
 test('skirmish catalog exposes three deterministic balanced maps and fair difficulty profiles', () => {
@@ -71,6 +85,7 @@ test('runtime starts a Russia-as-player skirmish without changing player-team ow
     assert.deepEqual(state.enemyResources, DEFAULT_SKIRMISH_SETUP.startingResources);
     assert.equal(game.uaHQ.team, TEAM.UA);
     assert.equal(game.ruHQ.team, TEAM.RU);
+    assert.deepEqual(game.skirmishSnapshot().enemyCapacity, enemyExpectedCapacity(game));
 
     const barracks = game.buildings.find((building) => building.team === TEAM.UA && building.type === 'barracks');
     game.select(barracks);
@@ -86,4 +101,52 @@ test('runtime starts a Russia-as-player skirmish without changing player-team ow
   }
   assert.equal(FACTIONS[TEAM.UA].id, 'ukraine');
   assert.equal(FACTIONS[TEAM.RU].id, 'russia');
+});
+
+test('AI workers must physically gather and return finite map resources before the AI wallet is credited', () => {
+  const previousWidth = globalThis.innerWidth;
+  const previousHeight = globalThis.innerHeight;
+  globalThis.innerWidth = 1280;
+  globalThis.innerHeight = 720;
+  const game = new Game();
+  const dispose = installSkirmishFramework(game);
+  try {
+    const state = game.startSkirmish(DEFAULT_SKIRMISH_SETUP);
+    const workers = game.units.filter((unit) => unit.team === TEAM.RU && unit.type === state.enemyFaction.workerType);
+    assert.equal(workers.length, 2);
+    workers[1].hp = 0;
+    const worker = workers[0];
+    const node = game.nodes
+      .filter((candidate) => candidate.amount > 0)
+      .sort((left, right) => Math.hypot(left.x - worker.x, left.y - worker.y) - Math.hypot(right.x - worker.x, right.y - worker.y))[0];
+    const initialNodeAmount = node.amount;
+    const initialWallet = { ...state.enemyResources };
+
+    game.update(0.1);
+    assert.equal(node.amount, initialNodeAmount, 'remote gathering must not remove resources');
+    assert.deepEqual(state.enemyResources, initialWallet, 'remote gathering must not credit the AI wallet');
+
+    worker.x = node.x;
+    worker.y = node.y;
+    worker.order = null;
+    for (let index = 0; index < 24; index += 1) game.update(0.1);
+    assert.ok(node.amount < initialNodeAmount, 'worker should gather only while physically at the site');
+    assert.ok(worker.carry > 0, 'gathered resources stay on the worker until drop-off');
+    assert.deepEqual(state.enemyResources, initialWallet, 'carried resources are not spendable before return');
+
+    const carried = worker.carry;
+    const carriedKind = worker.carryKind;
+    worker.x = game.ruHQ.x;
+    worker.y = game.ruHQ.y;
+    game.update(0.1);
+    assert.equal(worker.carry, 0);
+    assert.ok(state.enemyResources[carriedKind] >= initialWallet[carriedKind] + carried);
+    assert.ok(state.enemyGathered >= carried);
+  } finally {
+    dispose();
+    if (previousWidth === undefined) delete globalThis.innerWidth;
+    else globalThis.innerWidth = previousWidth;
+    if (previousHeight === undefined) delete globalThis.innerHeight;
+    else globalThis.innerHeight = previousHeight;
+  }
 });
