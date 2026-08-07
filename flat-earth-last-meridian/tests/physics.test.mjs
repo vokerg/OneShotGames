@@ -28,10 +28,11 @@ test("daylight is local to the Sun footprint rather than global", () => {
   assert.ok(opposite < underSun * 0.35);
 });
 
-test("ice-wall pressure rises toward the rim", () => {
+test("ice-wall pressure rises toward the rim and covers the wall station", () => {
   assert.equal(edgePressureAt(0, 0), 0);
   assert.ok(edgePressureAt(0.8, 0) > edgePressureAt(0.68, 0));
   assert.ok(edgePressureAt(ICE_WALL_RADIUS, 0) > 0.99);
+  assert.ok(edgePressureAt(0.63, 0.47) >= 0.46);
 });
 
 test("a firmament star fix materially reduces rim wind drift", () => {
