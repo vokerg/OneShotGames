@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#031018">
   <title>Flat Earth: Last Meridian</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="polish.css">
 </head>
 <body>
   <main class="shell">
@@ -30,6 +31,8 @@
       <div class="viewport-wrap">
         <canvas id="game" width="960" height="720" tabindex="0" aria-label="Top-down expedition map of the Disc"></canvas>
         <div class="viewport-frame" aria-hidden="true"></div>
+        <div class="viewport-chrome" aria-hidden="true"><span>OPTICAL SURVEY // 1:42M</span><span class="live-dot">LIVE</span></div>
+        <div class="depth-scale" aria-hidden="true"></div>
         <div class="coordinate-tag top-left" aria-hidden="true">AZ 000° // POLAR DATUM</div>
         <div class="coordinate-tag bottom-right" aria-hidden="true">DISC PROJECTION // LIVE</div>
         <div id="prompt" class="prompt" aria-live="polite"></div>
@@ -75,10 +78,16 @@
   <div id="startOverlay" class="overlay open">
     <article class="briefing-card">
       <div class="briefing-art" aria-hidden="true">
+        <div class="briefing-scale">
+          <span>SUN ALT // LOCAL</span>
+          <span>WALL RANGE // SEALED</span>
+          <span>MERIDIAN // DRIFTING</span>
+        </div>
         <div class="disc-glyph">
           <span class="orbit one"></span>
           <span class="orbit two"></span>
           <span class="orbit three"></span>
+          <span class="wall-spark"></span>
           <i class="brief-sun"></i>
           <i class="brief-pole"></i>
         </div>
@@ -116,5 +125,6 @@
   </div>
 
   <script type="module" src="game.mjs"></script>
+  <script type="module" src="polish.mjs"></script>
 </body>
 </html>
