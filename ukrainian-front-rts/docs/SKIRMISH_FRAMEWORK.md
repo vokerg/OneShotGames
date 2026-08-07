@@ -15,9 +15,13 @@ Every battlefield has explicit start positions, road geometry, resource placemen
 
 ## Runtime ownership and fairness
 
-`src/skirmish/skirmish-runtime.js` installs public skirmish commands on the authoritative `Game` instance and a named `STEP_BEGIN` delegate for the AI economy adapter. Campaign wave spawning is disabled in skirmish. The AI instead gathers from the same finite map resource nodes and submits its available resources/buildings/unit options to `planEconomyForDifficulty`.
+`src/skirmish/skirmish-runtime.js` installs public skirmish commands on the authoritative `Game` instance and a named `STEP_BEGIN` delegate for the AI economy adapter. Campaign wave spawning is disabled in skirmish.
 
-Difficulty changes observation/reaction cadence, planning quality, risk, and economy utilization through the shared UFR-082 profile contract. It does not multiply resources, unit stats, costs, or build time. AI production is placed into the same building queues used by the normal production runtime.
+AI economy workers are separated from tactical control and use the same physical gathering constraints as player workers: they must travel to a finite map node, be within the 35-unit interaction radius, gather at 18 resource units per second into a 40-unit carry limit, then return within 70 units of their command post before the cargo becomes spendable. Resources are never credited remotely. Depleted nodes are shared authoritative objects, so either side can exhaust them.
+
+AI command capacity is computed from the same base capacity, live unit population costs, queued population costs, and operational building capacity grants used by the player-side model. A planned unit is rejected if it would exceed that capacity, and AI resources are only spent when the unit is actually accepted into an existing production queue.
+
+Difficulty changes observation/reaction cadence, planning quality, risk, and economy utilization through the shared UFR-082 profile contract. It does not multiply resources, unit stats, costs, build time, gathering rate, carry capacity, or command capacity. The skirmish adapter also prevents the legacy Russian auto-acquisition path from bypassing the tactical reaction window; economy workers never use that combat-acquisition path.
 
 Russia-as-player uses a narrow faction production adapter because the legacy campaign production command assumes Ukrainian unit IDs. The adapter still pays the player's authoritative resource wallet, reserves command capacity, and appends to existing building queues; it does not spawn units directly.
 
@@ -27,4 +31,4 @@ Skirmish matches use the existing objective/outcome pipeline. The authored victo
 
 ## Verification
 
-`tests/skirmish-framework.test.mjs` checks the map/faction/difficulty catalog, generic victory contract, Russia-as-player team ownership, equal starting resources, and faction-aware production. The repository browser-startup smoke must show the skirmish card alongside campaign operations without warnings.
+`tests/skirmish-framework.test.mjs` checks the map/faction/difficulty catalog, generic victory contract, Russia-as-player team ownership, equal starting resources, faction-aware production, mirrored command-capacity accounting, and the physical gather/carry/drop-off requirement for AI resources. The repository browser-startup smoke must show the skirmish card alongside campaign operations without warnings.
