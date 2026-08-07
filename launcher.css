@@ -130,6 +130,68 @@ h1 {
 .card-ninja .card-art { background: linear-gradient(160deg, #434b61, #171a23); }
 .card-peace .card-art { background: linear-gradient(160deg, #2653a0, #182445); }
 .card-rts .card-art { background: linear-gradient(160deg, #5e7040, #222b1b); }
+.card-meridian .card-art {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 68% 22%, rgba(255, 202, 102, 0.28), transparent 23%),
+    radial-gradient(circle at 50% 58%, rgba(87, 222, 215, 0.2), transparent 36%),
+    linear-gradient(160deg, #123742, #07151d 66%, #040b12);
+}
+.card-meridian .card-art::before,
+.card-meridian .card-art::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.card-meridian .card-art::before {
+  width: 126px;
+  height: 126px;
+  border: 1px solid rgba(154, 231, 229, 0.2);
+  box-shadow: 0 0 0 18px rgba(115, 214, 219, 0.03), inset 0 0 28px rgba(87, 211, 216, 0.08);
+}
+.card-meridian .card-art::after {
+  width: 184px;
+  height: 184px;
+  border: 1px dashed rgba(157, 223, 220, 0.1);
+}
+.meridian-mini {
+  position: relative;
+  z-index: 2;
+  display: block;
+  width: 84px;
+  height: 84px;
+  transform: translateY(-1px) rotateX(58deg) rotateZ(-12deg) !important;
+  border: 3px solid rgba(198, 247, 242, 0.78);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(61, 163, 159, 0.28) 0 10%, transparent 11%),
+    radial-gradient(circle, rgba(22, 76, 85, 0.92) 0 62%, rgba(133, 232, 235, 0.12) 63% 68%, rgba(4, 14, 21, 0.95) 69%);
+  box-shadow: 0 0 20px rgba(98, 217, 222, 0.22), 0 22px 34px rgba(0,0,0,0.42);
+}
+.meridian-mini::before,
+.meridian-mini::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(174, 231, 229, 0.22);
+  border-radius: 50%;
+}
+.meridian-mini::before { width: 58px; height: 58px; }
+.meridian-mini::after { width: 28px; height: 28px; }
+.meridian-mini i {
+  position: absolute;
+  left: 56px;
+  top: 14px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffd37f;
+  box-shadow: 0 0 10px #ffbd59, 0 0 24px rgba(255, 160, 67, 0.72);
+}
 
 .card-copy {
   display: flex;
