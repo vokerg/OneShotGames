@@ -107,6 +107,18 @@ cd ukrainian-front-rts
 
 See [`ukrainian-front-rts/README.md`](ukrainian-front-rts/README.md) for controls and architecture, and [`ukrainian-front-rts/docs/ART_PIPELINE.md`](ukrainian-front-rts/docs/ART_PIPELINE.md) for the graphics workflow.
 
+### Flat Earth II // Southern Circuit
+
+Play a Russian-language old-school terminal investigation built around a real Santiago → Sydney southern route, branching evidence trails, puzzles, procedural SVG dossier art, autosave, keyboard controls and four endings. The intelligence-agency conspiracy is explicitly fictional; the route and astronomy clues are documented separately as reproducible observations.
+
+Run it with:
+
+```bash
+python3 flat-earth-2/run.py
+```
+
+See [`flat-earth-2/README.md`](flat-earth-2/README.md) for controls and campaign structure, and [`flat-earth-2/RESEARCH.md`](flat-earth-2/RESEARCH.md) for the factual/fiction boundary and research references.
+
 ## Recovery audit
 
 See [`RECOVERY.md`](RECOVERY.md) for the source refs and non-destructive restoration method used after the repository history rewrite.
