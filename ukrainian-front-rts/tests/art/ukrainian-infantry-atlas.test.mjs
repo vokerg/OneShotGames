@@ -71,11 +71,14 @@ test('every state has all eight directional sequences and valid timing', () => {
   }
 });
 
-test('runtime identity, direction, and visual-state adapters preserve safe fallbacks', () => {
+test('runtime identity, direction, and visual-state adapters preserve faction-safe fallbacks', () => {
   const catalog = output().catalogObject;
   assert.equal(resolveUkrainianInfantryIdentity('uaEngineer', { worker: true }, catalog), 'ua.combat-engineers');
   assert.equal(resolveUkrainianInfantryIdentity('uaMedic', { medic: true }, catalog), 'ua.casevac-team');
-  assert.equal(resolveUkrainianInfantryIdentity('futureUnknown', { role: 'air-defense' }, catalog), 'ua.mobile-sam');
+  assert.equal(resolveUkrainianInfantryIdentity('uaFutureAirDefense', { role: 'air-defense' }, catalog), 'ua.mobile-sam');
+  assert.equal(resolveUkrainianInfantryIdentity('futureUnknown', { faction: 'ukraine', role: 'air-defense' }, catalog), 'ua.mobile-sam');
+  assert.equal(resolveUkrainianInfantryIdentity('ruInfantry', { role: 'infantry' }, catalog), null);
+  assert.equal(resolveUkrainianInfantryIdentity('futureUnknown', { faction: 'russia', role: 'infantry' }, catalog), null);
   assert.equal(resolveUkrainianInfantryIdentity('uaTank', { armor: true }, catalog), null);
   assert.equal(ukrainianInfantryDirectionFromAngle(-Math.PI / 2), 'n');
   assert.equal(ukrainianInfantryDirectionFromAngle(0), 'e');
@@ -87,7 +90,7 @@ test('runtime identity, direction, and visual-state adapters preserve safe fallb
 });
 
 
-test('renderer art pass installs once, draws eligible UA infantry, and restores exact fallbacks', async () => {
+test('renderer art pass follows Ukrainian faction identity across side inversion and restores exact fallbacks', async () => {
   class Renderer {
     unit() { return 'fallback-unit'; }
     portrait() { return 'fallback-portrait'; }
@@ -112,7 +115,7 @@ test('renderer art pass installs once, draws eligible UA infantry, and restores 
 
   const renderer = Object.create(Renderer.prototype);
   renderer.g = {
-    unitStats: () => ({ archetype: 'infantry' }),
+    unitStats: (type) => ({ archetype: 'infantry', faction: type?.startsWith('ua') ? 'ukraine' : 'russia' }),
     camera: { z: 1 },
     time: 2,
   };
@@ -120,7 +123,7 @@ test('renderer art pass installs once, draws eligible UA infantry, and restores 
   renderer.sp = () => ({ x: 20, y: 30 });
   renderer.selection = () => calls.push({ selection: true });
 
-  const resolved = renderer.unit({
+  const playerSideUa = renderer.unit({
     team: TEAM.UA,
     type: 'uaInfantry',
     x: 10,
@@ -130,8 +133,22 @@ test('renderer art pass installs once, draws eligible UA infantry, and restores 
     angle: -Math.PI / 2,
     flash: 0,
   });
-  assert.equal(resolved.frameId, 'ua.line-infantry.idle.n.f00');
+  assert.equal(playerSideUa.frameId, 'ua.line-infantry.idle.n.f00');
   assert.equal(calls[0].animationId, 'ua.line-infantry.idle');
+
+  const opponentSideUa = renderer.unit({
+    team: TEAM.RU,
+    type: 'uaInfantry',
+    x: 10,
+    y: 15,
+    hp: 100,
+    maxHp: 100,
+    angle: -Math.PI / 2,
+    flash: 0,
+  });
+  assert.equal(opponentSideUa.frameId, 'ua.line-infantry.idle.n.f00');
+
+  assert.equal(renderer.unit({ team: TEAM.UA, type: 'ruInfantry' }), 'fallback-unit');
   assert.equal(renderer.unit({ team: TEAM.RU, type: 'ruInfantry' }), 'fallback-unit');
   assert.equal(installation.status().ready, true);
 
