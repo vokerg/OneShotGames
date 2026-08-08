@@ -1,4 +1,3 @@
-import { FACTIONS, TEAM } from '../config.js';
 import {
   loadUkrainianInfantryAtlas,
   resolveUkrainianInfantryAtlasUnitId,
@@ -11,8 +10,9 @@ import {
 
 const INSTALLATION = Symbol.for('fields-of-resolve.ukrainian-infantry-art-pass');
 
-function supportsAtlas(entity, stats) {
-  return entity?.team === TEAM.UA && !stats?.air && !stats?.armor;
+function resolveAtlasUnit(type, stats) {
+  if (stats?.air || stats?.armor) return null;
+  return resolveUkrainianInfantryAtlasUnitId(type, stats);
 }
 
 function roleLabel(stats) {
@@ -80,12 +80,8 @@ export function installUkrainianInfantryArtPass(
     });
 
   function atlasUnit(entity) {
-    const stats = entity?.team === TEAM.UA
-      ? this.g?.unitStats?.(entity.type)
-      : null;
-    const unitId = supportsAtlas(entity, stats)
-      ? resolveUkrainianInfantryAtlasUnitId(entity.type, stats)
-      : null;
+    const stats = this.g?.unitStats?.(entity?.type) ?? null;
+    const unitId = resolveAtlasUnit(entity?.type, stats);
     if (!unitId || !state.runtime) return fallbackUnit.call(this, entity);
 
     const screen = this.sp(entity.x, entity.y);
@@ -110,12 +106,8 @@ export function installUkrainianInfantryArtPass(
   }
 
   function atlasPortrait(entity) {
-    const stats = entity?.team === TEAM.UA
-      ? this.g?.unitStats?.(entity.type)
-      : null;
-    const unitId = supportsAtlas(entity, stats)
-      ? resolveUkrainianInfantryAtlasUnitId(entity.type, stats)
-      : null;
+    const stats = this.g?.unitStats?.(entity?.type) ?? null;
+    const unitId = resolveAtlasUnit(entity?.type, stats);
     if (!unitId || !state.runtime) return fallbackPortrait.call(this, entity);
 
     const context = this.px;
@@ -137,7 +129,7 @@ export function installUkrainianInfantryArtPass(
     context.fillRect(5, 83, 134, 22);
     context.font = 'bold 10px monospace';
     context.fillStyle = '#e4ca54';
-    context.fillText(`${FACTIONS[TEAM.UA].short} // ${roleLabel(stats)}`, 11, 97);
+    context.fillText(`UA // ${roleLabel(stats)}`, 11, 97);
     context.strokeStyle = '#a58a51';
     context.lineWidth = 5;
     context.strokeRect(2, 2, 140, 108);
