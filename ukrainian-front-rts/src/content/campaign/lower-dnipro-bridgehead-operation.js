@@ -65,6 +65,8 @@ export const LOWER_DNIPRO_WAVE_PLAN = deepFreeze({
 export const LOWER_DNIPRO_COMMAND_DECISIONS = deepFreeze({
   selectorScriptId: 'command-liaison',
   variable: 'reserveAxis',
+  decisionDeadlineSeconds: 135,
+  defaultChoice: 'north',
   choices: [
     { id: 'north', regionId: 'north-command-sector', effect: 'Commit the mobile reserve to the northern screen; wave 3 shifts south and wave 5 masses north.' },
     { id: 'south', regionId: 'south-command-sector', effect: 'Commit the mobile reserve to the southern screen; wave 3 shifts north and wave 5 leans south with fires.' },
@@ -167,14 +169,29 @@ export const LOWER_DNIPRO_MISSION_SCRIPT = deepFreeze({
     },
     {
       id: 'wave-3-north-choice',
-      when: { kind: 'all', conditions: [{ kind: 'timer', clock: 'seconds', operator: 'gte', value: 135 }, { kind: 'variable', id: 'reserveAxis', operator: 'eq', value: 'north' }] },
-      actions: [{
-        kind: 'reinforcement', team: 1, label: 'Assault group three — southern seam',
-        entities: [
-          { kind: 'unit', type: 'ruInfantry', count: 2, regionId: 'enemy-entry-south', spacingX: 18, spacingY: 16, scriptIdPrefix: 'wave3-north-rifles', tag: 'dnipro-wave' },
-          { kind: 'unit', type: 'ruIfv', count: 1, regionId: 'enemy-entry-south', spacingX: 0, spacingY: 0, scriptIdPrefix: 'wave3-north-ifv', tag: 'dnipro-wave' },
+      when: {
+        kind: 'all',
+        conditions: [
+          { kind: 'timer', clock: 'seconds', operator: 'gte', value: 135 },
+          {
+            kind: 'any',
+            conditions: [
+              { kind: 'variable', id: 'reserveAxis', operator: 'eq', value: 'north' },
+              { kind: 'variable', id: 'reserveAxis', operator: 'eq', value: 'uncommitted' },
+            ],
+          },
         ],
-      }],
+      },
+      actions: [
+        { kind: 'setVariable', id: 'reserveAxis', value: 'north' },
+        {
+          kind: 'reinforcement', team: 1, label: 'Assault group three — southern seam',
+          entities: [
+            { kind: 'unit', type: 'ruInfantry', count: 2, regionId: 'enemy-entry-south', spacingX: 18, spacingY: 16, scriptIdPrefix: 'wave3-north-rifles', tag: 'dnipro-wave' },
+            { kind: 'unit', type: 'ruIfv', count: 1, regionId: 'enemy-entry-south', spacingX: 0, spacingY: 0, scriptIdPrefix: 'wave3-north-ifv', tag: 'dnipro-wave' },
+          ],
+        },
+      ],
     },
     {
       id: 'wave-3-south-choice',
@@ -402,12 +419,12 @@ export const LOWER_DNIPRO_BRIEFING = deepFreeze({
     { id: 'logistics', label: 'River logistics engineer team', category: 'support', count: 1 },
     { id: 'bridgehead-rifles', label: 'Bridgehead mechanized squad', category: 'infantry', count: 1 },
     { id: 'reserve', label: 'Mobile tank reserve', category: 'armor', count: 1 },
-    { id: 'liaison', label: 'Command liaison squad', category: 'command', count: 1, note: 'Move this single element into a command sector to choose the reserve axis.' },
+    { id: 'liaison', label: 'Command liaison squad', category: 'command', count: 1, note: 'Move this single element into a command sector to choose the reserve axis before 135 seconds; otherwise the northern commitment is selected automatically.' },
   ],
   intelligence: [
     { id: 'waves', title: 'Six deliberate assault groups', detail: 'Assault windows are expected at 45-second intervals from 45 through 270 seconds.', confidence: 'confirmed' },
     { id: 'visibility', title: 'Night into predawn', detail: 'The operation begins in deep river darkness and transitions to predawn mist after four minutes.', confidence: 'confirmed' },
-    { id: 'decision', title: 'Reserve commitment matters', detail: 'The single command liaison selects north or south; later wave compositions respond deterministically to that commitment.', confidence: 'confirmed' },
+    { id: 'decision', title: 'Reserve commitment matters', detail: 'The single command liaison selects north or south before wave three; if no order is given by 135 seconds, the reserve defaults north so all six assault windows remain active.', confidence: 'confirmed' },
   ],
   objectives: LOWER_DNIPRO_OBJECTIVES.map((objective) => ({
     id: objective.id, title: objective.label, description: objective.failureReason, optional: Boolean(objective.optional),
@@ -416,11 +433,11 @@ export const LOWER_DNIPRO_BRIEFING = deepFreeze({
   difficultyNotes: {
     label: 'Standard',
     summary: 'A five-minute sustainment fight followed by a command-bunker counterattack.',
-    modifiers: ['Six authored assault windows', 'Single-element north/south reserve decision', 'Night-to-predawn visibility transition', 'River logistics adds 80 fuel on delivery'],
+    modifiers: ['Six authored assault windows', 'Single-element north/south reserve decision with a 135-second north fallback', 'Night-to-predawn visibility transition', 'River logistics adds 80 fuel on delivery'],
   },
   loadingHints: [
     'Deliver the river logistics team early: its fuel package raises the legacy 260 starting fuel above the 320 sustainment target.',
-    'Move the command liaison—not multiple units—into the north or south command sector to commit the reserve without ambiguous branch races.',
+    'Move the command liaison—not multiple units—into the north or south command sector before wave three; no order by 135 seconds defaults the reserve north.',
     'Do not spend the mobile reserve so aggressively that the bridgehead command post is exposed before the counterattack release at 300 seconds.',
   ],
   metadata: { fictional: true, legacyMissionId: 'kherson' },
@@ -461,7 +478,7 @@ export const LOWER_DNIPRO_OPERATION = deepFreeze({
   contentNotes: [
     'This is a stylized fictional operation using the legacy Lower Dnipro/Kherson mission identity.',
     'River logistics is represented by a canonical engineer team and scripted resource handoff rather than a new transport subsystem.',
-    'The single command-liaison selector prevents simultaneous north/south decision activation in ordinary play.',
+    'The single command-liaison selector prevents simultaneous north/south decision activation; an uncommitted reserve defaults north at wave three so authored waves cannot be skipped by inaction.',
     'No browser campaign mounting is owned by UFR-096.',
   ],
 });
