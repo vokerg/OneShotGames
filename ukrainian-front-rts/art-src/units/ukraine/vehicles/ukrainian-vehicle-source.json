@@ -1,0 +1,51 @@
+{
+  "schema": "fields-of-resolve.ukrainian-vehicle-art-source",
+  "version": 1,
+  "id": "fields-of-resolve.ukrainian-vehicles",
+  "frame": { "width": 64, "height": 64, "columns": 16 },
+  "directions": ["n", "ne", "e", "se", "s", "sw", "w", "nw"],
+  "states": {
+    "idle": { "frames": 2, "durationsMs": [360, 420], "loop": "loop" },
+    "move": { "frames": 4, "durationsMs": [120, 120, 120, 120], "loop": "loop" },
+    "attack": { "frames": 3, "durationsMs": [80, 90, 140], "loop": "once" },
+    "hit": { "frames": 2, "durationsMs": [90, 160], "loop": "once" },
+    "damaged": { "frames": 2, "durationsMs": [330, 390], "loop": "loop" },
+    "death": { "frames": 6, "durationsMs": [80, 90, 100, 120, 160, 480], "loop": "once" },
+    "wreck": { "frames": 2, "durationsMs": [700, 900], "loop": "hold" }
+  },
+  "paletteTokens": {
+    "ink": "#111512",
+    "deep": "#18271f",
+    "shadow": "#293c30",
+    "base": "#50684c",
+    "light": "#81956a",
+    "metal": "#9aa291",
+    "accent": "#e4ca54",
+    "optic": "#4e8db2",
+    "track": "#252a25",
+    "damage": "#d95f45",
+    "smoke": "#5d625d",
+    "apc": "#65765a",
+    "ifv": "#50684c",
+    "tank": "#465b42",
+    "recovery": "#6b704f",
+    "engineering": "#777044"
+  },
+  "units": [
+    { "id": "ua.protected-mobility.apc", "displayName": "Ukrainian Protected Mobility Carrier", "shortName": "Protected Carrier", "role": "protected-transport", "aliases": ["uaApc"], "profile": "apc", "accent": "apc" },
+    { "id": "ua.protected-mobility.ifv", "displayName": "Ukrainian Infantry Fighting Vehicle", "shortName": "Infantry Fighting Vehicle", "role": "infantry-fighting-vehicle", "aliases": ["uaIfv"], "profile": "ifv", "accent": "ifv" },
+    { "id": "ua.tank.main-battle", "displayName": "Ukrainian Main Battle Tank", "shortName": "Main Battle Tank", "role": "main-battle-tank", "aliases": ["uaTank"], "profile": "tank", "accent": "tank" },
+    { "id": "ua.recovery-vehicle.armored-recovery", "displayName": "Ukrainian Armored Recovery Vehicle", "shortName": "Armored Recovery Vehicle", "role": "armored-recovery", "aliases": ["uaRecovery"], "profile": "recovery", "accent": "recovery" },
+    { "id": "ua.breaching-section.engineering-vehicle", "displayName": "Ukrainian Combat Engineering Vehicle", "shortName": "Engineering Vehicle", "role": "combat-engineering-vehicle", "aliases": ["uaEngineeringVehicle"], "profile": "engineering", "accent": "engineering" }
+  ],
+  "provenance": {
+    "creator": "Fields of Resolve contributors with OpenAI-assisted deterministic vector generation",
+    "createdAt": "2026-08-07",
+    "source": "Original fictional Ukrainian vehicle silhouettes authored for this repository; no external visual assets used",
+    "license": "CC0-1.0",
+    "redistribution": "allowed",
+    "externalInputs": [],
+    "publicFigures": [],
+    "humanCorrections": "Pending maintainer visual review of atlas contact sheet and in-game captures."
+  }
+}
