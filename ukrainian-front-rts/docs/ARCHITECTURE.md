@@ -45,6 +45,7 @@ index.html
           ├─ src/combat/                 focused combat policies and systems
           ├─ src/status/                 authoritative unit-status policies
           ├─ src/visibility/             authoritative visibility policies
+          ├─ src/skirmish/               skirmish catalog, mode policy, runtime integration
           └─ src/systems/
               ├─ simulation-phases.js    authoritative phase order
               ├─ navigation-movement-system.js runtime navigation integration
@@ -107,7 +108,7 @@ runtime → injected Game/UI/Renderer interfaces + core fixed-step clock
 simulation harness → Game/core only
 ui/render → config + shared contracts + read-only game state + public game commands
 Game → config/schema/contracts/core/ai/systems
-systems, combat, status, visibility → config/schema/contracts/core/navigation/ai/sibling systems
+systems, combat, status, visibility, skirmish → config/schema/contracts/core/navigation/ai/sibling systems
 navigation → core/sibling navigation modules only
 ai → config/schema/contracts/core/sibling ai modules
 config (including src/content/) → schema/core/shared contracts only when needed
@@ -117,7 +118,7 @@ core → sibling core modules only
 production → never tests
 ```
 
-The architecture verifier enforces the declared production layers: `core`, `schema`, `contract`, `config`, `navigation`, `ai`, `systems`, `game`, `app`, `input`, `ui`, `render`, `audio`, and `main`. Focused modules under `src/content/` are classified as the declarative `config` layer. The top-level `src/combat/`, `src/status/`, and `src/visibility/` namespaces are classified as focused `systems` modules. `src/navigation/` remains a distinct inward-only policy layer.
+The architecture verifier enforces the declared production layers: `core`, `schema`, `contract`, `config`, `navigation`, `ai`, `systems`, `game`, `app`, `input`, `ui`, `render`, `audio`, and `main`. Focused modules under `src/content/` are classified as the declarative `config` layer. The top-level `src/combat/`, `src/status/`, `src/visibility/`, and `src/skirmish/` namespaces are classified as focused `systems` modules, except `src/skirmish/skirmish-catalog.js`, which is deliberately classified as declarative `config` so UI may consume immutable map/faction/default descriptors without importing simulation policy. `src/navigation/` remains a distinct inward-only policy layer.
 
 A small set of dependency-free public contracts is classified as `contract` because it is consumed from more than one outward layer without transferring mutation ownership:
 
@@ -186,9 +187,11 @@ UFR-081 adds pure tactical posture and bounded command-plan selection for scouti
 
 ### Focused simulation namespaces
 
-`src/combat/`, `src/status/`, and `src/visibility/` are focused simulation namespaces. They are part of the executable `systems` layer even though their directory names are domain-specific. They may import core, schema, shared contracts, declarative config/content, navigation policy, AI planning contracts, and sibling simulation modules. They must not import browser app/runtime, input, UI, rendering, audio, or composition modules.
+`src/combat/`, `src/status/`, `src/visibility/`, and `src/skirmish/` are focused simulation namespaces. They are part of the executable `systems` layer even though their directory names are domain-specific. They may import core, schema, shared contracts, declarative config/content, navigation policy, AI planning contracts, and sibling simulation modules. They must not import browser app/runtime, input, UI, rendering, audio, or composition modules.
 
-The exact shared-contract modules listed in the dependency section are deliberately narrower. A content or presentation module may import those public contracts, but it may not import an arbitrary combat, status, visibility, navigation, or systems runtime module.
+The skirmish namespace has one deliberate declarative exception: `src/skirmish/skirmish-catalog.js` is immutable config-layer data containing authored maps, faction-facing roster/cost descriptors, difficulty IDs, and defaults. `src/skirmish/skirmish-config.js` validates that catalog against authoritative AI difficulty contracts and projects normalized mission setup, while `src/skirmish/skirmish-runtime.js` owns live mode initialization, fair AI economy/tactical cadence composition, side-vs-faction separation, and public skirmish commands through declared simulation delegates. UI reads only the catalog plus public Game commands; it does not import skirmish runtime policy.
+
+The exact shared-contract modules listed in the dependency section are deliberately narrower. A content or presentation module may import those public contracts, but it may not import an arbitrary combat, status, visibility, skirmish, navigation, or systems runtime module.
 
 ### `src/systems/simulation-phases.js`
 
