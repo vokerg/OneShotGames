@@ -67,9 +67,9 @@ test('operation preserves the legacy Donbas economy and mission identity while e
 
 test('crossing terrain is genuinely authored around a water obstacle and bridge cells', () => {
   const map = loadAuthoredMap(DONBAS_CROSSING_MAP);
-  const terrainSymbols = map.terrain.rows.join('');
+  const terrainSymbols = DONBAS_CROSSING_MAP.terrain.rows.join('');
   assert.ok([...terrainSymbols].filter((cell) => cell === 'w').length >= 40);
-  assert.equal(map.terrain.rows.filter((row) => row.includes('bb')).length, 2);
+  assert.equal(DONBAS_CROSSING_MAP.terrain.rows.filter((row) => row.includes('bb')).length, 2);
   assert.equal(map.roads.find((road) => road.id === 'crossing-road').cells.length, 30);
   assert.equal(map.regions['west-bridgehead'].metadata.purpose, 'crossing-defense');
 });
