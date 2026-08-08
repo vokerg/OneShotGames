@@ -13,7 +13,10 @@ const host = '127.0.0.1';
 const port = 4177;
 const browserPort = 9227;
 const pageUrl = `http://${host}:${port}/`;
-const reviewAnchor = Object.freeze({ xRatio: 0.27, yRatio: 0.49 });
+const uaReviewAnchor = Object.freeze({ xRatio: 0.27, yRatio: 0.49 });
+const ruReviewAnchor = Object.freeze({ xRatio: 0.5, yRatio: 0.5 });
+const world = Object.freeze({ width: 2560, height: 1664 });
+const ruReviewWorld = Object.freeze({ x: 2100, y: 305 });
 const mime = {
   '.css': 'text/css',
   '.html': 'text/html',
@@ -64,7 +67,7 @@ await new Promise((resolveReady, rejectReady) => {
   server.listen(port, host, resolveReady);
 });
 
-const profile = await mkdtemp(join(tmpdir(), 'ufrts-ua-readability-'));
+const profile = await mkdtemp(join(tmpdir(), 'ufrts-infantry-readability-'));
 const logs = [];
 const chrome = spawn(browser, [
   '--headless=new',
@@ -182,11 +185,11 @@ async function capture(name) {
   return bytes.length;
 }
 
-async function wheel(deltaY, count) {
+async function wheel(deltaY, count, anchor = uaReviewAnchor) {
   await evaluate(`(() => {
     const canvas = document.querySelector('#game');
-    const x = Math.round(innerWidth * ${reviewAnchor.xRatio});
-    const y = Math.round(innerHeight * ${reviewAnchor.yRatio});
+    const x = Math.round(innerWidth * ${anchor.xRatio});
+    const y = Math.round(innerHeight * ${anchor.yRatio});
     for (let index = 0; index < ${count}; index += 1) {
       canvas.dispatchEvent(new WheelEvent('wheel', {
         bubbles: true,
@@ -196,6 +199,21 @@ async function wheel(deltaY, count) {
         deltaY: ${deltaY},
       }));
     }
+  })()`);
+  await delay(350);
+}
+
+async function focusMinimap(worldX, worldY) {
+  await evaluate(`(() => {
+    const minimap = document.querySelector('#minimap');
+    const bounds = minimap.getBoundingClientRect();
+    minimap.dispatchEvent(new MouseEvent('mousedown', {
+      bubbles: true,
+      cancelable: true,
+      clientX: bounds.left + bounds.width * ${worldX / world.width},
+      clientY: bounds.top + bounds.height * ${worldY / world.height},
+      button: 0,
+    }));
   })()`);
   await delay(350);
 }
@@ -216,31 +234,51 @@ try {
   await waitFor(
     `(async () => {
       const { Renderer } = await import('./src/render.js');
-      return Renderer.prototype.ukrainianInfantryAtlasStatus?.().ready === true;
+      const ua = Renderer.prototype.ukrainianInfantryAtlasStatus?.();
+      const ru = Renderer.prototype.russianInfantryAtlasStatus?.();
+      return ua?.ready === true && ru?.ready === true;
     })()`,
-    'Ukrainian infantry atlas readiness',
+    'both infantry atlases readiness',
     { awaitPromise: true },
   );
   await delay(600);
 
   const captures = [];
-  captures.push({ file: 'command-color.png', expectedZoom: 1, bytes: await capture('command-color.png') });
+  captures.push({ faction: 'ua', file: 'command-color.png', expectedZoom: 1, bytes: await capture('command-color.png') });
 
-  await wheel(120, 10);
-  captures.push({ file: 'strategic-color.png', expectedZoom: 0.55, bytes: await capture('strategic-color.png') });
+  await wheel(120, 10, uaReviewAnchor);
+  captures.push({ faction: 'ua', file: 'strategic-color.png', expectedZoom: 0.55, bytes: await capture('strategic-color.png') });
 
-  await wheel(-120, 20);
-  captures.push({ file: 'inspection-color.png', expectedZoom: 1.45, bytes: await capture('inspection-color.png') });
+  await wheel(-120, 20, uaReviewAnchor);
+  captures.push({ faction: 'ua', file: 'inspection-color.png', expectedZoom: 1.45, bytes: await capture('inspection-color.png') });
 
-  await wheel(120, 10);
+  await wheel(120, 10, uaReviewAnchor);
   await evaluate(`document.documentElement.style.filter = 'grayscale(1)'`);
   await delay(150);
-  captures.push({ file: 'strategic-value.png', expectedZoom: 0.55, bytes: await capture('strategic-value.png') });
+  captures.push({ faction: 'ua', file: 'strategic-value.png', expectedZoom: 0.55, bytes: await capture('strategic-value.png') });
+  await evaluate(`document.documentElement.style.filter = ''`);
+
+  await focusMinimap(ruReviewWorld.x, ruReviewWorld.y);
+  await wheel(-120, 20, ruReviewAnchor);
+  captures.push({ faction: 'ru', file: 'ru-inspection-color.png', expectedZoom: 1.45, bytes: await capture('ru-inspection-color.png') });
+
+  await wheel(120, 4, ruReviewAnchor);
+  captures.push({ faction: 'ru', file: 'ru-command-color.png', expectedZoom: 0.95, bytes: await capture('ru-command-color.png') });
+
+  await wheel(120, 12, ruReviewAnchor);
+  captures.push({ faction: 'ru', file: 'ru-strategic-color.png', expectedZoom: 0.55, bytes: await capture('ru-strategic-color.png') });
+
+  await evaluate(`document.documentElement.style.filter = 'grayscale(1)'`);
+  await delay(150);
+  captures.push({ faction: 'ru', file: 'ru-strategic-value.png', expectedZoom: 0.55, bytes: await capture('ru-strategic-value.png') });
   await evaluate(`document.documentElement.style.filter = ''`);
 
   const atlasStatus = await evaluate(`(async () => {
     const { Renderer } = await import('./src/render.js');
-    return Renderer.prototype.ukrainianInfantryAtlasStatus?.();
+    return {
+      ukrainian: Renderer.prototype.ukrainianInfantryAtlasStatus?.(),
+      russian: Renderer.prototype.russianInfantryAtlasStatus?.(),
+    };
   })()`, { awaitPromise: true });
   const failures = events.filter((event) =>
     event.method === 'Runtime.exceptionThrown'
@@ -248,7 +286,8 @@ try {
     || (event.method === 'Log.entryAdded' && event.params?.entry?.level === 'error')
     || (event.method === 'Network.loadingFailed' && !event.params?.canceled),
   );
-  if (!atlasStatus?.ready || atlasStatus.degraded || atlasStatus.error || failures.length) {
+  const atlasFailure = Object.values(atlasStatus ?? {}).some((status) => !status?.ready || status.degraded || status.error);
+  if (atlasFailure || failures.length) {
     throw new Error(`Mission readability browser review failed: ${JSON.stringify({ atlasStatus, failures })}`);
   }
 
@@ -260,15 +299,18 @@ try {
     captures,
     review: {
       strategicZoom: 0.55,
-      commandZoom: 1,
+      commandZoom: '0.95-1.0',
       inspectionZoom: 1.45,
       grayscale: true,
-      zoomAnchor: reviewAnchor,
+      uaZoomAnchor: uaReviewAnchor,
+      ruZoomAnchor: ruReviewAnchor,
+      ruReviewWorld,
       surface: 'actual mission runtime',
+      factions: ['ua', 'ru'],
     },
   };
   await writeFile(resolve(artifacts, 'mission-readability-smoke.json'), JSON.stringify(manifest, null, 2));
-  console.log(`[ua-infantry-mission-readability] captured ${captures.length} actual-mission reviews for ${missionTitle}`);
+  console.log(`[infantry-mission-readability] captured ${captures.length} actual-mission reviews for ${missionTitle}`);
 } catch (error) {
   await writeFile(resolve(artifacts, 'mission-readability-failure.log'), `${logs.join('')}\n${error.stack}\n`);
   throw error;
