@@ -4,6 +4,15 @@ const DIRECTIONS = Object.freeze(['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw']);
 const DIRECTION_ANGLES = Object.freeze([0, 45, 90, 135, 180, 225, 270, 315]);
 const REQUIRED_STATES = Object.freeze(['idle', 'move', 'attack', 'hit', 'damaged', 'death', 'wreck']);
 
+const BATTLEFIELD_PRESENTATION = Object.freeze({
+  revision: 'top-down-readable-v2',
+  frame: Object.freeze({ width: 48, height: 48 }),
+  standingBody: Object.freeze({ x: 8, y: 3, width: 32, height: 42 }),
+  equipment: Object.freeze({ maxWidth: 18, maxLength: 34 }),
+  runtimeScale: Object.freeze({ multiplier: 1.05, floor: 0.55 }),
+  drawYOffset: 7,
+});
+
 function assert(condition, message) {
   if (!condition) throw new TypeError(message);
 }
@@ -71,19 +80,19 @@ function roleMark(unit, palette) {
   const accent = palette[unit.accent];
   switch (unit.equipment) {
     case 'tool':
-      return `<path d="M14 31l13-18 4 3-13 18z" fill="${palette.equipment}"/><path d="M27 12l8-1-3 7z" fill="${accent}"/>`;
+      return `<g transform="rotate(-18 11 27)"><rect x="9" y="17" width="4" height="21" fill="${palette.equipment}"/><rect x="6" y="16" width="10" height="5" fill="${accent}"/></g>`;
     case 'launcher':
-      return `<rect x="18" y="8" width="8" height="24" fill="${palette.ink}"/><rect x="20" y="5" width="4" height="24" fill="${palette.equipment}"/><rect x="17" y="5" width="10" height="5" fill="${accent}"/>`;
+      return `<rect x="32" y="5" width="7" height="30" rx="2" fill="${palette.ink}"/><rect x="34" y="4" width="3" height="27" fill="${palette.equipment}"/><rect x="31" y="7" width="9" height="5" fill="${accent}"/>`;
     case 'optic':
-      return `<rect x="19" y="9" width="10" height="18" fill="${palette.ink}"/><rect x="21" y="7" width="6" height="16" fill="${palette.equipment}"/><rect x="22" y="8" width="4" height="5" fill="${accent}"/>`;
+      return `<rect x="31" y="20" width="8" height="7" fill="${palette.ink}"/><rect x="33" y="19" width="4" height="5" fill="${accent}"/><rect x="35" y="9" width="2" height="12" fill="${palette.equipment}"/>`;
     case 'medical':
-      return `<rect x="15" y="19" width="18" height="15" fill="${palette.medical}"/><rect x="22" y="21" width="4" height="11" fill="${palette['medical-mark']}"/><rect x="18" y="25" width="12" height="4" fill="${palette['medical-mark']}"/>`;
+      return `<rect x="17" y="19" width="14" height="13" rx="2" fill="${palette.medical}"/><rect x="22" y="21" width="4" height="9" fill="${palette['medical-mark']}"/><rect x="19" y="24" width="10" height="4" fill="${palette['medical-mark']}"/>`;
     case 'sam':
-      return `<rect x="17" y="7" width="5" height="25" fill="${palette.ink}"/><rect x="26" y="7" width="5" height="25" fill="${palette.ink}"/><path d="M16 8l3-6 4 6zM25 8l3-6 4 6z" fill="${accent}"/>`;
+      return `<rect x="9" y="9" width="5" height="25" rx="2" fill="${palette.ink}"/><rect x="15" y="7" width="5" height="27" rx="2" fill="${palette.ink}"/><rect x="10" y="6" width="3" height="22" fill="${palette.equipment}"/><rect x="16" y="4" width="3" height="24" fill="${palette.equipment}"/><rect x="9" y="7" width="11" height="5" fill="${accent}"/>`;
     case 'radio':
-      return `<rect x="14" y="18" width="10" height="15" fill="${palette.ink}"/><rect x="16" y="20" width="6" height="5" fill="${accent}"/><rect x="19" y="8" width="2" height="12" fill="${palette.equipment}"/><path d="M29 13q8 5 0 10M31 10q13 8 0 16" fill="none" stroke="${accent}" stroke-width="2"/>`;
+      return `<rect x="10" y="20" width="10" height="13" rx="2" fill="${palette.ink}"/><rect x="12" y="22" width="6" height="5" fill="${accent}"/><rect x="13" y="8" width="2" height="14" fill="${palette.equipment}"/><path d="M16 12q6 4 0 8M18 9q10 6 0 13" fill="none" stroke="${accent}" stroke-width="2"/>`;
     default:
-      return `<rect x="21" y="5" width="5" height="27" fill="${palette.ink}"/><rect x="23" y="4" width="2" height="22" fill="${palette.equipment}"/><rect x="16" y="27" width="9" height="7" fill="${accent}"/>`;
+      return `<rect x="12" y="24" width="7" height="7" fill="${accent}"/><rect x="13" y="25" width="5" height="3" fill="${palette.equipment}"/>`;
   }
 }
 
@@ -91,25 +100,37 @@ function stateTransform(state, frameIndex) {
   if (state === 'move') {
     const phases = [-2, -1, 1, 2, 1, -1];
     const phase = phases[frameIndex % phases.length];
-    return { bodyY: Math.abs(phase) * -0.5, leftLeg: phase, rightLeg: -phase, lean: phase * 0.5, opacity: 1 };
+    return { bodyY: Math.abs(phase) * -0.5, leftLeg: phase, rightLeg: -phase, lean: phase * 0.35, opacity: 1 };
   }
   if (state === 'attack') {
-    return { bodyY: 0, leftLeg: 0, rightLeg: 0, lean: [0, -2, 1][frameIndex] ?? 0, recoil: [0, 3, 1][frameIndex] ?? 0, opacity: 1 };
+    return { bodyY: 0, leftLeg: 0, rightLeg: 0, lean: [0, -1.5, 0.8][frameIndex] ?? 0, recoil: [0, 1.5, 0.5][frameIndex] ?? 0, opacity: 1 };
   }
-  if (state === 'hit') return { bodyY: frameIndex === 0 ? 1 : 0, leftLeg: -1, rightLeg: 1, lean: frameIndex === 0 ? 6 : 3, opacity: 1, hit: true };
-  if (state === 'damaged') return { bodyY: frameIndex === 0 ? 2 : 1, leftLeg: -1, rightLeg: 1, lean: frameIndex === 0 ? 3 : 2, opacity: frameIndex === 0 ? 0.9 : 0.94, damaged: true };
+  if (state === 'hit') return { bodyY: frameIndex === 0 ? 1 : 0, leftLeg: -1, rightLeg: 1, lean: frameIndex === 0 ? 5 : 2.5, opacity: 1, hit: true };
+  if (state === 'damaged') return { bodyY: frameIndex === 0 ? 1.5 : 1, leftLeg: -1, rightLeg: 1, lean: frameIndex === 0 ? 2.5 : 1.5, opacity: frameIndex === 0 ? 0.9 : 0.94, damaged: true };
   if (state === 'death') {
     const sequence = [
-      { bodyY: 1, lean: 10, opacity: 1, prone: false },
-      { bodyY: 3, lean: 28, opacity: 0.95, prone: false },
-      { bodyY: 6, lean: 52, opacity: 0.85, prone: true },
-      { bodyY: 8, lean: 75, opacity: 0.72, prone: true },
-      { bodyY: 9, lean: 88, opacity: 0.62, prone: true },
+      { bodyY: 1, lean: 8, opacity: 1, prone: false },
+      { bodyY: 2, lean: 24, opacity: 0.95, prone: false },
+      { bodyY: 4, lean: 48, opacity: 0.86, prone: true },
+      { bodyY: 6, lean: 72, opacity: 0.74, prone: true },
+      { bodyY: 7, lean: 88, opacity: 0.62, prone: true },
     ];
     return { leftLeg: 0, rightLeg: 0, death: true, ...sequence[frameIndex] };
   }
-  if (state === 'wreck') return { bodyY: 9, leftLeg: 0, rightLeg: 0, lean: 88, opacity: 0.55, wreck: true, prone: true };
+  if (state === 'wreck') return { bodyY: 7, leftLeg: 0, rightLeg: 0, lean: 88, opacity: 0.55, wreck: true, prone: true };
   return { bodyY: frameIndex % 2 ? -0.5 : 0, leftLeg: 0, rightLeg: 0, lean: 0, opacity: 1 };
+}
+
+function standingBody(motion, palette, uniform, light) {
+  return `<g data-human-body="standing"><rect x="14" y="31" width="7" height="13" rx="2" fill="${palette.ink}" transform="translate(${motion.leftLeg} 0)"/><rect x="27" y="31" width="7" height="13" rx="2" fill="${palette.ink}" transform="translate(${motion.rightLeg} 0)"/><rect x="8" y="18" width="7" height="15" rx="2" fill="${uniform}"/><rect x="33" y="18" width="7" height="15" rx="2" fill="${palette['uniform-dark']}"/><path d="M12 18q12-7 24 0l-3 16q-9 5-18 0z" fill="${uniform}"/><path d="M15 18q5-4 9-4v21q-5 1-9-2z" fill="${light}"/><path d="M24 14q5 0 9 4v15q-4 2-9 2z" fill="${palette['uniform-dark']}"/><rect x="18" y="20" width="12" height="10" rx="2" fill="${palette.shadow}" opacity=".38"/><circle cx="24" cy="9" r="7.5" fill="${light}"/><path d="M16.5 9q7.5-10 15 0v4h-15z" fill="${palette['uniform-dark']}"/><rect x="20" y="4" width="8" height="3" fill="${light}"/><rect x="21" y="12" width="6" height="3" fill="${palette.ink}" opacity=".65"/></g>`;
+}
+
+function proneBody(palette, uniform, light) {
+  return `<g data-human-body="prone"><rect x="7" y="20" width="34" height="14" rx="4" fill="${uniform}"/><rect x="10" y="21" width="16" height="6" fill="${light}"/><circle cx="39" cy="27" r="7" fill="${light}"/><rect x="8" y="33" width="14" height="6" rx="2" fill="${palette.ink}"/><rect x="24" y="33" width="14" height="6" rx="2" fill="${palette.ink}"/></g>`;
+}
+
+function serviceWeapon(palette, accent) {
+  return `<g data-equipment="service-weapon"><rect x="33" y="8" width="5" height="25" rx="1" fill="${palette.ink}"/><rect x="35" y="5" width="2" height="24" fill="${palette.equipment}"/><rect x="30" y="24" width="7" height="5" fill="${accent}"/></g>`;
 }
 
 function renderBattleFrame(unit, state, frameIndex, palette) {
@@ -118,28 +139,29 @@ function renderBattleFrame(unit, state, frameIndex, palette) {
   const uniform = motion.damaged || motion.death || motion.wreck ? palette['uniform-dark'] : palette['uniform-base'];
   const light = motion.damaged || motion.wreck ? palette.shadow : palette['uniform-light'];
   const muzzle = state === 'attack' && frameIndex === 1
-    ? `<path d="M24 2l3 5-3 4-3-4z" fill="${palette['ukrainian-yellow']}"/><rect x="23" y="2" width="2" height="4" fill="#fff1aa"/>`
+    ? `<path d="M36 1l4 5-4 5-4-5z" fill="${palette['ukrainian-yellow']}"/><rect x="35" y="1" width="2" height="5" fill="#fff1aa"/>`
     : '';
   const damage = motion.hit
-    ? `<path d="M12 12l5 3-4 4 6 2-3 5-8-5z" fill="${palette.damage}" opacity=".9"/>`
+    ? `<path d="M11 17l6 3-4 5 6 2-4 5-8-6z" fill="${palette.damage}" opacity=".9"/>`
     : motion.damaged
-      ? `<path d="M15 23l5-3 4 4-3 7-7-2z" fill="${palette.damage}" opacity=".62"/>`
+      ? `<path d="M15 25l5-4 5 4-3 7-8-2z" fill="${palette.damage}" opacity=".62"/>`
       : '';
-  const prone = motion.prone === true;
-  const body = prone
-    ? `<rect x="12" y="22" width="25" height="11" rx="2" fill="${uniform}"/><rect x="16" y="19" width="10" height="8" fill="${light}"/><circle cx="37" cy="27" r="6" fill="${light}"/>`
-    : `<rect x="16" y="17" width="16" height="20" rx="2" fill="${uniform}"/><rect x="17" y="18" width="6" height="17" fill="${light}"/><rect x="25" y="19" width="6" height="16" fill="${palette['uniform-dark']}"/><path d="M17 16q7-9 14 0v4H17z" fill="${light}"/><rect x="19" y="14" width="10" height="5" fill="${light}"/><rect x="16" y="35" width="6" height="8" fill="${palette.ink}" transform="translate(${motion.leftLeg} 0)"/><rect x="26" y="35" width="6" height="8" fill="${palette.ink}" transform="translate(${motion.rightLeg} 0)"/>`;
-  return `<g opacity="${motion.opacity}"><ellipse cx="24" cy="41" rx="13" ry="4" fill="${palette.ink}" opacity=".45"/><g transform="translate(0 ${motion.bodyY + (motion.recoil ?? 0)}) rotate(${motion.lean} 24 28)">${body}${roleMark(unit, palette)}<rect x="30" y="29" width="5" height="7" fill="${palette['ukrainian-blue']}"/><rect x="30" y="33" width="5" height="3" fill="${palette['ukrainian-yellow']}"/>${damage}${muzzle}</g></g>`;
+  const body = motion.prone === true
+    ? proneBody(palette, uniform, light)
+    : standingBody(motion, palette, uniform, light);
+  const role = motion.prone === true ? '' : roleMark(unit, palette);
+  const weapon = motion.prone === true ? '' : serviceWeapon(palette, accent);
+  return `<g data-presentation="${BATTLEFIELD_PRESENTATION.revision}" opacity="${motion.opacity}"><ellipse cx="24" cy="27" rx="15" ry="18" fill="${palette.ink}" opacity=".32"/><g transform="translate(0 ${motion.bodyY + (motion.recoil ?? 0)}) rotate(${motion.lean} 24 26)">${body}${weapon}${role}<rect x="28" y="28" width="6" height="7" fill="${palette['ukrainian-blue']}"/><rect x="28" y="32" width="6" height="3" fill="${palette['ukrainian-yellow']}"/>${damage}${muzzle}</g></g>`;
 }
 
 function renderPortrait(unit, palette) {
   const accent = palette[unit.accent];
-  return `<rect width="48" height="48" fill="${palette.shadow}"/><path d="M6 43V27q2-11 18-11t18 11v16z" fill="${palette['uniform-base']}"/><path d="M9 42V29q3-8 11-10v23z" fill="${palette['uniform-light']}"/><circle cx="24" cy="15" r="9" fill="${palette['uniform-light']}"/><path d="M15 14q9-12 18 0v4H15z" fill="${palette['uniform-dark']}"/><rect x="19" y="15" width="3" height="2" fill="${palette.ink}"/><rect x="27" y="15" width="3" height="2" fill="${palette.ink}"/><rect x="21" y="22" width="7" height="2" fill="${palette['uniform-dark']}"/><rect x="34" y="27" width="7" height="9" fill="${accent}"/><rect x="35" y="28" width="5" height="3" fill="${palette['ukrainian-blue']}"/><rect x="35" y="32" width="5" height="3" fill="${palette['ukrainian-yellow']}"/>`;
+  return `<rect width="48" height="48" fill="${palette.shadow}"/><path d="M4 46V31q2-13 20-13t20 13v15z" fill="${palette['uniform-base']}"/><path d="M7 44V32q3-9 13-12v24z" fill="${palette['uniform-light']}"/><path d="M20 20q4-3 8 0l6 24H20z" fill="${palette['uniform-dark']}" opacity=".72"/><circle cx="24" cy="14" r="10" fill="${palette['uniform-light']}"/><path d="M14 13q10-13 20 0v5H14z" fill="${palette['uniform-dark']}"/><rect x="18" y="14" width="4" height="2" fill="${palette.ink}"/><rect x="27" y="14" width="4" height="2" fill="${palette.ink}"/><rect x="21" y="22" width="7" height="3" fill="${palette['uniform-dark']}"/><rect x="34" y="28" width="9" height="11" fill="${accent}"/><rect x="35" y="29" width="7" height="4" fill="${palette['ukrainian-blue']}"/><rect x="35" y="34" width="7" height="4" fill="${palette['ukrainian-yellow']}"/>`;
 }
 
 function renderIcon(unit, palette) {
   const accent = palette[unit.accent];
-  return `<rect width="48" height="48" rx="4" fill="${palette.shadow}"/><rect x="4" y="4" width="40" height="40" rx="3" fill="${palette['uniform-dark']}" stroke="${palette.equipment}" stroke-width="2"/><circle cx="24" cy="17" r="7" fill="${palette['uniform-light']}"/><path d="M13 39q1-14 11-14t11 14z" fill="${palette['uniform-base']}"/>${roleMark(unit, { ...palette, ink: accent, equipment: accent })}<rect x="7" y="37" width="15" height="3" fill="${palette['ukrainian-blue']}"/><rect x="22" y="37" width="19" height="3" fill="${palette['ukrainian-yellow']}"/>`;
+  return `<rect width="48" height="48" rx="4" fill="${palette.shadow}"/><rect x="4" y="4" width="40" height="40" rx="3" fill="${palette['uniform-dark']}" stroke="${palette.equipment}" stroke-width="2"/><circle cx="24" cy="15" r="8" fill="${palette['uniform-light']}"/><path d="M12 39q2-15 12-15t12 15z" fill="${palette['uniform-base']}"/><rect x="17" y="27" width="14" height="10" fill="${accent}" opacity=".7"/><rect x="7" y="39" width="17" height="3" fill="${palette['ukrainian-blue']}"/><rect x="24" y="39" width="17" height="3" fill="${palette['ukrainian-yellow']}"/>`;
 }
 
 function frameRecord(id, x, y, width, height, tags, attachments = {}) {
@@ -156,10 +178,10 @@ function frameRecord(id, x, y, width, height, tags, attachments = {}) {
       ...attachments,
     },
     masks: {
-      hit: { x: 6, y: 5, w: width - 12, h: height - 9 },
-      selection: { x: 7, y: 12, w: width - 14, h: height - 15 }
+      hit: { x: 6, y: 4, w: width - 12, h: height - 7 },
+      selection: { x: 6, y: 8, w: width - 12, h: height - 10 },
     },
-    tags
+    tags,
   };
 }
 
@@ -197,15 +219,15 @@ export function generateUkrainianInfantryAtlas(sourceValue) {
         for (let frameIndex = 0; frameIndex < definition.frames; frameIndex += 1) {
           const id = `${unit.id}.${state}.${direction}.f${String(frameIndex).padStart(2, '0')}`;
           const cell = makeCell(index++, columns, width, height);
-          const muzzle = rotatePoint(24, 3, DIRECTION_ANGLES[directionIndex]);
+          const muzzle = rotatePoint(36, 4, DIRECTION_ANGLES[directionIndex]);
           frames[id] = frameRecord(
             id,
             cell.x,
             cell.y,
             width,
             height,
-            ['ukraine', 'infantry', unit.role, state, direction],
-            { muzzle }
+            ['ukraine', 'infantry', unit.role, state, direction, BATTLEFIELD_PRESENTATION.revision],
+            { muzzle },
           );
           directions[direction].push({ frame: id, durationMs: definition.durationsMs[frameIndex] });
           const definitionId = `${unit.id.replaceAll('.', '-')}-${state}-f${frameIndex}`;
@@ -220,7 +242,7 @@ export function generateUkrainianInfantryAtlas(sourceValue) {
         id: `${unit.id}.${state}`,
         loop: definition.loop,
         defaultDurationMs: definition.durationsMs[0],
-        directions
+        directions,
       };
     }
 
@@ -240,7 +262,7 @@ export function generateUkrainianInfantryAtlas(sourceValue) {
   const rows = Math.ceil(index / columns);
   const imageWidth = columns * width;
   const imageHeight = rows * height;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${imageWidth}" height="${imageHeight}" viewBox="0 0 ${imageWidth} ${imageHeight}" shape-rendering="crispEdges"><defs>${definitions.join('')}</defs>${cells.map((cell) => `<use href="#${cell.definition}" transform="translate(${cell.x} ${cell.y}) rotate(${cell.angle} 24 24)"/>`).join('')}</svg>\n`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" data-presentation="${BATTLEFIELD_PRESENTATION.revision}" width="${imageWidth}" height="${imageHeight}" viewBox="0 0 ${imageWidth} ${imageHeight}" shape-rendering="crispEdges"><defs>${definitions.join('')}</defs>${cells.map((cell) => `<use href="#${cell.definition}" transform="translate(${cell.x} ${cell.y}) rotate(${cell.angle} 24 24)"/>`).join('')}</svg>\n`;
   const manifestObject = {
     schema: ATLAS_SCHEMA,
     version: 1,
@@ -251,7 +273,7 @@ export function generateUkrainianInfantryAtlas(sourceValue) {
     paletteTokens: source.paletteTokens,
     frames,
     animations,
-    fallback: { frame: 'missing' }
+    fallback: { frame: 'missing' },
   };
 
   const contactWidth = 7 * 150;
@@ -279,8 +301,8 @@ export function generateUkrainianInfantryAtlas(sourceValue) {
       units: source.units.length,
       battleFrames: Object.values(frames).filter((frame) => frame.tags.includes('infantry') && !frame.tags.includes('portrait') && !frame.tags.includes('icon')).length,
       totalFrames: Object.keys(frames).length,
-      animations: Object.keys(animations).length
-    }
+      animations: Object.keys(animations).length,
+    },
   };
 
   return Object.freeze({
@@ -290,10 +312,11 @@ export function generateUkrainianInfantryAtlas(sourceValue) {
     svg,
     contactSheet,
     catalog: stableJson(catalog),
-    catalogObject: catalog
+    catalogObject: catalog,
   });
 }
 
 export const UKRAINIAN_INFANTRY_ART_SOURCE_SCHEMA = SOURCE_SCHEMA;
 export const UKRAINIAN_INFANTRY_REQUIRED_STATES = REQUIRED_STATES;
 export const UKRAINIAN_INFANTRY_DIRECTIONS = DIRECTIONS;
+export const UKRAINIAN_INFANTRY_BATTLEFIELD_PRESENTATION = BATTLEFIELD_PRESENTATION;
