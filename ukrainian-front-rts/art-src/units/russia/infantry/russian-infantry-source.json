@@ -1,0 +1,55 @@
+{
+  "schema": "fields-of-resolve.russian-infantry-art-source",
+  "version": 1,
+  "id": "fields-of-resolve.russian-infantry",
+  "frame": { "width": 48, "height": 48, "columns": 20 },
+  "directions": ["n", "ne", "e", "se", "s", "sw", "w", "nw"],
+  "states": {
+    "idle": { "frames": 2, "durationsMs": [280, 340], "loop": "loop" },
+    "move": { "frames": 6, "durationsMs": [110, 110, 110, 110, 110, 110], "loop": "loop" },
+    "attack": { "frames": 3, "durationsMs": [75, 85, 115], "loop": "once" },
+    "hit": { "frames": 2, "durationsMs": [85, 145], "loop": "once" },
+    "damaged": { "frames": 2, "durationsMs": [280, 340], "loop": "loop" },
+    "death": { "frames": 5, "durationsMs": [95, 105, 120, 150, 440], "loop": "once" },
+    "wreck": { "frames": 1, "durationsMs": [1000], "loop": "hold" }
+  },
+  "paletteTokens": {
+    "ink": "#111512",
+    "deep": "#2a211b",
+    "shadow": "#41342a",
+    "base": "#6c5947",
+    "light": "#94775a",
+    "metal": "#918d7d",
+    "accent": "#cdbd9d",
+    "optic": "#786957",
+    "damage": "#d95f45",
+    "medical": "#d7d9cf",
+    "medical-mark": "#9d3835",
+    "engineer": "#b48142",
+    "command": "#c8a96a",
+    "assault": "#9a684c",
+    "anti-armor": "#b45d4c",
+    "recon": "#687f72",
+    "air-defense": "#6f8f70"
+  },
+  "units": [
+    { "id": "ru.engineer-sappers", "displayName": "Russian Engineer-Sapper Section", "shortName": "Engineer-Sappers", "role": "engineering", "aliases": ["ruEngineer"], "equipment": "tool", "accent": "engineer" },
+    { "id": "ru.command-group", "displayName": "Russian Regimental Command Group", "shortName": "Command Group", "role": "command-support", "aliases": ["ruCommand"], "equipment": "radio", "accent": "command" },
+    { "id": "ru.motor-rifle-squad", "displayName": "Russian Motor Rifle Squad", "shortName": "Motor Rifle Squad", "role": "line-infantry", "aliases": ["ruInfantry"], "equipment": "rifle", "accent": "accent" },
+    { "id": "ru.assault-group.shock", "displayName": "Russian Shock Assault Group", "shortName": "Shock Group", "role": "assault", "aliases": ["ruAssault"], "equipment": "grenade", "accent": "assault" },
+    { "id": "ru.assault-group.anti-armor", "displayName": "Russian Anti-Armor Assault Group", "shortName": "Anti-Armor Group", "role": "anti-armor", "aliases": ["ruAntiArmor"], "equipment": "launcher", "accent": "anti-armor" },
+    { "id": "ru.scout-section", "displayName": "Russian Scout Section", "shortName": "Scout Section", "role": "reconnaissance", "aliases": ["ruRecon"], "equipment": "optic", "accent": "recon" },
+    { "id": "ru.medical-team", "displayName": "Russian Medical Team", "shortName": "Medical Team", "role": "medical", "aliases": ["ruMedic"], "equipment": "medical", "accent": "medical-mark" },
+    { "id": "ru.air-defense-team", "displayName": "Russian Short-Range Air-Defense Team", "shortName": "Air-Defense Team", "role": "air-defense", "aliases": ["ruAirDefense"], "equipment": "air-defense", "accent": "air-defense" }
+  ],
+  "provenance": {
+    "creator": "Fields of Resolve contributors with OpenAI-assisted deterministic vector generation",
+    "createdAt": "2026-08-07",
+    "source": "Original fictional Russian faction silhouettes authored for this repository; no external visual assets used",
+    "license": "CC0-1.0",
+    "redistribution": "allowed",
+    "externalInputs": [],
+    "publicFigures": [],
+    "humanCorrections": "Pending maintainer visual review of atlas contact sheet and in-game captures."
+  }
+}
