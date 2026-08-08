@@ -40,6 +40,7 @@ const SYSTEM_NAMESPACES = Object.freeze([
   'combat',
   'status',
   'visibility',
+  'skirmish',
 ]);
 
 const ALLOWED_IMPORTS = Object.freeze({
@@ -145,6 +146,7 @@ function layerOf(path) {
   if (UI_OWNERSHIP_MODULES.has(path)) return 'ui';
   if (path === 'src/game.js') return 'game';
   if (CONTRACT_MODULES.has(path)) return 'contract';
+  if (path === 'src/skirmish/skirmish-catalog.js') return 'config';
   if (path === 'src/config.js' || path.startsWith('src/content/')) return 'config';
   if (path === 'src/content-schema.js') return 'schema';
   if (path === 'src/ui.js' || path.startsWith('src/ui/') || path.startsWith('src/localization/')) return 'ui';
