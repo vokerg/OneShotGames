@@ -35,6 +35,28 @@ function findBrowser() {
     .find((name) => entries.some((directory) => existsSync(join(directory, name))));
 }
 
+function infantryObservationExpression(faction) {
+  const type = faction === 'ua' ? 'uaInfantry' : 'ruInfantry';
+  return `(() => {
+    const game = window.__infantryReview?.game;
+    const renderer = window.__infantryReview?.renderer;
+    const entity = game?.units?.find((candidate) => candidate?.type === '${type}');
+    if (!game || !renderer || !entity || !Number.isFinite(entity.x) || !Number.isFinite(entity.y)) return false;
+    const screen = renderer.sp(entity.x, entity.y);
+    return {
+      id: entity.id,
+      type: entity.type,
+      worldX: entity.x,
+      worldY: entity.y,
+      screenX: screen.x,
+      screenY: screen.y,
+      zoom: game.camera?.z,
+      cameraX: game.camera?.x,
+      cameraY: game.camera?.y,
+    };
+  })()`;
+}
+
 await mkdir(artifacts, { recursive: true });
 const browser = findBrowser();
 if (!browser) throw new Error('No Chrome/Chromium executable found. Set CHROME_BIN.');
@@ -55,6 +77,11 @@ const server = createServer(async (request, response) => {
       throw new Error('Invalid path');
     }
     response.setHeader('content-type', mime[extname(file)] || 'application/octet-stream');
+    if (requested === 'src/main.js') {
+      const source = await readFile(file, 'utf8');
+      response.end(`${source}\nwindow.__infantryReview = Object.freeze({ game, renderer });\n`);
+      return;
+    }
     response.end(await readFile(file));
   } catch (error) {
     response.statusCode = 404;
@@ -184,7 +211,7 @@ async function capture(name) {
   return bytes.length;
 }
 
-async function wheel(deltaY, count, anchor = uaReviewAnchor) {
+async function wheel(deltaY, count, anchor) {
   await evaluate(`(() => {
     const canvas = document.querySelector('#game');
     const x = Math.round(innerWidth * ${anchor.xRatio});
@@ -199,7 +226,21 @@ async function wheel(deltaY, count, anchor = uaReviewAnchor) {
       }));
     }
   })()`);
-  await delay(350);
+  await delay(120);
+}
+
+async function setZoom(target, anchor, label) {
+  for (let attempt = 0; attempt < 32; attempt += 1) {
+    const zoom = await evaluate(`window.__infantryReview?.game?.camera?.z`);
+    if (Number.isFinite(zoom) && Math.abs(zoom - target) <= 0.03) return zoom;
+    if (!Number.isFinite(zoom)) {
+      await delay(100);
+      continue;
+    }
+    await wheel(zoom < target ? -120 : 120, 1, anchor);
+  }
+  const zoom = await evaluate(`window.__infantryReview?.game?.camera?.z`);
+  throw new Error(`Could not reach ${label} zoom ${target}; current zoom is ${zoom}.`);
 }
 
 async function focusMinimap(worldX, worldY) {
@@ -218,14 +259,12 @@ async function focusMinimap(worldX, worldY) {
 }
 
 async function focusObservedInfantry(faction, label) {
-  const observed = await waitFor(
-    `window.__infantryReview?.last?.${faction}`,
-    `${label} render observation`,
-  );
+  const expression = infantryObservationExpression(faction);
+  const observed = await waitFor(expression, `${label} live runtime observation`);
   await focusMinimap(observed.worldX, observed.worldY);
   return waitFor(
     `(() => {
-      const point = window.__infantryReview?.last?.${faction};
+      const point = ${expression};
       return point
         && point.screenX >= 160 && point.screenX <= 1440
         && point.screenY >= 130 && point.screenY <= 640
@@ -236,6 +275,28 @@ async function focusObservedInfantry(faction, label) {
   );
 }
 
+async function captureReview({ faction, label, zoom, file, grayscale = false, anchor }) {
+  const actualZoom = await setZoom(zoom, anchor, label);
+  const observed = await focusObservedInfantry(faction, label);
+  if (grayscale) {
+    await evaluate(`document.documentElement.style.filter = 'grayscale(1)'`);
+    await delay(150);
+  }
+  try {
+    return {
+      faction,
+      file,
+      expectedZoom: zoom,
+      actualZoom,
+      observed,
+      grayscale,
+      bytes: await capture(file),
+    };
+  } finally {
+    if (grayscale) await evaluate(`document.documentElement.style.filter = ''`);
+  }
+}
+
 try {
   await connect();
   await call('Runtime.enable');
@@ -243,31 +304,10 @@ try {
   await call('Page.enable');
   await call('Network.enable');
   await call('Page.navigate', { url: pageUrl });
-  await waitFor(`document.readyState === 'complete' && document.querySelector('.missionCard button')`, 'mission selection');
-  await evaluate(`(async () => {
-    const { Renderer } = await import('./src/render.js');
-    if (!window.__infantryReview?.installed) {
-      const originalRender = Renderer.prototype.render;
-      window.__infantryReview = { installed: true, last: { ua: null, ru: null } };
-      Renderer.prototype.render = function infantryReviewObservedRender(...args) {
-        for (const entity of this.g?.units ?? []) {
-          const faction = entity?.type === 'uaInfantry' ? 'ua' : entity?.type === 'ruInfantry' ? 'ru' : null;
-          if (!faction || !Number.isFinite(entity.x) || !Number.isFinite(entity.y)) continue;
-          const screen = this.sp(entity.x, entity.y);
-          window.__infantryReview.last[faction] = {
-            type: entity.type,
-            worldX: entity.x,
-            worldY: entity.y,
-            screenX: screen.x,
-            screenY: screen.y,
-            zoom: this.g?.camera?.z,
-          };
-        }
-        return originalRender.apply(this, args);
-      };
-    }
-    return true;
-  })()`, { awaitPromise: true });
+  await waitFor(
+    `document.readyState === 'complete' && window.__infantryReview?.game && window.__infantryReview?.renderer && document.querySelector('.missionCard button')`,
+    'mission selection and runtime review bridge',
+  );
   await evaluate(`document.querySelector('.missionCard button').click()`);
   const missionTitle = await waitFor(
     `document.querySelector('#missionSelect')?.classList.contains('hidden') && document.querySelector('#missionTitle')?.textContent`,
@@ -283,48 +323,25 @@ try {
     'both infantry atlases readiness',
     { awaitPromise: true },
   );
-  await delay(600);
-  await waitFor(`window.__infantryReview?.last?.ua && window.__infantryReview?.last?.ru`, 'live UA/RU infantry draw observations');
+  await waitFor(infantryObservationExpression('ua'), 'live Ukrainian infantry runtime entity');
+  await waitFor(infantryObservationExpression('ru'), 'live Russian infantry runtime entity');
+  await delay(300);
 
   const captures = [];
-  await focusObservedInfantry('ua', 'Ukrainian infantry at command zoom');
-  captures.push({ faction: 'ua', file: 'command-color.png', expectedZoom: 1, bytes: await capture('command-color.png') });
+  captures.push(await captureReview({ faction: 'ua', label: 'Ukrainian infantry at command zoom', zoom: 1, file: 'command-color.png', anchor: uaReviewAnchor }));
+  captures.push(await captureReview({ faction: 'ua', label: 'Ukrainian infantry at strategic zoom', zoom: 0.55, file: 'strategic-color.png', anchor: uaReviewAnchor }));
+  captures.push(await captureReview({ faction: 'ua', label: 'Ukrainian infantry at inspection zoom', zoom: 1.45, file: 'inspection-color.png', anchor: uaReviewAnchor }));
+  captures.push(await captureReview({ faction: 'ua', label: 'Ukrainian infantry at strategic value zoom', zoom: 0.55, file: 'strategic-value.png', grayscale: true, anchor: uaReviewAnchor }));
 
-  await wheel(120, 10, uaReviewAnchor);
-  await focusObservedInfantry('ua', 'Ukrainian infantry at strategic zoom');
-  captures.push({ faction: 'ua', file: 'strategic-color.png', expectedZoom: 0.55, bytes: await capture('strategic-color.png') });
+  captures.push(await captureReview({ faction: 'ru', label: 'Russian infantry at inspection zoom', zoom: 1.45, file: 'ru-inspection-color.png', anchor: ruReviewAnchor }));
+  captures.push(await captureReview({ faction: 'ru', label: 'Russian infantry at command zoom', zoom: 1, file: 'ru-command-color.png', anchor: ruReviewAnchor }));
+  captures.push(await captureReview({ faction: 'ru', label: 'Russian infantry at strategic zoom', zoom: 0.55, file: 'ru-strategic-color.png', anchor: ruReviewAnchor }));
+  captures.push(await captureReview({ faction: 'ru', label: 'Russian infantry at strategic value zoom', zoom: 0.55, file: 'ru-strategic-value.png', grayscale: true, anchor: ruReviewAnchor }));
 
-  await wheel(-120, 20, uaReviewAnchor);
-  await focusObservedInfantry('ua', 'Ukrainian infantry at inspection zoom');
-  captures.push({ faction: 'ua', file: 'inspection-color.png', expectedZoom: 1.45, bytes: await capture('inspection-color.png') });
-
-  await wheel(120, 10, uaReviewAnchor);
-  await focusObservedInfantry('ua', 'Ukrainian infantry at strategic value zoom');
-  await evaluate(`document.documentElement.style.filter = 'grayscale(1)'`);
-  await delay(150);
-  captures.push({ faction: 'ua', file: 'strategic-value.png', expectedZoom: 0.55, bytes: await capture('strategic-value.png') });
-  await evaluate(`document.documentElement.style.filter = ''`);
-
-  await wheel(-120, 20, ruReviewAnchor);
-  await focusObservedInfantry('ru', 'Russian infantry at inspection zoom');
-  captures.push({ faction: 'ru', file: 'ru-inspection-color.png', expectedZoom: 1.45, bytes: await capture('ru-inspection-color.png') });
-
-  await wheel(120, 4, ruReviewAnchor);
-  await focusObservedInfantry('ru', 'Russian infantry at command zoom');
-  captures.push({ faction: 'ru', file: 'ru-command-color.png', expectedZoom: 0.95, bytes: await capture('ru-command-color.png') });
-
-  await wheel(120, 12, ruReviewAnchor);
-  await focusObservedInfantry('ru', 'Russian infantry at strategic zoom');
-  captures.push({ faction: 'ru', file: 'ru-strategic-color.png', expectedZoom: 0.55, bytes: await capture('ru-strategic-color.png') });
-
-  await focusObservedInfantry('ru', 'Russian infantry at strategic value zoom');
-  await evaluate(`document.documentElement.style.filter = 'grayscale(1)'`);
-  await delay(150);
-  captures.push({ faction: 'ru', file: 'ru-strategic-value.png', expectedZoom: 0.55, bytes: await capture('ru-strategic-value.png') });
-  await evaluate(`document.documentElement.style.filter = ''`);
-
-  const observedInfantry = await evaluate(`window.__infantryReview?.last`);
-
+  const observedInfantry = {
+    ua: await evaluate(infantryObservationExpression('ua')),
+    ru: await evaluate(infantryObservationExpression('ru')),
+  };
   const atlasStatus = await evaluate(`(async () => {
     const { Renderer } = await import('./src/render.js');
     return {
@@ -352,12 +369,13 @@ try {
     observedInfantry,
     review: {
       strategicZoom: 0.55,
-      commandZoom: '0.95-1.0',
+      commandZoom: 1,
       inspectionZoom: 1.45,
       grayscale: true,
       uaZoomAnchor: uaReviewAnchor,
       ruZoomAnchor: ruReviewAnchor,
-      observer: 'live Renderer.prototype.unit draw coordinates',
+      observer: 'test-server bridge to live Game and Renderer instances',
+      visibilityContract: 'live infantry entity must remain inside the battlefield review viewport before every capture',
       surface: 'actual mission runtime',
       factions: ['ua', 'ru'],
     },
