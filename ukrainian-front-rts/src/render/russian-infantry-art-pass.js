@@ -10,6 +10,7 @@ import {
 } from './russian-infantry-atlas.js';
 
 const INSTALLATION = Symbol.for('fields-of-resolve.russian-infantry-art-pass');
+const BATTLEFIELD_SCALE = Object.freeze({ multiplier: 1.08, floor: 0.6, drawYOffset: 7 });
 
 function statsFor(renderer, entity) {
   const legacy = UNIT_TYPES[entity?.type];
@@ -81,11 +82,11 @@ export function installRussianInfantryArtPass(RendererClass, { loadAtlas = loadR
     const zoom = this.g.camera.z;
     const visualState = russianInfantryStateForEntity(entity);
     const direction = russianInfantryDirectionFromAngle(entity.angle);
-    const scale = Math.max(0.35, zoom * 0.9);
+    const scale = Math.max(BATTLEFIELD_SCALE.floor, zoom * BATTLEFIELD_SCALE.multiplier);
     const animationId = russianInfantryAnimationId(unitId, visualState);
     const elapsedMs = russianInfantryAnimationElapsedMs(entity, visualState, this.g.time);
     const drawX = Math.round(screen.x);
-    const drawY = Math.round(screen.y) + 12 * zoom;
+    const drawY = Math.round(screen.y) + BATTLEFIELD_SCALE.drawYOffset * zoom;
     const resolved = state.runtime.drawAnimation(this.x, animationId, {
       x: drawX,
       y: drawY,
