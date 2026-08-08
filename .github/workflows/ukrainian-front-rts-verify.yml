@@ -55,6 +55,9 @@ jobs:
       - name: UFR-110 Ukrainian infantry Art Lab browser review
         if: always()
         run: node scripts/ukrainian-infantry-art-lab-smoke.mjs
+      - name: Ukrainian infantry actual-mission readability review
+        if: always()
+        run: node scripts/ukrainian-infantry-mission-readability-smoke.mjs
       - name: Visual regression review capture
         if: always()
         run: node scripts/visual-regression-smoke.mjs

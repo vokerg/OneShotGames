@@ -1,11 +1,12 @@
 import { loadSpriteAtlas } from './sprite-atlas-runtime.js';
 import {
   generateUkrainianInfantryAtlas,
+  UKRAINIAN_INFANTRY_BATTLEFIELD_PRESENTATION,
   UKRAINIAN_INFANTRY_DIRECTIONS,
   UKRAINIAN_INFANTRY_REQUIRED_STATES,
 } from './ukrainian-infantry-atlas-generator.js';
 
-export { UKRAINIAN_INFANTRY_DIRECTIONS };
+export { UKRAINIAN_INFANTRY_BATTLEFIELD_PRESENTATION, UKRAINIAN_INFANTRY_DIRECTIONS };
 
 export const UKRAINIAN_INFANTRY_SOURCE_URL = new URL(
   '../../art-src/units/ukraine/infantry/ukrainian-infantry-source.json',
