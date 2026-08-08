@@ -186,6 +186,6 @@
     "redistribution": "allowed",
     "externalInputs": [],
     "publicFigures": [],
-    "humanCorrections": "Pending maintainer visual review in Art Lab and visual-regression captures."
+    "humanCorrections": "Post-merge playtest #206 corrected battlefield silhouette footprint, screen-upright directional posing, runtime scale, and actual-mission zoom/value review."
   }
 }
