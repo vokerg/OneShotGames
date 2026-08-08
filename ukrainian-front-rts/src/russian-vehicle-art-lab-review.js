@@ -10,10 +10,12 @@ import { loadSpriteAtlas } from './render/sprite-atlas-runtime.js';
 const canvas = document.querySelector('#game');
 const context = canvas.getContext('2d');
 const labels = ['APC', 'IFV', 'BREAKTHROUGH MBT', 'RECOVERY', 'ENGINEERING'];
+const scales = Object.freeze({ '1': 0.78, '2': 1.02, '3': 1.25 });
 let runtime = null;
 let loadError = null;
 let stateIndex = 0;
 let directionIndex = 2;
+let reviewScale = scales['2'];
 let paused = false;
 let valueCheck = false;
 let startedAt = performance.now();
@@ -23,6 +25,7 @@ const reviewState = {
   get error() { return loadError ? String(loadError.message ?? loadError) : null; },
   get state() { return RUSSIAN_VEHICLE_STATES[stateIndex]; },
   get direction() { return RUSSIAN_VEHICLE_DIRECTIONS[directionIndex]; },
+  get scale() { return reviewScale; },
   get unitIds() { return [...RUSSIAN_VEHICLE_UNIT_IDS]; },
 };
 Object.defineProperty(window, '__russianVehicleArtLabReview', { value: reviewState, configurable: true });
@@ -37,6 +40,7 @@ load().catch((error) => {
 });
 
 addEventListener('keydown', (event) => {
+  if (scales[event.key]) reviewScale = scales[event.key];
   if (event.key.toLowerCase() === 'u') stateIndex = (stateIndex + 1) % RUSSIAN_VEHICLE_STATES.length;
   if (event.key.toLowerCase() === 'r') directionIndex = (directionIndex + 1) % RUSSIAN_VEHICLE_DIRECTIONS.length;
   if (event.key.toLowerCase() === 'v') {
@@ -72,7 +76,7 @@ function draw(now) {
         y,
         elapsedMs: paused ? 0 : now - startedAt,
         direction,
-        scale: 1.02,
+        scale: reviewScale,
       });
       context.fillStyle = '#c9c1a2';
       context.font = 'bold 9px ui-monospace, monospace';
