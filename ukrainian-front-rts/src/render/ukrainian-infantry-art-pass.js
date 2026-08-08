@@ -1,6 +1,7 @@
 import {
   loadUkrainianInfantryAtlas,
   resolveUkrainianInfantryAtlasUnitId,
+  UKRAINIAN_INFANTRY_BATTLEFIELD_PRESENTATION,
   ukrainianInfantryAnimationElapsedMs,
   ukrainianInfantryAnimationId,
   ukrainianInfantryDirectionFromAngle,
@@ -88,11 +89,14 @@ export function installUkrainianInfantryArtPass(
     const zoom = this.g.camera.z;
     const visualState = ukrainianInfantryStateForEntity(entity);
     const direction = ukrainianInfantryDirectionFromAngle(entity.angle);
-    const scale = Math.max(0.35, zoom * 0.9);
+    const scale = Math.max(
+      UKRAINIAN_INFANTRY_BATTLEFIELD_PRESENTATION.runtimeScale.floor,
+      zoom * UKRAINIAN_INFANTRY_BATTLEFIELD_PRESENTATION.runtimeScale.multiplier,
+    );
     const animationId = ukrainianInfantryAnimationId(unitId, visualState);
     const elapsedMs = ukrainianInfantryAnimationElapsedMs(entity, visualState, this.g.time);
     const drawX = Math.round(screen.x);
-    const drawY = Math.round(screen.y) + 12 * zoom;
+    const drawY = Math.round(screen.y) + UKRAINIAN_INFANTRY_BATTLEFIELD_PRESENTATION.drawYOffset * zoom;
     const resolved = state.runtime.drawAnimation(this.x, animationId, {
       x: drawX,
       y: drawY,
