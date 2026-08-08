@@ -67,8 +67,8 @@ test('operation preserves the legacy Lower Dnipro starting economy and six-wave 
 
 test('authored map contains two river crossings, floodplain terrain, and night visibility phases', () => {
   const map = loadAuthoredMap(LOWER_DNIPRO_MAP);
-  const terrainSymbols = map.terrain.rows.join('');
-  assert.equal(map.terrain.rows.filter((row) => row.includes('bbbbbb')).length, 4);
+  const terrainSymbols = LOWER_DNIPRO_MAP.terrain.rows.join('');
+  assert.equal(LOWER_DNIPRO_MAP.terrain.rows.filter((row) => row.includes('bbbbbb')).length, 4);
   assert.equal([...terrainSymbols].filter((cell) => cell === 'w').length, 120);
   assert.equal(map.roads.find((road) => road.id === 'north-pontoon-route').cells.length, 24);
   assert.equal(map.roads.find((road) => road.id === 'south-pontoon-route').cells.length, 24);
