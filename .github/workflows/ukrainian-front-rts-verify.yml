@@ -58,7 +58,7 @@ jobs:
       - name: Ukrainian infantry actual-mission readability review
         if: always()
         run: node scripts/ukrainian-infantry-mission-readability-smoke.mjs
-      - name: UFR-113 Russian vehicle actual-mission readability review
+      - name: Paired Ukrainian/Russian vehicle actual-mission readability review
         if: always()
         run: node scripts/russian-vehicle-mission-readability-smoke.mjs
       - name: Visual regression review capture
