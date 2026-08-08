@@ -1,0 +1,44 @@
+name: Issue 215 infantry fidelity materializer
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'ukrainian-front-rts/scripts/dev/issue-215-materialize.mjs'
+      - 'ukrainian-front-rts/src/render/ukrainian-infantry-atlas-generator.js'
+      - 'ukrainian-front-rts/src/render/russian-infantry-atlas-generator.js'
+      - 'ukrainian-front-rts/tests/art/infantry-fidelity.test.mjs'
+      - '.github/workflows/issue-215-materialize.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'ufrts/issue-215-infantry-fidelity'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply fidelity patch
+        working-directory: ukrainian-front-rts
+        run: node scripts/dev/issue-215-materialize.mjs
+      - name: Verify focused contract
+        working-directory: ukrainian-front-rts
+        run: node --test tests/art/infantry-fidelity.test.mjs tests/art/ukrainian-infantry-atlas.test.mjs tests/art/russian-infantry-atlas.test.mjs
+      - name: Commit materialized changes
+        run: |
+          if git diff --quiet; then
+            echo 'No materialized changes.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ukrainian-front-rts/src/render/ukrainian-infantry-atlas-generator.js ukrainian-front-rts/src/render/russian-infantry-atlas-generator.js
+          git commit -m 'feat(art): increase infantry source fidelity'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
