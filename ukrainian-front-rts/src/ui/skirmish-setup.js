@@ -3,7 +3,7 @@ import {
   SKIRMISH_DIFFICULTY_IDS,
   SKIRMISH_FACTIONS,
   SKIRMISH_MAPS,
-} from '../skirmish/skirmish-config.js';
+} from '../skirmish/skirmish-catalog.js';
 
 function option(documentTarget, value, label) {
   const element = documentTarget.createElement('option');

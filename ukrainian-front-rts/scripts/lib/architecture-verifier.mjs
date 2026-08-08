@@ -25,10 +25,22 @@ const CONTRACT_MODULES = new Set([
   'src/ui/combat-readability.js',
 ]);
 
+const BROWSER_COMPOSITION_MODULES = new Set([
+  'src/app/diagnostics-bootstrap.js',
+  'src/render/viewport-runtime-bootstrap.js',
+  'src/ui/onboarding-help-bootstrap.js',
+  'src/ui/viewport-runtime-bootstrap.js',
+]);
+
+const UI_OWNERSHIP_MODULES = new Set([
+  'src/app/diagnostics.js',
+]);
+
 const SYSTEM_NAMESPACES = Object.freeze([
   'combat',
   'status',
   'visibility',
+  'skirmish',
 ]);
 
 const ALLOWED_IMPORTS = Object.freeze({
@@ -130,9 +142,11 @@ function scrub(source) {
 }
 
 function layerOf(path) {
-  if (path === 'src/main.js' || path === 'src/art-lab.js') return 'main';
+  if (path === 'src/main.js' || path === 'src/art-lab.js' || BROWSER_COMPOSITION_MODULES.has(path)) return 'main';
+  if (UI_OWNERSHIP_MODULES.has(path)) return 'ui';
   if (path === 'src/game.js') return 'game';
   if (CONTRACT_MODULES.has(path)) return 'contract';
+  if (path === 'src/skirmish/skirmish-catalog.js') return 'config';
   if (path === 'src/config.js' || path.startsWith('src/content/')) return 'config';
   if (path === 'src/content-schema.js') return 'schema';
   if (path === 'src/ui.js' || path.startsWith('src/ui/') || path.startsWith('src/localization/')) return 'ui';
@@ -152,7 +166,8 @@ function resolvedImport(sourcePath, specifier) {
 }
 
 function ownsDom(path) {
-  return path === 'src/main.js' || path === 'src/art-lab.js' || path === 'src/ui.js' || path.startsWith('src/ui/') ||
+  return BROWSER_COMPOSITION_MODULES.has(path) || UI_OWNERSHIP_MODULES.has(path) ||
+    path === 'src/main.js' || path === 'src/art-lab.js' || path === 'src/ui.js' || path.startsWith('src/ui/') ||
     path.startsWith('src/localization/') ||
     path === 'src/render.js' || path === 'src/art-pass.js' || path === 'src/environment-art-pass.js' ||
     path === 'src/app/runtime.js' || path.startsWith('src/input/') ||
