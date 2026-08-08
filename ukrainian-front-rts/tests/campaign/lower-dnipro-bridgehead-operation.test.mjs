@@ -139,7 +139,7 @@ test('single command liaison commits north and deterministically selects the nor
   assert.equal(game.units.some((unit) => unit.scriptId?.startsWith('wave3-south-')), false);
 });
 
-test('single command liaison commits south and deterministically selects the south-choice wave-three response', () => {
+test('south reserve order at the exact deadline wins without racing the automatic fallback', () => {
   const game = scriptedGame();
   initializeMissionScripts(game);
   updateMissionScripts(game);
@@ -147,21 +147,25 @@ test('single command liaison commits south and deterministically selects the sou
   const liaison = game.units.find((unit) => unit.scriptId === LOWER_DNIPRO_COMMAND_DECISIONS.selectorScriptId);
   liaison.x = 21 * 32;
   liaison.y = 19 * 32;
+  game.time = LOWER_DNIPRO_COMMAND_DECISIONS.decisionDeadlineSeconds;
   updateMissionScripts(game);
-  assert.equal(game.missionScriptState.variables.reserveAxis, 'south');
 
-  game.time = 135;
+  assert.equal(game.missionScriptState.variables.reserveAxis, 'south');
+  assert.equal(game.units.some((unit) => unit.scriptId?.startsWith('wave3-north-')), false);
+  assert.equal(game.units.some((unit) => unit.scriptId?.startsWith('wave3-south-')), false);
+
+  game.time += 0.1;
   updateMissionScripts(game);
   assert.ok(game.units.some((unit) => unit.scriptId?.startsWith('wave3-south-')));
   assert.equal(game.units.some((unit) => unit.scriptId?.startsWith('wave3-north-')), false);
 });
 
-test('uncommitted reserve defaults north at wave three so inaction cannot skip authored assault windows', () => {
+test('uncommitted reserve defaults north immediately after wave-three deadline so inaction cannot skip authored assault windows', () => {
   const game = scriptedGame();
   initializeMissionScripts(game);
   updateMissionScripts(game);
 
-  game.time = LOWER_DNIPRO_COMMAND_DECISIONS.decisionDeadlineSeconds;
+  game.time = LOWER_DNIPRO_COMMAND_DECISIONS.decisionDeadlineSeconds + 0.1;
   updateMissionScripts(game);
 
   assert.equal(LOWER_DNIPRO_COMMAND_DECISIONS.defaultChoice, 'north');
