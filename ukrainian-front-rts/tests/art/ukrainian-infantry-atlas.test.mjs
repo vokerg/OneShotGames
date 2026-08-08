@@ -75,7 +75,17 @@ test('runtime identity, direction, and visual-state adapters preserve safe fallb
   const catalog = output().catalogObject;
   assert.equal(resolveUkrainianInfantryIdentity('uaEngineer', { worker: true }, catalog), 'ua.combat-engineers');
   assert.equal(resolveUkrainianInfantryIdentity('uaMedic', { medic: true }, catalog), 'ua.casevac-team');
-  assert.equal(resolveUkrainianInfantryIdentity('futureUnknown', { role: 'air-defense' }, catalog), 'ua.mobile-sam');
+  assert.equal(resolveUkrainianInfantryIdentity(
+    'futureUnknown',
+    { role: 'air-defense', factionId: 'ukraine' },
+    catalog,
+  ), 'ua.mobile-sam');
+  assert.equal(resolveUkrainianInfantryIdentity(
+    'ruInfantry',
+    { role: 'infantry', factionId: 'russia' },
+    catalog,
+  ), null);
+  assert.equal(resolveUkrainianInfantryIdentity('futureUnknown', { role: 'infantry' }, catalog), null);
   assert.equal(resolveUkrainianInfantryIdentity('uaTank', { armor: true }, catalog), null);
   assert.equal(ukrainianInfantryDirectionFromAngle(-Math.PI / 2), 'n');
   assert.equal(ukrainianInfantryDirectionFromAngle(0), 'e');
@@ -112,7 +122,9 @@ test('renderer art pass installs once, draws eligible UA infantry, and restores 
 
   const renderer = Object.create(Renderer.prototype);
   renderer.g = {
-    unitStats: () => ({ archetype: 'infantry' }),
+    unitStats: (type) => type === 'ruInfantry'
+      ? { archetype: 'infantry', factionId: 'russia' }
+      : { archetype: 'infantry' },
     camera: { z: 1 },
     time: 2,
   };
@@ -132,6 +144,7 @@ test('renderer art pass installs once, draws eligible UA infantry, and restores 
   });
   assert.equal(resolved.frameId, 'ua.line-infantry.idle.n.f00');
   assert.equal(calls[0].animationId, 'ua.line-infantry.idle');
+  assert.equal(renderer.unit({ team: TEAM.UA, type: 'ruInfantry' }), 'fallback-unit');
   assert.equal(renderer.unit({ team: TEAM.RU, type: 'ruInfantry' }), 'fallback-unit');
   assert.equal(installation.status().ready, true);
 
