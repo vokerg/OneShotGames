@@ -87,7 +87,7 @@ const pending = new Map();
 const events = [];
 
 async function connect() {
-  for (let attempt = 0; attempt < 40; attempt += 1) {
+  for (let attempt = 0; attempt < 120; attempt += 1) {
     if (chromeExited) throw new Error('Chrome exited before the DevTools endpoint became available.');
     try {
       const response = await fetch(`http://${host}:${browserPort}/json`);

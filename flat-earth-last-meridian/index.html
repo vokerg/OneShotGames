@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#031018">
+  <title>Flat Earth: Last Meridian</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="polish.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="masthead">
+      <div class="brand-lockup">
+        <div class="service-mark" aria-hidden="true"><span></span><i></i></div>
+        <div>
+          <p class="eyebrow">POLAR SURVEY SERVICE // FIELD TERMINAL 07</p>
+          <h1>Flat Earth: <em>Last Meridian</em></h1>
+        </div>
+      </div>
+      <div class="status-strip" aria-label="Expedition status">
+        <div class="meter-cell"><span>HEAT</span><strong id="heatValue">68%</strong></div>
+        <div class="meter-cell"><span>BATTERY</span><strong id="batteryValue">76%</strong></div>
+        <div><span>AMBIENT</span><strong id="temperatureValue">—</strong></div>
+        <div><span>SUN TRACK</span><strong id="timeValue">06:00</strong></div>
+        <div class="window-cell"><span>WINDOW</span><strong id="missionValue">05:30</strong></div>
+      </div>
+    </header>
+
+    <section class="game-grid">
+      <div class="viewport-wrap">
+        <canvas id="game" width="960" height="720" tabindex="0" aria-label="Top-down expedition map of the Disc"></canvas>
+        <div class="viewport-frame" aria-hidden="true"></div>
+        <div class="viewport-chrome" aria-hidden="true"><span>OPTICAL SURVEY // 1:42M</span><span class="live-dot">LIVE</span></div>
+        <div class="depth-scale" aria-hidden="true"></div>
+        <div class="coordinate-tag top-left" aria-hidden="true">AZ 000° // POLAR DATUM</div>
+        <div class="coordinate-tag bottom-right" aria-hidden="true">DISC PROJECTION // LIVE</div>
+        <div id="prompt" class="prompt" aria-live="polite"></div>
+        <div class="legend" aria-hidden="true">
+          <span><i class="dot sun"></i> moving daylight</span>
+          <span><i class="dot station"></i> meridian hardware</span>
+          <span><i class="dot wall"></i> ice wall</span>
+        </div>
+      </div>
+
+      <aside class="side-panel">
+        <section class="mission-panel">
+          <div class="panel-kicker"><span>MISSION</span><b>05:30 CORRECTION WINDOW</b></div>
+          <h2>Restore the<br>Last Meridian</h2>
+          <p id="objectiveText">Bring three meridian stations back online, then reach the Rim Observatory before the correction window closes.</p>
+          <ol id="stationList" class="station-list"></ol>
+        </section>
+
+        <section class="readout">
+          <p class="panel-label">COSMOLOGY // LIVE READOUT</p>
+          <dl>
+            <div><dt>Local daylight</dt><dd id="daylightValue">—</dd></div>
+            <div><dt>Rim wind</dt><dd id="windValue">—</dd></div>
+            <div><dt>Firmament fix</dt><dd id="starValue">OFFLINE</dd></div>
+            <div><dt>Surface state</dt><dd id="laneValue">DRY</dd></div>
+          </dl>
+        </section>
+
+        <section class="field-log">
+          <p class="panel-label">FIELD LOG // CHRONOLOGICAL</p>
+          <div id="log" aria-live="polite"></div>
+        </section>
+
+        <section class="controls">
+          <p class="panel-label">SLEDGE INPUT</p>
+          <p><kbd>WASD</kbd>/<kbd>ARROWS</kbd> travel <span>·</span> <kbd>SHIFT</kbd> overdrive</p>
+          <p><kbd>E</kbd> service <span>·</span> <kbd>SPACE</kbd> star fix <span>·</span> <kbd>R</kbd> restart</p>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <div id="startOverlay" class="overlay open">
+    <article class="briefing-card">
+      <div class="briefing-art" aria-hidden="true">
+        <div class="briefing-scale">
+          <span>SUN ALT // LOCAL</span>
+          <span>WALL RANGE // SEALED</span>
+          <span>MERIDIAN // DRIFTING</span>
+        </div>
+        <div class="disc-glyph">
+          <span class="orbit one"></span>
+          <span class="orbit two"></span>
+          <span class="orbit three"></span>
+          <span class="wall-spark"></span>
+          <i class="brief-sun"></i>
+          <i class="brief-pole"></i>
+        </div>
+        <div class="briefing-caption">LAST VERIFIED MERIDIAN // 611.184</div>
+      </div>
+      <div class="briefing-copy">
+        <p class="eyebrow">EXPEDITION BRIEF // DISC YEAR 611</p>
+        <h2>The Sun Track<br><em>is slipping.</em></h2>
+        <p class="lead">A moving island of daylight circles above a world-sized Disc. Three instruments between the central pole and the Ice Wall have gone dark.</p>
+        <p>You have one correction window and a solar sledge. Follow the gold light when you need power. Cut through night when the survey lanes freeze hard. Near the Wall, trust the turning stars more than your steering.</p>
+        <div class="rule-grid">
+          <div><strong>01 // DAY MOVES</strong><span>Warmth and usable solar power travel with the low Sun.</span></div>
+          <div><strong>02 // NIGHT FREEZES</strong><span>Dark survey lanes become fast, beautiful, and dangerous.</span></div>
+          <div><strong>03 // THE RIM PUSHES</strong><span>Cold outward wind grows teeth as the Ice Wall approaches.</span></div>
+          <div><strong>04 // STARS TURN</strong><span>Night fixes tame drift beneath the rotating firmament.</span></div>
+        </div>
+        <p class="fiction-note">Alternate-world fiction. Its cosmology is intentionally not a scientific model of the real Earth.</p>
+        <button id="startButton" type="button"><span>BEGIN EXPEDITION</span><i>→</i></button>
+      </div>
+    </article>
+  </div>
+
+  <div id="endingOverlay" class="overlay" aria-hidden="true">
+    <article class="briefing-card ending-card">
+      <div class="ending-sigil" aria-hidden="true"><span></span><i></i></div>
+      <p class="eyebrow">RIM OBSERVATORY // PRIORITY TRANSMISSION</p>
+      <h2 id="endingTitle">The Last Meridian is awake.</h2>
+      <p id="endingText"></p>
+      <div id="endingChoices" class="ending-choices">
+        <button type="button" data-ending="stabilize"><span>01</span> Stabilize the Sun Track</button>
+        <button type="button" data-ending="outward"><span>02</span> Turn the Observatory Outward</button>
+      </div>
+      <button id="restartButton" class="secondary hidden" type="button">RUN AGAIN</button>
+    </article>
+  </div>
+
+  <script type="module" src="game.mjs"></script>
+  <script type="module" src="polish.mjs"></script>
+</body>
+</html>
