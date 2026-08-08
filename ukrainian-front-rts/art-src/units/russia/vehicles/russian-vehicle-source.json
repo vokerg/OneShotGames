@@ -1,0 +1,51 @@
+{
+  "schema": "fields-of-resolve.russian-vehicle-art-source",
+  "version": 1,
+  "id": "fields-of-resolve.russian-vehicles",
+  "frame": { "width": 64, "height": 64, "columns": 16 },
+  "directions": ["n", "ne", "e", "se", "s", "sw", "w", "nw"],
+  "states": {
+    "idle": { "frames": 2, "durationsMs": [360, 420], "loop": "loop" },
+    "move": { "frames": 4, "durationsMs": [120, 120, 120, 120], "loop": "loop" },
+    "attack": { "frames": 3, "durationsMs": [80, 90, 140], "loop": "once" },
+    "hit": { "frames": 2, "durationsMs": [90, 160], "loop": "once" },
+    "damaged": { "frames": 2, "durationsMs": [330, 390], "loop": "loop" },
+    "death": { "frames": 6, "durationsMs": [80, 90, 100, 120, 160, 480], "loop": "once" },
+    "wreck": { "frames": 2, "durationsMs": [700, 900], "loop": "hold" }
+  },
+  "paletteTokens": {
+    "ink": "#111512",
+    "deep": "#2a211b",
+    "shadow": "#41342a",
+    "base": "#6c5947",
+    "light": "#94775a",
+    "metal": "#918d7d",
+    "accent": "#cdbd9d",
+    "optic": "#786957",
+    "track": "#252421",
+    "damage": "#d95f45",
+    "smoke": "#625d58",
+    "apc": "#735f49",
+    "ifv": "#685442",
+    "tank": "#5f4e3e",
+    "recovery": "#74634a",
+    "engineering": "#7a6543"
+  },
+  "units": [
+    { "id": "ru.apc-carrier", "displayName": "Russian Massed Armored Personnel Carrier", "shortName": "Mass APC", "role": "mass-protected-transport", "aliases": ["ruApc"], "profile": "apc", "accent": "apc" },
+    { "id": "ru.apc-ifv", "displayName": "Russian Infantry Fighting Vehicle", "shortName": "Line IFV", "role": "infantry-fighting-vehicle", "aliases": ["ruIfv"], "profile": "ifv", "accent": "ifv" },
+    { "id": "ru.tank-breakthrough", "displayName": "Russian Breakthrough Main Battle Tank", "shortName": "Breakthrough Tank", "role": "breakthrough-tank", "aliases": ["ruTank"], "profile": "tank", "accent": "tank" },
+    { "id": "ru.repair-tractor", "displayName": "Russian Armored Repair Tractor", "shortName": "Repair Tractor", "role": "armored-recovery", "aliases": ["ruRecovery"], "profile": "recovery", "accent": "recovery" },
+    { "id": "ru.engineering-vehicle.breacher", "displayName": "Russian Combat Engineering Breacher", "shortName": "Engineering Breacher", "role": "combat-engineering-vehicle", "aliases": ["ruEngineeringVehicle"], "profile": "engineering", "accent": "engineering" }
+  ],
+  "provenance": {
+    "creator": "Fields of Resolve contributors with OpenAI-assisted deterministic vector generation",
+    "createdAt": "2026-08-08",
+    "source": "Original fictional Russian faction vehicle silhouettes authored for this repository; no external visual assets used",
+    "license": "CC0-1.0",
+    "redistribution": "allowed",
+    "externalInputs": [],
+    "publicFigures": [],
+    "humanCorrections": "Pending maintainer visual review of atlas contact sheet and in-game captures."
+  }
+}
