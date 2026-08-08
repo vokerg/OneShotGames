@@ -16,7 +16,6 @@ const pageUrl = `http://${host}:${port}/`;
 const uaReviewAnchor = Object.freeze({ xRatio: 0.27, yRatio: 0.49 });
 const ruReviewAnchor = Object.freeze({ xRatio: 0.5, yRatio: 0.5 });
 const world = Object.freeze({ width: 2560, height: 1664 });
-const ruReviewWorld = Object.freeze({ x: 2100, y: 305 });
 const mime = {
   '.css': 'text/css',
   '.html': 'text/html',
@@ -218,6 +217,25 @@ async function focusMinimap(worldX, worldY) {
   await delay(350);
 }
 
+async function focusObservedInfantry(faction, label) {
+  const observed = await waitFor(
+    `window.__infantryReview?.last?.${faction}`,
+    `${label} render observation`,
+  );
+  await focusMinimap(observed.worldX, observed.worldY);
+  return waitFor(
+    `(() => {
+      const point = window.__infantryReview?.last?.${faction};
+      return point
+        && point.screenX >= 160 && point.screenX <= 1440
+        && point.screenY >= 130 && point.screenY <= 640
+        ? point
+        : false;
+    })()`,
+    `${label} visible inside battlefield review viewport`,
+  );
+}
+
 try {
   await connect();
   await call('Runtime.enable');
@@ -242,36 +260,70 @@ try {
     { awaitPromise: true },
   );
   await delay(600);
+  await evaluate(`(async () => {
+    const { Renderer } = await import('./src/render.js');
+    if (!window.__infantryReview?.installed) {
+      const originalUnit = Renderer.prototype.unit;
+      window.__infantryReview = { installed: true, last: { ua: null, ru: null } };
+      Renderer.prototype.unit = function infantryReviewObservedUnit(entity) {
+        const result = originalUnit.call(this, entity);
+        const faction = entity?.type === 'uaInfantry' ? 'ua' : entity?.type === 'ruInfantry' ? 'ru' : null;
+        if (faction && Number.isFinite(entity.x) && Number.isFinite(entity.y)) {
+          const screen = this.sp(entity.x, entity.y);
+          window.__infantryReview.last[faction] = {
+            type: entity.type,
+            worldX: entity.x,
+            worldY: entity.y,
+            screenX: screen.x,
+            screenY: screen.y,
+            zoom: this.g?.camera?.z,
+          };
+        }
+        return result;
+      };
+    }
+    return true;
+  })()`, { awaitPromise: true });
+  await waitFor(`window.__infantryReview?.last?.ua && window.__infantryReview?.last?.ru`, 'live UA/RU infantry draw observations');
 
   const captures = [];
+  await focusObservedInfantry('ua', 'Ukrainian infantry at command zoom');
   captures.push({ faction: 'ua', file: 'command-color.png', expectedZoom: 1, bytes: await capture('command-color.png') });
 
   await wheel(120, 10, uaReviewAnchor);
+  await focusObservedInfantry('ua', 'Ukrainian infantry at strategic zoom');
   captures.push({ faction: 'ua', file: 'strategic-color.png', expectedZoom: 0.55, bytes: await capture('strategic-color.png') });
 
   await wheel(-120, 20, uaReviewAnchor);
+  await focusObservedInfantry('ua', 'Ukrainian infantry at inspection zoom');
   captures.push({ faction: 'ua', file: 'inspection-color.png', expectedZoom: 1.45, bytes: await capture('inspection-color.png') });
 
   await wheel(120, 10, uaReviewAnchor);
+  await focusObservedInfantry('ua', 'Ukrainian infantry at strategic value zoom');
   await evaluate(`document.documentElement.style.filter = 'grayscale(1)'`);
   await delay(150);
   captures.push({ faction: 'ua', file: 'strategic-value.png', expectedZoom: 0.55, bytes: await capture('strategic-value.png') });
   await evaluate(`document.documentElement.style.filter = ''`);
 
-  await focusMinimap(ruReviewWorld.x, ruReviewWorld.y);
   await wheel(-120, 20, ruReviewAnchor);
+  await focusObservedInfantry('ru', 'Russian infantry at inspection zoom');
   captures.push({ faction: 'ru', file: 'ru-inspection-color.png', expectedZoom: 1.45, bytes: await capture('ru-inspection-color.png') });
 
   await wheel(120, 4, ruReviewAnchor);
+  await focusObservedInfantry('ru', 'Russian infantry at command zoom');
   captures.push({ faction: 'ru', file: 'ru-command-color.png', expectedZoom: 0.95, bytes: await capture('ru-command-color.png') });
 
   await wheel(120, 12, ruReviewAnchor);
+  await focusObservedInfantry('ru', 'Russian infantry at strategic zoom');
   captures.push({ faction: 'ru', file: 'ru-strategic-color.png', expectedZoom: 0.55, bytes: await capture('ru-strategic-color.png') });
 
+  await focusObservedInfantry('ru', 'Russian infantry at strategic value zoom');
   await evaluate(`document.documentElement.style.filter = 'grayscale(1)'`);
   await delay(150);
   captures.push({ faction: 'ru', file: 'ru-strategic-value.png', expectedZoom: 0.55, bytes: await capture('ru-strategic-value.png') });
   await evaluate(`document.documentElement.style.filter = ''`);
+
+  const observedInfantry = await evaluate(`window.__infantryReview?.last`);
 
   const atlasStatus = await evaluate(`(async () => {
     const { Renderer } = await import('./src/render.js');
@@ -297,6 +349,7 @@ try {
     atlasStatus,
     viewport: { width: 1600, height: 1000 },
     captures,
+    observedInfantry,
     review: {
       strategicZoom: 0.55,
       commandZoom: '0.95-1.0',
@@ -304,7 +357,7 @@ try {
       grayscale: true,
       uaZoomAnchor: uaReviewAnchor,
       ruZoomAnchor: ruReviewAnchor,
-      ruReviewWorld,
+      observer: 'live Renderer.prototype.unit draw coordinates',
       surface: 'actual mission runtime',
       factions: ['ua', 'ru'],
     },
