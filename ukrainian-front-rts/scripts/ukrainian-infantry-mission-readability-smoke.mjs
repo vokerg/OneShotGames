@@ -13,6 +13,7 @@ const host = '127.0.0.1';
 const port = 4177;
 const browserPort = 9227;
 const pageUrl = `http://${host}:${port}/`;
+const reviewAnchor = Object.freeze({ xRatio: 0.27, yRatio: 0.49 });
 const mime = {
   '.css': 'text/css',
   '.html': 'text/html',
@@ -116,6 +117,13 @@ async function connect() {
             events.push(message);
           }
         });
+        socket.addEventListener('close', () => {
+          for (const entry of pending.values()) {
+            clearTimeout(entry.timeout);
+            entry.reject(new Error('Chrome DevTools socket closed.'));
+          }
+          pending.clear();
+        }, { once: true });
         return;
       }
     } catch (error) {
@@ -177,8 +185,8 @@ async function capture(name) {
 async function wheel(deltaY, count) {
   await evaluate(`(() => {
     const canvas = document.querySelector('#game');
-    const x = Math.round(innerWidth * 0.48);
-    const y = Math.round(innerHeight * 0.48);
+    const x = Math.round(innerWidth * ${reviewAnchor.xRatio});
+    const y = Math.round(innerHeight * ${reviewAnchor.yRatio});
     for (let index = 0; index < ${count}; index += 1) {
       canvas.dispatchEvent(new WheelEvent('wheel', {
         bubbles: true,
@@ -255,6 +263,7 @@ try {
       commandZoom: 1,
       inspectionZoom: 1.45,
       grayscale: true,
+      zoomAnchor: reviewAnchor,
       surface: 'actual mission runtime',
     },
   };
