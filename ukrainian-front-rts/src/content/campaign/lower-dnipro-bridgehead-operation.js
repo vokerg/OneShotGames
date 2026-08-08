@@ -114,6 +114,7 @@ export const LOWER_DNIPRO_MISSION_SCRIPT = deepFreeze({
         kind: 'all',
         conditions: [
           { kind: 'variable', id: 'reserveAxis', operator: 'eq', value: 'uncommitted' },
+          { kind: 'timer', clock: 'seconds', operator: 'lte', value: 135 },
           { kind: 'region', regionId: 'north-command-sector', selector: { collection: 'units', scriptId: 'command-liaison' }, state: 'alive', event: 'enter', operator: 'gte', value: 1 },
         ],
       },
@@ -132,6 +133,7 @@ export const LOWER_DNIPRO_MISSION_SCRIPT = deepFreeze({
         kind: 'all',
         conditions: [
           { kind: 'variable', id: 'reserveAxis', operator: 'eq', value: 'uncommitted' },
+          { kind: 'timer', clock: 'seconds', operator: 'lte', value: 135 },
           { kind: 'region', regionId: 'south-command-sector', selector: { collection: 'units', scriptId: 'command-liaison' }, state: 'alive', event: 'enter', operator: 'gte', value: 1 },
         ],
       },
@@ -177,7 +179,13 @@ export const LOWER_DNIPRO_MISSION_SCRIPT = deepFreeze({
             kind: 'any',
             conditions: [
               { kind: 'variable', id: 'reserveAxis', operator: 'eq', value: 'north' },
-              { kind: 'variable', id: 'reserveAxis', operator: 'eq', value: 'uncommitted' },
+              {
+                kind: 'all',
+                conditions: [
+                  { kind: 'timer', clock: 'seconds', operator: 'gt', value: 135 },
+                  { kind: 'variable', id: 'reserveAxis', operator: 'eq', value: 'uncommitted' },
+                ],
+              },
             ],
           },
         ],
@@ -419,12 +427,12 @@ export const LOWER_DNIPRO_BRIEFING = deepFreeze({
     { id: 'logistics', label: 'River logistics engineer team', category: 'support', count: 1 },
     { id: 'bridgehead-rifles', label: 'Bridgehead mechanized squad', category: 'infantry', count: 1 },
     { id: 'reserve', label: 'Mobile tank reserve', category: 'armor', count: 1 },
-    { id: 'liaison', label: 'Command liaison squad', category: 'command', count: 1, note: 'Move this single element into a command sector to choose the reserve axis before 135 seconds; otherwise the northern commitment is selected automatically.' },
+    { id: 'liaison', label: 'Command liaison squad', category: 'command', count: 1, note: 'Move this single element into a command sector to choose the reserve axis by 135 seconds; otherwise the northern commitment is selected automatically immediately after the deadline.' },
   ],
   intelligence: [
     { id: 'waves', title: 'Six deliberate assault groups', detail: 'Assault windows are expected at 45-second intervals from 45 through 270 seconds.', confidence: 'confirmed' },
     { id: 'visibility', title: 'Night into predawn', detail: 'The operation begins in deep river darkness and transitions to predawn mist after four minutes.', confidence: 'confirmed' },
-    { id: 'decision', title: 'Reserve commitment matters', detail: 'The single command liaison selects north or south before wave three; if no order is given by 135 seconds, the reserve defaults north so all six assault windows remain active.', confidence: 'confirmed' },
+    { id: 'decision', title: 'Reserve commitment matters', detail: 'The single command liaison selects north or south through the 135-second deadline; if no order is given, the reserve defaults north immediately afterward so all six assault windows remain active.', confidence: 'confirmed' },
   ],
   objectives: LOWER_DNIPRO_OBJECTIVES.map((objective) => ({
     id: objective.id, title: objective.label, description: objective.failureReason, optional: Boolean(objective.optional),
@@ -433,11 +441,11 @@ export const LOWER_DNIPRO_BRIEFING = deepFreeze({
   difficultyNotes: {
     label: 'Standard',
     summary: 'A five-minute sustainment fight followed by a command-bunker counterattack.',
-    modifiers: ['Six authored assault windows', 'Single-element north/south reserve decision with a 135-second north fallback', 'Night-to-predawn visibility transition', 'River logistics adds 80 fuel on delivery'],
+    modifiers: ['Six authored assault windows', 'Single-element north/south reserve decision with a post-135-second north fallback', 'Night-to-predawn visibility transition', 'River logistics adds 80 fuel on delivery'],
   },
   loadingHints: [
     'Deliver the river logistics team early: its fuel package raises the legacy 260 starting fuel above the 320 sustainment target.',
-    'Move the command liaison—not multiple units—into the north or south command sector before wave three; no order by 135 seconds defaults the reserve north.',
+    'Move the command liaison—not multiple units—into the north or south command sector by 135 seconds; an unanswered order defaults north immediately after the deadline.',
     'Do not spend the mobile reserve so aggressively that the bridgehead command post is exposed before the counterattack release at 300 seconds.',
   ],
   metadata: { fictional: true, legacyMissionId: 'kherson' },
@@ -478,7 +486,7 @@ export const LOWER_DNIPRO_OPERATION = deepFreeze({
   contentNotes: [
     'This is a stylized fictional operation using the legacy Lower Dnipro/Kherson mission identity.',
     'River logistics is represented by a canonical engineer team and scripted resource handoff rather than a new transport subsystem.',
-    'The single command-liaison selector prevents simultaneous north/south decision activation; an uncommitted reserve defaults north at wave three so authored waves cannot be skipped by inaction.',
+    'The single command-liaison selector prevents simultaneous north/south decision activation; an unanswered decision defaults north immediately after the deadline so authored waves cannot be skipped by inaction.',
     'No browser campaign mounting is owned by UFR-096.',
   ],
 });
