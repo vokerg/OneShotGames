@@ -1,5 +1,6 @@
 import {Renderer} from './render.js';
 import {TEAM,FACTIONS} from './config.js';
+import {installUkrainianInfantryArtPass} from './render/ukrainian-infantry-art-pass.js';
 
 const INK='#111512';
 const px=(q,x,y,w,h,c)=>{q.fillStyle=c;q.fillRect(Math.round(x),Math.round(y),Math.max(1,Math.round(w)),Math.max(1,Math.round(h)))};
@@ -98,3 +99,5 @@ Renderer.prototype.portrait=function(e){
  if(t?.armor)this.vehicle(q,e,t,.72);else if(t?.air)this.drone(q,e,t,.72);else this.infantry(q,e,t||{},.9);q.restore();
  q.fillStyle='rgba(0,0,0,.42)';q.fillRect(5,83,134,22);q.font='bold 10px monospace';q.fillStyle=p.accent;q.fillText(`${f.short} // ${t?.archetype?.toUpperCase()||'FIELD UNIT'}`,11,97);q.strokeStyle='#a58a51';q.lineWidth=5;q.strokeRect(2,2,140,108);
 };
+
+installUkrainianInfantryArtPass(Renderer);
