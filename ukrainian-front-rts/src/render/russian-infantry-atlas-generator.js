@@ -4,6 +4,28 @@ export const RUSSIAN_INFANTRY_REQUIRED_STATES = Object.freeze(['idle', 'move', '
 
 const DIRECTION_ANGLES = Object.freeze({ n: -90, ne: -45, e: 0, se: 45, s: 90, sw: 135, w: 180, nw: -135 });
 
+const DIRECTION_VECTORS = Object.freeze({
+  n: Object.freeze({ x: 0, y: -1 }),
+  ne: Object.freeze({ x: 0.72, y: -0.72 }),
+  e: Object.freeze({ x: 1, y: 0 }),
+  se: Object.freeze({ x: 0.72, y: 0.72 }),
+  s: Object.freeze({ x: 0, y: 1 }),
+  sw: Object.freeze({ x: -0.72, y: 0.72 }),
+  w: Object.freeze({ x: -1, y: 0 }),
+  nw: Object.freeze({ x: -0.72, y: -0.72 }),
+});
+
+function directionalPose(direction, recoil = 0) {
+  const vector = DIRECTION_VECTORS[direction] ?? DIRECTION_VECTORS.n;
+  const shoulderX = 24 + vector.x * 2.8;
+  const shoulderY = 21 + vector.y * 1.4;
+  const weaponX = shoulderX + vector.x * (16 - recoil);
+  const weaponY = shoulderY + vector.y * (11 - recoil * 0.45);
+  const headX = 24 + vector.x * 1.7;
+  const headY = 11 + vector.y * 1.0;
+  return Object.freeze({ vector, shoulderX, shoulderY, weaponX, weaponY, headX, headY });
+}
+
 function assertSource(source) {
   if (!source || typeof source !== 'object' || Array.isArray(source)) throw new TypeError('Russian infantry source must be an object.');
   if (source.schema !== SOURCE_SCHEMA || source.version !== 1) throw new TypeError('Unsupported Russian infantry art source schema.');
@@ -31,19 +53,25 @@ function palette(source, key, fallback) {
   return source.paletteTokens?.[key] ?? fallback;
 }
 
-function equipmentSvg(unit, p) {
-  if (unit.equipment === 'tool') return `<path d="M27 20 L38 10" stroke="${p.metal}" stroke-width="3"/><path d="M34 9 L41 15" stroke="${p.accent}" stroke-width="4"/>`;
-  if (unit.equipment === 'radio') return `<rect x="10" y="17" width="6" height="11" fill="${p.deep}"/><path d="M13 17 L11 6" stroke="${p.metal}" stroke-width="1.5"/><circle cx="13" cy="14" r="2" fill="${p.accent}"/>`;
-  if (unit.equipment === 'launcher') return `<rect x="23" y="18" width="19" height="5" rx="1" fill="${p.deep}" stroke="${p.ink}" stroke-width="1"/><rect x="34" y="16" width="5" height="9" fill="${p.accent}"/>`;
-  if (unit.equipment === 'air-defense') return `<path d="M22 22 L40 8" stroke="${p.deep}" stroke-width="7"/><path d="M25 20 L42 7" stroke="${p.metal}" stroke-width="2"/><rect x="35" y="7" width="7" height="5" fill="${p.accent}" stroke="${p.ink}"/><circle cx="29" cy="15" r="2.5" fill="${p.optic}" stroke="${p.ink}"/>`;
-  if (unit.equipment === 'optic') return `<path d="M24 20 L40 17" stroke="${p.deep}" stroke-width="4"/><circle cx="34" cy="17" r="3" fill="${p.optic}" stroke="${p.ink}"/>`;
-  if (unit.equipment === 'medical') return `<rect x="12" y="20" width="12" height="11" fill="${p.medical}" stroke="${p.ink}"/><rect x="17" y="21" width="3" height="9" fill="${p.medicalMark}"/><rect x="14" y="24" width="9" height="3" fill="${p.medicalMark}"/>`;
-  if (unit.equipment === 'grenade') return `<path d="M24 21 L39 14" stroke="${p.deep}" stroke-width="4"/><circle cx="15" cy="21" r="3" fill="${p.accent}" stroke="${p.ink}"/>`;
-  return `<path d="M23 20 L41 15" stroke="${p.deep}" stroke-width="4"/><path d="M28 18 L40 15" stroke="${p.metal}" stroke-width="1.5"/>`;
+function equipmentSvg(unit, p, pose) {
+  const vx = pose.vector.x;
+  const vy = pose.vector.y;
+  const sx = pose.shoulderX;
+  const sy = pose.shoulderY;
+  const wx = pose.weaponX;
+  const wy = pose.weaponY;
+  const weapon = `<g data-detail="weapon-material"><path d="M${sx - vx * 5} ${sy - vy * 4} L${wx} ${wy}" stroke="${p.ink}" stroke-width="6"/><path d="M${sx} ${sy} L${wx} ${wy}" stroke="${p.metal}" stroke-width="3"/><circle cx="${sx + vx * 5}" cy="${sy + vy * 3.5}" r="2" fill="${p.deep}"/></g>`;
+  if (unit.equipment === 'tool') return `<g data-role="tool"><path d="M15 28 L${15 - vx * 10} ${27 - vy * 8}" stroke="${p.metal}" stroke-width="4"/><path d="M${12 - vx * 10} ${25 - vy * 8} L${18 - vx * 10} ${30 - vy * 8}" stroke="${p.accent}" stroke-width="4"/></g>`;
+  if (unit.equipment === 'radio') return `${weapon}<g data-role="radio"><rect x="10" y="21" width="9" height="12" rx="2" fill="${p.deep}"/><rect x="12" y="23" width="5" height="4" fill="${p.accent}"/><path d="M14 21 L12 7" stroke="${p.metal}" stroke-width="2"/></g>`;
+  if (unit.equipment === 'launcher') return `<g data-detail="weapon-material" data-role="launcher"><path d="M${sx - vx * 4} ${sy - vy * 3} L${wx} ${wy}" stroke="${p.ink}" stroke-width="9"/><path d="M${sx} ${sy} L${wx} ${wy}" stroke="${p.deep}" stroke-width="6"/><circle cx="${wx - vx * 3}" cy="${wy - vy * 2}" r="3" fill="${p.accent}"/></g>`;
+  if (unit.equipment === 'air-defense') return `<g data-role="air-defense"><path d="M15 28 L${17 + vx * 18} ${23 + vy * 14}" stroke="${p.ink}" stroke-width="8"/><path d="M19 29 L${21 + vx * 18} ${25 + vy * 14}" stroke="${p.ink}" stroke-width="8"/><path d="M15 28 L${17 + vx * 18} ${23 + vy * 14}" stroke="${p.metal}" stroke-width="3"/><path d="M19 29 L${21 + vx * 18} ${25 + vy * 14}" stroke="${p.metal}" stroke-width="3"/><rect x="12" y="27" width="10" height="5" fill="${p.accent}"/></g>`;
+  if (unit.equipment === 'optic') return `${weapon}<circle cx="${sx + vx * 8}" cy="${sy + vy * 5}" r="3" fill="${p.optic}" stroke="${p.ink}"/>`;
+  if (unit.equipment === 'medical') return `<g data-role="medical"><rect x="17" y="21" width="14" height="12" rx="2" fill="${p.medical}" stroke="${p.ink}"/><rect x="22" y="22" width="4" height="10" fill="${p.medicalMark}"/><rect x="19" y="25" width="10" height="4" fill="${p.medicalMark}"/></g>`;
+  if (unit.equipment === 'grenade') return `${weapon}<circle cx="14" cy="28" r="3" fill="${p.accent}" stroke="${p.ink}"/>`;
+  return weapon;
 }
 
 function renderInfantryFrame(source, unit, state, direction, frameIndex) {
-  const angle = DIRECTION_ANGLES[direction];
   const p = {
     ink: palette(source, 'ink', '#111512'), deep: palette(source, 'deep', '#2a211b'), shadow: palette(source, 'shadow', '#41342a'),
     base: palette(source, 'base', '#6c5947'), light: palette(source, 'light', '#94775a'), metal: palette(source, 'metal', '#918d7d'),
@@ -52,26 +80,41 @@ function renderInfantryFrame(source, unit, state, direction, frameIndex) {
   };
   const move = state === 'move' ? Math.sin((frameIndex / 6) * Math.PI * 2) * 2 : 0;
   const idle = state === 'idle' ? (frameIndex % 2 ? 0.8 : 0) : 0;
-  const recoil = state === 'attack' ? [0, -2.2, -0.8][frameIndex] ?? 0 : 0;
-  const hit = state === 'hit' ? (frameIndex === 0 ? -2 : 1) : 0;
+  const recoil = state === 'attack' ? [0, 2.2, 0.8][frameIndex] ?? 0 : 0;
+  const hit = state === 'hit' ? (frameIndex === 0 ? 1 : 0) : 0;
   const death = state === 'death' ? Math.min(1, frameIndex / 4) : 0;
-  const bodyRotate = death * 72 + hit * 4;
-  const bodyY = 1 + idle + death * 8;
-  const opacity = state === 'wreck' ? 0.78 : 1;
-  const damageOverlay = state === 'damaged' || state === 'hit' ? `<path d="M14 27 L19 23 L22 28 L27 24" stroke="${p.damage}" stroke-width="2" fill="none"/>` : '';
-  const muzzle = state === 'attack' && frameIndex === 1 ? `<path d="M42 15 l5 -3 l-2 5 l3 2 l-6 1 z" fill="#f2d57a"/>` : '';
+  const bodyRotate = death * 72 + hit * 5;
+  const bodyY = idle + death * 7;
+  const opacity = state === 'wreck' ? 0.72 : 1;
+  const pose = directionalPose(direction, recoil);
+  const damageOverlay = state === 'damaged' || state === 'hit' ? `<path d="M13 26 L18 22 L22 27 L27 23" stroke="${p.damage}" stroke-width="2" fill="none"/>` : '';
+  const muzzle = state === 'attack' && frameIndex === 1 ? `<circle cx="${pose.weaponX}" cy="${pose.weaponY}" r="4" fill="#f2d57a"/><rect x="${pose.weaponX - 1}" y="${pose.weaponY - 1}" width="2" height="2" fill="#fff1aa"/>` : '';
   if (state === 'wreck') {
-    return `<g opacity="${opacity}"><ellipse cx="24" cy="34" rx="14" ry="5" fill="rgba(0,0,0,.3)"/><g transform="rotate(${angle} 24 24) rotate(78 24 28)"><rect x="15" y="20" width="18" height="13" rx="3" fill="${p.shadow}" stroke="${p.ink}" stroke-width="2"/><circle cx="12" cy="25" r="5" fill="${p.deep}"/><path d="M18 26 L38 22" stroke="${p.deep}" stroke-width="4"/></g></g>`;
+    return `<g opacity="${opacity}"><ellipse cx="24" cy="38" rx="15" ry="4" fill="rgba(0,0,0,.3)"/><g data-human-body="prone" transform="rotate(78 24 29)"><rect x="8" y="21" width="32" height="14" rx="4" fill="${p.shadow}" stroke="${p.ink}" stroke-width="2"/><circle cx="38" cy="27" r="6" fill="${p.deep}"/><path d="M18 27 L38 23" stroke="${p.deep}" stroke-width="4"/></g></g>`;
   }
-  return `<g transform="rotate(${angle} 24 24) translate(${recoil} 0)" opacity="${opacity}">
-    <ellipse cx="24" cy="38" rx="11" ry="4" fill="rgba(0,0,0,.28)"/>
-    <g transform="translate(0 ${bodyY}) rotate(${bodyRotate} 24 27)">
-      <path d="M18 ${31 + move} L17 40" stroke="${p.deep}" stroke-width="5"/><path d="M29 ${31 - move} L31 40" stroke="${p.deep}" stroke-width="5"/>
-      <rect x="15" y="18" width="18" height="17" rx="3" fill="${p.base}" stroke="${p.ink}" stroke-width="2"/>
-      <path d="M17 19 L23 19 L20 34 L16 34 Z" fill="${p.light}" opacity=".75"/><path d="M29 19 L33 22 L32 34 L27 34 Z" fill="${p.shadow}" opacity=".8"/>
-      <circle cx="24" cy="13" r="6" fill="${p.light}" stroke="${p.ink}" stroke-width="2"/><path d="M18 13 Q24 7 30 13" fill="${p.deep}" stroke="${p.ink}" stroke-width="1.5"/>
-      <rect x="15" y="20" width="4" height="11" fill="${p.accent}" opacity=".8"/>
-      ${equipmentSvg(unit, p)}${damageOverlay}${muzzle}
+  return `<g opacity="${opacity}">
+    <ellipse cx="24" cy="41" rx="12" ry="3.5" fill="rgba(0,0,0,.28)"/>
+    <g data-human-body="standing" data-directional-body="fixed-upright" transform="translate(0 ${bodyY}) rotate(${bodyRotate} 24 28)">
+      <g data-detail="boots-knees">
+        <path d="M17 ${31 + move} L16 42" stroke="${p.ink}" stroke-width="7"/><path d="M30 ${31 - move} L32 42" stroke="${p.ink}" stroke-width="7"/>
+        <path d="M17 ${31 + move} L17 37" stroke="${p.base}" stroke-width="4"/><path d="M30 ${31 - move} L31 37" stroke="${p.base}" stroke-width="4"/>
+        <rect x="13" y="36" width="8" height="3" rx="1" fill="${p.shadow}"/><rect x="28" y="36" width="8" height="3" rx="1" fill="${p.shadow}"/>
+        <rect x="13" y="40" width="9" height="3" rx="1" fill="${p.deep}"/><rect x="27" y="40" width="10" height="3" rx="1" fill="${p.deep}"/>
+      </g>
+      <rect x="9" y="19" width="8" height="14" rx="3" fill="${pose.vector.x >= 0 ? p.light : p.shadow}"/>
+      <rect x="31" y="19" width="8" height="14" rx="3" fill="${pose.vector.x >= 0 ? p.shadow : p.light}"/>
+      <path d="M13 18 Q24 13 35 18 L33 35 Q24 39 15 35 Z" fill="${p.base}" stroke="${p.ink}" stroke-width="1.5"/>
+      <path d="M15 19 L23 16 L21 35 L16 34 Z" fill="${p.light}" opacity=".72"/><path d="M24 16 L34 19 L32 34 L25 35 Z" fill="${p.shadow}" opacity=".78"/>
+      <g data-detail="load-bearing-kit">
+        <path d="M17 18 L21 18 L20 34 L16 33 Z M27 18 L31 19 L32 33 L28 34 Z" fill="${p.deep}" opacity=".72"/>
+        <rect x="19" y="21" width="10" height="9" rx="1" fill="${p.shadow}"/>
+        <rect x="18" y="29" width="5" height="5" rx="1" fill="${p.deep}"/><rect x="25" y="29" width="5" height="5" rx="1" fill="${p.deep}"/>
+        <path d="M20 23 H28 M24 20 V32" stroke="${p.metal}" stroke-width="1" opacity=".42"/>
+      </g>
+      <circle cx="${pose.headX}" cy="${pose.headY}" r="7" fill="${p.light}" stroke="${p.ink}" stroke-width="1.5"/>
+      <path d="M${pose.headX - 7} ${pose.headY} Q${pose.headX} ${pose.headY - 9} ${pose.headX + 7} ${pose.headY} L${pose.headX + 6} ${pose.headY + 3} L${pose.headX - 6} ${pose.headY + 3} Z" fill="${p.deep}"/>
+      <g data-detail="helmet-fittings"><path d="M${pose.headX - 5} ${pose.headY - 1} H${pose.headX + 5}" stroke="${p.shadow}" stroke-width="1.5"/><rect x="${pose.headX - 2}" y="${pose.headY - 5}" width="4" height="3" rx="1" fill="${p.ink}"/><rect x="${pose.headX + pose.vector.x * 4 - 1}" y="${pose.headY + pose.vector.y * 2 - 1}" width="2" height="2" fill="${p.metal}"/></g>
+      ${equipmentSvg(unit, p, pose)}${damageOverlay}${muzzle}
     </g>
   </g>`;
 }
@@ -86,8 +129,8 @@ function renderIcon(source, unit) {
 }
 
 function directionAttachment(direction) {
-  const radians = (DIRECTION_ANGLES[direction] * Math.PI) / 180;
-  return { x: Number((24 + Math.cos(radians) * 18).toFixed(2)), y: Number((24 + Math.sin(radians) * 18).toFixed(2)) };
+  const vector = DIRECTION_VECTORS[direction] ?? DIRECTION_VECTORS.n;
+  return { x: Number((24 + vector.x * 18).toFixed(2)), y: Number((24 + vector.y * 18).toFixed(2)) };
 }
 
 function frameRecord(id, index, columns, width, height, tags, muzzle = { x: 40, y: 20 }) {

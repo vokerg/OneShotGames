@@ -107,16 +107,35 @@ function standingBody(motion, pose, palette, uniform, light) {
   const faceShade = pose.vector.x >= 0 ? palette['uniform-dark'] : light;
   const oppositeShade = pose.vector.x >= 0 ? light : palette['uniform-dark'];
   return `<g data-human-body="standing" data-directional-body="fixed-upright">
-    <rect x="13" y="31" width="8" height="13" rx="2" fill="${palette.ink}" transform="translate(${motion.leftLeg} 0)"/>
-    <rect x="27" y="31" width="8" height="13" rx="2" fill="${palette.ink}" transform="translate(${motion.rightLeg} 0)"/>
+    <g data-detail="boots-knees">
+      <rect x="13" y="31" width="8" height="13" rx="2" fill="${palette.ink}" transform="translate(${motion.leftLeg} 0)"/>
+      <rect x="27" y="31" width="8" height="13" rx="2" fill="${palette.ink}" transform="translate(${motion.rightLeg} 0)"/>
+      <rect x="15" y="31" width="5" height="7" fill="${uniform}" opacity=".9" transform="translate(${motion.leftLeg} 0)"/>
+      <rect x="28" y="31" width="5" height="7" fill="${uniform}" opacity=".9" transform="translate(${motion.rightLeg} 0)"/>
+      <rect x="14" y="36" width="7" height="3" rx="1" fill="${palette.shadow}" transform="translate(${motion.leftLeg} 0)"/>
+      <rect x="27" y="36" width="7" height="3" rx="1" fill="${palette.shadow}" transform="translate(${motion.rightLeg} 0)"/>
+      <rect x="13" y="41" width="9" height="3" rx="1" fill="${palette['uniform-dark']}" transform="translate(${motion.leftLeg} 0)"/>
+      <rect x="26" y="41" width="9" height="3" rx="1" fill="${palette['uniform-dark']}" transform="translate(${motion.rightLeg} 0)"/>
+    </g>
     <rect x="8" y="18" width="8" height="15" rx="3" fill="${oppositeShade}"/>
     <rect x="32" y="18" width="8" height="15" rx="3" fill="${faceShade}"/>
     <path d="M12 18 Q24 12 36 18 L33 35 Q24 40 15 35 Z" fill="${uniform}" stroke="${palette.ink}" stroke-width="1.5"/>
     <path d="M14 19 Q19 15 24 15 L22 35 Q18 36 15 33 Z" fill="${light}" opacity=".82"/>
     <path d="M24 15 Q30 15 34 19 L33 33 Q29 36 24 35 Z" fill="${palette['uniform-dark']}" opacity=".78"/>
-    <rect x="18" y="21" width="12" height="9" rx="2" fill="${palette.shadow}" opacity=".35"/>
+    <g data-detail="load-bearing-kit">
+      <path d="M17 18 L21 18 L20 34 L16 33 Z M27 18 L31 19 L32 33 L28 34 Z" fill="${palette.shadow}" opacity=".72"/>
+      <rect x="19" y="21" width="10" height="9" rx="1" fill="${palette.shadow}" opacity=".62"/>
+      <rect x="18" y="29" width="5" height="5" rx="1" fill="${palette['uniform-dark']}"/>
+      <rect x="25" y="29" width="5" height="5" rx="1" fill="${palette['uniform-dark']}"/>
+      <path d="M20 23 H28 M24 20 V32" stroke="${palette.equipment}" stroke-width="1" opacity=".48"/>
+    </g>
     <circle cx="${pose.headX}" cy="${pose.headY}" r="7.5" fill="${light}" stroke="${palette.ink}" stroke-width="1.5"/>
     <path d="M${pose.headX - 7.5} ${pose.headY} Q${pose.headX} ${pose.headY - 10} ${pose.headX + 7.5} ${pose.headY} L${pose.headX + 7} ${pose.headY + 4} L${pose.headX - 7} ${pose.headY + 4} Z" fill="${palette['uniform-dark']}"/>
+    <g data-detail="helmet-fittings">
+      <path d="M${pose.headX - 6} ${pose.headY - 1} H${pose.headX + 6}" stroke="${palette.shadow}" stroke-width="1.5"/>
+      <rect x="${pose.headX - 2}" y="${pose.headY - 6}" width="4" height="3" rx="1" fill="${palette.ink}"/>
+      <rect x="${pose.headX + pose.vector.x * 4 - 1.5}" y="${pose.headY + pose.vector.y * 2 - 1.5}" width="3" height="3" fill="${palette.equipment}"/>
+    </g>
     <rect x="${pose.headX - 3}" y="${pose.headY + 1}" width="6" height="2.5" fill="${palette.ink}" opacity=".58"/>
   </g>`;
 }
@@ -126,7 +145,19 @@ function proneBody(palette, uniform, light) {
 }
 
 function serviceWeapon(pose, palette, accent, width = 4) {
-  return `<g data-equipment="service-weapon"><path d="M${pose.shoulderX} ${pose.shoulderY} L${pose.weaponX} ${pose.weaponY}" stroke="${palette.ink}" stroke-width="${width + 2}" stroke-linecap="square"/><path d="M${pose.shoulderX} ${pose.shoulderY} L${pose.weaponX} ${pose.weaponY}" stroke="${palette.equipment}" stroke-width="${width}" stroke-linecap="square"/><rect x="${pose.shoulderX - 3}" y="${pose.shoulderY + 2}" width="7" height="5" fill="${accent}"/></g>`;
+  const vx = pose.vector.x;
+  const vy = pose.vector.y;
+  const stockX = pose.shoulderX - vx * 5;
+  const stockY = pose.shoulderY - vy * 4;
+  const receiverX = pose.shoulderX + vx * 5;
+  const receiverY = pose.shoulderY + vy * 3.5;
+  return `<g data-equipment="service-weapon" data-detail="weapon-material">
+    <path d="M${stockX} ${stockY} L${pose.weaponX} ${pose.weaponY}" stroke="${palette.ink}" stroke-width="${width + 2}" stroke-linecap="square"/>
+    <path d="M${pose.shoulderX} ${pose.shoulderY} L${pose.weaponX} ${pose.weaponY}" stroke="${palette.equipment}" stroke-width="${width}" stroke-linecap="square"/>
+    <path d="M${stockX} ${stockY} L${pose.shoulderX} ${pose.shoulderY}" stroke="${palette['uniform-dark']}" stroke-width="${Math.max(3, width)}"/>
+    <circle cx="${receiverX}" cy="${receiverY}" r="${Math.max(1.5, width * 0.45)}" fill="${palette.shadow}" stroke="${palette.ink}" stroke-width="1"/>
+    <rect x="${pose.shoulderX - 3}" y="${pose.shoulderY + 2}" width="7" height="5" fill="${accent}"/>
+  </g>`;
 }
 
 function roleMark(unit, pose, palette) {
