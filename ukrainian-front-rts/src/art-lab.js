@@ -22,6 +22,13 @@ import {
  loadRussianInfantryAtlas,
  russianInfantryAnimationId,
 } from './render/russian-infantry-atlas.js';
+import {
+ UKRAINIAN_VEHICLE_DIRECTIONS,
+ UKRAINIAN_VEHICLE_STATES,
+ UKRAINIAN_VEHICLE_UNIT_IDS,
+ loadUkrainianVehicleAtlas,
+ ukrainianVehicleAnimationId,
+} from './render/ukrainian-vehicle-atlas.js';
 
 const canvas=document.querySelector('#game');
 const game=new Game();
@@ -54,25 +61,31 @@ let ukrainianStateIndex=0,ukrainianDirectionIndex=2;
 let templateRuntime=null,templateLoadError=null;
 let ukrainianInfantryRuntime=null,ukrainianInfantryLoadError=null;
 let russianInfantryRuntime=null,russianInfantryLoadError=null;
+let ukrainianVehicleRuntime=null,ukrainianVehicleLoadError=null;
 
 const ukrainianInfantryLabels=['ENGINEERS','LINE','ANTI-ARMOR','RECON','CASEVAC','AIR DEFENSE','COMMAND'];
 const russianInfantryLabels=['ENGINEERS','COMMAND','LINE','ASSAULT','ANTI-ARMOR','RECON','MEDICAL','AIR DEFENSE'];
+const ukrainianVehicleLabels=['APC','IFV','MBT','RECOVERY','ENGINEERING'];
 
 async function loadAtlasReviews(){
  const fallback=await loadSpriteAtlas(new URL('../assets/atlases/fallback.atlas.json',import.meta.url));
- const [template,ukrainianInfantry,russianInfantry]=await Promise.all([
+ const [template,ukrainianInfantry,russianInfantry,ukrainianVehicle]=await Promise.all([
   loadTemplateUnitAtlas({fallbackRuntime:fallback}),
   loadUkrainianInfantryAtlas({fallbackRuntime:fallback}),
   loadRussianInfantryAtlas({fallbackRuntime:fallback}),
+  loadUkrainianVehicleAtlas({fallbackRuntime:fallback}),
  ]);
  templateRuntime=template;
  ukrainianInfantryRuntime=ukrainianInfantry;
  russianInfantryRuntime=russianInfantry;
+ ukrainianVehicleRuntime=ukrainianVehicle;
 }
 loadAtlasReviews().catch(error=>{
  if(!templateRuntime)templateLoadError=error;
  if(!ukrainianInfantryRuntime)ukrainianInfantryLoadError=error;
  if(!russianInfantryRuntime)russianInfantryLoadError=error;
+ if(!ukrainianVehicleRuntime)ukrainianVehicleLoadError=error;
+ console.error('[art-lab] atlas review load failed',error);
 });
 
 function centerCamera(){
@@ -105,11 +118,11 @@ function drawUkrainianInfantryReview(now){
  const q=renderer.x,state=UKRAINIAN_INFANTRY_STATES[ukrainianStateIndex];
  const direction=UKRAINIAN_INFANTRY_DIRECTIONS[ukrainianDirectionIndex];
  const spacing=Math.min(122,Math.max(82,(canvas.width-160)/UKRAINIAN_INFANTRY_UNIT_IDS.length));
- const start=canvas.width/2-spacing*(UKRAINIAN_INFANTRY_UNIT_IDS.length-1)/2,y=160;
- q.save();q.fillStyle='rgba(10,14,11,.88)';q.fillRect(Math.round(start-spacing*.58),Math.round(y-55),Math.round(spacing*UKRAINIAN_INFANTRY_UNIT_IDS.length+spacing*.16),91);
+ const start=canvas.width/2-spacing*(UKRAINIAN_INFANTRY_UNIT_IDS.length-1)/2,y=135;
+ q.save();q.fillStyle='rgba(10,14,11,.88)';q.fillRect(Math.round(start-spacing*.58),Math.round(y-50),Math.round(spacing*UKRAINIAN_INFANTRY_UNIT_IDS.length+spacing*.16),84);
  q.textAlign='center';q.font='bold 11px ui-monospace, monospace';q.fillStyle='#8fc7e8';
- q.fillText(`UFR-110 UKRAINIAN INFANTRY · ${state.toUpperCase()} · ${direction.toUpperCase()}`,Math.round(canvas.width/2),Math.round(y-40));
- if(ukrainianInfantryRuntime){for(let index=0;index<UKRAINIAN_INFANTRY_UNIT_IDS.length;index+=1){const unitId=UKRAINIAN_INFANTRY_UNIT_IDS[index],x=start+index*spacing;ukrainianInfantryRuntime.drawAnimation(q,ukrainianInfantryAnimationId(unitId,state),{x,y,elapsedMs:paused?0:now,direction,scale:1.12});q.fillStyle='#c9c1a2';q.font='bold 9px ui-monospace, monospace';q.fillText(ukrainianInfantryLabels[index],Math.round(x),Math.round(y+25));}}
+ q.fillText(`UFR-110 UKRAINIAN INFANTRY · ${state.toUpperCase()} · ${direction.toUpperCase()}`,Math.round(canvas.width/2),Math.round(y-36));
+ if(ukrainianInfantryRuntime){for(let index=0;index<UKRAINIAN_INFANTRY_UNIT_IDS.length;index+=1){const unitId=UKRAINIAN_INFANTRY_UNIT_IDS[index],x=start+index*spacing;ukrainianInfantryRuntime.drawAnimation(q,ukrainianInfantryAnimationId(unitId,state),{x,y,elapsedMs:paused?0:now,direction,scale:1.08});q.fillStyle='#c9c1a2';q.font='bold 9px ui-monospace, monospace';q.fillText(ukrainianInfantryLabels[index],Math.round(x),Math.round(y+23));}}
  else{q.fillStyle='#dfb49e';q.fillText(ukrainianInfantryLoadError?'UKRAINIAN INFANTRY ATLAS FAILED TO LOAD':'LOADING UKRAINIAN INFANTRY ATLAS…',Math.round(canvas.width/2),Math.round(y));}
  q.restore();
 }
@@ -118,12 +131,25 @@ function drawRussianInfantryReview(now){
  const q=renderer.x,state=RUSSIAN_INFANTRY_STATES[ukrainianStateIndex%RUSSIAN_INFANTRY_STATES.length];
  const direction=RUSSIAN_INFANTRY_DIRECTIONS[ukrainianDirectionIndex%RUSSIAN_INFANTRY_DIRECTIONS.length];
  const spacing=Math.min(108,Math.max(72,(canvas.width-150)/RUSSIAN_INFANTRY_UNIT_IDS.length));
- const start=canvas.width/2-spacing*(RUSSIAN_INFANTRY_UNIT_IDS.length-1)/2,y=275;
- q.save();q.fillStyle='rgba(14,11,10,.9)';q.fillRect(Math.round(start-spacing*.58),Math.round(y-55),Math.round(spacing*RUSSIAN_INFANTRY_UNIT_IDS.length+spacing*.16),91);
+ const start=canvas.width/2-spacing*(RUSSIAN_INFANTRY_UNIT_IDS.length-1)/2,y=235;
+ q.save();q.fillStyle='rgba(14,11,10,.9)';q.fillRect(Math.round(start-spacing*.58),Math.round(y-50),Math.round(spacing*RUSSIAN_INFANTRY_UNIT_IDS.length+spacing*.16),84);
  q.textAlign='center';q.font='bold 11px ui-monospace, monospace';q.fillStyle='#dfb49e';
- q.fillText(`UFR-111 RUSSIAN INFANTRY · ${state.toUpperCase()} · ${direction.toUpperCase()}`,Math.round(canvas.width/2),Math.round(y-40));
- if(russianInfantryRuntime){for(let index=0;index<RUSSIAN_INFANTRY_UNIT_IDS.length;index+=1){const unitId=RUSSIAN_INFANTRY_UNIT_IDS[index],x=start+index*spacing;russianInfantryRuntime.drawAnimation(q,russianInfantryAnimationId(unitId,state),{x,y,elapsedMs:paused?0:now,direction,scale:1.12});q.fillStyle='#c9c1a2';q.font='bold 9px ui-monospace, monospace';q.fillText(russianInfantryLabels[index],Math.round(x),Math.round(y+25));}}
+ q.fillText(`UFR-111 RUSSIAN INFANTRY · ${state.toUpperCase()} · ${direction.toUpperCase()}`,Math.round(canvas.width/2),Math.round(y-36));
+ if(russianInfantryRuntime){for(let index=0;index<RUSSIAN_INFANTRY_UNIT_IDS.length;index+=1){const unitId=RUSSIAN_INFANTRY_UNIT_IDS[index],x=start+index*spacing;russianInfantryRuntime.drawAnimation(q,russianInfantryAnimationId(unitId,state),{x,y,elapsedMs:paused?0:now,direction,scale:1.08});q.fillStyle='#c9c1a2';q.font='bold 9px ui-monospace, monospace';q.fillText(russianInfantryLabels[index],Math.round(x),Math.round(y+23));}}
  else{q.fillStyle='#dfb49e';q.fillText(russianInfantryLoadError?'RUSSIAN INFANTRY ATLAS FAILED TO LOAD':'LOADING RUSSIAN INFANTRY ATLAS…',Math.round(canvas.width/2),Math.round(y));}
+ q.restore();
+}
+
+function drawUkrainianVehicleReview(now){
+ const q=renderer.x,state=UKRAINIAN_VEHICLE_STATES[ukrainianStateIndex%UKRAINIAN_VEHICLE_STATES.length];
+ const direction=UKRAINIAN_VEHICLE_DIRECTIONS[ukrainianDirectionIndex%UKRAINIAN_VEHICLE_DIRECTIONS.length];
+ const spacing=Math.min(150,Math.max(110,(canvas.width-220)/UKRAINIAN_VEHICLE_UNIT_IDS.length));
+ const start=canvas.width/2-spacing*(UKRAINIAN_VEHICLE_UNIT_IDS.length-1)/2,y=350;
+ q.save();q.fillStyle='rgba(10,14,11,.91)';q.fillRect(Math.round(start-spacing*.58),Math.round(y-58),Math.round(spacing*UKRAINIAN_VEHICLE_UNIT_IDS.length+spacing*.16),100);
+ q.textAlign='center';q.font='bold 11px ui-monospace, monospace';q.fillStyle='#8fc7e8';
+ q.fillText(`UFR-112 UKRAINIAN VEHICLES · ${state.toUpperCase()} · ${direction.toUpperCase()}`,Math.round(canvas.width/2),Math.round(y-42));
+ if(ukrainianVehicleRuntime){for(let index=0;index<UKRAINIAN_VEHICLE_UNIT_IDS.length;index+=1){const unitId=UKRAINIAN_VEHICLE_UNIT_IDS[index],x=start+index*spacing;ukrainianVehicleRuntime.drawAnimation(q,ukrainianVehicleAnimationId(unitId,state),{x,y,elapsedMs:paused?0:now,direction,scale:1.02});q.fillStyle='#c9c1a2';q.font='bold 9px ui-monospace, monospace';q.fillText(ukrainianVehicleLabels[index],Math.round(x),Math.round(y+31));}}
+ else{q.fillStyle='#dfb49e';q.fillText(ukrainianVehicleLoadError?'UKRAINIAN VEHICLE ATLAS FAILED TO LOAD':'LOADING UKRAINIAN VEHICLE ATLAS…',Math.round(canvas.width/2),Math.round(y));}
  q.restore();
 }
 
@@ -135,7 +161,7 @@ function drawLabels(){
 
 function applyValueCheck(){if(!valueCheck)return;const q=renderer.x,image=q.getImageData(0,0,canvas.width,canvas.height),d=image.data;for(let i=0;i<d.length;i+=4){const y=Math.round(d[i]*.2126+d[i+1]*.7152+d[i+2]*.0722);d[i]=d[i+1]=d[i+2]=y;}q.putImageData(image,0,0);}
 
-function capture(){const stamp=new Date().toISOString().replace(/[:.]/g,'-'),templateState=TEMPLATE_UNIT_STATES[templateStateIndex],state=UKRAINIAN_INFANTRY_STATES[ukrainianStateIndex],direction=UKRAINIAN_INFANTRY_DIRECTIONS[ukrainianDirectionIndex],link=document.createElement('a');link.download=`fields-of-resolve-roster-template-${templateState}-infantry-${state}-${direction}-z${game.camera.z.toFixed(2)}-${paused?'still':'motion'}-${valueCheck?'value':'color'}-${stamp}.png`;link.href=canvas.toDataURL('image/png');link.click();}
+function capture(){const stamp=new Date().toISOString().replace(/[:.]/g,'-'),templateState=TEMPLATE_UNIT_STATES[templateStateIndex],state=UKRAINIAN_INFANTRY_STATES[ukrainianStateIndex],direction=UKRAINIAN_INFANTRY_DIRECTIONS[ukrainianDirectionIndex],link=document.createElement('a');link.download=`fields-of-resolve-roster-template-${templateState}-atlas-${state}-${direction}-z${game.camera.z.toFixed(2)}-${paused?'still':'motion'}-${valueCheck?'value':'color'}-${stamp}.png`;link.href=canvas.toDataURL('image/png');link.click();}
 
 addEventListener('keydown',event=>{
  if(event.key==='1'||event.key==='2'||event.key==='3'){game.camera.z=event.key==='1'?.65:event.key==='2'?.85:1.15;centerCamera();}
@@ -149,5 +175,5 @@ addEventListener('keydown',event=>{
 });
 addEventListener('resize',centerCamera);
 
-function frame(now){const dt=Math.min(.033,(now-last)/1000);last=now;if(!paused)game.time+=dt;renderer.render();drawUkrainianInfantryReview(now);drawRussianInfantryReview(now);drawTemplateReview(now);drawLabels();applyValueCheck();requestAnimationFrame(frame);}
+function frame(now){const dt=Math.min(.033,(now-last)/1000);last=now;if(!paused)game.time+=dt;renderer.render();drawUkrainianInfantryReview(now);drawRussianInfantryReview(now);drawUkrainianVehicleReview(now);drawTemplateReview(now);drawLabels();applyValueCheck();requestAnimationFrame(frame);}
 requestAnimationFrame(frame);

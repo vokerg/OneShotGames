@@ -290,6 +290,11 @@ try {
   if (socket?.readyState === WebSocket.OPEN) socket.close();
   if (!chromeExited) chrome.kill('SIGTERM');
   await Promise.race([chromeExit, delay(2000)]);
+  if (!chromeExited) {
+    chrome.kill('SIGKILL');
+    await Promise.race([chromeExit, delay(3000)]);
+  }
+  if (!chromeExited) throw new Error('Chromium did not exit after forced localization-smoke teardown.');
   await new Promise((resolveClose) => server.close(resolveClose));
   await rm(profile, { recursive: true, force: true });
 }
