@@ -26,8 +26,12 @@ test('Ukrainian infantry battlefield presentation reserves a human-readable foot
   assert.ok(presentation.runtimeScale.floor >= 0.5, 'strategic zoom must retain a readable pixel footprint');
 });
 
-test('generated Ukrainian infantry atlas identifies the readable top-down battlefield revision', () => {
+test('generated Ukrainian infantry atlas uses fixed-upright bodies with authored eight-direction equipment poses', () => {
   const generated = generateUkrainianInfantryAtlas(source);
-  assert.match(generated.svg, /data-presentation="top-down-readable-v2"/);
-  assert.doesNotMatch(generated.svg, /data-presentation="front-elevation"/);
+  assert.match(generated.svg, /data-presentation="screen-upright-directional-v3"/);
+  assert.match(generated.svg, /data-directional-body="fixed-upright"/);
+  assert.doesNotMatch(generated.svg, /transform="translate\([^)]*\) rotate\((?:45|90|135|180|225|270|315)/);
+  for (const direction of source.directions) {
+    assert.match(generated.svg, new RegExp(`data-direction="${direction}"`));
+  }
 });
