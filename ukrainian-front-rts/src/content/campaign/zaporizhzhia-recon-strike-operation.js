@@ -124,8 +124,8 @@ export const ZAPORIZHZHIA_RECON_STRIKE_MISSION_SCRIPT = deepFreeze({
       ],
     },
     {
-      id: 'ew-node-destroyed',
-      when: { kind: 'entity', selector: { collection: 'buildings', scriptId: 'enemy-ew-node' }, state: 'destroyed', operator: 'gte', value: 1 },
+      id: 'ew-node-suppressed',
+      when: { kind: 'objective', id: 'disable-ew-node', state: 'complete' },
       actions: [
         { kind: 'setVariable', id: 'ewSuppressed', value: true },
         {
