@@ -115,12 +115,16 @@ test('EW counterplay uses the objective-library disable contract rather than a b
     { id: 'art-1', scriptId: 'enemy-artillery-1', scriptTag: 'enemy-artillery', type: 'ruArtillery', team: TEAM.RU, x: 832, y: 224, hp: 100, maxHp: 100 },
     { id: 'art-2', scriptId: 'enemy-artillery-2', scriptTag: 'enemy-artillery', type: 'ruArtillery', team: TEAM.RU, x: 864, y: 448, hp: 100, maxHp: 100 },
   );
+  initializeMissionScripts(game);
 
   const summary = updateObjectiveLibrary(game);
   const ew = summary.results.find((result) => result.id === 'disable-ew-node');
   assert.equal(ew.complete, true);
   assert.equal(ew.failed, false);
   assert.equal(game.gameOver, false);
+
+  updateMissionScripts(game);
+  assert.equal(game.missionScriptState.variables.ewSuppressed, true);
 });
 
 test('strike chain explicitly composes recon, EW suppression, artillery suppression, optional intel, and checkpoints', () => {
