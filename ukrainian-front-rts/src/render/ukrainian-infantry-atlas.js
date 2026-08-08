@@ -59,6 +59,19 @@ function candidateStrings(type, stats) {
     .filter((value) => typeof value === 'string' && value.length > 0);
 }
 
+function isUkrainianIdentityString(value) {
+  if (typeof value !== 'string') return false;
+  const trimmed = value.trim();
+  if (/^ua(?:[A-Z0-9_.-]|$)/.test(trimmed)) return true;
+  const normalized = trimmed.toLowerCase();
+  return normalized === 'ua' || normalized === 'ukraine' || normalized === 'ukrainian';
+}
+
+export function hasUkrainianInfantryIdentity(type, stats = null) {
+  if (candidateStrings(type, stats).some(isUkrainianIdentityString)) return true;
+  return [stats?.faction, stats?.factionId].some(isUkrainianIdentityString);
+}
+
 function svgDataUrl(svg) {
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }
@@ -68,6 +81,7 @@ export function resolveUkrainianInfantryAtlasUnitId(type, stats = null) {
     const resolved = UKRAINIAN_INFANTRY_TYPE_ALIASES[candidate];
     if (resolved) return resolved;
   }
+  if (!hasUkrainianInfantryIdentity(type, stats)) return null;
   for (const candidate of [stats?.roleId, stats?.role, stats?.archetype]) {
     if (typeof candidate !== 'string') continue;
     const normalized = candidate.trim().toLowerCase().replaceAll('_', '-');
