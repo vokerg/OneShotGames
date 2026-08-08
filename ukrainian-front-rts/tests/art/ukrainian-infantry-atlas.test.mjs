@@ -13,6 +13,7 @@ import { TEAM } from '../../src/config.js';
 import { installUkrainianInfantryArtPass } from '../../src/render/ukrainian-infantry-art-pass.js';
 import {
   resolveUkrainianInfantryIdentity,
+  UKRAINIAN_INFANTRY_BATTLEFIELD_PRESENTATION,
   UKRAINIAN_INFANTRY_DIRECTIONS as RUNTIME_UKRAINIAN_INFANTRY_DIRECTIONS,
   ukrainianInfantryDirectionFromAngle,
   ukrainianInfantryVisualState,
@@ -89,7 +90,7 @@ test('runtime identity, direction, and visual-state adapters preserve faction-sa
   assert.equal(ukrainianInfantryVisualState({ hp: 100, maxHp: 100, flash: 0, order: { kind: 'move' } }), 'move');
 });
 
-test('renderer art pass follows Ukrainian faction identity across side inversion and restores exact fallbacks', async () => {
+test('renderer art pass follows Ukrainian faction identity, presentation scale, and restores exact fallbacks', async () => {
   class Renderer {
     unit() { return 'fallback-unit'; }
     portrait() { return 'fallback-portrait'; }
@@ -134,7 +135,23 @@ test('renderer art pass follows Ukrainian faction identity across side inversion
   });
   assert.equal(playerSideUa.frameId, 'ua.line-infantry.idle.n.f00');
   assert.equal(calls[0].animationId, 'ua.line-infantry.idle');
+  assert.equal(calls[0].options.scale, UKRAINIAN_INFANTRY_BATTLEFIELD_PRESENTATION.runtimeScale.multiplier);
+  assert.equal(calls[0].options.y, 30 + UKRAINIAN_INFANTRY_BATTLEFIELD_PRESENTATION.drawYOffset);
 
+  renderer.g.camera.z = 0.4;
+  renderer.unit({
+    team: TEAM.UA,
+    type: 'uaInfantry',
+    x: 10,
+    y: 15,
+    hp: 100,
+    maxHp: 100,
+    angle: -Math.PI / 2,
+    flash: 0,
+  });
+  assert.equal(calls[2].options.scale, UKRAINIAN_INFANTRY_BATTLEFIELD_PRESENTATION.runtimeScale.floor);
+
+  renderer.g.camera.z = 1;
   const opponentSideUa = renderer.unit({
     team: TEAM.RU,
     type: 'uaInfantry',
