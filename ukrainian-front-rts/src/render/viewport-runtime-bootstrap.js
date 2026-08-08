@@ -11,9 +11,11 @@ const rendererPatch = installRendererViewportPatch({
 addEventListener(
   'DOMContentLoaded',
   () => {
-    import('./ukrainian-vehicle-runtime-install.js').catch((error) => {
-      console.error('[ukrainian-vehicle-art] runtime installation failed', error);
-    });
+    import('./ukrainian-vehicle-runtime-install.js')
+      .then(() => import('./russian-vehicle-runtime-install.js'))
+      .catch((error) => {
+        console.error('[vehicle-art] runtime installation failed', error);
+      });
   },
   { once: true },
 );
