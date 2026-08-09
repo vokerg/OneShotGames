@@ -53,11 +53,19 @@ test('Zaporizhzhia operation validates through all prerequisite campaign contrac
   assert.ok(Object.isFrozen(ZAPORIZHZHIA_RECON_STRIKE_OPERATION));
 });
 
-test('operation preserves the legacy Zaporizhzhia starting economy and intelligence target', () => {
+test('operation preserves the legacy Zaporizhzhia economy and makes the required intelligence target reachable without optional intel', () => {
   const legacy = MISSIONS.find((mission) => mission.id === 'zaporizhzhia');
   assert.ok(legacy);
   assert.deepEqual(ZAPORIZHZHIA_RECON_STRIKE_MAP.metadata.startingResources, legacy.start);
-  assert.equal(ZAPORIZHZHIA_RECON_STRIKE_OBJECTIVES.find((objective) => objective.id === 'accumulate-intelligence').amount, 250);
+  const target = ZAPORIZHZHIA_RECON_STRIKE_OBJECTIVES.find((objective) => objective.id === 'accumulate-intelligence').amount;
+  assert.equal(target, 250);
+
+  const intelCache = ZAPORIZHZHIA_RECON_STRIKE_MAP.resources.find((resource) => resource.id === 'legacy-target-intel-cache');
+  assert.ok(intelCache);
+  assert.equal(intelCache.type, 'intel');
+  assert.equal(intelCache.amount, 220);
+  assert.deepEqual(intelCache.cell, { x: 22, y: 7 });
+  assert.ok(legacy.start.intel + intelCache.amount >= target);
   assert.equal(ZAPORIZHZHIA_RECON_STRIKE_OPERATION.mission.legacyMissionId, legacy.id);
 });
 
