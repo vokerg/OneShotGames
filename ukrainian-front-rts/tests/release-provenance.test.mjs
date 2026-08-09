@@ -6,7 +6,12 @@ import { fileURLToPath } from 'node:url';
 import { validateReleaseProvenance, verifyReleaseProvenance } from '../scripts/verify-release-provenance.mjs';
 
 function manifest(records) {
-  return { schema: 'fields-of-resolve.release-provenance', version: 1, records };
+  return {
+    schema: 'fields-of-resolve.release-provenance',
+    version: 1,
+    policy: { allowedRedistribution: ['allowed', 'generated', 'repository-authored'] },
+    records,
+  };
 }
 
 const base = [
@@ -33,6 +38,12 @@ test('release provenance fails closed on missing license metadata', () => {
   const records = structuredClone(base);
   records[0].license = 'TBD';
   assert.match(validateReleaseProvenance(manifest(records)).join('\n'), /license must contain explicit metadata/);
+});
+
+test('release provenance rejects unapproved redistribution status', () => {
+  const records = structuredClone(base);
+  records[0].redistribution = 'restricted';
+  assert.match(validateReleaseProvenance(manifest(records)).join('\n'), /redistribution is not permitted: restricted/);
 });
 
 test('release provenance rejects duplicate ids and missing domains', () => {
