@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-import { validateReleaseProvenance } from '../scripts/verify-release-provenance.mjs';
+import { validateReleaseProvenance, verifyReleaseProvenance } from '../scripts/verify-release-provenance.mjs';
 
 function manifest(records) {
   return { schema: 'fields-of-resolve.release-provenance', version: 1, records };
@@ -18,6 +20,13 @@ const base = [
 
 test('release provenance accepts all required provenance domains', () => {
   assert.deepEqual(validateReleaseProvenance(manifest(base)), []);
+});
+
+test('release provenance filesystem gate validates the committed release manifest', async () => {
+  const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+  const result = await verifyReleaseProvenance(projectRoot);
+  assert.ok(result.recordCount >= 7);
+  assert.deepEqual(result.kinds, ['audio', 'font', 'procedural-output', 'reference', 'text', 'visual']);
 });
 
 test('release provenance fails closed on missing license metadata', () => {
