@@ -25,7 +25,7 @@ The approaches are independent rather than a fragile single-choice branch: using
 3. **Suppress** — destroy both tagged artillery sections;
 4. **Exploit** — use either or both authored approaches as tactical conditions allow.
 
-The operation also preserves the legacy 250-intelligence objective and starting economy of 320 metal, 190 fuel, and 70 intel.
+The operation preserves the legacy 250-intelligence objective and starting economy of 320 metal, 190 fuel, and 70 intel. It also carries forward the legacy mission's 220-intelligence field cache near the artillery belt, so the required 250-intelligence target is reachable through ordinary resource collection without depending on the optional relay objective.
 
 ## EW counterplay
 
@@ -33,7 +33,7 @@ The EW node is an ordinary canonical building with a stable script identity. Its
 
 ## Optional target intelligence
 
-A separate relay pocket beyond the main artillery belt is an optional drone-recon objective. Reaching it records the optional target package and grants a scripted 80-intelligence bonus. It is deliberately positioned beyond the primary targets so the player trades time and exposure for a richer debrief outcome.
+A separate relay pocket beyond the main artillery belt is an optional drone-recon objective. Reaching it records the optional target package and grants a scripted 80-intelligence bonus. It is deliberately positioned beyond the primary targets so the player trades time and exposure for a richer debrief outcome; this bonus is not required to satisfy the primary 250-intelligence objective.
 
 ## Checkpoints
 
@@ -45,7 +45,7 @@ Stable handoff boundaries are published for:
 
 ## Verification
 
-Focused coverage in `tests/campaign/zaporizhzhia-recon-strike-operation.test.mjs` validates public contracts, legacy economy fidelity, steppe topology, distinct routes, canonical identifiers, independent route reactions, objective-library EW disable semantics, strike-chain composition, optional intelligence, checkpoints, and immutability.
+Focused coverage in `tests/campaign/zaporizhzhia-recon-strike-operation.test.mjs` validates public contracts, legacy economy fidelity including sufficient required-path intel supply, steppe topology, distinct routes, canonical identifiers, independent route reactions, objective-library EW disable semantics, strike-chain composition, optional intelligence, checkpoints, and immutability.
 
 Repository-wide verification remains `bash ./verify.sh`.
 
