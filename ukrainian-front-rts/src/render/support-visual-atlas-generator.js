@@ -31,6 +31,17 @@ export function validateSupportVisualSource(source){
   return errors;
 }
 
+function frameRecord(frame){
+  return {
+    id:frame.id,
+    rect:{x:frame.x,y:frame.y,w:64,h:64},
+    sourceSize:{w:64,h:64},offset:{x:0,y:0},anchor:{x:32,y:52},
+    attachments:{center:{x:32,y:32},effect:{x:48,y:16},selection:{x:32,y:50},shadow:{x:32,y:50}},
+    masks:{hit:{x:8,y:8,w:48,h:48},selection:{x:7,y:10,w:50,h:44}},
+    tags:['support-visual',frame.faction,frame.family,frame.state,frame.direction],
+  };
+}
+
 export function generateSupportVisualAtlas(source){
   const errors=validateSupportVisualSource(source);if(errors.length)throw new Error(errors.join('\n'));
   const frames=[];let index=0;
@@ -40,6 +51,23 @@ export function generateSupportVisualAtlas(source){
     frames.push({id,faction,family:identity.family,state,direction,x,y,width:64,height:64});
     frames[index].svg=`<g transform="translate(${x} ${y})"><g transform="rotate(${rotation} 32 32)">${shape(identity.profile,factionData.base,factionData.accent,state)}</g>${state==='attack'?`<circle cx="52" cy="12" r="4" fill="#efc56d"/>`:''}${state==='wreck'?`<path d="M12 52L52 12" stroke="#1b1b1b" stroke-width="5"/>`:''}</g>`;index++;
   }
-  const rows=Math.ceil(frames.length/16),svg=`<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="${rows*64}" viewBox="0 0 1024 ${rows*64}"><title>${escapeXml('Fields of Resolve fires and support atlas')}</title>${frames.map((frame)=>frame.svg).join('')}</svg>`;
-  return Object.freeze({svg,frames:Object.freeze(frames.map(({svg,...frame})=>Object.freeze(frame))),frameCount:frames.length,width:1024,height:rows*64});
+  const rows=Math.ceil(frames.length/16),width=1024,height=rows*64;
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><title>${escapeXml('Fields of Resolve fires and support atlas')}</title>${frames.map((frame)=>frame.svg).join('')}</svg>`;
+  const cleanFrames=frames.map(({svg,...frame})=>Object.freeze(frame));
+  const manifestFrames=Object.fromEntries(cleanFrames.map((frame)=>[frame.id,frameRecord(frame)]));
+  const animations={};
+  for(const factionData of Object.values(source.factions))for(const identity of source.identities)for(const state of source.states){
+    const directions={};
+    for(const direction of source.directions)directions[direction]=[{frame:`${factionData.prefix}.${identity.family}.${state}.${direction}`,durationMs:state==='attack'?180:260}];
+    animations[`${factionData.prefix}.${identity.family}.${state}`]={loop:state==='wreck'?'hold':'loop',defaultDurationMs:260,directions};
+  }
+  return Object.freeze({
+    svg,frames:Object.freeze(cleanFrames),frameCount:frames.length,width,height,
+    manifestObject:{
+      schema:'fields-of-resolve.sprite-atlas',version:1,id:'fields-of-resolve.support-visuals',sampling:'nearest',
+      image:{src:'support-visuals.svg',width,height,pixelRatio:1},
+      directions:{order:[...source.directions],zero:'n',clockwise:true},frames:manifestFrames,animations,
+      fallback:{frame:'ua.support.idle.n'},
+    },
+  });
 }
