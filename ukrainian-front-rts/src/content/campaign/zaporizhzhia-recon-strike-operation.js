@@ -238,6 +238,9 @@ export const ZAPORIZHZHIA_RECON_STRIKE_MAP = deepFreeze({
     { id: 'north-shelterbelt-route', cells: horizontal(6, 1, 20), metadata: { approach: 'north', concealment: 'shelterbelt' } },
     { id: 'south-farm-track', cells: horizontal(18, 1, 20), metadata: { approach: 'south', concealment: 'limited' } },
   ],
+  resources: [
+    { id: 'legacy-target-intel-cache', type: 'intel', cell: { x: 22, y: 7 }, amount: 220, metadata: { legacyMissionId: 'zaporizhzhia', purpose: 'required-intelligence-economy' } },
+  ],
   props: [
     { id: 'north-observation-berm', type: 'observation-position', cell: { x: 18, y: 5 }, footprint: { width: 2, height: 2 }, blockingLayers: [], metadata: { approach: 'north' } },
     { id: 'south-drainage-cut', type: 'drainage-cut', cell: { x: 17, y: 18 }, footprint: { width: 2, height: 2 }, blockingLayers: ['ground'], metadata: { approach: 'south' } },
