@@ -1,0 +1,24 @@
+{
+  "schema": "fields-of-resolve.support-visual-source",
+  "version": 1,
+  "directions": ["n", "ne", "e", "se", "s", "sw", "w", "nw"],
+  "states": ["idle", "move", "attack", "damaged", "wreck"],
+  "families": ["drone", "artillery", "rocket", "air-defense", "logistics", "command", "bridging", "support"],
+  "factions": {
+    "ukraine": { "prefix": "ua", "base": "#4f6f62", "accent": "#d7bb56" },
+    "russia": { "prefix": "ru", "base": "#6c5947", "accent": "#b9aa8d" }
+  },
+  "identities": [
+    {"family":"drone","profile":"quad"},{"family":"artillery","profile":"gun"},{"family":"rocket","profile":"launcher"},{"family":"air-defense","profile":"radar"},
+    {"family":"logistics","profile":"truck"},{"family":"command","profile":"mast"},{"family":"bridging","profile":"bridge"},{"family":"support","profile":"utility"}
+  ],
+  "provenance": {
+    "creator": "Fields of Resolve contributors with OpenAI-assisted deterministic vector generation",
+    "createdAt": "2026-08-09",
+    "source": "Original fictional role-readable support silhouettes authored for this repository; no external visual assets used",
+    "license": "CC0-1.0",
+    "redistribution": "allowed",
+    "externalInputs": [],
+    "publicFigures": []
+  }
+}
