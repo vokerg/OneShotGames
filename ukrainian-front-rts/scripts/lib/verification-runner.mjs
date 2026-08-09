@@ -17,6 +17,7 @@ export const VERIFICATION_COMMANDS = Object.freeze([
   Object.freeze({ id: 'runtime-content', label: 'runtime content reconciliation', script: 'scripts/verify-runtime-content.mjs' }),
   Object.freeze({ id: 'seeded-random', label: 'seeded simulation randomness', script: 'scripts/verify-seeded-random.mjs' }),
   Object.freeze({ id: 'art-sources', label: 'source art and export manifests', script: 'scripts/verify-art-sources.mjs' }),
+  Object.freeze({ id: 'support-visuals', label: 'fires and support visual atlas', script: 'scripts/verify-support-visuals.mjs' }),
   Object.freeze({ id: 'ui-art', label: 'deterministic UI art assets', script: 'scripts/verify-ui-art.mjs' }),
   Object.freeze({ id: 'ui-skin', label: 'production UI skin', script: 'scripts/verify-ui-skin.mjs' }),
   Object.freeze({ id: 'command-card', label: 'production command card', script: 'scripts/verify-command-card.mjs' }),
