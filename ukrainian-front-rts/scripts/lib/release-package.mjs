@@ -1,11 +1,11 @@
 import { createHash } from 'node:crypto';
 import { cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
-import { basename, dirname, extname, join, relative, resolve, sep } from 'node:path';
+import { dirname, extname, join, relative, resolve, sep } from 'node:path';
 
 export const RELEASE_PACKAGE_SCHEMA = 'fields-of-resolve.release-package';
 export const RELEASE_PACKAGE_VERSION = 1;
 export const RELEASE_CACHE_PREFIX = 'fields-of-resolve-release-';
-export const RELEASE_RUNTIME_DIRECTORIES = Object.freeze(['assets', 'game', 'src', 'ui']);
+export const RELEASE_RUNTIME_DIRECTORIES = Object.freeze(['assets', 'src', 'ui']);
 export const RELEASE_TOP_LEVEL_EXTENSIONS = Object.freeze(new Set(['.css']));
 
 function posix(path) {
