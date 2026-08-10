@@ -46,6 +46,7 @@ export function installSupportVisualArtPass(RendererClass,{loadAtlas=loadSupport
       x:Math.round(screen.x),y:Math.round(screen.y)+14*zoom,scale:Math.max(.3,zoom*.82),
       elapsedMs:supportVisualAnimationElapsedMs(entity,visualState,this.g.time),direction,
     });
+    if(result?.pending)return fallbackUnit.call(this,entity);
     if(stats&&typeof this.selection==='function')this.selection(entity,screen,stats,zoom);
     return result;
   }
@@ -61,7 +62,8 @@ export function installSupportVisualArtPass(RendererClass,{loadAtlas=loadSupport
     context.fillStyle='#111713';context.fillRect(0,0,144,112);
     context.fillStyle=unitId.startsWith('ua.')?'#26352b':'#352b24';
     for(let y=0;y<112;y+=9)for(let x=0;x<144;x+=9)if((x+y)%27===0)context.fillRect(x,y,9,9);
-    state.runtime.drawFrame(context,frameId,{x:72,y:87,scale:1.42});
+    const result=state.runtime.drawFrame(context,frameId,{x:72,y:87,scale:1.42});
+    if(result?.pending)return fallbackPortrait.call(this,entity);
     context.fillStyle='rgba(0,0,0,.55)';context.fillRect(5,82,134,23);
     context.font='bold 9px monospace';context.fillStyle=unitId.startsWith('ua.')?'#e4ca54':'#c8b89a';
     context.fillText(`${FACTIONS[entity.team]?.short??(unitId.startsWith('ua.')?'UA':'RU')} // ${roleLabel(stats,unitId)}`.slice(0,30),10,97);
