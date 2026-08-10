@@ -3,13 +3,22 @@ import test from 'node:test';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { validateReleaseProvenance, verifyReleaseProvenance } from '../scripts/verify-release-provenance.mjs';
+import {
+  validateAudioReleaseLedger,
+  validateReleaseProvenance,
+  validateVisualSourceCatalog,
+  verifyReleaseProvenance,
+} from '../scripts/verify-release-provenance.mjs';
 
 function manifest(records) {
   return {
     schema: 'fields-of-resolve.release-provenance',
     version: 1,
-    policy: { allowedRedistribution: ['allowed', 'generated', 'repository-authored'] },
+    policy: {
+      requiredFields: ['id', 'kind', 'source', 'license', 'redistribution', 'validator'],
+      allowedRedistribution: ['allowed', 'generated', 'repository-authored'],
+      failClosed: true,
+    },
     records,
   };
 }
@@ -40,6 +49,15 @@ test('release provenance fails closed on missing license metadata', () => {
   assert.match(validateReleaseProvenance(manifest(records)).join('\n'), /license must contain explicit metadata/);
 });
 
+test('release provenance requires its fail-closed policy and declared metadata contract', () => {
+  const candidate = manifest(base);
+  candidate.policy.failClosed = false;
+  candidate.policy.requiredFields = candidate.policy.requiredFields.filter((field) => field !== 'source');
+  const errors = validateReleaseProvenance(candidate).join('\n');
+  assert.match(errors, /policy\.failClosed must be true/);
+  assert.match(errors, /policy\.requiredFields must include source/);
+});
+
 test('release provenance rejects unapproved redistribution status', () => {
   const records = structuredClone(base);
   records[0].redistribution = 'restricted';
@@ -52,4 +70,28 @@ test('release provenance rejects duplicate ids and missing domains', () => {
   const errors = validateReleaseProvenance(manifest(records)).join('\n');
   assert.match(errors, /duplicate provenance id/);
   assert.match(errors, /missing required provenance kind: procedural-output/);
+});
+
+test('visual provenance rejects nested missing licenses and untracked source frames', () => {
+  const catalog = {
+    schema: 'fields-of-resolve.art-source-catalog',
+    assets: [{
+      id: 'visual.test',
+      provenance: { creator: 'repo', source: 'original', license: 'TBD', redistribution: 'allowed' },
+      frames: [{ path: 'units/test.svg' }],
+    }],
+  };
+  const errors = validateVisualSourceCatalog(catalog, ['units/test.svg', 'units/orphan.svg']).join('\n');
+  assert.match(errors, /visual asset visual\.test missing provenance\.license/);
+  assert.match(errors, /untracked visual source: units\/orphan\.svg/);
+});
+
+test('audio provenance rejects family-level missing source and license metadata', () => {
+  const ledger = {
+    schema: 'fields-of-resolve.audio-release-qa',
+    families: [{ id: 'combat', sourcePath: '', license: 'unknown', redistribution: 'allowed' }],
+  };
+  const errors = validateAudioReleaseLedger(ledger).join('\n');
+  assert.match(errors, /audio family combat missing sourcePath/);
+  assert.match(errors, /audio family combat missing license/);
 });
