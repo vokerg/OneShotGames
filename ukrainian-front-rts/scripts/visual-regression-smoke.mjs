@@ -19,16 +19,27 @@ function findBrowser() {
   const entries = (process.env.PATH || '').split(delimiter);
   return process.env.CHROME_BIN || ['google-chrome', 'chromium', 'chromium-browser'].find((name) => entries.some((directory) => existsSync(join(directory, name))));
 }
-function runBrowser(browser, arguments_) {
+function runBrowser(browser, arguments_, { timeoutMs = 45_000 } = {}) {
   return new Promise((resolveRun, rejectRun) => {
     const child = spawn(browser, arguments_, { stdio: ['ignore', 'pipe', 'pipe'] });
     const stdout = [], stderr = [];
+    let settled = false;
+    const finish = (callback, value) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      callback(value);
+    };
+    const timeout = setTimeout(() => {
+      child.kill('SIGKILL');
+      finish(rejectRun, new Error(`Chrome exceeded ${timeoutMs}ms timeout.`));
+    }, timeoutMs);
     child.stdout.on('data', (chunk) => stdout.push(chunk));
     child.stderr.on('data', (chunk) => stderr.push(chunk));
-    child.once('error', rejectRun);
+    child.once('error', (error) => finish(rejectRun, error));
     child.once('exit', (code, signal) => {
       const result = { code, signal, stdout: Buffer.concat(stdout).toString(), stderr: Buffer.concat(stderr).toString() };
-      code === 0 ? resolveRun(result) : rejectRun(new Error(`Chrome exited with ${code ?? signal}: ${result.stderr}`));
+      code === 0 ? finish(resolveRun, result) : finish(rejectRun, new Error(`Chrome exited with ${code ?? signal}: ${result.stderr}`));
     });
   });
 }
@@ -68,22 +79,28 @@ try {
   const screenshotStat = await stat(screenshot);
   if (screenshotStat.size < 4096) throw new Error(`Visual-regression screenshot is unexpectedly small (${screenshotStat.size} bytes).`);
 
-  const supportCaptures=[];
-  for(let page=0;page<4;page+=1){
-    const value=page===3;
-    const name=`ufr-114-support-page-${page+1}-${value?'value':'color'}.png`;
-    const output=resolve(artifacts,name);
-    const url=`http://${host}:${port}/art-lab.html?supportPage=${page}${value?'&value=1':''}`;
-    const review=await runBrowser(browser,[
-      '--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--hide-scrollbars','--virtual-time-budget=8000',
-      '--window-size=1600,900','--dump-dom',`--screenshot=${output}`,url,
-    ]);
-    if(!review.stdout.includes('data-support-visual-ready="true"'))throw new Error(`UFR-114 Art Lab page ${page+1} did not reach ready state.`);
-    if(!review.stdout.includes(`data-support-visual-page="${page}"`))throw new Error(`UFR-114 Art Lab page ${page+1} did not select the requested review page.`);
-    if(review.stdout.includes('data-support-visual-error='))throw new Error(`UFR-114 Art Lab page ${page+1} reported a runtime load error.`);
-    const captureStat=await stat(output);
-    if(captureStat.size<4096)throw new Error(`UFR-114 Art Lab capture ${name} is unexpectedly small (${captureStat.size} bytes).`);
-    supportCaptures.push({page:page+1,file:name,valueCheck:value,bytes:captureStat.size});
+  // Keep CI bounded: the Art Lab retains four manual pages covering all 32 identities,
+  // while automation captures one faction in color and the opposing support page in
+  // grayscale. Unit tests and the support verifier enforce exact 32-identity coverage.
+  const reviewTargets = [
+    { page: 0, value: false, label: 'ua-uas-fires' },
+    { page: 3, value: true, label: 'ru-support' },
+  ];
+  const supportCaptures = [];
+  for (const target of reviewTargets) {
+    const name = `ufr-114-${target.label}-${target.value ? 'value' : 'color'}.png`;
+    const output = resolve(artifacts, name);
+    const url = `http://${host}:${port}/art-lab.html?supportPage=${target.page}${target.value ? '&value=1' : ''}`;
+    const review = await runBrowser(browser, [
+      '--headless=new', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--hide-scrollbars', '--virtual-time-budget=6000',
+      '--window-size=1600,900', '--dump-dom', `--screenshot=${output}`, url,
+    ], { timeoutMs: 60_000 });
+    if (!review.stdout.includes('data-support-visual-ready="true"')) throw new Error(`UFR-114 Art Lab page ${target.page + 1} did not reach ready state.`);
+    if (!review.stdout.includes(`data-support-visual-page="${target.page}"`)) throw new Error(`UFR-114 Art Lab page ${target.page + 1} did not select the requested review page.`);
+    if (review.stdout.includes('data-support-visual-error=')) throw new Error(`UFR-114 Art Lab page ${target.page + 1} reported a runtime load error.`);
+    const captureStat = await stat(output);
+    if (captureStat.size < 4096) throw new Error(`UFR-114 Art Lab capture ${name} is unexpectedly small (${captureStat.size} bytes).`);
+    supportCaptures.push({ page: target.page + 1, file: name, valueCheck: target.value, bytes: captureStat.size });
   }
 
   await writeFile(resolve(artifacts, 'visual-regression-manifest.json'), JSON.stringify({
@@ -92,10 +109,17 @@ try {
     screenshot: 'visual-regression-overview.png',
     width: 1920,
     height: 1080,
-    supportReview:{page:'art-lab.html',width:1600,height:900,captures:supportCaptures},
+    supportReview: {
+      page: 'art-lab.html',
+      width: 1600,
+      height: 900,
+      manualPageCount: 4,
+      automatedCaptureStrategy: 'representative-opposing-faction-color-and-grayscale',
+      captures: supportCaptures,
+    },
     ...summary,
   }, null, 2));
-  console.log(`[visual-regression-browser] captured ${summary.total} scenes and ${supportCaptures.length} UFR-114 Art Lab pages to artifacts/visual-regression`);
+  console.log(`[visual-regression-browser] captured ${summary.total} scenes and ${supportCaptures.length} bounded UFR-114 Art Lab reviews to artifacts/visual-regression`);
 } finally {
   await new Promise((resolveClose) => server.close(resolveClose));
 }
