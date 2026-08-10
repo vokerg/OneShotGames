@@ -1,4 +1,4 @@
-import { installCampaignProgressionRuntime } from '../app/campaign-progression-runtime.js';
+import { installCampaignProgressionRuntime } from './campaign-progression-runtime.js';
 import {
   ACCESSIBILITY_FOCUS_PAUSE_REASON,
   ACCESSIBILITY_PAUSE_EVENT,
