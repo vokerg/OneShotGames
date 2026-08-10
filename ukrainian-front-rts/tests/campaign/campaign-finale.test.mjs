@@ -25,7 +25,7 @@ import {
   CAMPAIGN_PROGRESSION_STAGES,
   createCampaignProgressionRuntime,
   installCampaignProgressionRuntime,
-} from '../../src/app/campaign-progression-runtime.js';
+} from '../../src/ui/campaign-progression-runtime.js';
 
 function completedProfile({ difficulty = CAMPAIGN_DIFFICULTIES.STANDARD, score = 82 } = {}) {
   let profile = createCampaignProfile({ difficulty, initialOperationIds: [CAMPAIGN_OPERATION_IDS[0]] });
