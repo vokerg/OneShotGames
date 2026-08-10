@@ -143,6 +143,7 @@ export function supportVisualAnimationElapsedMs(entity,state,gameTimeSeconds=0){
 }
 
 export async function loadSupportVisualAtlas({source=SUPPORT_VISUAL_SOURCE_URL,fetchImpl=globalThis.fetch?.bind(globalThis),imageFactory=defaultImageFactory,fallbackRuntime=null}={}){
+  const artLabPath=String(globalThis.location?.pathname??'').endsWith('/art-lab.html');
   try{
     if(typeof fetchImpl!=='function')throw new Error('No fetch implementation is available for support visuals.');
     const response=await fetchImpl(String(source));
@@ -162,11 +163,11 @@ export async function loadSupportVisualAtlas({source=SUPPORT_VISUAL_SOURCE_URL,f
     const ensurePortrait=(unitId)=>ensureImage(`${unitId}|portrait`,portraitSvg(sourceObject,unitId));
 
     const search=globalThis.location?.search?new URLSearchParams(globalThis.location.search):null;
-    const reviewPage=Number(search?.get('supportPage'));
-    const initialIds=Number.isInteger(reviewPage)&&SUPPORT_VISUAL_REVIEW_PAGES[reviewPage]
-      ? SUPPORT_VISUAL_REVIEW_PAGES[reviewPage].unitIds
-      : ACTIVE_RUNTIME_IDS;
-    const initialDirection=Number.isInteger(reviewPage)?'e':null;
+    const reviewParam=search?.get('supportPage');
+    const reviewPage=reviewParam===null||reviewParam===undefined?Number.NaN:Number(reviewParam);
+    const reviewPageDefinition=Number.isInteger(reviewPage)?SUPPORT_VISUAL_REVIEW_PAGES[reviewPage]:null;
+    const initialIds=reviewPageDefinition?.unitIds??ACTIVE_RUNTIME_IDS;
+    const initialDirection=reviewPageDefinition?'e':null;
     const preload=initialDirection
       ? initialIds.map((unitId)=>ensureAnimationFrame(unitId,'idle',initialDirection,0))
       : initialIds.flatMap((unitId)=>SUPPORT_VISUAL_REQUIRED_DIRECTIONS.map((direction)=>ensureAnimationFrame(unitId,'idle',direction,0)));
@@ -201,7 +202,7 @@ export async function loadSupportVisualAtlas({source=SUPPORT_VISUAL_SOURCE_URL,f
       cacheStatus:()=>Object.freeze({loaded:cache.size,loading:inflight.size,errors:loadErrors.size}),
     });
   }catch(error){
-    if(fallbackRuntime)return Object.freeze({...fallbackRuntime,degraded:true,loadError:error,catalog:Object.freeze({units:Object.freeze([])})});
+    if(fallbackRuntime&&!artLabPath)return Object.freeze({...fallbackRuntime,degraded:true,loadError:error,catalog:Object.freeze({units:Object.freeze([])})});
     throw error;
   }
 }
