@@ -1,3 +1,4 @@
+import { installCampaignProgressionRuntime } from '../app/campaign-progression-runtime.js';
 import {
   ACCESSIBILITY_FOCUS_PAUSE_REASON,
   ACCESSIBILITY_PAUSE_EVENT,
@@ -35,6 +36,8 @@ export function installMenuStackComposition({
 
   try {
     registerCleanup(registerMenuPauseRuntime(game, runtime));
+    const campaign = installCampaignProgressionRuntime({ game, windowTarget });
+    registerCleanup(() => campaign.dispose());
     const onAccessibilityPause = () => runtime.pause(ACCESSIBILITY_FOCUS_PAUSE_REASON);
     const onAccessibilityResume = () => runtime.resume(ACCESSIBILITY_FOCUS_PAUSE_REASON);
     documentTarget.addEventListener?.(ACCESSIBILITY_PAUSE_EVENT, onAccessibilityPause);
