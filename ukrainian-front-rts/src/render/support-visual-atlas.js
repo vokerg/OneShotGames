@@ -49,9 +49,9 @@ export function supportVisualFactionPrefix(entity,stats=null){
 export function supportVisualStateForEntity(entity){
   if(!entity||typeof entity!=='object')return'idle';
   if(entity.wreck===true||entity.destroyed===true)return'wreck';
-  if(entity.dying===true||entity.death===true||Number(entity.hp)<0)return'death';
+  if(entity.dying===true||entity.death===true||Number(entity.hp)<=0)return'death';
+  if(Number(entity.flash)>0||entity.firing===true)return'attack';
   if(entity.hit===true||entity.hitFlash===true||Number(entity.recentHit)>0)return'hit';
-  if(entity.firing===true||Number(entity.flash)>0)return'attack';
   const hp=Number(entity.hp),maxHp=Number(entity.maxHp);
   if(Number.isFinite(hp)&&Number.isFinite(maxHp)&&maxHp>0&&hp/maxHp<.5)return'damaged';
   if(entity.order||entity.moving===true||Math.hypot(Number(entity.vx)||0,Number(entity.vy)||0)>.01)return'move';
