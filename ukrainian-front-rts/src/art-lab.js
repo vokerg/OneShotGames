@@ -72,18 +72,14 @@ const ukrainianVehicleLabels=['APC','IFV','MBT','RECOVERY','ENGINEERING'];
 
 async function loadAtlasReviews(){
  const fallback=await loadSpriteAtlas(new URL('../assets/atlases/fallback.atlas.json',import.meta.url));
- const [template,ukrainianInfantry,russianInfantry,ukrainianVehicle,supportVisual]=await Promise.all([
-  loadTemplateUnitAtlas({fallbackRuntime:fallback}),
-  loadUkrainianInfantryAtlas({fallbackRuntime:fallback}),
-  loadRussianInfantryAtlas({fallbackRuntime:fallback}),
-  loadUkrainianVehicleAtlas({fallbackRuntime:fallback}),
-  loadSupportVisualAtlas({fallbackRuntime:fallback}),
+ const settle=(promise,onReady,onError)=>Promise.resolve(promise).then(onReady).catch(onError);
+ await Promise.allSettled([
+  settle(loadTemplateUnitAtlas({fallbackRuntime:fallback}),runtime=>{templateRuntime=runtime;},error=>{templateLoadError=error;}),
+  settle(loadUkrainianInfantryAtlas({fallbackRuntime:fallback}),runtime=>{ukrainianInfantryRuntime=runtime;},error=>{ukrainianInfantryLoadError=error;}),
+  settle(loadRussianInfantryAtlas({fallbackRuntime:fallback}),runtime=>{russianInfantryRuntime=runtime;},error=>{russianInfantryLoadError=error;}),
+  settle(loadUkrainianVehicleAtlas({fallbackRuntime:fallback}),runtime=>{ukrainianVehicleRuntime=runtime;},error=>{ukrainianVehicleLoadError=error;}),
+  settle(loadSupportVisualAtlas({fallbackRuntime:fallback}),runtime=>{supportVisualRuntime=runtime;},error=>{supportVisualLoadError=error;}),
  ]);
- templateRuntime=template;
- ukrainianInfantryRuntime=ukrainianInfantry;
- russianInfantryRuntime=russianInfantry;
- ukrainianVehicleRuntime=ukrainianVehicle;
- supportVisualRuntime=supportVisual;
 }
 loadAtlasReviews().catch(error=>{
  if(!templateRuntime)templateLoadError=error;
