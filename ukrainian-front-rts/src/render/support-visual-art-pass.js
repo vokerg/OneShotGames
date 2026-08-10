@@ -1,12 +1,21 @@
 import { UNIT_TYPES } from '../config.js';
-import { loadSupportVisualAtlas, supportVisualDirectionFromAngle, supportVisualFactionPrefix, supportVisualFamilyFor, supportVisualStateForEntity } from './support-visual-atlas.js';
+import {
+  loadSupportVisualAtlas,
+  resolveSupportVisualUnitId,
+  supportVisualAnimationElapsedMs,
+  supportVisualAnimationId,
+  supportVisualDirectionFromAngle,
+  supportVisualStateForEntity,
+} from './support-visual-atlas.js';
 
 const INSTALLATION=Symbol.for('fields-of-resolve.support-visual-art-pass');
 
 function statsFor(renderer,entity){
-  const legacy=UNIT_TYPES[entity?.type];
-  if(!legacy)return null;
-  try{return renderer.g?.unitStats?.(entity.type)??legacy;}catch{return legacy;}
+  try{
+    const runtime=renderer.g?.unitStats?.(entity?.type);
+    if(runtime)return runtime;
+  }catch{}
+  return entity?.stats??UNIT_TYPES[entity?.type]??null;
 }
 
 export function installSupportVisualArtPass(RendererClass,{loadAtlas=loadSupportVisualAtlas}={}){
@@ -19,16 +28,16 @@ export function installSupportVisualArtPass(RendererClass,{loadAtlas=loadSupport
 
   function supportUnit(entity){
     const stats=statsFor(this,entity);
-    const family=supportVisualFamilyFor(entity?.type,stats);
-    const prefix=supportVisualFactionPrefix(entity,stats);
-    if(!family||!prefix||!state.runtime)return fallbackUnit.call(this,entity);
-    const screen=this.sp(entity.x,entity.y),zoom=this.g.camera.z;
-    const visualState=supportVisualStateForEntity(entity),direction=supportVisualDirectionFromAngle(entity.angle);
-    const drawX=Math.round(screen.x),drawY=Math.round(screen.y)+14*zoom;
-    const result=state.runtime.drawAnimation(this.x,`${prefix}.${family}.${visualState}`,{
-      x:drawX,y:drawY,scale:Math.max(.3,zoom*.82),elapsedMs:Math.max(0,Number(this.g.time)||0)*1000,direction,
+    const unitId=resolveSupportVisualUnitId(entity?.type,stats);
+    if(!unitId||!state.runtime)return fallbackUnit.call(this,entity);
+    const visualState=supportVisualStateForEntity(entity),animationId=supportVisualAnimationId(unitId,visualState);
+    if(!animationId||!state.runtime.manifest?.animations?.[animationId])return fallbackUnit.call(this,entity);
+    const screen=this.sp(entity.x,entity.y),zoom=this.g.camera.z,direction=supportVisualDirectionFromAngle(entity.angle);
+    const result=state.runtime.drawAnimation(this.x,animationId,{
+      x:Math.round(screen.x),y:Math.round(screen.y)+14*zoom,scale:Math.max(.3,zoom*.82),
+      elapsedMs:supportVisualAnimationElapsedMs(entity,visualState,this.g.time),direction,
     });
-    this.selection(entity,screen,stats,zoom);
+    if(stats&&typeof this.selection==='function')this.selection(entity,screen,stats,zoom);
     return result;
   }
 
@@ -38,7 +47,7 @@ export function installSupportVisualArtPass(RendererClass,{loadAtlas=loadSupport
     status:()=>Object.freeze({state:state.status,ready:state.status==='ready',error:state.error?String(state.error.message??state.error):null}),
     restore(){
       if(RendererClass.prototype.unit===supportUnit)RendererClass.prototype.unit=fallbackUnit;
-      delete RendererClass.prototype.supportVisualAtlasStatus;
+      if(RendererClass.prototype.supportVisualAtlasStatus)delete RendererClass.prototype.supportVisualAtlasStatus;
       delete RendererClass.prototype[INSTALLATION];
     },
   });
