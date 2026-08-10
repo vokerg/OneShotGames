@@ -68,7 +68,7 @@ test('support visual generation is byte deterministic',()=>{
   assert.deepEqual(a.catalogObject,b.catalogObject);
 });
 
-test('runtime resolution is canonical and does not steal unrelated renderer ownership',()=>{
+test('runtime resolution is canonical and lifecycle precedence matches production vehicle atlases',()=>{
   assert.equal(resolveSupportVisualUnitId('uaDrone',{visual:'quadDrone'}),'ua.recon-drone.fpv-strike');
   assert.equal(resolveSupportVisualUnitId('ruArtillery',{visual:'msta'}),'ru.self-propelled-gun');
   assert.equal(resolveSupportVisualUnitId('ua.support.mobile-bridge',{}),'ua.support.mobile-bridge');
@@ -76,7 +76,9 @@ test('runtime resolution is canonical and does not steal unrelated renderer owne
   assert.equal(resolveSupportVisualUnitId('ruTank',{archetype:'artillery',faction:'russia'}),null);
   assert.equal(supportVisualFactionPrefix({type:'uaDrone',team:0},{visual:'quadDrone'}),'ua');
   assert.equal(supportVisualStateForEntity({wreck:true,hp:0,maxHp:100}),'wreck');
-  assert.equal(supportVisualStateForEntity({dying:true,hp:0,maxHp:100}),'death');
+  assert.equal(supportVisualStateForEntity({hp:0,maxHp:100}),'death');
+  assert.equal(supportVisualStateForEntity({dying:true,hp:1,maxHp:100}),'death');
+  assert.equal(supportVisualStateForEntity({hitFlash:true,flash:.1,hp:80,maxHp:100}),'attack');
   assert.equal(supportVisualStateForEntity({hitFlash:true,hp:80,maxHp:100}),'hit');
   assert.equal(supportVisualStateForEntity({hp:40,maxHp:100}),'damaged');
   assert.equal(supportVisualStateForEntity({hp:100,maxHp:100,flash:.1}),'attack');
@@ -85,26 +87,38 @@ test('runtime resolution is canonical and does not steal unrelated renderer owne
   assert.equal(supportVisualAnimationId('uaDrone','death'),'ua.recon-drone.fpv-strike.death');
 });
 
-test('support renderer pass composes with fallback and restores ownership cleanly',async()=>{
-  const draws=[];
-  const runtime={manifest:{animations:{'ua.recon-drone.fpv-strike.idle':{}}},drawAnimation(...args){draws.push(args);return{frameId:'ok'};}};
+test('support renderer pass composes unit and portrait fallbacks and restores ownership cleanly',async()=>{
+  const draws=[],portraits=[];
+  const frameId='ua.recon-drone.fpv-strike.portrait';
+  const runtime={
+    manifest:{animations:{'ua.recon-drone.fpv-strike.idle':{}},frames:{[frameId]:{}}},
+    drawAnimation(...args){draws.push(args);return{frameId:'ok'};},
+    drawFrame(...args){portraits.push(args);return{frameId};},
+  };
+  const context={clearRect(){},fillRect(){},fillText(){},strokeRect(){},set fillStyle(value){},set font(value){},set strokeStyle(value){},set lineWidth(value){}};
   class Renderer{
-    constructor(){this.g={camera:{z:1},time:1,unitStats:(type)=>type==='uaDrone'?{visual:'quadDrone',size:10}:null};this.x={};this.selections=0;}
+    constructor(){this.g={camera:{z:1},time:1,unitStats:(type)=>type==='uaDrone'?{visual:'quadDrone',size:10,role:'fpv-strike'}:null};this.x={};this.px=context;this.selections=0;}
     unit(entity){return `fallback:${entity.type}`;}
+    portrait(entity){return `fallback-portrait:${entity.type}`;}
     sp(){return{x:100,y:100};}
     selection(){this.selections+=1;}
   }
-  const fallback=Renderer.prototype.unit;
+  const fallbackUnit=Renderer.prototype.unit,fallbackPortrait=Renderer.prototype.portrait;
   const installation=installSupportVisualArtPass(Renderer,{loadAtlas:async()=>runtime});
   await new Promise((resolve)=>setTimeout(resolve,0));
   const renderer=new Renderer();
   assert.equal(renderer.unit({type:'uaInfantry',x:0,y:0,angle:0}),'fallback:uaInfantry');
-  assert.deepEqual(renderer.unit({type:'uaDrone',x:0,y:0,angle:-Math.PI/2,hp:50,maxHp:50}),{frameId:'ok'});
+  assert.equal(renderer.portrait({type:'uaInfantry'}),'fallback-portrait:uaInfantry');
+  assert.deepEqual(renderer.unit({type:'uaDrone',team:0,x:0,y:0,angle:-Math.PI/2,hp:50,maxHp:50}),{frameId:'ok'});
+  assert.equal(renderer.portrait({type:'uaDrone',team:0}),'ua.recon-drone.fpv-strike');
   assert.equal(draws.length,1);
   assert.equal(draws[0][1],'ua.recon-drone.fpv-strike.idle');
+  assert.equal(portraits.length,1);
+  assert.equal(portraits[0][1],frameId);
   assert.equal(renderer.selections,1);
   installation.restore();
-  assert.equal(Renderer.prototype.unit,fallback);
+  assert.equal(Renderer.prototype.unit,fallbackUnit);
+  assert.equal(Renderer.prototype.portrait,fallbackPortrait);
 });
 
 test('support validation fails closed on dependency drift, lifecycle drift and provenance gaps',()=>{
