@@ -1,0 +1,82 @@
+{
+  "schema": "fields-of-resolve.release-provenance",
+  "version": 1,
+  "project": "Fields of Resolve",
+  "policy": {
+    "requiredFields": ["id", "kind", "source", "license", "redistribution", "validator"],
+    "allowedRedistribution": ["allowed", "generated", "repository-authored"],
+    "failClosed": true
+  },
+  "records": [
+    {
+      "id": "visual-art",
+      "kind": "visual",
+      "source": "art-src/manifest.json",
+      "sourcePaths": ["art-src/manifest.json"],
+      "license": "per-source-record",
+      "redistribution": "allowed",
+      "validator": "scripts/verify-art-sources.mjs",
+      "notes": "Canonical generated art-source manifest; individual source records retain creator, external-input, public-figure, and license detail."
+    },
+    {
+      "id": "audio-release",
+      "kind": "audio",
+      "source": "assets/audio/release-qa.json",
+      "sourcePaths": ["assets/audio/release-qa.json"],
+      "license": "per-release-record",
+      "redistribution": "allowed",
+      "validator": "scripts/verify-audio-release-qa.mjs",
+      "notes": "Canonical combat, UI, music, voice, and ambience release ledger."
+    },
+    {
+      "id": "runtime-fonts",
+      "kind": "font",
+      "source": "index.html and CSS font-family declarations",
+      "sourcePaths": ["index.html", "styles.css"],
+      "license": "system-font-stack/no-bundled-font-binary",
+      "redistribution": "repository-authored",
+      "validator": "scripts/verify-release-provenance.mjs",
+      "notes": "No redistributable third-party font binary is committed; release uses the runtime/system stack."
+    },
+    {
+      "id": "localized-text",
+      "kind": "text",
+      "source": "src/localization/",
+      "sourcePaths": ["src/localization"],
+      "license": "repository-license",
+      "redistribution": "repository-authored",
+      "validator": "scripts/verify-localization.mjs",
+      "notes": "English and Ukrainian runtime copy is repository-authored; translation limitations remain documented by UFR-143."
+    },
+    {
+      "id": "campaign-reference-material",
+      "kind": "reference",
+      "source": "docs/ and art-src/campaign/",
+      "sourcePaths": ["docs", "art-src/campaign"],
+      "license": "repository-license/per-source-record",
+      "redistribution": "allowed",
+      "validator": "scripts/verify-campaign-art.mjs",
+      "notes": "Reference material is either repository-authored prose or represented by explicit campaign-art source records."
+    },
+    {
+      "id": "procedural-visual-outputs",
+      "kind": "procedural-output",
+      "source": "scripts/build-art-sources.mjs and art-src/",
+      "sourcePaths": ["scripts/build-art-sources.mjs", "art-src"],
+      "license": "inherited-from-source-record",
+      "redistribution": "generated",
+      "validator": "scripts/verify-art-sources.mjs",
+      "notes": "Generated visual outputs inherit their authoritative source-record provenance."
+    },
+    {
+      "id": "procedural-audio-outputs",
+      "kind": "procedural-output",
+      "source": "assets/audio/release-qa.json and audio build scripts",
+      "sourcePaths": ["assets/audio/release-qa.json", "scripts"],
+      "license": "per-release-record",
+      "redistribution": "generated",
+      "validator": "scripts/verify-audio-release-qa.mjs",
+      "notes": "Deterministic generated audio is covered by the audio release ledger."
+    }
+  ]
+}
