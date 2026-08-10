@@ -13,5 +13,28 @@
  <div class="panel"><strong>Unit Art Lab</strong><small>Full roster plus UFR-109 template, UFR-110/111 infantry atlases, UFR-112/113 vehicle reviews, and the UFR-114 drone/fires/support atlas. <span class="keys">1 / 2 / 3</span> changes zoom. <span class="keys">F</span> flips roster facing. <span class="keys">T</span> cycles template states. <span class="keys">U</span> cycles production atlas states. <span class="keys">R</span> cycles production atlas direction. <span class="keys">P</span> cycles the four UFR-114 identity review pages and returns to the roster. <span class="keys">Space</span> pauses animation. <span class="keys">V</span> toggles grayscale value inspection. <span class="keys">S</span> downloads a timestamped review PNG.</small></div>
  <script type="module" src="src/art-lab.js"></script>
  <script type="module" src="src/render/russian-vehicle-art-lab-review.js"></script>
+ <script>
+  (()=>{
+   const params=new URLSearchParams(location.search),page=Number(params.get('supportPage'));
+   if(!Number.isInteger(page)||page<0||page>3)return;
+   const value=params.get('value')==='1';let attempts=0;
+   const poll=setInterval(()=>{
+    attempts+=1;const status=globalThis.__UFR114_ART_LAB__?.getStatus?.();
+    if(status?.error){document.body.dataset.supportVisualError=status.error;clearInterval(poll);return;}
+    if(!status?.ready){if(attempts>200){document.body.dataset.supportVisualError='timeout';clearInterval(poll);}return;}
+    for(let index=0;index<=page;index+=1)window.dispatchEvent(new KeyboardEvent('keydown',{key:'p',code:'KeyP',bubbles:true}));
+    if(value)window.dispatchEvent(new KeyboardEvent('keydown',{key:'v',code:'KeyV',bubbles:true}));
+    document.querySelector('.panel')?.classList.add('hidden');
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+     const ready=globalThis.__UFR114_ART_LAB__?.getStatus?.();
+     document.body.dataset.supportVisualReady=String(Boolean(ready?.ready));
+     document.body.dataset.supportVisualPage=String(ready?.page??-1);
+     document.body.dataset.supportVisualState=String(ready?.state??'unknown');
+     document.body.dataset.supportVisualDirection=String(ready?.direction??'unknown');
+    }));
+    clearInterval(poll);
+   },50);
+  })();
+ </script>
 </body>
 </html>
