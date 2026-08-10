@@ -23,7 +23,10 @@
     if(status?.error){document.body.dataset.supportVisualError=status.error;clearInterval(poll);return;}
     if(!status?.ready){if(attempts>200){document.body.dataset.supportVisualError='timeout';clearInterval(poll);}return;}
     for(let index=0;index<=page;index+=1)window.dispatchEvent(new KeyboardEvent('keydown',{key:'p',code:'KeyP',bubbles:true}));
-    if(value)window.dispatchEvent(new KeyboardEvent('keydown',{key:'v',code:'KeyV',bubbles:true}));
+    if(value){
+     const gameCanvas=document.querySelector('#game');
+     if(gameCanvas)gameCanvas.style.filter='grayscale(1)';
+    }
     document.querySelector('.panel')?.classList.add('hidden');
     requestAnimationFrame(()=>requestAnimationFrame(()=>{
      const ready=globalThis.__UFR114_ART_LAB__?.getStatus?.();
@@ -31,6 +34,7 @@
      document.body.dataset.supportVisualPage=String(ready?.page??-1);
      document.body.dataset.supportVisualState=String(ready?.state??'unknown');
      document.body.dataset.supportVisualDirection=String(ready?.direction??'unknown');
+     document.body.dataset.supportVisualValue=String(value);
     }));
     clearInterval(poll);
    },50);
