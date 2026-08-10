@@ -19,12 +19,10 @@ function findBrowser() {
   const entries = (process.env.PATH || '').split(delimiter);
   return process.env.CHROME_BIN || ['google-chrome', 'chromium', 'chromium-browser'].find((name) => entries.some((directory) => existsSync(join(directory, name))));
 }
-
 function runBrowser(browser, arguments_) {
   return new Promise((resolveRun, rejectRun) => {
     const child = spawn(browser, arguments_, { stdio: ['ignore', 'pipe', 'pipe'] });
-    const stdout = [];
-    const stderr = [];
+    const stdout = [], stderr = [];
     child.stdout.on('data', (chunk) => stdout.push(chunk));
     child.stderr.on('data', (chunk) => stderr.push(chunk));
     child.once('error', rejectRun);
@@ -70,15 +68,34 @@ try {
   const screenshotStat = await stat(screenshot);
   if (screenshotStat.size < 4096) throw new Error(`Visual-regression screenshot is unexpectedly small (${screenshotStat.size} bytes).`);
 
+  const supportCaptures=[];
+  for(let page=0;page<4;page+=1){
+    const value=page===3;
+    const name=`ufr-114-support-page-${page+1}-${value?'value':'color'}.png`;
+    const output=resolve(artifacts,name);
+    const url=`http://${host}:${port}/art-lab.html?supportPage=${page}${value?'&value=1':''}`;
+    const review=await runBrowser(browser,[
+      '--headless=new','--no-sandbox','--disable-gpu','--disable-dev-shm-usage','--hide-scrollbars','--virtual-time-budget=8000',
+      '--window-size=1600,900','--dump-dom',`--screenshot=${output}`,url,
+    ]);
+    if(!review.stdout.includes('data-support-visual-ready="true"'))throw new Error(`UFR-114 Art Lab page ${page+1} did not reach ready state.`);
+    if(!review.stdout.includes(`data-support-visual-page="${page}"`))throw new Error(`UFR-114 Art Lab page ${page+1} did not select the requested review page.`);
+    if(review.stdout.includes('data-support-visual-error='))throw new Error(`UFR-114 Art Lab page ${page+1} reported a runtime load error.`);
+    const captureStat=await stat(output);
+    if(captureStat.size<4096)throw new Error(`UFR-114 Art Lab capture ${name} is unexpectedly small (${captureStat.size} bytes).`);
+    supportCaptures.push({page:page+1,file:name,valueCheck:value,bytes:captureStat.size});
+  }
+
   await writeFile(resolve(artifacts, 'visual-regression-manifest.json'), JSON.stringify({
     status: 'passed',
     page: 'visual-regression.html',
     screenshot: 'visual-regression-overview.png',
     width: 1920,
     height: 1080,
+    supportReview:{page:'art-lab.html',width:1600,height:900,captures:supportCaptures},
     ...summary,
   }, null, 2));
-  console.log(`[visual-regression-browser] captured ${summary.total} scenes to artifacts/visual-regression/visual-regression-overview.png`);
+  console.log(`[visual-regression-browser] captured ${summary.total} scenes and ${supportCaptures.length} UFR-114 Art Lab pages to artifacts/visual-regression`);
 } finally {
   await new Promise((resolveClose) => server.close(resolveClose));
 }
