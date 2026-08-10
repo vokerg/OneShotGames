@@ -13,8 +13,9 @@ addEventListener(
   () => {
     import('./ukrainian-vehicle-runtime-install.js')
       .then(() => import('./russian-vehicle-runtime-install.js'))
+      .then(() => import('./support-visual-runtime-install.js'))
       .catch((error) => {
-        console.error('[vehicle-art] runtime installation failed', error);
+        console.error('[unit-art] runtime installation failed', error);
       });
   },
   { once: true },
