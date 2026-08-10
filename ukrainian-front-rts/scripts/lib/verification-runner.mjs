@@ -35,6 +35,7 @@ export const VERIFICATION_COMMANDS = Object.freeze([
   Object.freeze({ id: 'accessibility-settings', label: 'visual accessibility and key rebinding', script: 'scripts/verify-accessibility-settings.mjs' }),
   Object.freeze({ id: 'localization', label: 'English/Ukrainian runtime localization', script: 'scripts/verify-localization.mjs' }),
   Object.freeze({ id: 'audio-release-qa', label: 'audio release QA and provenance gate', script: 'scripts/verify-audio-release-qa.mjs' }),
+  Object.freeze({ id: 'release-package', label: 'reproducible offline release package', script: 'scripts/verify-release-package.mjs' }),
   Object.freeze({
     id: 'runtime-composition',
     label: 'runtime composition ownership',
