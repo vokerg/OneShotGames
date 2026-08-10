@@ -30,6 +30,11 @@ const reviewState = {
 };
 Object.defineProperty(window, '__russianVehicleArtLabReview', { value: reviewState, configurable: true });
 
+function supportReviewActive() {
+  const page = window.__UFR114_ART_LAB__?.getStatus?.().page;
+  return Number.isInteger(page) && page >= 0;
+}
+
 async function load() {
   const fallback = await loadSpriteAtlas(new URL('../../assets/atlases/fallback.atlas.json', import.meta.url));
   runtime = await loadRussianVehicleAtlas({ fallbackRuntime: fallback });
@@ -40,6 +45,7 @@ load().catch((error) => {
 });
 
 addEventListener('keydown', (event) => {
+  if (supportReviewActive()) return;
   if (scales[event.key]) reviewScale = scales[event.key];
   if (event.key.toLowerCase() === 'u') stateIndex = (stateIndex + 1) % RUSSIAN_VEHICLE_STATES.length;
   if (event.key.toLowerCase() === 'r') directionIndex = (directionIndex + 1) % RUSSIAN_VEHICLE_DIRECTIONS.length;
@@ -54,6 +60,10 @@ addEventListener('keydown', (event) => {
 });
 
 function draw(now) {
+  if (supportReviewActive()) {
+    requestAnimationFrame(draw);
+    return;
+  }
   const width = canvas.clientWidth || innerWidth;
   const state = RUSSIAN_VEHICLE_STATES[stateIndex];
   const direction = RUSSIAN_VEHICLE_DIRECTIONS[directionIndex];
