@@ -11,6 +11,7 @@ import {
   getCampaignOperation,
   getNextCampaignOperation,
 } from '../content/campaign/campaign-operation-registry.js';
+import { applyCampaignBalance } from '../content/campaign/campaign-balance.js';
 import {
   CAMPAIGN_FINALE_OPERATION,
   CAMPAIGN_FINALE_OPERATION_ID,
@@ -64,13 +65,16 @@ export function createCampaignProgressionRuntime({ profile: initialProfile = nul
 
   function beginOperation(operationId) {
     if (!profile.unlockedOperationIds.includes(operationId)) throw new Error(`Cannot begin locked operation: ${operationId}`);
+    const operationIndex = CAMPAIGN_OPERATION_IDS.indexOf(operationId);
+    if (operationIndex < 0) throw new RangeError(`Unknown campaign operation: ${operationId}`);
     const operation = getCampaignOperation(operationId);
+    const runtimeOperation = operationId === CAMPAIGN_FINALE_OPERATION_ID
+      ? deepFreeze({ ...operation, mission: createFinaleMission(profile) })
+      : operation;
     activeOperationId = operationId;
     debrief = null;
     stage = CAMPAIGN_PROGRESSION_STAGES.BRIEFING;
-    return operationId === CAMPAIGN_FINALE_OPERATION_ID
-      ? deepFreeze({ ...operation, mission: createFinaleMission(profile) })
-      : operation;
+    return applyCampaignBalance(runtimeOperation, profile.difficulty, operationIndex);
   }
 
   function enterBattlefield(operationId = activeOperationId) {
