@@ -2,14 +2,15 @@
 
 ## Scope
 
-This gate validates the integrated nine-operation campaign rather than individual mission contracts. It exercises the production campaign progression runtime, difficulty balance policy, campaign save runtime, authored checkpoint contracts, content policy, finale debrief, and credits transition.
+This gate validates the integrated nine-operation campaign rather than individual mission contracts. It exercises the production campaign progression runtime, difficulty balance policy, mission checkpoint service, campaign save runtime, content policy, finale debrief, and credits transition.
 
 ## Deterministic alpha matrix
 
 - Difficulties: Story, Standard, Veteran
 - Operations per difficulty: 9
 - Total operation traversals: 27
-- Active-mission save/restore checkpoints: 27 (one per operation/difficulty traversal)
+- Canonical mission-checkpoint captures/restores: 27
+- Active-mission campaign save/restore checkpoints: 27
 - Expected credits transitions: 3
 - Content audit violations allowed: 0
 - Hidden combat-stat difficulty modifiers allowed: 0
@@ -22,7 +23,9 @@ The UFR-103 difficulty policy existed and passed isolated balance tests, but the
 
 ## Save/checkpoint coverage
 
-Each traversal enters the battlefield, captures an active mission snapshot with operation identity, deterministic simulation seed, tick, and checkpoint identity, persists it through the production campaign save runtime, restores it, and verifies profile revision plus checkpoint continuity before recording the mission result. Authored checkpoint-policy/label structures encountered in mission contracts are also validated for stable unique IDs.
+Each traversal enters the battlefield and captures a checkpoint through the production `mission-checkpoint-service`, including operation identity, deterministic simulation seed, tick, profile revision, mission-script version, and mission snapshot. The gate verifies the checkpoint as the latest operation checkpoint and performs a compatibility restore. It then adapts that canonical checkpoint into campaign mission state, persists it through the production campaign save runtime, restores it, and verifies profile revision plus checkpoint continuity before recording the mission result.
+
+This deliberately uses the canonical checkpoint service instead of imposing a second schema over each mission's authored `checkpointPolicy`, whose representation is mission-specific.
 
 ## Progression/finale coverage
 
