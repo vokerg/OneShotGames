@@ -40,8 +40,8 @@ function collectStrings(value, path = [], output = []) {
 }
 
 function hasFictionNote(operation) {
-  if (operation?.briefing?.metadata?.fictional === true) return true;
-  if (operation?.mission?.metadata?.fictional === true || operation?.mission?.metadata?.fictionalFraming === true) return true;
+  if (operation?.briefing?.metadata?.fictional === true || operation?.briefing?.metadata?.fictionalized === true) return true;
+  if (operation?.mission?.metadata?.fictional === true || operation?.mission?.metadata?.fictionalized === true || operation?.mission?.metadata?.fictionalFraming === true) return true;
   return Array.isArray(operation?.contentNotes) && operation.contentNotes.some((note) => /fiction/i.test(String(note)));
 }
 
