@@ -1,5 +1,3 @@
-import { VISUAL_PERFORMANCE_BUDGETS } from '../render/visual-performance-runtime.js';
-
 const deepFreeze = (value) => {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
   for (const child of Object.values(value)) deepFreeze(child);
@@ -16,8 +14,8 @@ export const RELEASE_PERFORMANCE_BUDGETS = deepFreeze({
     missionReadyMs: 12_000,
   },
   frame: {
-    targetMs: VISUAL_PERFORMANCE_BUDGETS.targetFrameMs,
-    p95Ms: VISUAL_PERFORMANCE_BUDGETS.warningP95FrameMs,
+    targetMs: 1000 / 60,
+    p95Ms: 25,
     simulationP95Ms: 10,
     renderP95Ms: 20,
     uiP95Ms: 5,
@@ -31,7 +29,7 @@ export const RELEASE_PERFORMANCE_BUDGETS = deepFreeze({
     maximumFailures: 0,
   },
   atlas: {
-    maximumDecodedSupportFrames: VISUAL_PERFORMANCE_BUDGETS.supportDecodedFrameLimit,
+    maximumDecodedSupportFrames: 192,
   },
   audio: {
     maximumVoices: 32,
@@ -42,7 +40,7 @@ export const RELEASE_PERFORMANCE_BUDGETS = deepFreeze({
   },
   stress: {
     minimumUnits: 200,
-    maximumP95FrameMs: VISUAL_PERFORMANCE_BUDGETS.warningP95FrameMs,
+    maximumP95FrameMs: 25,
     maximumEstimatedMemoryBytes: 96 * 1024 * 1024,
   },
 });
