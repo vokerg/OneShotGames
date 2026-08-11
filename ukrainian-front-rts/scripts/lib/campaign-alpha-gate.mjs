@@ -104,7 +104,7 @@ function runDifficulty(difficulty) {
     };
     const slotId = `alpha-${difficulty}-${operationIndex + 1}`;
     const saved = saves.saveSlot({ slotId, label: `${difficulty} operation ${operationIndex + 1}` });
-    invariant(saved.status === CAMPAIGN_SAVE_STATUSES.OK, `${difficulty}/${operationId} checkpoint save must succeed`);
+    invariant(saved.slotId === slotId && saved.profile.revision === currentProfile.revision, `${difficulty}/${operationId} checkpoint save must persist the active profile`);
     restored = null;
     const loaded = saves.loadSlot(slotId);
     invariant(loaded.status === CAMPAIGN_SAVE_STATUSES.OK && restored, `${difficulty}/${operationId} checkpoint restore must succeed`);
