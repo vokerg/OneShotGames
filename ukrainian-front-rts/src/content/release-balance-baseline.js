@@ -26,6 +26,7 @@ export const RELEASE_BALANCE_BASELINE = deepFreeze({
   id: RELEASE_BALANCE_BASELINE_ID,
   authority: {
     combat: 'src/config.js',
+    research: 'src/config.js',
     economy: 'src/content/economy-balance.js',
     ai: 'src/ai/ai-difficulty-profiles.js',
     campaign: 'src/content/campaign/campaign-balance.js',
@@ -57,6 +58,14 @@ export const RELEASE_BALANCE_BASELINE = deepFreeze({
     depot: { cost: { metal: 100 }, buildTime: 7 },
     barracks: { cost: { metal: 150 }, buildTime: 9 },
     workshop: { cost: { metal: 220, fuel: 80 }, buildTime: 12 },
+  },
+  research: {
+    cageArmor: { tier: 1, applies: ['tank', 'ifv'], cost: { metal: 140, intel: 40 }, mods: { hp: 1.18, droneResistance: 0.25 } },
+    thermal: { tier: 1, applies: ['tank', 'ifv'], cost: { metal: 110, intel: 65 }, mods: { sight: 35, range: 1.1 } },
+    natoAmmo: { tier: 1, applies: ['artillery'], cost: { metal: 150, fuel: 55, intel: 45 }, mods: { damage: 1.16, range: 1.16 } },
+    activeProtection: { tier: 2, requires: 'cageArmor', applies: ['tank'], cost: { metal: 220, fuel: 90, intel: 90 }, mods: { hp: 1.22 } },
+    digitalC2: { tier: 2, requires: 'thermal', applies: ['tank', 'ifv', 'artillery'], cost: { metal: 180, intel: 120 }, mods: { rate: 0.84, sight: 25 } },
+    mineRoller: { tier: 2, applies: ['tank'], cost: { metal: 130, fuel: 70 }, mods: { speed: 1.12 } },
   },
   economy: {
     schemaVersion: 1,
