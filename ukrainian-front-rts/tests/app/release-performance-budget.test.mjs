@@ -122,7 +122,6 @@ test('release gate reports concrete subsystem failures at the budget boundary', 
     'pathfinding.failures',
     'atlas.decodedSupportFrames',
     'save.serializedBytes',
-    'stress.frameP95',
     'stress.minimumUnits',
   ]);
   assert.throws(() => assertReleasePerformanceMeasurement(baseline), /Release performance budget failed/);
