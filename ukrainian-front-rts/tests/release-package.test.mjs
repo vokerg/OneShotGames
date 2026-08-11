@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -17,6 +17,15 @@ async function withTemp(callback) {
   const root = await mkdtemp(join(tmpdir(), 'ufr-release-package-test-'));
   try { return await callback(root); }
   finally { await rm(root, { recursive: true, force: true }); }
+}
+
+async function createFixtureProject(root) {
+  await mkdir(join(root, 'assets'), { recursive: true });
+  await mkdir(join(root, 'src'), { recursive: true });
+  await writeFile(join(root, 'index.html'), '<!doctype html><html><head></head><body></body></html>\n');
+  await writeFile(join(root, 'styles.css'), 'body { margin: 0; }\n');
+  await writeFile(join(root, 'assets', 'sprite.txt'), 'asset\n');
+  await writeFile(join(root, 'src', 'app.js'), 'export const ready = true;\n');
 }
 
 test('release inputs exclude authoring, task, test, and documentation trees', async () => {
@@ -55,4 +64,22 @@ test('release verification fails closed on file mutation and undeclared output',
   await buildReleasePackage({ projectRoot, outputRoot: output });
   await writeFile(join(output, 'undeclared.txt'), 'not in package manifest\n');
   await assert.rejects(() => verifyReleasePackage(output), /file set drift/i);
+}));
+
+test('release builder rejects source-overlapping output before deleting runtime inputs', async () => withTemp(async (root) => {
+  const fixture = join(root, 'fixture');
+  await createFixtureProject(fixture);
+  const appPath = join(fixture, 'src', 'app.js');
+  const indexPath = join(fixture, 'index.html');
+  const appBefore = await readFile(appPath, 'utf8');
+  const indexBefore = await readFile(indexPath, 'utf8');
+
+  for (const outputRoot of [join(fixture, 'src', 'release'), join(fixture, 'assets', 'release'), indexPath]) {
+    await assert.rejects(
+      () => buildReleasePackage({ projectRoot: fixture, outputRoot }),
+      /overlap release source inputs/i,
+    );
+    assert.equal(await readFile(appPath, 'utf8'), appBefore);
+    assert.equal(await readFile(indexPath, 'utf8'), indexBefore);
+  }
 }));
