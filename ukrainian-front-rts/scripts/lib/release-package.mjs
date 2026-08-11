@@ -134,6 +134,17 @@ export function generatedReleasePaths(releaseId) {
   });
 }
 
+function releaseOutputOverlapsSources(root, output, inputPaths) {
+  for (const directory of RELEASE_RUNTIME_DIRECTORIES) {
+    const runtimeRoot = resolve(root, directory);
+    if (output === runtimeRoot || output.startsWith(`${runtimeRoot}${sep}`)) return true;
+  }
+  return inputPaths.some((path) => {
+    const source = resolve(root, path);
+    return output === source || source.startsWith(`${output}${sep}`);
+  });
+}
+
 export async function buildReleasePackage({ projectRoot, outputRoot }) {
   if (!projectRoot || !outputRoot) throw new TypeError('buildReleasePackage requires projectRoot and outputRoot.');
   const root = resolve(projectRoot);
@@ -141,6 +152,9 @@ export async function buildReleasePackage({ projectRoot, outputRoot }) {
   if (output === root || root.startsWith(`${output}${sep}`)) throw new Error('Release output must not contain the project root.');
 
   const inputPaths = await discoverReleaseInputs(root);
+  if (releaseOutputOverlapsSources(root, output, inputPaths)) {
+    throw new Error('Release output must not overlap release source inputs.');
+  }
   const sourceInventory = await createSourceInventory(root, inputPaths);
   const releaseId = deriveReleaseId(sourceInventory);
   const paths = generatedReleasePaths(releaseId);
