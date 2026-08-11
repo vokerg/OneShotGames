@@ -39,9 +39,15 @@ function collectStrings(value, path = [], output = []) {
   return output;
 }
 
+function metadataMarksFiction(metadata) {
+  return metadata?.fictional === true || metadata?.fictionalized === true || metadata?.fictionalFraming === true;
+}
+
 function hasFictionNote(operation) {
-  if (operation?.briefing?.metadata?.fictional === true || operation?.briefing?.metadata?.fictionalized === true) return true;
-  if (operation?.mission?.metadata?.fictional === true || operation?.mission?.metadata?.fictionalized === true || operation?.mission?.metadata?.fictionalFraming === true) return true;
+  if (metadataMarksFiction(operation?.metadata)) return true;
+  if (metadataMarksFiction(operation?.briefing?.metadata)) return true;
+  if (metadataMarksFiction(operation?.mission?.metadata)) return true;
+  if (metadataMarksFiction(operation?.map?.metadata)) return true;
   return Array.isArray(operation?.contentNotes) && operation.contentNotes.some((note) => /fiction/i.test(String(note)));
 }
 
