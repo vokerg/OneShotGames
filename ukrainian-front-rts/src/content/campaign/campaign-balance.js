@@ -96,7 +96,9 @@ function timingMultiplier(path, key, balance) {
   const context = path.join('.').toLowerCase();
   if (context.includes('checkpoint')) return balance.checkpointTimeMultiplier;
   if (/reinforce|wave|reserve|counterattack/.test(context)) return balance.reinforcementDelayMultiplier;
-  if (/objective|survive|extract|evac|recovery|repair|rescue/.test(context) || /duration|limit|timeout|window/.test(key.toLowerCase())) {
+  const timerKey = key.toLowerCase();
+  if (/objective|survive|extract|evac|recovery|repair|rescue/.test(context)
+    || ['durationseconds', 'timelimitseconds', 'timeoutseconds', 'windowseconds'].includes(timerKey)) {
     return balance.objectiveTimerMultiplier;
   }
   return balance.pressureDelayMultiplier;
