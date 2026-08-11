@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { AI_DIFFICULTY_PROFILES } from '../../src/ai/ai-difficulty-profiles.js';
-import { BUILDING_TYPES, UNIT_TYPES } from '../../src/config.js';
+import { BUILDING_TYPES, UNIT_TYPES, UPGRADES } from '../../src/config.js';
 import {
   CAMPAIGN_BALANCE_VERSION,
   CAMPAIGN_DIFFICULTY_BALANCE,
@@ -35,6 +35,16 @@ function combatStats(unit) {
   };
 }
 
+function researchStats(upgrade) {
+  return {
+    tier: upgrade.tier,
+    ...(upgrade.requires ? { requires: upgrade.requires } : {}),
+    applies: upgrade.applies,
+    cost: upgrade.cost,
+    mods: upgrade.mods,
+  };
+}
+
 function aiTuning(profile) {
   return {
     observationDelayTicks: profile.observationDelayTicks,
@@ -45,7 +55,7 @@ function aiTuning(profile) {
   };
 }
 
-test('release candidate combat and structure values do not drift silently', () => {
+test('release candidate combat, structure, and research values do not drift silently', () => {
   for (const [archetype, factionIds] of Object.entries(UNIT_IDS)) {
     for (const [side, unitId] of Object.entries(factionIds)) {
       assert.deepEqual(
@@ -62,6 +72,15 @@ test('release candidate combat and structure values do not drift silently', () =
       { cost: building.cost, buildTime: building.buildTime },
       RELEASE_BALANCE_BASELINE.structures[buildingId],
       `${buildingId} changed without updating the reviewed release balance baseline`,
+    );
+  }
+
+  assert.deepEqual(Object.keys(UPGRADES).sort(), Object.keys(RELEASE_BALANCE_BASELINE.research).sort());
+  for (const [upgradeId, expected] of Object.entries(RELEASE_BALANCE_BASELINE.research)) {
+    assert.deepEqual(
+      researchStats(UPGRADES[upgradeId]),
+      expected,
+      `${upgradeId} research changed without updating the reviewed release balance baseline`,
     );
   }
 });
