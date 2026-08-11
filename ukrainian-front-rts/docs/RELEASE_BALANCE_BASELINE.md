@@ -22,6 +22,10 @@ The pairings preserve readable trade-offs instead of exact mirror stats: Ukraini
 
 The release contract freezes depot, barracks, and workshop costs/build times plus the economy profile's starting-force, affordability, and mission-completion windows. These values are already exercised by the economy evaluator and verification suite. They are kept in one drift contract so a cost/build-time edit and its pacing consequence are reviewed together.
 
+### Research progression
+
+All six modernization entries are part of the RC baseline: tier, prerequisite edge where present, applicable archetypes, resource/intelligence cost, and mechanical modifiers. Tier-one upgrades establish the initial durability/sight/artillery branches; `activeProtection` and `digitalC2` retain their explicit prerequisite chains, while `mineRoller` remains an independent tier-two mobility choice. Locking both cost and modifier payload prevents an apparently harmless research-price or effect edit from silently changing the campaign/economy curve.
+
 ### AI difficulty
 
 Difficulty remains a decision-quality curve, not a hidden-stat curve. `recruit` through `commander` change observation/reaction delay, planning quality, risk tolerance, and economy efficiency. Every profile must retain observed-only information and `1.0` resource/damage/health multipliers, with no full-map vision or fog bypass.
@@ -42,7 +46,7 @@ The authoritative deterministic balance tooling is `src/app/balance-simulation.j
 2. `economy-window` — exercises a real production order and resource delta.
 3. `mission-timing` — advances the authored scenario without injecting a player command and records mission pressure/timing metrics.
 
-`tests/balance/balance-simulation.test.mjs` verifies deterministic aggregation and the suite contract. `tests/balance/release-balance-baseline.test.mjs` adds the release drift gate for the reviewed values.
+`tests/balance/balance-simulation.test.mjs` verifies deterministic aggregation and the suite contract. `tests/balance/release-balance-baseline.test.mjs` adds the release drift gate for combat, structures, research, economy pacing, AI fairness/difficulty, campaign pressure, and batch tooling.
 
 ## Change protocol
 
