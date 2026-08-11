@@ -75,11 +75,7 @@ export const RELEASE_BALANCE_BASELINE = deepFreeze({
       armor: 20,
       command: 22,
     },
-    missionBenchmarks: {
-      donbas: 60,
-      zaporizhzhia: 65,
-      kherson: 70,
-    },
+    missionBenchmarks: { donbas: 60, zaporizhzhia: 65, kherson: 70 },
   },
   ai: {
     recruit: { observationDelayTicks: 45, reactionDelayTicks: 45, planningQuality: 0.45, riskTolerance: 0.3, economyEfficiency: 0.6 },
@@ -102,16 +98,16 @@ export const RELEASE_BALANCE_BASELINE = deepFreeze({
     veteran: { resourceMultiplier: 0.86, pressureDelayMultiplier: 0.88, reinforcementDelayMultiplier: 0.9, objectiveTimerMultiplier: 0.9, checkpointTimeMultiplier: 1.08, recoveryWindowSeconds: 18, combatStatMultiplier: 1 },
   },
   batchSimulation: {
-    pairedArchetypes: ['infantry', 'special-forces', 'tank', 'rocket-artillery', 'tube-artillery'],
-    campaignMissions: ['UA_M03', 'RU_M03'],
-    minimumWinRate: 0.1,
-    maximumWinRate: 0.9,
-    requireDeterministicRepeat: true,
-    requiredFacilitiesPerMission: 1,
+    batchIds: ['combat-mission', 'economy-window', 'mission-timing'],
+    batchKinds: ['combat', 'economy', 'mission'],
+    defaultIterations: 5,
+    defaultMissionIndex: 0,
+    defaultMaxTicks: 900,
+    requireDeterministicSeeds: true,
   },
   mapReview: {
-    principle: 'No release map may grant a starting-side combat-stat modifier; side pressure is authored through placement, objectives, resources, and timings.',
-    campaignMissionPair: ['UA_M03', 'RU_M03'],
-    deterministicFacilityParity: 1,
+    principle: 'Release maps do not grant hidden starting-side combat-stat modifiers; authored asymmetry must come from placement, objectives, resources, timing, or explicit scenario rules.',
+    deterministicScenarioIndex: 0,
+    evidence: 'The default combat, economy, and mission batches all execute the same deterministic authored scenario through the headless harness.',
   },
 });
