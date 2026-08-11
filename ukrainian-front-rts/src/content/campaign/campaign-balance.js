@@ -105,17 +105,22 @@ function timingMultiplier(path, key, balance) {
 function tuneNode(value, balance, path = []) {
   if (Array.isArray(value)) return value.map((child, index) => tuneNode(child, balance, [...path, String(index)]));
   if (!value || typeof value !== 'object') return value;
+  const descriptor = ['id', 'type', 'kind', 'action', 'label']
+    .map((key) => typeof value[key] === 'string' ? value[key] : '')
+    .filter(Boolean)
+    .join('-');
+  const nodePath = descriptor ? [...path, descriptor] : path;
   const output = {};
   for (const [key, child] of Object.entries(value)) {
     if ((key === 'start' || key === 'startingResources') && child && typeof child === 'object') {
-      output[key] = scaleResourceObject(tuneNode(child, balance, [...path, key]), balance.resourceMultiplier);
+      output[key] = scaleResourceObject(tuneNode(child, balance, [...nodePath, key]), balance.resourceMultiplier);
       continue;
     }
     if (Number.isFinite(child) && ['afterSeconds', 'delaySeconds', 'durationSeconds', 'timeLimitSeconds', 'timeoutSeconds', 'windowSeconds'].includes(key)) {
-      output[key] = Math.max(1, round(child * timingMultiplier([...path, key], key, balance)));
+      output[key] = Math.max(1, round(child * timingMultiplier([...nodePath, key], key, balance)));
       continue;
     }
-    output[key] = tuneNode(child, balance, [...path, key]);
+    output[key] = tuneNode(child, balance, [...nodePath, key]);
   }
   return output;
 }
