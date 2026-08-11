@@ -6,6 +6,11 @@ import {
 } from '../../src/core/campaign-profile.js';
 import { CAMPAIGN_SAVE_STATUSES } from '../../src/core/campaign-save-service.js';
 import {
+  MISSION_CHECKPOINT_STATUSES,
+  checkpointToMissionState,
+  createMissionCheckpointService,
+} from '../../src/core/mission-checkpoint-service.js';
+import {
   CAMPAIGN_OPERATION_IDS,
   CAMPAIGN_OPERATION_SEQUENCE,
 } from '../../src/content/campaign/campaign-operation-registry.js';
@@ -30,35 +35,6 @@ function createStorage() {
   };
 }
 
-function validateAuthoredCheckpointContracts(value, path = 'operation') {
-  if (!value || typeof value !== 'object') return 0;
-  let contracts = 0;
-  if (Object.prototype.hasOwnProperty.call(value, 'checkpointPolicy')) {
-    const policy = value.checkpointPolicy;
-    invariant(policy && typeof policy === 'object' && !Array.isArray(policy), `${path}.checkpointPolicy must be an object`);
-    if (policy.enabled === true) {
-      invariant(Array.isArray(policy.stablePoints) && policy.stablePoints.length > 0, `${path}.checkpointPolicy must declare stable points when enabled`);
-      const ids = policy.stablePoints.map((point) => point?.id);
-      invariant(ids.every((id) => typeof id === 'string' && id.length > 0), `${path}.checkpointPolicy stable points require IDs`);
-      invariant(new Set(ids).size === ids.length, `${path}.checkpointPolicy stable point IDs must be unique`);
-      contracts += 1;
-    }
-  }
-  if (Object.prototype.hasOwnProperty.call(value, 'checkpointLabels')) {
-    const labels = value.checkpointLabels;
-    invariant(Array.isArray(labels), `${path}.checkpointLabels must be an array`);
-    const ids = labels.map((label) => label?.id);
-    invariant(ids.every((id) => typeof id === 'string' && id.length > 0), `${path}.checkpointLabels require IDs`);
-    invariant(new Set(ids).size === ids.length, `${path}.checkpointLabels IDs must be unique`);
-    contracts += 1;
-  }
-  for (const [key, child] of Object.entries(value)) {
-    if (key === 'checkpointPolicy' || key === 'checkpointLabels') continue;
-    contracts += validateAuthoredCheckpointContracts(child, `${path}.${key}`);
-  }
-  return contracts;
-}
-
 function runDifficulty(difficulty) {
   let currentProfile = createCampaignProfile({
     profileId: `alpha-${difficulty}`,
@@ -77,8 +53,9 @@ function runDifficulty(difficulty) {
     captureState: () => ({ profile: currentProfile, missionState: currentMissionState }),
     restoreState: (state) => { restored = state; },
   });
+  const checkpoints = createMissionCheckpointService({ maxCheckpointsPerOperation: 3 });
 
-  let checkpointContracts = 0;
+  let checkpointCaptures = 0;
   let saveRestores = 0;
   let firstBalance = null;
 
@@ -89,19 +66,38 @@ function runDifficulty(difficulty) {
     invariant(operation.mission?.balance?.difficulty === difficulty, `${difficulty}/${operationId} mission must receive runtime balance`);
     invariant(operation.mission.balance.combatStatMultiplier === 1, `${difficulty}/${operationId} may not use hidden combat-stat cheats`);
     if (operationIndex === 0) firstBalance = operation.mission.balance;
-    checkpointContracts += validateAuthoredCheckpointContracts(operation.mission, `${difficulty}/${operationId}.mission`);
 
     progression.enterBattlefield(operationId);
-    currentMissionState = {
+    const missionScriptVersion = Number.isInteger(operation.mission?.version) && operation.mission.version >= 0
+      ? operation.mission.version
+      : 1;
+    const checkpointId = `alpha-${difficulty}-${operationIndex + 1}`;
+    const captured = checkpoints.capture({
+      checkpointId,
       operationId,
+      label: `${difficulty} operation ${operationIndex + 1}`,
+      createdAt: 1_000 + operationIndex,
       tick: (operationIndex + 1) * 120,
       simulationSeed: `alpha-${difficulty}-${operationIndex + 1}`,
+      profileRevision: currentProfile.revision,
+      missionScriptVersion,
       snapshot: {
-        checkpointId: `alpha-checkpoint-${operationIndex + 1}`,
         difficulty,
         operationIndex,
+        objectiveIds: operation.mission?.objectiveIds ?? [],
       },
-    };
+    });
+    invariant(captured.status === MISSION_CHECKPOINT_STATUSES.OK, `${difficulty}/${operationId} checkpoint capture must succeed`);
+    const restoredCheckpoint = checkpoints.restore(checkpointId, {
+      expectedOperationId: operationId,
+      expectedProfileRevision: currentProfile.revision,
+      expectedMissionScriptVersion: missionScriptVersion,
+    });
+    invariant(restoredCheckpoint.status === MISSION_CHECKPOINT_STATUSES.OK, `${difficulty}/${operationId} checkpoint compatibility restore must succeed`);
+    invariant(checkpoints.latest(operationId).checkpoint?.checkpointId === checkpointId, `${difficulty}/${operationId} checkpoint must be latest for the operation`);
+    currentMissionState = checkpointToMissionState(captured.checkpoint);
+    checkpointCaptures += 1;
+
     const slotId = `alpha-${difficulty}-${operationIndex + 1}`;
     const saved = saves.saveSlot({ slotId, label: `${difficulty} operation ${operationIndex + 1}` });
     invariant(saved.slotId === slotId && saved.profile.revision === currentProfile.revision, `${difficulty}/${operationId} checkpoint save must persist the active profile`);
@@ -110,7 +106,7 @@ function runDifficulty(difficulty) {
     invariant(loaded.status === CAMPAIGN_SAVE_STATUSES.OK && restored, `${difficulty}/${operationId} checkpoint restore must succeed`);
     invariant(restored.profile.revision === currentProfile.revision, `${difficulty}/${operationId} restored profile revision must match`);
     invariant(restored.missionState?.operationId === operationId, `${difficulty}/${operationId} restored mission operation must match`);
-    invariant(restored.missionState?.snapshot?.checkpointId === currentMissionState.snapshot.checkpointId, `${difficulty}/${operationId} restored checkpoint must match`);
+    invariant(restored.missionState?.snapshot?.checkpointId === checkpointId, `${difficulty}/${operationId} restored checkpoint must match`);
     saveRestores += 1;
 
     const debrief = progression.recordResult(operationId, {
@@ -137,8 +133,8 @@ function runDifficulty(difficulty) {
   return Object.freeze({
     difficulty,
     operationsCompleted: finalSnapshot.profile.completedOperationIds.length,
+    checkpointCaptures,
     saveRestores,
-    checkpointContracts,
     finalStage: finalSnapshot.stage,
     firstBalance,
   });
@@ -159,8 +155,8 @@ export function runCampaignAlphaGate() {
     status: 'alpha-ready',
     difficulties: runs.map((run) => run.difficulty),
     operationRuns: runs.reduce((sum, run) => sum + run.operationsCompleted, 0),
+    checkpointCaptures: runs.reduce((sum, run) => sum + run.checkpointCaptures, 0),
     checkpointSaveRestores: runs.reduce((sum, run) => sum + run.saveRestores, 0),
-    authoredCheckpointContracts: runs.reduce((sum, run) => sum + run.checkpointContracts, 0),
     creditsTransitions: runs.filter((run) => run.finalStage === CAMPAIGN_PROGRESSION_STAGES.CREDITS).length,
     contentAuditViolations: contentAudit.violations.length,
     blockers: Object.freeze([]),
