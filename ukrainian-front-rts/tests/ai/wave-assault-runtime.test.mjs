@@ -65,6 +65,15 @@ function install(game, overrides = {}) {
   });
 }
 
+function assertApproachOrder(unit, target) {
+  assert.equal(unit.order?.kind, 'attackMove');
+  assert.notDeepEqual(unit.order, { kind: 'attackMove', x: target.x, y: target.y }, 'wave destination must not be the blocked building center');
+  assert.ok(
+    Math.hypot(unit.order.x - target.x, unit.order.y - target.y) < Math.hypot(unit.x - target.x, unit.y - target.y),
+    'wave destination should advance toward its operational objective',
+  );
+}
+
 test('wave assault retains its operational objective without initial line of sight', () => {
   const game = mockGame();
   const dispose = install(game);
@@ -72,7 +81,8 @@ test('wave assault retains its operational objective without initial line of sig
   const snapshot = updateTacticalAi(game);
   const wave = game.units[0];
   assert.equal(snapshot.lastPlan.posture, 'scouting');
-  assert.deepEqual(wave.order, { kind: 'attackMove', x: game.uaHQ.x, y: game.uaHQ.y });
+  assertApproachOrder(wave, game.uaHQ);
+  assert.equal(wave.waveAssaultTargetId, `building:${game.uaHQ.id}`);
   assert.equal(wave.waveAssaultState, 'ordered');
   assert.equal(snapshot.commandMetrics.waveAssault.total, 1);
   assert.equal(snapshot.commandMetrics.waveAssault.ordered, 1);
@@ -92,7 +102,7 @@ test('wave assault deterministically reacquires a surviving objective when its H
   game.units[0].order = null;
   const snapshot = updateTacticalAi(game);
 
-  assert.deepEqual(game.units[0].order, { kind: 'attackMove', x: fallback.x, y: fallback.y });
+  assertApproachOrder(game.units[0], fallback);
   assert.equal(game.units[0].waveAssaultTargetId, `building:${fallback.id}`);
   assert.equal(snapshot.commandMetrics.waveAssault.reacquired, 1);
 
@@ -111,7 +121,8 @@ test('reinforcement joins an existing wave assault on the next tactical update',
   game.units.push(reinforcement);
   const snapshot = updateTacticalAi(game);
 
-  assert.deepEqual(reinforcement.order, { kind: 'attackMove', x: game.uaHQ.x, y: game.uaHQ.y });
+  assertApproachOrder(reinforcement, game.uaHQ);
+  assert.equal(reinforcement.waveAssaultTargetId, `building:${game.uaHQ.id}`);
   assert.equal(reinforcement.waveAssaultState, 'ordered');
   assert.equal(snapshot.commandMetrics.waveAssault.total, 2);
   assert.equal(snapshot.commandMetrics.waveAssault.ordered, 2);
@@ -175,7 +186,7 @@ test('wave assault reaches pressure range through authoritative navigation aroun
   const dispose = install(game, { waveReacquireTicks: 90 });
 
   updateTacticalAi(game);
-  assert.equal(attacker.order.kind, 'attackMove');
+  assertApproachOrder(attacker, uaHq);
   const start = { x: attacker.x, y: attacker.y };
   for (let tick = 0; tick < 240; tick += 1) updateUnitsWithNavigation(game, 1 / 30);
 
