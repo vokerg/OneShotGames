@@ -245,7 +245,9 @@ export class NavigationGrid {
       throw new RangeError(`Footprint cell (${maxX - 1}, ${maxY - 1}) is outside the navigation grid.`);
     }
 
-    const ignored = ignoreBlockerIds.length ? new Set(ignoreBlockerIds) : null;
+    const ignored = Array.isArray(ignoreBlockerIds) && ignoreBlockerIds.length === 0
+      ? null
+      : new Set(ignoreBlockerIds);
     const layerCells = this.#blockerCellsByLayer.get(layer);
     for (let cellY = y; cellY < maxY; cellY += 1) {
       const rowOffset = cellY * this.width;
