@@ -26,6 +26,12 @@ UFR-151 turns the existing profiler and subsystem limits into one versioned rele
 
 The 25 ms renderer warning and 192-frame support cache are pre-existing production limits from UFR-123. The 32-voice ceiling matches the composed mixer default. The remaining RC1 limits are intentionally generous enough for GitHub CI/browser variance while still catching order-of-magnitude regressions and unbounded caches.
 
+## Canonical measurement environment
+
+The release CI reference is the repository workflow `.github/workflows/ukrainian-front-rts-verify.yml`: GitHub-hosted `ubuntu-latest` with Node.js 22. GitHub does not guarantee a particular processor model for that runner label, so RC1 deliberately defines a runner class rather than a CPU SKU. The wall-clock 200-unit gate runs in its own Node test process after the parallel correctness suite; unrelated test workers therefore cannot consume its frame-time budget. The gate itself remains part of `./verify.sh` and is not skipped or weakened.
+
+For comparable local evidence use Node.js 22, run `./verify.sh` on an otherwise idle machine, and avoid CPU throttling/power-saving modes. Local numbers are diagnostic; the pull-request CI run is the release pass/fail reference. Browser startup and headed pacing evidence use the same workflow/browser-smoke environment, while UFR-154 remains the final human-visible soak pass.
+
 ## Gate semantics
 
 `createReleasePerformanceMeasurement()` consumes the existing read-only profiler snapshot plus startup, atlas, and save measurements. It fails closed if pathfinding, AI, or audio diagnostics are unavailable. `evaluateReleasePerformanceMeasurement()` returns every check and concrete failures; `assertReleasePerformanceMeasurement()` is the CI-facing hard gate.
@@ -36,7 +42,7 @@ The 200-unit requirement is a minimum workload, not a cap. A report with excelle
 
 `tests/app/release-performance-budget.test.mjs` covers two complementary layers. The contract fixture drives 120 profiler frames with path-service, tactical-AI, and audio diagnostics through the same adapters used by the runtime profiler and verifies the complete RC1 report. Separately, the assembled stress test starts the real headless mission through `createSimulationHarness()`, expands it to exactly 100 Ukrainian plus 100 Russian live units, issues a 100-unit movement order, warms navigation for 15 ticks, and measures a 30-tick steady-state window against the 25 ms RC1 stress ceiling while requiring zero path-service failures.
 
-Separate regression cases breach frame, path failure, atlas cache, save-size, and stress-unit thresholds and assert that each subsystem is named in the failure report. The full repository verifier discovers these tests automatically alongside existing visual-performance, save, audio, pathfinding, AI, browser-startup, and assembled-runtime checks. The release budget does not replace those focused tests; it composes their limits into a release decision contract.
+Separate regression cases breach frame, path failure, atlas cache, save-size, and stress-unit thresholds and assert that each subsystem is named in the failure report. The full repository verifier discovers these tests automatically alongside existing visual-performance, save, audio, pathfinding, AI, browser-startup, and assembled-runtime checks. Timing-sensitive wall-clock evidence is executed in a dedicated Node process rather than concurrently with unrelated test files, preventing scheduler contention from being mistaken for a gameplay regression. The release budget does not replace focused subsystem tests; it composes their limits into a release decision contract.
 
 ## Profiling and optimization decisions
 
