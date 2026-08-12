@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { performance } from 'node:perf_hooks';
 import test from 'node:test';
 
 import { createPerformanceProfiler } from '../../src/app/performance-profiler.js';
@@ -8,6 +9,8 @@ import {
   createReleasePerformanceMeasurement,
   evaluateReleasePerformanceMeasurement,
 } from '../../src/app/release-performance-budget.js';
+import { createSimulationHarness } from '../../src/app/simulation-harness.js';
+import { TEAM } from '../../src/config.js';
 import { VISUAL_PERFORMANCE_BUDGETS } from '../../src/render/visual-performance-runtime.js';
 
 function profilerSnapshot({ frameDeltaMs = 16, unitCount = 200 } = {}) {
@@ -86,6 +89,53 @@ function passingMeasurement() {
   });
 }
 
+function p95(values) {
+  const sorted = [...values].sort((left, right) => left - right);
+  return sorted[Math.min(sorted.length - 1, Math.ceil(sorted.length * 0.95) - 1)] ?? 0;
+}
+
+function addStressForce(game, team, targetCount) {
+  const type = team === TEAM.UA ? 'uaInfantry' : 'ruInfantry';
+  const existing = game.units.filter((unit) => unit.team === team).length;
+  for (let index = existing; index < targetCount; index += 1) {
+    const column = index % 10;
+    const row = Math.floor(index / 10);
+    const x = team === TEAM.UA ? 180 + column * 34 : 1880 + column * 34;
+    const y = team === TEAM.UA ? 1040 + row * 34 : 240 + row * 34;
+    game.addUnit(type, team, x, y);
+  }
+}
+
+function runTwoHundredUnitStressScenario() {
+  const harness = createSimulationHarness({ tickSeconds: 1 / 30 });
+  harness.startScenario({ missionIndex: 0, seed: 'release-200-unit-stress' });
+  addStressForce(harness.game, TEAM.UA, 100);
+  addStressForce(harness.game, TEAM.RU, 100);
+  assert.equal(harness.game.units.length, RELEASE_PERFORMANCE_BUDGETS.stress.minimumUnits);
+
+  const ukrainianIds = harness.game.units
+    .filter((unit) => unit.team === TEAM.UA)
+    .map((unit) => unit.id);
+  assert.equal(harness.issueCommand({ type: 'select', entityIds: ukrainianIds }).ok, true);
+  assert.equal(harness.issueCommand({ type: 'move', x: 1540, y: 720 }).ok, true);
+
+  // Warm the navigation grid/cache before the steady-state release measurement window.
+  harness.advanceTicks(15);
+
+  const tickDurations = [];
+  for (let index = 0; index < 30; index += 1) {
+    const startedAt = performance.now();
+    harness.advanceTicks(1);
+    tickDurations.push(performance.now() - startedAt);
+  }
+
+  return {
+    units: harness.game.units.length,
+    p95TickMs: p95(tickDurations),
+    path: harness.game.navigationState?.pathService?.metrics?.() ?? null,
+  };
+}
+
 test('release performance budgets inherit production render/cache limits', () => {
   assert.equal(RELEASE_PERFORMANCE_BUDGETS.frame.p95Ms, VISUAL_PERFORMANCE_BUDGETS.warningP95FrameMs);
   assert.equal(RELEASE_PERFORMANCE_BUDGETS.frame.targetMs, VISUAL_PERFORMANCE_BUDGETS.targetFrameMs);
@@ -97,7 +147,7 @@ test('release performance budgets inherit production render/cache limits', () =>
   assert.equal(RELEASE_PERFORMANCE_BUDGETS.audio.maximumVoices, 32);
 });
 
-test('200-unit profiler workload satisfies the release candidate integration budget', () => {
+test('release candidate integration budget composes profiler subsystem diagnostics', () => {
   const measurement = passingMeasurement();
   const report = assertReleasePerformanceMeasurement(measurement);
   assert.equal(report.pass, true);
@@ -105,6 +155,17 @@ test('200-unit profiler workload satisfies the release candidate integration bud
   assert.equal(measurement.pathfinding.failures, 0);
   assert.equal(measurement.audio.maximumVoices, 32);
   assert.ok(measurement.stress.estimatedMemoryBytes > 0);
+});
+
+test('assembled 200-unit simulation stays inside the RC1 stress budget', () => {
+  const stress = runTwoHundredUnitStressScenario();
+  assert.equal(stress.units, RELEASE_PERFORMANCE_BUDGETS.stress.minimumUnits);
+  assert.ok(stress.path, 'Expected the assembled simulation to expose path-service diagnostics.');
+  assert.equal(stress.path.failures, 0);
+  assert.ok(
+    stress.p95TickMs <= RELEASE_PERFORMANCE_BUDGETS.stress.maximumP95FrameMs,
+    `200-unit steady-state tick p95 ${stress.p95TickMs.toFixed(2)} ms exceeded ${RELEASE_PERFORMANCE_BUDGETS.stress.maximumP95FrameMs} ms budget.`,
+  );
 });
 
 test('release gate reports concrete subsystem failures at the budget boundary', () => {
