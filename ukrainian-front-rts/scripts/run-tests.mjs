@@ -5,6 +5,9 @@ import { fileURLToPath } from 'node:url';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const testsRoot = join(projectRoot, 'tests');
+const TIMING_SENSITIVE_TESTS = new Set([
+  'tests/app/release-performance-budget.test.mjs',
+]);
 
 function walk(directory) {
   return readdirSync(directory).flatMap((entry) => {
@@ -13,14 +16,34 @@ function walk(directory) {
   });
 }
 
+function projectPath(path) {
+  return relative(projectRoot, path).replaceAll('\\', '/');
+}
+
+function runTestFiles(testFiles, { isolated = false } = {}) {
+  if (!testFiles.length) return 0;
+  const label = isolated ? 'isolated timing-sensitive' : 'unit';
+  console.log(`Running ${testFiles.length} ${label} test file(s).`);
+  const result = spawnSync(process.execPath, [
+    '--test',
+    ...(isolated ? ['--test-concurrency=1'] : []),
+    ...testFiles,
+  ], {
+    cwd: projectRoot,
+    stdio: 'inherit',
+  });
+  if (result.error) throw result.error;
+  return result.status ?? 1;
+}
+
 const filters = process.argv.slice(2);
 const allTests = walk(testsRoot)
   .filter((path) => path.endsWith('.test.mjs'))
   .sort((left, right) => left.localeCompare(right));
 const selectedTests = filters.length
   ? allTests.filter((path) => {
-      const projectPath = relative(projectRoot, path).replaceAll('\\', '/');
-      return filters.some((filter) => projectPath.includes(filter));
+      const pathFromRoot = projectPath(path);
+      return filters.some((filter) => pathFromRoot.includes(filter));
     })
   : allTests;
 
@@ -33,11 +56,14 @@ if (!selectedTests.length) {
   process.exit(1);
 }
 
-console.log(`Running ${selectedTests.length} unit test file(s).`);
-const result = spawnSync(process.execPath, ['--test', ...selectedTests], {
-  cwd: projectRoot,
-  stdio: 'inherit',
-});
+// Wall-clock release budgets must not inherit scheduler contention from unrelated
+// test workers. Keep them in the authoritative test stage, but execute them in a
+// dedicated process after the parallel correctness suite.
+const timingSensitiveTests = selectedTests.filter((path) => TIMING_SENSITIVE_TESTS.has(projectPath(path)));
+const regularTests = selectedTests.filter((path) => !TIMING_SENSITIVE_TESTS.has(projectPath(path)));
 
-if (result.error) throw result.error;
-process.exit(result.status ?? 1);
+const regularStatus = runTestFiles(regularTests);
+if (regularStatus !== 0) process.exit(regularStatus);
+
+const timingStatus = runTestFiles(timingSensitiveTests, { isolated: true });
+process.exit(timingStatus);

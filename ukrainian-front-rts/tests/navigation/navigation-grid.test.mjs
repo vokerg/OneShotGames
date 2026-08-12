@@ -45,10 +45,16 @@ test('tracks deterministic dynamic blockers by id and movement layer', () => {
   assert.deepEqual(grid.blockerIdsAt(2, 2), ['building-a', 'building-b']);
   assert.equal(grid.isPassable(2, 2), false);
   assert.equal(grid.isPassable(2, 2, { ignoreBlockerIds: ['building-a', 'building-b'] }), true);
+  assert.equal(
+    grid.isPassable(2, 2, { ignoreBlockerIds: new Set(['building-a', 'building-b']) }),
+    true,
+  );
   assert.equal(grid.isPassable(2, 2, { layer: MOVEMENT_LAYERS.AIR }), true);
 
   assert.equal(grid.removeDynamicBlocker('building-a'), true);
   assert.deepEqual(grid.blockerIdsAt(2, 2), ['building-b']);
+  assert.equal(grid.isPassable(2, 2, { ignoreBlockerIds: ['building-b'] }), true);
+  assert.equal(grid.isPassable(3, 2), false);
 });
 
 test('represents bridge cells as ground-passable terrain over water', () => {
