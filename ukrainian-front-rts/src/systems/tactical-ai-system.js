@@ -18,6 +18,7 @@ const DEFAULT_MAX_OBSERVERS = 96;
 const DEFAULT_MAX_HOSTILES = 128;
 const DEFAULT_WAVE_REACQUIRE_TICKS = 90;
 const WAVE_ENGAGEMENT_RADIUS = 220;
+const WAVE_APPROACH_RINGS = 3;
 
 function requireGame(game) {
   if (!game || typeof game !== 'object') throw new TypeError('Tactical AI requires a game object.');
@@ -228,6 +229,71 @@ function selectWaveObjective(game, state, unit) {
   return candidates[0] ?? null;
 }
 
+function buildingBlockerCells(building) {
+  const placement = building?.placement;
+  if (
+    placement?.origin && Number.isInteger(placement.origin.x) && Number.isInteger(placement.origin.y) &&
+    placement?.footprint && Number.isInteger(placement.footprint.width) && Number.isInteger(placement.footprint.height)
+  ) {
+    return {
+      left: placement.origin.x,
+      top: placement.origin.y,
+      right: placement.origin.x + placement.footprint.width,
+      bottom: placement.origin.y + placement.footprint.height,
+    };
+  }
+  const stats = BUILDING_TYPES[building?.type];
+  if (!stats) return null;
+  return {
+    left: Math.max(0, Math.floor((building.x - stats.w / 2) / WORLD.tile)),
+    top: Math.max(0, Math.floor((building.y - stats.h / 2) / WORLD.tile)),
+    right: Math.min(WORLD.w / WORLD.tile, Math.ceil((building.x + stats.w / 2) / WORLD.tile)),
+    bottom: Math.min(WORLD.h / WORLD.tile, Math.ceil((building.y + stats.h / 2) / WORLD.tile)),
+  };
+}
+
+function buildingBlocksCell(building, cell) {
+  const blocker = buildingBlockerCells(building);
+  return Boolean(blocker && cell.x >= blocker.left && cell.x < blocker.right && cell.y >= blocker.top && cell.y < blocker.bottom);
+}
+
+function waveApproachPoint(game, unit, target) {
+  const targetBlocker = buildingBlockerCells(target);
+  if (!targetBlocker) return Object.freeze({ x: clamp(target.x, 0, WORLD.w), y: clamp(target.y, 0, WORLD.h) });
+  const width = WORLD.w / WORLD.tile;
+  const height = WORLD.h / WORLD.tile;
+  const liveBuildings = game.buildings.filter((building) => building.hp > 0);
+  const candidates = [];
+  for (let ring = 1; ring <= WAVE_APPROACH_RINGS; ring += 1) {
+    const left = targetBlocker.left - ring;
+    const right = targetBlocker.right - 1 + ring;
+    const top = targetBlocker.top - ring;
+    const bottom = targetBlocker.bottom - 1 + ring;
+    for (let y = top; y <= bottom; y += 1) {
+      for (let x = left; x <= right; x += 1) {
+        if (x !== left && x !== right && y !== top && y !== bottom) continue;
+        if (x < 0 || y < 0 || x >= width || y >= height) continue;
+        const cell = { x, y };
+        if (liveBuildings.some((building) => buildingBlocksCell(building, cell))) continue;
+        const point = {
+          x: (x + 0.5) * WORLD.tile,
+          y: (y + 0.5) * WORLD.tile,
+        };
+        candidates.push({ point, ring, x, y, unitDistance: distance(unit, point), targetDistance: distance(target, point) });
+      }
+    }
+    if (candidates.length) break;
+  }
+  candidates.sort((left, right) =>
+    left.unitDistance - right.unitDistance ||
+    left.targetDistance - right.targetDistance ||
+    left.y - right.y ||
+    left.x - right.x);
+  const selected = candidates[0]?.point;
+  if (selected) return Object.freeze(selected);
+  return Object.freeze({ x: clamp(target.x, 0, WORLD.w), y: clamp(target.y, 0, WORLD.h) });
+}
+
 function refreshWaveAssaults(game, state) {
   const waveUnits = controllableUnits(game, state.team, state.policy.maxUnits)
     .filter((unit) => unit.waveSpawned);
@@ -251,6 +317,7 @@ function refreshWaveAssaults(game, state) {
         const changed = !assault || assault.targetId !== waveTargetId(nextTarget);
         assault = {
           targetId: waveTargetId(nextTarget),
+          destination: waveApproachPoint(game, unit, nextTarget),
           nextReacquireTick: state.tick + state.waveReacquireTicks,
         };
         state.waveAssaults.set(unit.id, assault);
@@ -259,6 +326,7 @@ function refreshWaveAssaults(game, state) {
       } else {
         state.waveAssaults.set(unit.id, {
           targetId: null,
+          destination: null,
           nextReacquireTick: state.tick + state.waveReacquireTicks,
         });
         unit.waveAssaultState = 'waiting-bounded';
@@ -268,16 +336,25 @@ function refreshWaveAssaults(game, state) {
       }
     }
 
+    if (!assault.destination) {
+      assault = { ...assault, destination: waveApproachPoint(game, unit, target) };
+      state.waveAssaults.set(unit.id, assault);
+    }
     const targetDistance = distance(unit, target);
     if (targetDistance <= WAVE_ENGAGEMENT_RADIUS) engaging += 1;
+    const destination = assault.destination;
     const correctOrder = unit.order?.kind === 'attackMove' &&
-      Math.abs(unit.order.x - target.x) < 1 && Math.abs(unit.order.y - target.y) < 1;
+      Math.abs(unit.order.x - destination.x) < 1 && Math.abs(unit.order.y - destination.y) < 1;
     if (!correctOrder || due) {
+      if (!correctOrder && !unit.order && !due) {
+        assault = { ...assault, destination: waveApproachPoint(game, unit, target) };
+        state.waveAssaults.set(unit.id, assault);
+      }
       clearTacticalCommand(unit);
       unit.order = {
         kind: 'attackMove',
-        x: clamp(target.x, 0, WORLD.w),
-        y: clamp(target.y, 0, WORLD.h),
+        x: clamp(assault.destination.x, 0, WORLD.w),
+        y: clamp(assault.destination.y, 0, WORLD.h),
       };
       unit.target = null;
     }
