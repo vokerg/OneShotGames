@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -15,6 +16,20 @@ test('UFR-154 matrix covers every required browser and QA surface', () => {
   assert.equal(matrix.task, 'UFR-154');
   assert.deepEqual(matrix.surfaces, REQUIRED_SURFACES);
   assert.deepEqual(matrix.browsers.map((browser) => browser.id), REQUIRED_BROWSERS);
+});
+
+test('UFR-154 completion preserves the maintainer waiver boundary', () => {
+  assert.equal(matrix.taskState, 'completed-with-waiver');
+  assert.equal(matrix.highestEvidenceLevel, 'CONTRACT_COMPLETE');
+  assert.equal(matrix.correctiveIssue, 245);
+  assert.equal(matrix.waiverFollowUpIssue, 249);
+  assert.deepEqual(matrix.deferredBrowserEvidence, ['edge', 'firefox', 'safari']);
+  assert.deepEqual(matrix.knownVisualDefects, [242, 243, 244]);
+  assert.equal(
+    existsSync(resolve(root, 'tasks/completed/UFR-154.md')),
+    true,
+    'UFR-154 completion marker must exist when the waiver-backed task state is completed',
+  );
 });
 
 test('automated browser coverage names evidence for every required surface', () => {
@@ -33,9 +48,10 @@ test('automated browser coverage names evidence for every required surface', () 
 test('manual browser rows fail closed with an explicit exception and procedure', () => {
   const manual = matrix.browsers.filter((browser) => browser.verification === 'manual-release');
   assert.deepEqual(manual.map((browser) => browser.id), ['edge', 'firefox', 'safari']);
+  assert.deepEqual(matrix.deferredBrowserEvidence, manual.map((browser) => browser.id));
 
   for (const browser of manual) {
-    assert.match(browser.exception, /CI|runner|harness|available/i, `${browser.id} must explain why automation is unavailable`);
+    assert.match(browser.exception, /outstanding|tracked|CI|runner|harness|available/i, `${browser.id} must explain why headed evidence remains outstanding`);
     assert.match(browser.procedure, /seven required surfaces|BROWSER_QA_MATRIX\.md/i, `${browser.id} must provide a release verification procedure`);
     assert.equal(browser.evidence, undefined, `${browser.id} must not claim automated evidence that was not executed`);
   }

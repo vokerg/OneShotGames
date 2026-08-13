@@ -1,3 +1,9 @@
+import { readdir } from 'node:fs/promises';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { validateTaskMarkerState } from './lib/task-marker-state.mjs';
+
 const token = process.env.GITHUB_TOKEN;
 const repository = process.env.GITHUB_REPOSITORY;
 if (!token || !repository) {
@@ -5,6 +11,7 @@ if (!token || !repository) {
   process.exit(0);
 }
 
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const headers = { Accept: 'application/vnd.github+json', Authorization: `Bearer ${token}`, 'X-GitHub-Api-Version': '2022-11-28' };
 async function github(path) {
   const response = await fetch(`https://api.github.com/repos/${repository}${path}`, { headers });
@@ -12,7 +19,24 @@ async function github(path) {
   return response.json();
 }
 
-const pulls = await github('/pulls?state=open&per_page=100');
+async function markerIds(directory) {
+  try {
+    const entries = await readdir(resolve(root, 'tasks', directory), { withFileTypes: true });
+    return entries
+      .filter((entry) => entry.isFile())
+      .map((entry) => entry.name.match(/^(UFR-\d+)\.md$/i)?.[1]?.toUpperCase())
+      .filter(Boolean)
+      .sort();
+  } catch (error) {
+    if (error?.code === 'ENOENT') return [];
+    throw error;
+  }
+}
+
+const [pulls, repositoryState] = await Promise.all([
+  github('/pulls?state=open&per_page=100'),
+  github(''),
+]);
 const claims = new Map();
 for (const pull of pulls) {
   const match = pull.title.match(/^\[([^\]]+)\]/);
@@ -28,6 +52,17 @@ for (const [id, numbers] of claims) {
   if (numbers.length > 1) failures.push(`duplicate active claim ${id}: PRs ${numbers.join(', ')}`);
 }
 
+const checkedInClaims = await markerIds('claims');
+const checkedInCompletions = await markerIds('completed');
+const activeClaimCounts = Object.fromEntries([...claims].map(([id, numbers]) => [id, numbers.length]));
+const onDefaultBranch = !process.env.GITHUB_HEAD_REF && process.env.GITHUB_REF_NAME === repositoryState.default_branch;
+failures.push(...validateTaskMarkerState({
+  claimIds: checkedInClaims,
+  completedIds: checkedInCompletions,
+  activeClaimCounts,
+  forbidCheckedInClaims: onDefaultBranch,
+}));
+
 for (const pull of pulls) {
   if (!/\b(?:0|zero)\s+behind\b/i.test(pull.body || '')) continue;
   const sameRepository = pull.head.repo?.full_name === repository;
@@ -40,4 +75,4 @@ if (failures.length) {
   failures.forEach((failure) => console.error(`[claims] ${failure}`));
   process.exit(1);
 }
-console.log(`[claims] ${claims.size} active task/recovery claim(s), no duplicates or false zero-behind statements.`);
+console.log(`[claims] ${claims.size} active task/recovery claim(s); ${checkedInClaims.length} checked-in claim marker(s); no duplicate, orphaned, contradictory, default-branch, or false zero-behind state.`);

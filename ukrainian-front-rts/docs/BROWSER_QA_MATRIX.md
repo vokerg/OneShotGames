@@ -2,14 +2,22 @@
 
 UFR-154 defines the release browser-compatibility evidence boundary for Fields of Resolve. The machine-readable source of truth is `release/browser-qa-matrix.json`.
 
+## Current UFR-154 status
+
+UFR-154 is completed at **`CONTRACT_COMPLETE` with an explicit maintainer waiver**. PR #241 established the initial Chromium-oriented QA contract, and corrective PR #246 adds the missing task-state safeguards and records the evidence ceiling accurately. Corrective issue #245 tracks that repair.
+
+Headed Edge, Firefox, and Safari execution remains outstanding and is tracked by #249. The waiver allows the UFR-154 contract to merge without representing those unavailable checks as completed. Until #249 is satisfied, do not describe UFR-154 as `PLAYER_VERIFIED` or `RELEASE_VERIFIED`.
+
+The real-screen review that exposed the original evidence gap also found known visual defects #242, #243, and #244. Those defects remain separate UI work; a green synthetic/Art-Lab capture is not evidence that the affected operation selector, Skirmish setup, or live HUD layout is release-clean.
+
 ## Supported desktop browsers
 
 | Browser | Release status | Automated evidence | Required headed release pass |
 | --- | --- | --- | --- |
 | Chrome / Chromium | Supported | Yes, authoritative Ubuntu CI | Recommended final soak |
-| Microsoft Edge | Supported | Shared Chromium-engine contract only | Required on Windows |
-| Mozilla Firefox | Supported | No dependency-free cross-browser driver is installed | Required on current stable Firefox |
-| Safari | Supported where feasible | Not available on Ubuntu CI | Required on current stable Safari/macOS |
+| Microsoft Edge | Supported | Shared Chromium-engine contract only | Deferred to #249 on Windows |
+| Mozilla Firefox | Supported | No dependency-free cross-browser driver is installed | Deferred to #249 on current stable Firefox |
+| Safari | Supported where feasible | Not available on Ubuntu CI | Deferred to #249 on current stable Safari/macOS |
 
 A browser is not marked verified merely because it shares web-platform APIs with Chrome. Rows without executed browser evidence remain `manual-release` in the machine-readable matrix and therefore cannot be mistaken for automated passes.
 
@@ -39,4 +47,6 @@ Edge should be exercised on Windows because OS/browser integration and fullscree
 
 ## Release boundary
 
-`bash verify.sh` validates that the matrix remains complete and fail-closed through `tests/release/browser-qa-matrix.test.mjs`. GitHub CI provides automated Chromium evidence. UFR-154 does not claim headed Firefox, Edge, or Safari execution until those runs are actually recorded; later release-candidate QA may attach those results without changing the matrix schema.
+`bash verify.sh` validates that the matrix remains structurally complete and fail-closed through `tests/release/browser-qa-matrix.test.mjs`. GitHub CI provides automated Chromium evidence. That automation is a baseline, not a substitute for the headed Edge, Firefox, and Safari release passes tracked by #249 and not a substitute for real-screen visual QA of shipped UI flows.
+
+The durable UFR-154 completion marker records `CONTRACT_COMPLETE`, the unavailable headed checks, and follow-up #249. Higher evidence levels remain unavailable until those checks are actually executed.
