@@ -77,10 +77,6 @@ function normalizeLayers(layers) {
   return Object.freeze(unique.sort());
 }
 
-function blockerKey(x, y) {
-  return `${x},${y}`;
-}
-
 export function movementBandForCost(cost) {
   if (cost === null) return TERRAIN_MOVEMENT_BANDS.IMPASSABLE;
   if (!Number.isFinite(cost) || cost <= 0) throw new TypeError('Terrain movement cost must be null or a positive finite number.');
@@ -115,6 +111,7 @@ export function terrainMovementProfile(terrain, layer = MOVEMENT_LAYERS.GROUND, 
 export class NavigationGrid {
   #terrain;
   #dynamicBlockers = new Map();
+  #blockerCellsByLayer = new Map(Object.values(MOVEMENT_LAYERS).map((layer) => [layer, new Map()]));
 
   constructor({ width, height, tileSize = 32, defaultTerrain = TERRAIN_TYPES.OPEN, terrainRules = DEFAULT_TERRAIN_RULES }) {
     assertPositiveInteger(width, 'Navigation grid width');
@@ -196,29 +193,75 @@ export class NavigationGrid {
     if (typeof id !== 'string' || !id.trim()) throw new TypeError('Dynamic blocker id must be a non-empty string.');
     if (this.#dynamicBlockers.has(id)) throw new Error(`Dynamic blocker already exists: ${id}`);
     const cells = this.cellsForFootprint(origin, footprint);
-    this.#dynamicBlockers.set(id, Object.freeze({ id, cells, layers: normalizeLayers(layers) }));
+    const normalizedLayers = normalizeLayers(layers);
+    const blocker = Object.freeze({ id, cells, layers: normalizedLayers });
+    this.#dynamicBlockers.set(id, blocker);
+
+    for (const layer of normalizedLayers) {
+      const layerCells = this.#blockerCellsByLayer.get(layer);
+      for (const cell of cells) {
+        const cellIndex = cell.y * this.width + cell.x;
+        let blockerIds = layerCells.get(cellIndex);
+        if (!blockerIds) {
+          blockerIds = new Set();
+          layerCells.set(cellIndex, blockerIds);
+        }
+        blockerIds.add(id);
+      }
+    }
   }
 
   removeDynamicBlocker(id) {
-    return this.#dynamicBlockers.delete(id);
+    const blocker = this.#dynamicBlockers.get(id);
+    if (!blocker) return false;
+    this.#dynamicBlockers.delete(id);
+    for (const layer of blocker.layers) {
+      const layerCells = this.#blockerCellsByLayer.get(layer);
+      for (const cell of blocker.cells) {
+        const cellIndex = cell.y * this.width + cell.x;
+        const blockerIds = layerCells.get(cellIndex);
+        if (!blockerIds) continue;
+        blockerIds.delete(id);
+        if (blockerIds.size === 0) layerCells.delete(cellIndex);
+      }
+    }
+    return true;
   }
 
   blockerIdsAt(x, y, layer = MOVEMENT_LAYERS.GROUND) {
     assertCell({ x, y }, this.width, this.height);
     if (!KNOWN_MOVEMENT_LAYERS.has(layer)) throw new Error(`Unknown movement layer: ${layer}`);
-    const key = blockerKey(x, y);
-    return [...this.#dynamicBlockers.values()]
-      .filter((blocker) => blocker.layers.includes(layer) && blocker.cells.some((cell) => blockerKey(cell.x, cell.y) === key))
-      .map((blocker) => blocker.id)
-      .sort();
+    const blockerIds = this.#blockerCellsByLayer.get(layer).get(y * this.width + x);
+    return blockerIds ? [...blockerIds].sort() : [];
   }
 
   isPassable(x, y, { layer = MOVEMENT_LAYERS.GROUND, footprint = { width: 1, height: 1 }, ignoreBlockerIds = [] } = {}) {
-    const ignored = new Set(ignoreBlockerIds);
-    return this.cellsForFootprint({ x, y }, footprint).every((cell) => {
-      if (this.movementCost(cell.x, cell.y, layer) === null) return false;
-      return this.blockerIdsAt(cell.x, cell.y, layer).every((id) => ignored.has(id));
-    });
+    assertCell({ x, y }, this.width, this.height);
+    if (!KNOWN_MOVEMENT_LAYERS.has(layer)) throw new Error(`Unknown movement layer: ${layer}`);
+    const normalized = normalizeFootprint(footprint);
+    const maxX = x + normalized.width;
+    const maxY = y + normalized.height;
+    if (maxX > this.width || maxY > this.height) {
+      throw new RangeError(`Footprint cell (${maxX - 1}, ${maxY - 1}) is outside the navigation grid.`);
+    }
+
+    const ignored = Array.isArray(ignoreBlockerIds) && ignoreBlockerIds.length === 0
+      ? null
+      : new Set(ignoreBlockerIds);
+    const layerCells = this.#blockerCellsByLayer.get(layer);
+    for (let cellY = y; cellY < maxY; cellY += 1) {
+      const rowOffset = cellY * this.width;
+      for (let cellX = x; cellX < maxX; cellX += 1) {
+        const terrain = this.#terrain[rowOffset + cellX];
+        if (this.terrainRules[terrain]?.[layer] === null) return false;
+        const blockerIds = layerCells.get(rowOffset + cellX);
+        if (!blockerIds) continue;
+        for (const blockerId of blockerIds) {
+          if (!ignored?.has(blockerId)) return false;
+        }
+      }
+    }
+    return true;
   }
 
   applyMapData({ terrain = [], shelterbelts = [], roads = [], bridges = [], blockers = [] } = {}) {
