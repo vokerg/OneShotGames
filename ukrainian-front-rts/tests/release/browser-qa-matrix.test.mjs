@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -23,6 +24,11 @@ test('UFR-154 fails closed while headed release browser evidence is missing', ()
   assert.equal(matrix.correctiveIssue, 245);
   assert.deepEqual(matrix.blockingBrowserEvidence, ['edge', 'firefox', 'safari']);
   assert.deepEqual(matrix.knownVisualDefects, [242, 243, 244]);
+  assert.equal(
+    existsSync(resolve(root, 'tasks/completed/UFR-154.md')),
+    false,
+    'UFR-154 completion marker must not exist while the browser QA matrix is incomplete',
+  );
 });
 
 test('automated browser coverage names evidence for every required surface', () => {
