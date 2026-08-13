@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { AI_DIFFICULTY_PROFILES } from '../../src/ai/ai-difficulty-profiles.js';
-import { BUILDING_TYPES, UNIT_TYPES, UPGRADES } from '../../src/config.js';
+import { createSimulationHarness } from '../../src/app/simulation-harness.js';
+import { BUILDING_TYPES, MISSIONS, TEAM, UNIT_TYPES, UPGRADES, WORLD } from '../../src/config.js';
 import {
   CAMPAIGN_BALANCE_VERSION,
   CAMPAIGN_DIFFICULTY_BALANCE,
@@ -52,6 +53,60 @@ function aiTuning(profile) {
     planningQuality: profile.planningQuality,
     riskTolerance: profile.riskTolerance,
     economyEfficiency: profile.economyEfficiency,
+  };
+}
+
+function teamName(team) {
+  if (team === TEAM.UA) return 'ukraine';
+  if (team === TEAM.RU) return 'russia';
+  throw new Error(`Unexpected battlefield team: ${team}`);
+}
+
+function battlefieldSnapshot(missionIndex) {
+  const harness = createSimulationHarness({ simulationSeed: 'release-balance-map-review' });
+  const state = harness.startScenario({ missionIndex, seed: 'release-balance-map-review' });
+  const terrainTileCounts = harness.game.terrain.reduce((counts, tile) => {
+    if (tile === 0) counts.neutral += 1;
+    else if (tile === 1) counts.lowBand += 1;
+    else if (tile === 2) counts.highBand += 1;
+    else throw new Error(`Unexpected terrain tile class: ${tile}`);
+    return counts;
+  }, { neutral: 0, lowBand: 0, highBand: 0 });
+
+  return {
+    world: { width: WORLD.w, height: WORLD.h, tile: WORLD.tile },
+    terrainTileCounts,
+    road: harness.game.road.map((point) => [...point]),
+    resources: state.nodes.map((node) => ({
+      x: node.x,
+      y: node.y,
+      kind: node.kind,
+      amount: node.amount,
+      label: node.label,
+    })),
+    buildings: state.buildings.map((building) => ({
+      type: building.type,
+      team: teamName(building.team),
+      x: building.x,
+      y: building.y,
+    })),
+    fixedNonHeroUnits: state.units
+      .filter((unit) => !UNIT_TYPES[unit.type]?.hero)
+      .map((unit) => ({
+        type: unit.type,
+        team: teamName(unit.team),
+        x: unit.x,
+        y: unit.y,
+      })),
+  };
+}
+
+function missionBalanceSnapshot(mission) {
+  return {
+    id: mission.id,
+    objectives: [...mission.objectives],
+    start: { ...mission.start },
+    waves: { ...mission.waves },
   };
 }
 
@@ -125,4 +180,26 @@ test('release candidate campaign pressure and batch-simulation contract are vers
     'mission-timing',
   ]);
   assert.equal(RELEASE_BALANCE_BASELINE.batchSimulation.requireDeterministicSeeds, true);
+});
+
+test('all release missions preserve the reviewed battlefield, resource, chokepoint, and spawn geometry', () => {
+  const expected = RELEASE_BALANCE_BASELINE.mapReview;
+  assert.equal(expected.model, 'authored-asymmetric-pve');
+  assert.equal(expected.review.hiddenStartingSideCombatModifiers, false);
+
+  for (let missionIndex = 0; missionIndex < MISSIONS.length; missionIndex += 1) {
+    const actual = battlefieldSnapshot(missionIndex);
+    assert.deepEqual(actual.world, expected.world, `Mission ${missionIndex} world geometry drifted`);
+    assert.deepEqual(actual.terrainTileCounts, expected.terrainTileCounts, `Mission ${missionIndex} terrain distribution drifted`);
+    assert.deepEqual(actual.road, expected.road, `Mission ${missionIndex} operational/chokepoint axis drifted`);
+    assert.deepEqual(actual.resources, expected.resources, `Mission ${missionIndex} resource geometry drifted`);
+    assert.deepEqual(actual.buildings, expected.buildings, `Mission ${missionIndex} base spawn geometry drifted`);
+    assert.deepEqual(actual.fixedNonHeroUnits, expected.fixedNonHeroUnits, `Mission ${missionIndex} fixed force spawns drifted`);
+  }
+});
+
+test('release mission objectives, starting resources, and wave pressure remain part of the map-balance review', () => {
+  assert.deepEqual(MISSIONS.map(missionBalanceSnapshot), RELEASE_BALANCE_BASELINE.mapReview.missions);
+  assert.equal(RELEASE_BALANCE_BASELINE.mapReview.missions.length, 3);
+  assert.match(RELEASE_BALANCE_BASELINE.mapReview.review.exploitAssessment, /No release P0\/P1 placement exploit/);
 });
