@@ -72,7 +72,7 @@ export function validateReleaseNotes(notes, version) {
   for (const heading of REQUIRED_RELEASE_NOTE_HEADINGS) {
     if (!notes.includes(heading)) throw new Error(`Release notes are missing required heading: ${heading}`);
   }
-  if (/<(?:version|date|summary|fill|todo|tbd|placeholder)[^>]*>/i.test(notes) || /\b(?:TODO|TBD)\b/.test(notes)) {
+  if (/<[^>\r\n]+>/.test(notes) || /\b(?:TODO|TBD)\b/.test(notes)) {
     throw new Error('Release notes still contain template placeholders.');
   }
   return true;
