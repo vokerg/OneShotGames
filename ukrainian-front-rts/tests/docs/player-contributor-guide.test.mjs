@@ -46,6 +46,8 @@ test('player and contributor guide covers the UFR-157 player manual surface', as
   assert.match(guide, /Shelterbelt Grid/);
   assert.match(guide, /Industrial Basin/);
   assert.match(guide, /manual and autosave slots/);
+  assert.match(guide, /fields-of-resolve:campaign-save:<slot-id>/);
+  assert.match(guide, /browser\/profile and origin/);
   assert.match(guide, /provenance\/release-manifest\.json/);
 });
 
@@ -56,6 +58,8 @@ test('player and contributor guide covers the UFR-157 contributor workflows', as
     '## Architecture landmarks',
     '## Adding a gameplay unit or building',
     '## Adding a campaign scenario',
+    '## Save and persistence changes',
+    '## Release-facing changes',
     '## Modifying legacy-sensitive systems',
     '## Verification and evidence',
   ]) {
@@ -64,6 +68,8 @@ test('player and contributor guide covers the UFR-157 contributor workflows', as
   assert.match(guide, /ufrts\/<task-id>-<slug>/);
   assert.match(guide, /tasks\/claims\/<ID>\.md/);
   assert.match(guide, /tasks\/completed\/<ID>\.md/);
+  assert.match(guide, /RELEASE_PERFORMANCE_BUDGETS\.md/);
+  assert.match(guide, /RELEASE_BALANCE_BASELINE\.md/);
   assert.match(guide, /legacy-source\//);
   assert.match(guide, /bash verify\.sh/);
 });
