@@ -17,6 +17,14 @@ test('UFR-154 matrix covers every required browser and QA surface', () => {
   assert.deepEqual(matrix.browsers.map((browser) => browser.id), REQUIRED_BROWSERS);
 });
 
+test('UFR-154 fails closed while headed release browser evidence is missing', () => {
+  assert.equal(matrix.taskState, 'incomplete');
+  assert.equal(matrix.highestEvidenceLevel, 'CONTRACT_COMPLETE');
+  assert.equal(matrix.correctiveIssue, 245);
+  assert.deepEqual(matrix.blockingBrowserEvidence, ['edge', 'firefox', 'safari']);
+  assert.deepEqual(matrix.knownVisualDefects, [242, 243, 244]);
+});
+
 test('automated browser coverage names evidence for every required surface', () => {
   const automated = matrix.browsers.filter((browser) => browser.verification === 'automated-ci');
   assert.ok(automated.length > 0, 'at least one browser must have automated CI evidence');
@@ -33,6 +41,7 @@ test('automated browser coverage names evidence for every required surface', () 
 test('manual browser rows fail closed with an explicit exception and procedure', () => {
   const manual = matrix.browsers.filter((browser) => browser.verification === 'manual-release');
   assert.deepEqual(manual.map((browser) => browser.id), ['edge', 'firefox', 'safari']);
+  assert.deepEqual(matrix.blockingBrowserEvidence, manual.map((browser) => browser.id));
 
   for (const browser of manual) {
     assert.match(browser.exception, /CI|runner|harness|available/i, `${browser.id} must explain why automation is unavailable`);
