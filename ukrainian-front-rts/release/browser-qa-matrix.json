@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "task": "UFR-154",
+  "surfaces": ["keyboard", "audio", "canvas", "storage", "fullscreen", "dpi", "performance"],
+  "browsers": [
+    {
+      "id": "chrome",
+      "label": "Chrome / Chromium",
+      "support": "supported",
+      "verification": "automated-ci",
+      "platform": "GitHub-hosted Ubuntu / local desktop",
+      "evidence": {
+        "keyboard": ["browser-startup-smoke", "browser-accessibility-settings-smoke"],
+        "audio": ["browser-audio-release-smoke"],
+        "canvas": ["browser-startup-smoke", "visual-regression-smoke"],
+        "storage": ["browser-startup-smoke", "browser-localization-smoke"],
+        "fullscreen": ["viewport-runtime-tests", "browser-accessibility-settings-smoke"],
+        "dpi": ["viewport-runtime-tests", "visual-regression-smoke"],
+        "performance": ["release-performance-budget", "browser-startup-smoke"]
+      }
+    },
+    {
+      "id": "edge",
+      "label": "Microsoft Edge",
+      "support": "supported",
+      "verification": "manual-release",
+      "platform": "Windows desktop",
+      "exception": "The authoritative Linux CI image does not provide Edge; Chromium-engine automated coverage is shared with Chrome, but Edge branding/integration behavior still requires a headed Windows release pass.",
+      "procedure": "Run the release package in current stable Edge and exercise the seven required surfaces using docs/BROWSER_QA_MATRIX.md."
+    },
+    {
+      "id": "firefox",
+      "label": "Mozilla Firefox",
+      "support": "supported",
+      "verification": "manual-release",
+      "platform": "Windows, macOS, or Linux desktop",
+      "exception": "The dependency-free browser smoke harness is Chrome DevTools Protocol based and cannot drive Firefox without adding a separate automation dependency; headed Firefox remains a release QA pass.",
+      "procedure": "Run the release package in current stable Firefox and exercise the seven required surfaces using docs/BROWSER_QA_MATRIX.md."
+    },
+    {
+      "id": "safari",
+      "label": "Safari",
+      "support": "supported-where-feasible",
+      "verification": "manual-release",
+      "platform": "macOS desktop",
+      "exception": "Safari is not available on the authoritative Ubuntu CI runner; WebKit-specific fullscreen, audio-unlock, storage, DPI, and performance behavior requires a headed macOS release pass.",
+      "procedure": "Run the release package in current stable Safari on macOS and exercise the seven required surfaces using docs/BROWSER_QA_MATRIX.md."
+    }
+  ]
+}
