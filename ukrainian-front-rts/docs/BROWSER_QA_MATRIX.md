@@ -2,6 +2,14 @@
 
 UFR-154 defines the release browser-compatibility evidence boundary for Fields of Resolve. The machine-readable source of truth is `release/browser-qa-matrix.json`.
 
+## Current UFR-154 status
+
+UFR-154 is **incomplete**. PR #241 established a Chromium-oriented QA contract and documentation, but it was merged before the task had the completion evidence required by `docs/FEATURE_CONVEYOR.md`. The corrective work is tracked by #245.
+
+The highest defensible evidence level is currently `CONTRACT_COMPLETE`. Edge, Firefox, and Safari remain blocking headed-release evidence because no executed browser pass has been recorded for those rows. Do not create `tasks/completed/UFR-154.md`, mark the corrective PR ready, or describe UFR-154 as `PLAYER_VERIFIED`/`RELEASE_VERIFIED` until those passes are recorded or an explicit maintainer waiver names the unavailable checks and blocking follow-up.
+
+The real-screen review that exposed this evidence gap also found known visual defects #242, #243, and #244. Those defects remain separate UI work; a green synthetic/Art-Lab capture is not evidence that the affected operation selector, Skirmish setup, or live HUD layout is release-clean.
+
 ## Supported desktop browsers
 
 | Browser | Release status | Automated evidence | Required headed release pass |
@@ -39,4 +47,6 @@ Edge should be exercised on Windows because OS/browser integration and fullscree
 
 ## Release boundary
 
-`bash verify.sh` validates that the matrix remains complete and fail-closed through `tests/release/browser-qa-matrix.test.mjs`. GitHub CI provides automated Chromium evidence. UFR-154 does not claim headed Firefox, Edge, or Safari execution until those runs are actually recorded; later release-candidate QA may attach those results without changing the matrix schema.
+`bash verify.sh` validates that the matrix remains structurally complete and fail-closed through `tests/release/browser-qa-matrix.test.mjs`. GitHub CI provides automated Chromium evidence. That automation is a baseline, not a substitute for the missing headed Edge, Firefox, and Safari release passes and not a substitute for real-screen visual QA of shipped UI flows.
+
+Until the blocking browser evidence is recorded or explicitly waived under the conveyor rules, `release/browser-qa-matrix.json` must keep `taskState: "incomplete"` and `highestEvidenceLevel: "CONTRACT_COMPLETE"`.
