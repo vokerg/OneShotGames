@@ -1,6 +1,6 @@
 # Release balance baseline
 
-`src/content/release-balance-baseline.js` is the reviewed release-candidate drift contract for UFR-149. It deliberately does **not** feed runtime mechanics. The authoritative runtime modules remain `src/config.js`, `src/content/economy-balance.js`, `src/ai/ai-difficulty-profiles.js`, and `src/content/campaign/campaign-balance.js`; the baseline exists so a later number change cannot masquerade as an unrelated refactor.
+`src/content/release-balance-baseline.js` is the reviewed release-candidate drift contract for UFR-149. It deliberately does **not** feed runtime mechanics. The authoritative runtime modules remain `src/config.js`, `src/game.js`, `src/content/economy-balance.js`, `src/ai/ai-difficulty-profiles.js`, and `src/content/campaign/campaign-balance.js`; the baseline exists so a later number or battlefield change cannot masquerade as an unrelated refactor.
 
 ## Baseline identity
 
@@ -8,6 +8,7 @@
 - Contract version: `1`
 - Economy profile: `gate-b2-baseline-v1`
 - Campaign balance version: `1`
+- Battlefield: `shared-campaign-battlefield-v1`
 - Batch simulation: `combat-mission`, `economy-window`, and `mission-timing` through `src/app/balance-simulation.js`
 
 ## Review rationale
@@ -34,9 +35,15 @@ Difficulty remains a decision-quality curve, not a hidden-stat curve. `recruit` 
 
 Story/standard/veteran campaign pressure is authored through resources, pressure/reinforcement timing, objective/checkpoint timing, and recovery windows. `combatStatMultiplier` stays `1` at every tier. Late-campaign pressure may continue to be derived by `resolveCampaignBalance`; changing the tier anchors requires an explicit baseline update.
 
-### Map symmetry and authored asymmetry
+### Battlefield, resources, objectives, chokepoints, and spawns
 
-The release rule is fairness rather than geometric mirroring. A map/scenario may be intentionally asymmetric, but it must not grant a hidden starting-side combat-stat modifier. Advantage must be legible in placement, objectives, starting resources, timing, terrain, or explicit scenario rules. The default deterministic scenario is exercised by all three headless batches, so changes to authored map pressure are reviewed together with combat/economy/mission timing output.
+The runtime does not currently ship three independent skirmish-map definitions. All three campaign missions run on the same authored `2560 x 1664` battlefield created by `Game.start()`, while mission objectives, starting resources, heroes, and wave pressure vary through `MISSIONS`. UFR-149 therefore reviews the actual runtime model rather than inventing a separate map catalog.
+
+The versioned map review locks the shared battlefield's six-point southwest-to-northeast road/operational axis, all five resource sites, the deterministic terrain-class distribution, both headquarters and support-building positions, and every fixed non-hero starting unit. The same regression is executed for every mission so mission-specific setup cannot silently substitute different geometry. Objective text, starting resource packages, and wave schedules are also part of the contract.
+
+This battlefield is intentionally asymmetric PvE rather than mirrored PvP. Ukraine begins in the southwest near the Salvage Yard and Fuel Point; Russia begins in the northeast near the Industrial Site and Forward Fuel Base; the Signals Relay sits between those ends of the resource axis. The asymmetry is visible and scenario-authored. It is not compensated with hidden starting-side combat modifiers: AI fairness remains separately locked to `1.0` resource/damage/health multipliers, observed-only information, and no fog bypass.
+
+The road and deterministic terrain distribution are treated as the release chokepoint/approach evidence because they define the authored operational axis used by the current battlefield presentation and pathing environment. A geometry change must now update the baseline deliberately and explain how it affects approach pressure. The release baseline accepts no unresolved P0/P1 placement exploit; any intended advantage must be attributable to explicit placement, resources, objectives, wave timing, or documented scenario rules.
 
 ## Batch-simulation evidence
 
@@ -46,7 +53,7 @@ The authoritative deterministic balance tooling is `src/app/balance-simulation.j
 2. `economy-window` — exercises a real production order and resource delta.
 3. `mission-timing` — advances the authored scenario without injecting a player command and records mission pressure/timing metrics.
 
-`tests/balance/balance-simulation.test.mjs` verifies deterministic aggregation and the suite contract. `tests/balance/release-balance-baseline.test.mjs` adds the release drift gate for combat, structures, research, economy pacing, AI fairness/difficulty, campaign pressure, and batch tooling.
+`tests/balance/balance-simulation.test.mjs` verifies deterministic aggregation and the suite contract. `tests/balance/release-balance-baseline.test.mjs` adds the release drift gate for combat, structures, research, economy pacing, AI fairness/difficulty, campaign pressure, and the complete shared-battlefield review across all three missions.
 
 ## Change protocol
 
