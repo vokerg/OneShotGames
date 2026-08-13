@@ -33,7 +33,10 @@ async function markerIds(directory) {
   }
 }
 
-const pulls = await github('/pulls?state=open&per_page=100');
+const [pulls, repositoryState] = await Promise.all([
+  github('/pulls?state=open&per_page=100'),
+  github(''),
+]);
 const claims = new Map();
 for (const pull of pulls) {
   const match = pull.title.match(/^\[([^\]]+)\]/);
@@ -52,10 +55,12 @@ for (const [id, numbers] of claims) {
 const checkedInClaims = await markerIds('claims');
 const checkedInCompletions = await markerIds('completed');
 const activeClaimCounts = Object.fromEntries([...claims].map(([id, numbers]) => [id, numbers.length]));
+const onDefaultBranch = !process.env.GITHUB_HEAD_REF && process.env.GITHUB_REF_NAME === repositoryState.default_branch;
 failures.push(...validateTaskMarkerState({
   claimIds: checkedInClaims,
   completedIds: checkedInCompletions,
   activeClaimCounts,
+  forbidCheckedInClaims: onDefaultBranch,
 }));
 
 for (const pull of pulls) {
@@ -70,4 +75,4 @@ if (failures.length) {
   failures.forEach((failure) => console.error(`[claims] ${failure}`));
   process.exit(1);
 }
-console.log(`[claims] ${claims.size} active task/recovery claim(s); ${checkedInClaims.length} checked-in claim marker(s); no duplicate, orphaned, contradictory, or false zero-behind state.`);
+console.log(`[claims] ${claims.size} active task/recovery claim(s); ${checkedInClaims.length} checked-in claim marker(s); no duplicate, orphaned, contradictory, default-branch, or false zero-behind state.`);
