@@ -7,10 +7,19 @@ function activeCount(activeClaimCounts, id) {
   return Number(activeClaimCounts?.[id] || 0);
 }
 
-export function validateTaskMarkerState({ claimIds = [], completedIds = [], activeClaimCounts = {} } = {}) {
+export function validateTaskMarkerState({
+  claimIds = [],
+  completedIds = [],
+  activeClaimCounts = {},
+  forbidCheckedInClaims = false,
+} = {}) {
   const claims = normalizeIds(claimIds);
   const completed = new Set(normalizeIds(completedIds));
   const failures = [];
+
+  if (forbidCheckedInClaims && claims.length) {
+    failures.push(`default branch contains active claim marker(s): ${claims.join(', ')}`);
+  }
 
   for (const id of claims) {
     if (completed.has(id)) {
