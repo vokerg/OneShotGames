@@ -1,6 +1,6 @@
 # Release balance baseline
 
-`src/content/release-balance-baseline.js` is the reviewed release-candidate drift contract for UFR-149. It deliberately does **not** feed runtime mechanics. The authoritative runtime modules remain `src/config.js`, `src/game.js`, `src/content/economy-balance.js`, `src/ai/ai-difficulty-profiles.js`, and `src/content/campaign/campaign-balance.js`; the baseline exists so a later number or battlefield change cannot masquerade as an unrelated refactor.
+`src/content/release-balance-baseline.js` is the reviewed release-candidate drift contract for UFR-149. It deliberately does **not** feed runtime mechanics. The authoritative runtime modules remain `src/config.js`, `src/game.js`, `src/skirmish/skirmish-catalog.js`, `src/content/economy-balance.js`, `src/ai/ai-difficulty-profiles.js`, and `src/content/campaign/campaign-balance.js`; the baseline exists so a later number or battlefield change cannot masquerade as an unrelated refactor.
 
 ## Baseline identity
 
@@ -8,14 +8,15 @@
 - Contract version: `1`
 - Economy profile: `gate-b2-baseline-v1`
 - Campaign balance version: `1`
-- Battlefield: `shared-campaign-battlefield-v1`
+- Campaign battlefield: `shared-campaign-battlefield-v1`
+- Skirmish maps: `crossing-ground`, `shelterbelt-grid`, `industrial-basin`
 - Batch simulation: `combat-mission`, `economy-window`, and `mission-timing` through `src/app/balance-simulation.js`
 
 ## Review rationale
 
 ### Counters and combat values
 
-The baseline locks the five faction-paired line archetypes used by the current core roster: infantry, drones, IFVs, tanks, and self-propelled artillery. The Ukrainian roster pays the player-facing economy costs while the Russian scenario force is authored by mission/AI budgets, hence the intentional zero-cost Russian entries in `src/config.js`. The release gate therefore compares combat capability and pacing directly rather than pretending both sides share the same production economy.
+The baseline locks the five faction-paired line archetypes used by the current core roster: infantry, drones, IFVs, tanks, and self-propelled artillery. The Ukrainian roster pays the player-facing economy costs while the Russian campaign force is authored by mission/AI budgets, hence the intentional zero-cost Russian campaign entries in `src/config.js`. Skirmish faction production uses its own explicit paired costs in the skirmish catalog and remains covered by the skirmish framework tests.
 
 The pairings preserve readable trade-offs instead of exact mirror stats: Ukrainian infantry/tanks trade higher durability/range for their resource cost; Russian drones/artillery retain their authored profile differences. No release change should flatten those differences without a new baseline review and deterministic batch evidence.
 
@@ -35,28 +36,32 @@ Difficulty remains a decision-quality curve, not a hidden-stat curve. `recruit` 
 
 Story/standard/veteran campaign pressure is authored through resources, pressure/reinforcement timing, objective/checkpoint timing, and recovery windows. `combatStatMultiplier` stays `1` at every tier. Late-campaign pressure may continue to be derived by `resolveCampaignBalance`; changing the tier anchors requires an explicit baseline update.
 
-### Battlefield, resources, objectives, chokepoints, and spawns
+### Campaign battlefield review
 
-The runtime does not currently ship three independent skirmish-map definitions. All three campaign missions run on the same authored `2560 x 1664` battlefield created by `Game.start()`, while mission objectives, starting resources, heroes, and wave pressure vary through `MISSIONS`. UFR-149 therefore reviews the actual runtime model rather than inventing a separate map catalog.
+All three campaign missions run on the same authored `2560 x 1664` battlefield created by `Game.start()`, while mission objectives, starting resources, heroes, and wave pressure vary through `MISSIONS`. The versioned review locks the six-point southwest-to-northeast road/operational axis, all five resource sites, deterministic terrain-class distribution, both headquarters and support-building positions, and every fixed non-hero starting unit. The same regression executes for every mission, and the three objective sets, starting resource packages, and wave schedules are also locked.
 
-The versioned map review locks the shared battlefield's six-point southwest-to-northeast road/operational axis, all five resource sites, the deterministic terrain-class distribution, both headquarters and support-building positions, and every fixed non-hero starting unit. The same regression is executed for every mission so mission-specific setup cannot silently substitute different geometry. Objective text, starting resource packages, and wave schedules are also part of the contract.
+The campaign battlefield is intentionally asymmetric PvE rather than mirrored PvP. Ukraine begins in the southwest near the Salvage Yard and Fuel Point; Russia begins in the northeast near the Industrial Site and Forward Fuel Base; the Signals Relay lies between them. This advantage model is visible and authored. It is not compensated with hidden combat modifiers: the AI fairness contract separately requires `1.0` resource/damage/health multipliers, observed-only information, and no fog bypass.
 
-This battlefield is intentionally asymmetric PvE rather than mirrored PvP. Ukraine begins in the southwest near the Salvage Yard and Fuel Point; Russia begins in the northeast near the Industrial Site and Forward Fuel Base; the Signals Relay sits between those ends of the resource axis. The asymmetry is visible and scenario-authored. It is not compensated with hidden starting-side combat modifiers: AI fairness remains separately locked to `1.0` resource/damage/health multipliers, observed-only information, and no fog bypass.
+### Skirmish map review
 
-The road and deterministic terrain distribution are treated as the release chokepoint/approach evidence because they define the authored operational axis used by the current battlefield presentation and pathing environment. A geometry change must now update the baseline deliberately and explain how it affects approach pressure. The release baseline accepts no unresolved P0/P1 placement exploit; any intended advantage must be attributable to explicit placement, resources, objectives, wave timing, or documented scenario rules.
+The release also includes all three authored competitive battlefields from `src/skirmish/skirmish-catalog.js`: Crossing Ground, Shelterbelt Grid, and Industrial Basin. The baseline versions each map's deterministic terrain seed, player/enemy start positions, complete road geometry, resource coordinates/types/amounts, and equal starting wallet.
+
+The skirmish fairness regression checks more than exact-data drift. Opposing starts must be rotationally paired through the world center. Each resource has a counterpart on the opposing side with the same resource kind and amount, and paired start-to-resource distances may differ by at most one world unit. Crossing Ground contains small authored coordinate offsets but remains within that distance budget; Shelterbelt Grid and Industrial Basin are exact pairs. The shared skirmish objective remains destruction of the opposing command post, so neither faction receives an objective-side shortcut.
+
+Road geometry is version-locked for campaign and every skirmish map as the authored operational/chokepoint axis. A road, spawn, resource, terrain-seed/distribution, objective, or wave-pressure change must therefore be reviewed explicitly rather than entering the release as incidental data churn. The release baseline accepts no unresolved P0/P1 placement exploit; intended advantages must be attributable to explicit placement, resources, objectives, timing, or documented scenario rules.
 
 ## Batch-simulation evidence
 
-The authoritative deterministic balance tooling is `src/app/balance-simulation.js` plus `src/core/balance-snapshot.js`. The default suite produces three privacy-safe, seeded batches:
+The authoritative deterministic balance tooling is `src/app/balance-simulation.js` plus `src/core/balance-snapshot.js`. The default suite produces three seeded batches:
 
 1. `combat-mission` — exercises attack-move and resulting combat outcome/attrition.
 2. `economy-window` — exercises a real production order and resource delta.
 3. `mission-timing` — advances the authored scenario without injecting a player command and records mission pressure/timing metrics.
 
-`tests/balance/balance-simulation.test.mjs` verifies deterministic aggregation and the suite contract. `tests/balance/release-balance-baseline.test.mjs` adds the release drift gate for combat, structures, research, economy pacing, AI fairness/difficulty, campaign pressure, and the complete shared-battlefield review across all three missions.
+`tests/balance/balance-simulation.test.mjs` verifies deterministic aggregation and the suite contract. `tests/balance/release-balance-baseline.test.mjs` adds the release drift gate for combat, structures, research, economy pacing, AI fairness/difficulty, campaign pressure, the complete shared campaign battlefield, and all three skirmish maps/fairness invariants.
 
 ## Change protocol
 
 A post-baseline balance change must be intentional. Update the authoritative runtime value first, then update `RELEASE_BALANCE_BASELINE_ID` and the corresponding locked value in the same PR. The PR should state what player-facing problem is being corrected, show deterministic before/after batch evidence, and call out any deliberate map/campaign asymmetry. Do not change the baseline merely to make a drift test green when the runtime change was unrelated or accidental.
 
-For subjective tuning, deterministic headless results are necessary but not sufficient. Player-facing headed/browser playtests should be attached when the conclusion depends on readability, feel, or human decision time; the baseline test itself remains Level 1 deterministic evidence.
+For subjective tuning, deterministic headless results are necessary but not sufficient. Player-facing headed/browser playtests should be attached when the conclusion depends on readability, feel, or human decision time; the baseline test itself remains deterministic evidence.
