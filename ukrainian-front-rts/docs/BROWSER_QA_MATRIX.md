@@ -4,20 +4,20 @@ UFR-154 defines the release browser-compatibility evidence boundary for Fields o
 
 ## Current UFR-154 status
 
-UFR-154 is **incomplete**. PR #241 established a Chromium-oriented QA contract and documentation, but it was merged before the task had the completion evidence required by `docs/FEATURE_CONVEYOR.md`. The corrective work is tracked by #245.
+UFR-154 is completed at **`CONTRACT_COMPLETE` with an explicit maintainer waiver**. PR #241 established the initial Chromium-oriented QA contract, and corrective PR #246 adds the missing task-state safeguards and records the evidence ceiling accurately. Corrective issue #245 tracks that repair.
 
-The highest defensible evidence level is currently `CONTRACT_COMPLETE`. Edge, Firefox, and Safari remain blocking headed-release evidence because no executed browser pass has been recorded for those rows. Do not create `tasks/completed/UFR-154.md`, mark the corrective PR ready, or describe UFR-154 as `PLAYER_VERIFIED`/`RELEASE_VERIFIED` until those passes are recorded or an explicit maintainer waiver names the unavailable checks and blocking follow-up.
+Headed Edge, Firefox, and Safari execution remains outstanding and is tracked by #249. The waiver allows the UFR-154 contract to merge without representing those unavailable checks as completed. Until #249 is satisfied, do not describe UFR-154 as `PLAYER_VERIFIED` or `RELEASE_VERIFIED`.
 
-The real-screen review that exposed this evidence gap also found known visual defects #242, #243, and #244. Those defects remain separate UI work; a green synthetic/Art-Lab capture is not evidence that the affected operation selector, Skirmish setup, or live HUD layout is release-clean.
+The real-screen review that exposed the original evidence gap also found known visual defects #242, #243, and #244. Those defects remain separate UI work; a green synthetic/Art-Lab capture is not evidence that the affected operation selector, Skirmish setup, or live HUD layout is release-clean.
 
 ## Supported desktop browsers
 
 | Browser | Release status | Automated evidence | Required headed release pass |
 | --- | --- | --- | --- |
 | Chrome / Chromium | Supported | Yes, authoritative Ubuntu CI | Recommended final soak |
-| Microsoft Edge | Supported | Shared Chromium-engine contract only | Required on Windows |
-| Mozilla Firefox | Supported | No dependency-free cross-browser driver is installed | Required on current stable Firefox |
-| Safari | Supported where feasible | Not available on Ubuntu CI | Required on current stable Safari/macOS |
+| Microsoft Edge | Supported | Shared Chromium-engine contract only | Deferred to #249 on Windows |
+| Mozilla Firefox | Supported | No dependency-free cross-browser driver is installed | Deferred to #249 on current stable Firefox |
+| Safari | Supported where feasible | Not available on Ubuntu CI | Deferred to #249 on current stable Safari/macOS |
 
 A browser is not marked verified merely because it shares web-platform APIs with Chrome. Rows without executed browser evidence remain `manual-release` in the machine-readable matrix and therefore cannot be mistaken for automated passes.
 
@@ -47,6 +47,6 @@ Edge should be exercised on Windows because OS/browser integration and fullscree
 
 ## Release boundary
 
-`bash verify.sh` validates that the matrix remains structurally complete and fail-closed through `tests/release/browser-qa-matrix.test.mjs`. GitHub CI provides automated Chromium evidence. That automation is a baseline, not a substitute for the missing headed Edge, Firefox, and Safari release passes and not a substitute for real-screen visual QA of shipped UI flows.
+`bash verify.sh` validates that the matrix remains structurally complete and fail-closed through `tests/release/browser-qa-matrix.test.mjs`. GitHub CI provides automated Chromium evidence. That automation is a baseline, not a substitute for the headed Edge, Firefox, and Safari release passes tracked by #249 and not a substitute for real-screen visual QA of shipped UI flows.
 
-Until the blocking browser evidence is recorded or explicitly waived under the conveyor rules, `release/browser-qa-matrix.json` must keep `taskState: "incomplete"` and `highestEvidenceLevel: "CONTRACT_COMPLETE"`.
+The durable UFR-154 completion marker records `CONTRACT_COMPLETE`, the unavailable headed checks, and follow-up #249. Higher evidence levels remain unavailable until those checks are actually executed.
