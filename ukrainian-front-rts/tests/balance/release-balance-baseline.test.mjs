@@ -15,6 +15,11 @@ import {
 } from '../../src/content/economy-balance.js';
 import { RELEASE_BALANCE_BASELINE } from '../../src/content/release-balance-baseline.js';
 import { BALANCE_BATCH_KINDS } from '../../src/core/balance-snapshot.js';
+import {
+  DEFAULT_SKIRMISH_SETUP,
+  SKIRMISH_MAPS,
+  skirmishMissionForSetup,
+} from '../../src/skirmish/skirmish-config.js';
 
 const UNIT_IDS = Object.freeze({
   infantry: { ukraine: 'uaInfantry', russia: 'ruInfantry' },
@@ -62,7 +67,7 @@ function teamName(team) {
   throw new Error(`Unexpected battlefield team: ${team}`);
 }
 
-function battlefieldSnapshot(missionIndex) {
+function campaignBattlefieldSnapshot(missionIndex) {
   const harness = createSimulationHarness({ simulationSeed: 'release-balance-map-review' });
   const state = harness.startScenario({ missionIndex, seed: 'release-balance-map-review' });
   const terrainTileCounts = harness.game.terrain.reduce((counts, tile) => {
@@ -108,6 +113,22 @@ function missionBalanceSnapshot(mission) {
     start: { ...mission.start },
     waves: { ...mission.waves },
   };
+}
+
+function skirmishMapSnapshot(map) {
+  return {
+    id: map.id,
+    region: map.region,
+    seed: map.seed,
+    playerStart: { ...map.playerStart },
+    enemyStart: { ...map.enemyStart },
+    road: map.road.map((point) => [...point]),
+    resources: map.resources.map(({ id, kind, x, y, amount }) => ({ id, kind, x, y, amount })),
+  };
+}
+
+function pointDistance(left, right) {
+  return Math.hypot(left.x - right.x, left.y - right.y);
 }
 
 test('release candidate combat, structure, and research values do not drift silently', () => {
@@ -182,13 +203,13 @@ test('release candidate campaign pressure and batch-simulation contract are vers
   assert.equal(RELEASE_BALANCE_BASELINE.batchSimulation.requireDeterministicSeeds, true);
 });
 
-test('all release missions preserve the reviewed battlefield, resource, chokepoint, and spawn geometry', () => {
-  const expected = RELEASE_BALANCE_BASELINE.mapReview;
+test('all campaign missions preserve the reviewed battlefield, resource, chokepoint, and spawn geometry', () => {
+  const expected = RELEASE_BALANCE_BASELINE.mapReview.campaignBattlefield;
   assert.equal(expected.model, 'authored-asymmetric-pve');
-  assert.equal(expected.review.hiddenStartingSideCombatModifiers, false);
+  assert.equal(RELEASE_BALANCE_BASELINE.mapReview.review.hiddenStartingSideCombatModifiers, false);
 
   for (let missionIndex = 0; missionIndex < MISSIONS.length; missionIndex += 1) {
-    const actual = battlefieldSnapshot(missionIndex);
+    const actual = campaignBattlefieldSnapshot(missionIndex);
     assert.deepEqual(actual.world, expected.world, `Mission ${missionIndex} world geometry drifted`);
     assert.deepEqual(actual.terrainTileCounts, expected.terrainTileCounts, `Mission ${missionIndex} terrain distribution drifted`);
     assert.deepEqual(actual.road, expected.road, `Mission ${missionIndex} operational/chokepoint axis drifted`);
@@ -198,8 +219,44 @@ test('all release missions preserve the reviewed battlefield, resource, chokepoi
   }
 });
 
-test('release mission objectives, starting resources, and wave pressure remain part of the map-balance review', () => {
-  assert.deepEqual(MISSIONS.map(missionBalanceSnapshot), RELEASE_BALANCE_BASELINE.mapReview.missions);
-  assert.equal(RELEASE_BALANCE_BASELINE.mapReview.missions.length, 3);
+test('release campaign objectives, starting resources, and wave pressure remain part of map balance', () => {
+  assert.deepEqual(
+    MISSIONS.map(missionBalanceSnapshot),
+    RELEASE_BALANCE_BASELINE.mapReview.campaignBattlefield.missions,
+  );
+});
+
+test('all authored skirmish maps remain versioned and preserve paired spawn/resource fairness', () => {
+  const expected = RELEASE_BALANCE_BASELINE.mapReview.skirmish;
+  assert.equal(expected.model, 'paired-competitive');
+  assert.deepEqual(DEFAULT_SKIRMISH_SETUP.startingResources, expected.startingResources);
+  assert.deepEqual(SKIRMISH_MAPS.map(skirmishMapSnapshot), expected.maps);
+  assert.equal(expected.maps.length, 3);
+
+  for (const map of SKIRMISH_MAPS) {
+    assert.equal(map.playerStart.x + map.enemyStart.x, WORLD.w, `${map.id} start X positions are not rotationally paired`);
+    assert.equal(map.playerStart.y + map.enemyStart.y, WORLD.h, `${map.id} start Y positions are not rotationally paired`);
+    assert.equal(map.resources.length % 2, 0, `${map.id} must expose resource pairs`);
+
+    for (let index = 0; index < map.resources.length / 2; index += 1) {
+      const playerResource = map.resources[index];
+      const enemyResource = map.resources[map.resources.length - 1 - index];
+      assert.equal(playerResource.kind, enemyResource.kind, `${map.id} resource pair ${index} kind drifted`);
+      assert.equal(playerResource.amount, enemyResource.amount, `${map.id} resource pair ${index} amount drifted`);
+      const distanceDelta = Math.abs(
+        pointDistance(map.playerStart, playerResource) - pointDistance(map.enemyStart, enemyResource),
+      );
+      assert.ok(
+        distanceDelta <= expected.pairedResourceDistanceTolerance,
+        `${map.id} resource pair ${index} start-distance delta ${distanceDelta.toFixed(3)} exceeds ${expected.pairedResourceDistanceTolerance}`,
+      );
+    }
+  }
+});
+
+test('skirmish objective and balance review remain explicit and exploit-free', () => {
+  const mission = skirmishMissionForSetup(DEFAULT_SKIRMISH_SETUP);
+  assert.deepEqual(mission.objectives, ['Destroy the opposing command post']);
+  assert.match(RELEASE_BALANCE_BASELINE.mapReview.review.skirmishFairness, /resource pairs match kind and amount/);
   assert.match(RELEASE_BALANCE_BASELINE.mapReview.review.exploitAssessment, /No release P0\/P1 placement exploit/);
 });
