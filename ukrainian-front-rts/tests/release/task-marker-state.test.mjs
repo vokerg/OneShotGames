@@ -11,6 +11,17 @@ test('active checked-in claim marker is valid when exactly one open PR owns it',
   }), []);
 });
 
+test('default branch cannot retain an active claim marker', () => {
+  assert.deepEqual(validateTaskMarkerState({
+    claimIds: ['UFR-154'],
+    completedIds: [],
+    activeClaimCounts: { 'UFR-154': 1 },
+    forbidCheckedInClaims: true,
+  }), [
+    'default branch contains active claim marker(s): UFR-154',
+  ]);
+});
+
 test('orphaned checked-in claim marker fails closed', () => {
   assert.deepEqual(validateTaskMarkerState({
     claimIds: ['UFR-154'],
