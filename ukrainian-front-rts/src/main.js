@@ -4,6 +4,7 @@ import { createApplicationComposition } from './app/composition-registry.js';
 import { installControllerWithSimulationDelegates } from './app/controller-adapter.js';
 import { createGameRuntime } from './app/runtime.js';
 import './art-pass.js';
+import { installActiveAudioOutput } from './audio/active-audio-output.js';
 import { createAudioMixer } from './audio/audio-mixer.js';
 import { createDestructionState, materializeWreck } from './combat/destruction-system.js';
 import { reconcileActiveRuntimeContent } from './content/runtime-content-reconciliation.js';
@@ -99,6 +100,7 @@ const runtime = createGameRuntime({ game, renderer, ui });
 const browserStorage = acquireBrowserStorage(window);
 const audioMixer = createAudioMixer();
 let audioSettingsAccessibility = null;
+let activeAudioOutput = null;
 
 const modules = [
   module('attack-ground-controller', () => createAttackGroundController(game)),
@@ -218,6 +220,20 @@ const modules = [
       installed.dispose();
     };
   }),
+  module('active-audio-output', () => {
+    const installed = installActiveAudioOutput({
+      mixer: audioMixer,
+      events: game.events ?? game.domainEvents ?? null,
+      game,
+      documentTarget: document,
+      windowTarget: window,
+    });
+    activeAudioOutput = installed;
+    return () => {
+      if (activeAudioOutput === installed) activeAudioOutput = null;
+      installed.dispose();
+    };
+  }),
   module('production-queue-controls', () => installProductionQueueControls({ game, ui })),
   module('tactical-command-card', () => installTacticalCommandCard(ui)),
   module('stance-command-card', () => installStanceCommandCard(ui)),
@@ -294,6 +310,7 @@ window.__fieldsOfResolveComposition = Object.freeze({
   runtimeContent: () => runtimeContent,
   audio: () => Object.freeze({
     mixer: audioMixer.snapshot(),
+    output: activeAudioOutput?.snapshot() ?? null,
     settings: audioSettingsAccessibility?.snapshot() ?? null,
   }),
 });

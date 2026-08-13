@@ -1,0 +1,92 @@
+/* Operation-selection readability overrides.
+ * Loaded after ui-skin.css so the parchment frame cannot paint a dark fill beneath dark text.
+ */
+.missionCard {
+  grid-template-columns: 130px minmax(0, 1fr) max-content;
+  color: #2d2417;
+  background: #d7c792;
+  border-image-slice: 12;
+  overflow: visible;
+}
+
+.missionCard > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.missionCard h3 {
+  color: #241b11;
+}
+
+.missionCard small {
+  color: #55452c;
+}
+
+.missionCard p {
+  color: #382b1c;
+}
+
+.missionCard .missionPacing {
+  color: #4b371f;
+}
+
+.missionCard button {
+  max-width: 14rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 960px) {
+  .missionCard {
+    grid-template-columns: 130px minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .missionCard button {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+    max-width: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .missionCard {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .missionCard canvas {
+    display: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .missionCard {
+    background: #efe2b5;
+    color: #18130d;
+    filter: contrast(1.08);
+  }
+
+  .missionCard h3,
+  .missionCard small,
+  .missionCard p,
+  .missionCard .missionPacing {
+    color: #18130d;
+  }
+}
+
+@media (forced-colors: active) {
+  .missionCard {
+    border-image: none;
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+  }
+
+  .missionCard h3,
+  .missionCard small,
+  .missionCard p,
+  .missionCard .missionPacing {
+    color: CanvasText;
+  }
+}
