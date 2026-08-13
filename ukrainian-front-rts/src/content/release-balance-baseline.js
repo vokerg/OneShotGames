@@ -7,15 +7,7 @@ const deepFreeze = (value) => {
 export const RELEASE_BALANCE_BASELINE_VERSION = 1;
 export const RELEASE_BALANCE_BASELINE_ID = '2026-08-rc1';
 
-const combatStats = (hp, speed, range, damage, rate, sight, cost) => ({
-  hp,
-  speed,
-  range,
-  damage,
-  rate,
-  sight,
-  cost,
-});
+const combatStats = (hp, speed, range, damage, rate, sight, cost) => ({ hp, speed, range, damage, rate, sight, cost });
 
 /**
  * Reviewed release-candidate values. This is a drift contract, not runtime data:
@@ -31,6 +23,7 @@ export const RELEASE_BALANCE_BASELINE = deepFreeze({
     ai: 'src/ai/ai-difficulty-profiles.js',
     campaign: 'src/content/campaign/campaign-balance.js',
     battlefield: 'src/game.js + src/config.js',
+    skirmish: 'src/skirmish/skirmish-catalog.js',
     simulation: 'src/app/balance-simulation.js',
   },
   pairedCounters: {
@@ -71,20 +64,8 @@ export const RELEASE_BALANCE_BASELINE = deepFreeze({
   economy: {
     schemaVersion: 1,
     profileId: 'gate-b2-baseline-v1',
-    startingForce: {
-      engineers: 2,
-      lineSquads: 2,
-      baseCapacity: 14,
-      startingDepotCapacity: 8,
-      startingFieldedCapacity: 6,
-    },
-    affordabilitySeconds: {
-      worker: 12,
-      infantry: 15,
-      air: 18,
-      armor: 20,
-      command: 22,
-    },
+    startingForce: { engineers: 2, lineSquads: 2, baseCapacity: 14, startingDepotCapacity: 8, startingFieldedCapacity: 6 },
+    affordabilitySeconds: { worker: 12, infantry: 15, air: 18, armor: 20, command: 22 },
     missionBenchmarks: { donbas: 60, zaporizhzhia: 65, kherson: 70 },
   },
   ai: {
@@ -116,81 +97,98 @@ export const RELEASE_BALANCE_BASELINE = deepFreeze({
     requireDeterministicSeeds: true,
   },
   mapReview: {
-    battlefieldId: 'shared-campaign-battlefield-v1',
-    model: 'authored-asymmetric-pve',
-    world: { width: 2560, height: 1664, tile: 32 },
-    terrainTileCounts: { neutral: 3067, lowBand: 486, highBand: 607 },
-    road: [
-      [120, 1400],
-      [540, 1240],
-      [960, 1010],
-      [1330, 780],
-      [1760, 520],
-      [2300, 260],
-    ],
-    resources: [
-      { x: 490, y: 1280, kind: 'metal', amount: 1600, label: 'Salvage Yard' },
-      { x: 760, y: 1180, kind: 'fuel', amount: 1100, label: 'Fuel Point' },
-      { x: 1120, y: 850, kind: 'intel', amount: 900, label: 'Signals Relay' },
-      { x: 1570, y: 600, kind: 'metal', amount: 1800, label: 'Industrial Site' },
-      { x: 1900, y: 420, kind: 'fuel', amount: 1200, label: 'Forward Fuel Base' },
-    ],
-    buildings: [
-      { type: 'hq', team: 'ukraine', x: 230, y: 1390 },
-      { type: 'depot', team: 'ukraine', x: 350, y: 1330 },
-      { type: 'barracks', team: 'ukraine', x: 430, y: 1430 },
-      { type: 'hq', team: 'russia', x: 2300, y: 260 },
-      { type: 'barracks', team: 'russia', x: 2170, y: 340 },
-      { type: 'workshop', team: 'russia', x: 2230, y: 175 },
-    ],
-    fixedNonHeroUnits: [
-      { type: 'uaEngineer', team: 'ukraine', x: 320, y: 1380 },
-      { type: 'uaEngineer', team: 'ukraine', x: 355, y: 1410 },
-      { type: 'uaInfantry', team: 'ukraine', x: 470, y: 1360 },
-      { type: 'uaInfantry', team: 'ukraine', x: 500, y: 1410 },
-      { type: 'ruInfantry', team: 'russia', x: 2110, y: 280 },
-      { type: 'ruInfantry', team: 'russia', x: 2070, y: 330 },
-      { type: 'ruIfv', team: 'russia', x: 2140, y: 300 },
-      { type: 'ruTank', team: 'russia', x: 2210, y: 245 },
-    ],
-    missions: [
-      {
-        id: 'donbas',
-        objectives: [
-          'Recover 500 units of materiel',
-          'Establish infantry and repair facilities',
-          'Destroy the Russian forward command post',
-        ],
-        start: { metal: 240, fuel: 110, intel: 25 },
-        waves: { firstDelay: 70, interval: 46, maxActive: 7, maxWaves: 7 },
-      },
-      {
-        id: 'zaporizhzhia',
-        objectives: [
-          'Accumulate 250 intelligence',
-          'Field four Ukrainian FPV teams',
-          'Destroy all Russian artillery batteries',
-        ],
-        start: { metal: 320, fuel: 190, intel: 70 },
-        waves: { firstDelay: 58, interval: 42, maxActive: 9, maxWaves: 7 },
-      },
-      {
-        id: 'kherson',
-        objectives: [
-          'Assemble both Ukrainian command heroes',
-          'Defeat six Russian assault waves',
-          'Destroy the Russian command bunker',
-        ],
-        start: { metal: 430, fuel: 260, intel: 230 },
-        waves: { firstDelay: 45, interval: 36, maxActive: 12, maxWaves: 6 },
-      },
-    ],
+    campaignBattlefield: {
+      id: 'shared-campaign-battlefield-v1',
+      model: 'authored-asymmetric-pve',
+      world: { width: 2560, height: 1664, tile: 32 },
+      terrainTileCounts: { neutral: 3067, lowBand: 486, highBand: 607 },
+      road: [
+        [120, 1400], [540, 1240], [960, 1010], [1330, 780], [1760, 520], [2300, 260],
+      ],
+      resources: [
+        { x: 490, y: 1280, kind: 'metal', amount: 1600, label: 'Salvage Yard' },
+        { x: 760, y: 1180, kind: 'fuel', amount: 1100, label: 'Fuel Point' },
+        { x: 1120, y: 850, kind: 'intel', amount: 900, label: 'Signals Relay' },
+        { x: 1570, y: 600, kind: 'metal', amount: 1800, label: 'Industrial Site' },
+        { x: 1900, y: 420, kind: 'fuel', amount: 1200, label: 'Forward Fuel Base' },
+      ],
+      buildings: [
+        { type: 'hq', team: 'ukraine', x: 230, y: 1390 },
+        { type: 'depot', team: 'ukraine', x: 350, y: 1330 },
+        { type: 'barracks', team: 'ukraine', x: 430, y: 1430 },
+        { type: 'hq', team: 'russia', x: 2300, y: 260 },
+        { type: 'barracks', team: 'russia', x: 2170, y: 340 },
+        { type: 'workshop', team: 'russia', x: 2230, y: 175 },
+      ],
+      fixedNonHeroUnits: [
+        { type: 'uaEngineer', team: 'ukraine', x: 320, y: 1380 },
+        { type: 'uaEngineer', team: 'ukraine', x: 355, y: 1410 },
+        { type: 'uaInfantry', team: 'ukraine', x: 470, y: 1360 },
+        { type: 'uaInfantry', team: 'ukraine', x: 500, y: 1410 },
+        { type: 'ruInfantry', team: 'russia', x: 2110, y: 280 },
+        { type: 'ruInfantry', team: 'russia', x: 2070, y: 330 },
+        { type: 'ruIfv', team: 'russia', x: 2140, y: 300 },
+        { type: 'ruTank', team: 'russia', x: 2210, y: 245 },
+      ],
+      missions: [
+        { id: 'donbas', objectives: ['Recover 500 units of materiel', 'Establish infantry and repair facilities', 'Destroy the Russian forward command post'], start: { metal: 240, fuel: 110, intel: 25 }, waves: { firstDelay: 70, interval: 46, maxActive: 7, maxWaves: 7 } },
+        { id: 'zaporizhzhia', objectives: ['Accumulate 250 intelligence', 'Field four Ukrainian FPV teams', 'Destroy all Russian artillery batteries'], start: { metal: 320, fuel: 190, intel: 70 }, waves: { firstDelay: 58, interval: 42, maxActive: 9, maxWaves: 7 } },
+        { id: 'kherson', objectives: ['Assemble both Ukrainian command heroes', 'Defeat six Russian assault waves', 'Destroy the Russian command bunker'], start: { metal: 430, fuel: 260, intel: 230 }, waves: { firstDelay: 45, interval: 36, maxActive: 12, maxWaves: 6 } },
+      ],
+    },
+    skirmish: {
+      model: 'paired-competitive',
+      startingResources: { metal: 380, fuel: 210, intel: 70 },
+      pairedResourceDistanceTolerance: 1,
+      maps: [
+        {
+          id: 'crossing-ground', region: 'donbas', seed: 11,
+          playerStart: { x: 270, y: 1370 }, enemyStart: { x: 2290, y: 294 },
+          road: [[115, 1450], [530, 1240], [980, 960], [1370, 760], [1810, 515], [2370, 235]],
+          resources: [
+            { id: 'resource-1', kind: 'metal', x: 475, y: 1245, amount: 1700 },
+            { id: 'resource-2', kind: 'fuel', x: 720, y: 1390, amount: 1250 },
+            { id: 'resource-3', kind: 'intel', x: 1125, y: 930, amount: 900 },
+            { id: 'resource-4', kind: 'intel', x: 1435, y: 735, amount: 900 },
+            { id: 'resource-5', kind: 'fuel', x: 1840, y: 280, amount: 1250 },
+            { id: 'resource-6', kind: 'metal', x: 2085, y: 420, amount: 1700 },
+          ],
+        },
+        {
+          id: 'shelterbelt-grid', region: 'zaporizhzhia', seed: 29,
+          playerStart: { x: 286, y: 302 }, enemyStart: { x: 2274, y: 1362 },
+          road: [[150, 260], [610, 470], [1010, 690], [1500, 985], [1940, 1200], [2390, 1450]],
+          resources: [
+            { id: 'resource-1', kind: 'metal', x: 505, y: 420, amount: 1600 },
+            { id: 'resource-2', kind: 'intel', x: 760, y: 265, amount: 950 },
+            { id: 'resource-3', kind: 'fuel', x: 1120, y: 735, amount: 1350 },
+            { id: 'resource-4', kind: 'fuel', x: 1440, y: 929, amount: 1350 },
+            { id: 'resource-5', kind: 'intel', x: 1800, y: 1399, amount: 950 },
+            { id: 'resource-6', kind: 'metal', x: 2055, y: 1244, amount: 1600 },
+          ],
+        },
+        {
+          id: 'industrial-basin', region: 'kherson', seed: 47,
+          playerStart: { x: 300, y: 1320 }, enemyStart: { x: 2260, y: 344 },
+          road: [[105, 1325], [595, 1110], [1000, 910], [1510, 745], [1945, 535], [2410, 330]],
+          resources: [
+            { id: 'resource-1', kind: 'metal', x: 520, y: 1160, amount: 1800 },
+            { id: 'resource-2', kind: 'fuel', x: 690, y: 1390, amount: 1300 },
+            { id: 'resource-3', kind: 'intel', x: 1050, y: 820, amount: 1000 },
+            { id: 'resource-4', kind: 'intel', x: 1510, y: 844, amount: 1000 },
+            { id: 'resource-5', kind: 'fuel', x: 1870, y: 274, amount: 1300 },
+            { id: 'resource-6', kind: 'metal', x: 2040, y: 504, amount: 1800 },
+          ],
+        },
+      ],
+    },
     review: {
       hiddenStartingSideCombatModifiers: false,
-      resourceAxis: 'Five authored resource sites form a southwest-to-northeast progression between the opposing headquarters; the layout is intentionally scenario-asymmetric rather than a mirrored PvP map.',
-      chokepointAxis: 'The six-point southwest-to-northeast road is the authored operational axis; procedural terrain tile distribution and the route are locked so a geometry change cannot silently alter approach pressure.',
-      spawnAxis: 'Ukrainian and Russian headquarters, support buildings, and fixed non-hero starting forces are locked by side and position for all three missions.',
-      objectiveAxis: 'All three mission objective sets, starting resources, and wave schedules are locked alongside the shared battlefield geometry.',
+      campaignResourceAxis: 'The campaign uses a visible southwest-to-northeast resource progression and is intentionally scenario-asymmetric rather than mirrored PvP.',
+      skirmishFairness: 'All three skirmish starts rotate across world center; resource pairs match kind and amount, and paired start-to-resource distances differ by no more than one world unit.',
+      chokepointAxis: 'Every campaign/skirmish road is version-locked as the authored operational/chokepoint axis; campaign terrain-class distribution is locked as additional geometry evidence.',
+      spawnAxis: 'Campaign bases/fixed forces and every skirmish player/enemy start are version-locked.',
+      objectiveAxis: 'Campaign mission objectives/resources/waves and the skirmish equal-wallet/opposing-HQ victory contract are explicit rather than hidden side advantages.',
       exploitAssessment: 'No release P0/P1 placement exploit is accepted; scenario advantage must remain explicit in placement, objectives, resources, wave timing, or documented rules rather than hidden combat-stat bonuses.',
     },
   },
