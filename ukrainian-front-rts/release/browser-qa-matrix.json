@@ -1,6 +1,11 @@
 {
   "schemaVersion": 1,
   "task": "UFR-154",
+  "taskState": "incomplete",
+  "highestEvidenceLevel": "CONTRACT_COMPLETE",
+  "correctiveIssue": 245,
+  "blockingBrowserEvidence": ["edge", "firefox", "safari"],
+  "knownVisualDefects": [242, 243, 244],
   "surfaces": ["keyboard", "audio", "canvas", "storage", "fullscreen", "dpi", "performance"],
   "browsers": [
     {
