@@ -64,15 +64,19 @@ test('UFR-159 blocks undispositioned P0/P1 release defects and requires rational
   assert.equal(evaluateReleaseCandidateEvidence(input).verdict, 'PASS');
 });
 
-test('UFR-159 allows N/A only with an explicit rationale and still requires commit-bound pass evidence', () => {
+test('UFR-159 treats N/A as an explicit blocker and still requires commit-bound pass evidence', () => {
   const input = passingEvidence();
   const safari = input.browsers.find(({ id }) => id === 'safari');
   safari.status = 'na';
   safari.evidence = [];
   assert.throws(() => evaluateReleaseCandidateEvidence(input), /without a rationale/);
   safari.rationale = 'Safari is unavailable on this platform; separate macOS evidence is tracked by the gate owner.';
-  assert.equal(evaluateReleaseCandidateEvidence(input).verdict, 'PASS');
+  const report = evaluateReleaseCandidateEvidence(input);
+  assert.equal(report.verdict, 'BLOCKED');
+  assert.match(report.blockers.join('\n'), /Safari is unavailable/);
 
+  safari.status = 'pass';
+  safari.evidence = evidence('browser:safari');
   input.surfaces[0].evidence = [];
   assert.throws(() => evaluateReleaseCandidateEvidence(input), /marked pass but has no evidence/);
 });
