@@ -1,4 +1,4 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -31,12 +31,18 @@ function projectPath(path) {
   return resolve(projectRoot, path);
 }
 
+async function writeProjectFile(path, content) {
+  const target = projectPath(path);
+  await mkdir(dirname(target), { recursive: true });
+  await writeFile(target, content);
+}
+
 try {
   const args = parseArgs(process.argv.slice(2));
   if (args.init) {
     if (!args.output || args.input) throw new Error('--init requires --output and cannot be combined with --input.');
     const template = createReleaseCandidateEvidenceTemplate(args.init);
-    await writeFile(projectPath(args.output), `${JSON.stringify(template, null, 2)}\n`);
+    await writeProjectFile(args.output, `${JSON.stringify(template, null, 2)}\n`);
     console.log(`[rc-qa] wrote evidence template to ${args.output}`);
     process.exit(0);
   }
@@ -48,7 +54,7 @@ try {
   const evidence = JSON.parse(await readFile(projectPath(args.input), 'utf8'));
   const report = evaluateReleaseCandidateEvidence(evidence);
   const serialized = `${JSON.stringify(report, null, 2)}\n`;
-  if (args.output) await writeFile(projectPath(args.output), serialized);
+  if (args.output) await writeProjectFile(args.output, serialized);
   else process.stdout.write(serialized);
   console.log(`[rc-qa] ${report.candidate.commit} verdict=${report.verdict} failures=${report.failures.length} blockers=${report.blockers.length}`);
   if (report.verdict === 'FAIL') process.exit(1);
