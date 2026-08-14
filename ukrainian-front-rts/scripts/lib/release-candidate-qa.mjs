@@ -72,6 +72,7 @@ function evaluateRequiredResult(result, label, failures, blockers) {
   if (result.status === 'fail') failures.push(`${label} failed.`);
   if (result.status === 'blocked') blockers.push(`${label} is blocked.`);
   if (result.status === 'not-run') blockers.push(`${label} has not been run.`);
+  if (result.status === 'na') blockers.push(`${label} is unavailable: ${result.rationale}`);
 }
 
 function validateDefects(defects) {
