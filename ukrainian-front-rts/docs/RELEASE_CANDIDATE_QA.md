@@ -16,7 +16,7 @@ Every candidate must cover these product surfaces:
 - keyboard/focus/scaling/reduced-motion/contrast accessibility;
 - performance, long-session, large-battle, and deterministic stress.
 
-The browser matrix requires Chrome, Edge, Firefox, and Safari records. `na` is permitted only with an explicit rationale; it does not silently stand in for evidence that is expected on another runner or manual platform. Pass evidence is always bound to the exact candidate commit so an older successful workflow cannot certify a newer head.
+The browser matrix requires Chrome, Edge, Firefox, and Safari records. `na` is permitted only with an explicit rationale, but it remains a blocking state; it does not stand in for evidence that is expected on another runner or manual platform. Pass evidence is always bound to the exact candidate commit so an older successful workflow cannot certify a newer head.
 
 ## Existing automation to reuse
 
