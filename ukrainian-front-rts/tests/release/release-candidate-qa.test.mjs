@@ -1,5 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import {
   createReleaseCandidateEvidenceTemplate,
@@ -10,6 +15,7 @@ import {
 
 const commit = 'a'.repeat(40);
 const evidence = (ref) => [{ kind: 'workflow', ref, commit }];
+const cliPath = fileURLToPath(new URL('../../scripts/release-candidate-qa.mjs', import.meta.url));
 
 function passingEvidence() {
   return {
@@ -79,4 +85,16 @@ test('UFR-159 treats N/A as an explicit blocker and still requires commit-bound 
   safari.evidence = evidence('browser:safari');
   input.surfaces[0].evidence = [];
   assert.throws(() => evaluateReleaseCandidateEvidence(input), /marked pass but has no evidence/);
+});
+
+test('UFR-159 CLI creates nested output directories for a clean evidence export', async (t) => {
+  const tempRoot = await mkdtemp(join(tmpdir(), 'ufr-159-rc-qa-'));
+  t.after(() => rm(tempRoot, { recursive: true, force: true }));
+  const outputPath = join(tempRoot, 'nested', 'evidence.json');
+  const result = spawnSync(process.execPath, [cliPath, '--init', commit, '--output', outputPath], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+  const exported = JSON.parse(await readFile(outputPath, 'utf8'));
+  assert.equal(exported.candidate.commit, commit);
+  assert.equal(exported.surfaces.length, RELEASE_CANDIDATE_SURFACES.length);
+  assert.equal(exported.browsers.length, RELEASE_CANDIDATE_BROWSERS.length);
 });
