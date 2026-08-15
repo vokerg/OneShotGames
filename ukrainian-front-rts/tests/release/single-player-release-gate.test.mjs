@@ -25,6 +25,7 @@ function passingGate() {
     gates: SINGLE_PLAYER_RELEASE_GATES.map((id) => ({ id, status: 'pass', evidence: evidence(`gate:${id}`) })),
     freeze: SINGLE_PLAYER_FREEZE_AREAS.map((id) => ({ id, status: 'frozen', evidence: evidence(`freeze:${id}`) })),
     rcQa: { verdict: 'PASS', candidateCommit: commit, evidence: evidence('rc-qa') },
+    defectAudit: { status: 'pass', evidence: evidence('defect-audit') },
     defects: [
       { issue: '#183', severity: 'P1', disposition: 'fixed', evidence: evidence('issue:183') },
       { issue: '#249', severity: 'P1', disposition: 'fixed', evidence: evidence('issue:249') },
@@ -35,7 +36,7 @@ function passingGate() {
   };
 }
 
-test('UFR-160 passes only with Gates A-E, freezes, RC QA, tag, P0/P1 closure, and sign-off', () => {
+test('UFR-160 passes only with Gates A-E, freezes, RC QA, defect audit, P0/P1 closure, and sign-off', () => {
   const report = evaluateSinglePlayerReleaseGate(passingGate());
   assert.equal(report.verdict, 'PASS');
   assert.equal(report.failures.length, 0);
@@ -49,7 +50,18 @@ test('UFR-160 template fails closed before release evidence exists', () => {
   assert.match(report.blockers.join('\n'), /Gate A/);
   assert.match(report.blockers.join('\n'), /Release freeze schemas/);
   assert.match(report.blockers.join('\n'), /Release-candidate QA/);
+  assert.match(report.blockers.join('\n'), /Release defect audit/);
   assert.match(report.blockers.join('\n'), /Release sign-off/);
+});
+
+test('UFR-160 requires a commit-bound defect audit instead of permitting an omitted inventory', () => {
+  const input = passingGate();
+  input.defectAudit = { status: 'not-run', evidence: [] };
+  input.defects = [];
+  input.knownIssues = [];
+  const report = evaluateSinglePlayerReleaseGate(input);
+  assert.equal(report.verdict, 'BLOCKED');
+  assert.match(report.blockers.join('\n'), /Release defect audit is not-run/);
 });
 
 test('UFR-160 does not permit P0/P1 waivers or known-issue dispositions to promote', () => {
@@ -62,6 +74,9 @@ test('UFR-160 does not permit P0/P1 waivers or known-issue dispositions to promo
       rationale: 'Release owner considered the issue.',
       evidence: [],
     };
+    if (disposition === 'known-issue') {
+      input.knownIssues.push({ issue: '#183', severity: 'P1', summary: 'Release-blocking UI composition defect.' });
+    }
     const report = evaluateSinglePlayerReleaseGate(input);
     assert.equal(report.verdict, 'BLOCKED');
     assert.match(report.blockers.join('\n'), /#183 P1/);
@@ -81,6 +96,22 @@ test('UFR-160 rejects stale commit evidence and post-freeze drift', () => {
   assert.match(report.failures.join('\n'), /assets changed after freeze/);
 });
 
+test('UFR-160 reconciles published known issues with the defect inventory', () => {
+  const missing = passingGate();
+  missing.defects = missing.defects.filter(({ issue }) => issue !== '#247');
+  assert.throws(() => evaluateSinglePlayerReleaseGate(missing), /missing from the release defect inventory/);
+
+  const unpublished = passingGate();
+  unpublished.knownIssues = [];
+  assert.throws(() => evaluateSinglePlayerReleaseGate(unpublished), /missing from published known issues/);
+});
+
+test('UFR-160 requires a real ISO-8601 release sign-off timestamp', () => {
+  const invalid = passingGate();
+  invalid.signoff.recordedAt = 'today';
+  assert.throws(() => evaluateSinglePlayerReleaseGate(invalid), /ISO-8601 timestamp/);
+});
+
 test('UFR-160 CLI initializes a nested fail-closed evidence template', async (t) => {
   const root = await mkdtemp(join(tmpdir(), 'ufr-160-release-gate-'));
   t.after(() => rm(root, { recursive: true, force: true }));
@@ -91,5 +122,6 @@ test('UFR-160 CLI initializes a nested fail-closed evidence template', async (t)
   assert.equal(template.candidate.commit, commit);
   assert.equal(template.gates.length, 5);
   assert.equal(template.freeze.length, 3);
+  assert.equal(template.defectAudit.status, 'not-run');
   assert.equal(evaluateSinglePlayerReleaseGate(template).verdict, 'BLOCKED');
 });
