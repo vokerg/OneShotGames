@@ -22,8 +22,8 @@
   white-space: nowrap;
 }
 
-/* The eight-control worker matrix is useful on wide desktops, but it must not turn
-   the release HUD into a two-row control block at 1280px/standard laptop widths. */
+/* The eight-control worker matrix is useful on ultrawide desktops, but it must not
+   displace release controls at 1280px/1920px standard review widths. */
 #workerOverview.workerOverview {
   display: none !important;
 }
@@ -147,7 +147,9 @@
   }
 }
 
-@media (min-width: 1720px) {
+/* The 1920px release/localization review needs the full trailing control set. Restore
+   the optional worker matrix only once the viewport has enough ultrawide headroom. */
+@media (min-width: 2240px) {
   #workerOverview.workerOverview {
     display: grid !important;
     grid-template-columns: repeat(8, minmax(48px, 1fr)) !important;
