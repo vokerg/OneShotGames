@@ -45,7 +45,8 @@ test('operation contrast override composes after the global parchment skin', () 
 });
 
 test('operation selector removes the dark nine-slice center fill and exposes a readable book surface', () => {
-  const parchmentRule = uiSkinCss.match(/\.book,\s*\.endgameCard\s*\{([\s\S]*?)\}/);
+  const parchmentRule = [...uiSkinCss.matchAll(/\.book,\s*\.endgameCard\s*\{([\s\S]*?)\}/g)]
+    .find(([, declarations]) => declarations.includes('assets/ui/skin/parchment.svg'));
   assert.ok(parchmentRule, 'global parchment frame rule must exist');
   assert.match(parchmentRule[1], /border-image-source:\s*url\(["']assets\/ui\/skin\/parchment\.svg["']\)/);
   assert.match(parchmentRule[1], /border-image-slice:\s*12\s+fill\s*;/);
