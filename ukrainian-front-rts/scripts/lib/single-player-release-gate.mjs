@@ -4,8 +4,10 @@ export const SINGLE_PLAYER_RELEASE_GATES = Object.freeze(['A', 'B', 'C', 'D', 'E
 export const SINGLE_PLAYER_FREEZE_AREAS = Object.freeze(['schemas', 'assets', 'content']);
 
 const COMMIT = /^[0-9a-f]{40}$/i;
+const ISO_TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/;
 const GATE_STATUSES = new Set(['pass', 'fail', 'blocked', 'not-run']);
 const FREEZE_STATUSES = new Set(['frozen', 'changed', 'not-run']);
+const AUDIT_STATUSES = new Set(['pass', 'fail', 'not-run']);
 const DEFECT_SEVERITIES = new Set(['P0', 'P1', 'P2', 'P3']);
 const DEFECT_DISPOSITIONS = new Set(['fixed', 'blocker', 'known-issue', 'waived']);
 
@@ -23,6 +25,14 @@ function text(value, label) {
 function commit(value, label = 'candidate commit') {
   const normalized = text(value, label).toLowerCase();
   if (!COMMIT.test(normalized)) throw new TypeError(`${label} must be a 40-character Git commit SHA.`);
+  return normalized;
+}
+
+function timestamp(value, label) {
+  const normalized = text(value, label);
+  if (!ISO_TIMESTAMP.test(normalized) || Number.isNaN(Date.parse(normalized))) {
+    throw new TypeError(`${label} must be an ISO-8601 timestamp with an explicit UTC offset.`);
+  }
   return normalized;
 }
 
@@ -72,6 +82,7 @@ export function createSinglePlayerReleaseGateTemplate(candidateCommit) {
     gates: SINGLE_PLAYER_RELEASE_GATES.map((id) => ({ id, status: 'not-run', evidence: [] })),
     freeze: SINGLE_PLAYER_FREEZE_AREAS.map((id) => ({ id, status: 'not-run', evidence: [] })),
     rcQa: { verdict: 'BLOCKED', candidateCommit: candidate, evidence: [] },
+    defectAudit: { status: 'not-run', evidence: [] },
     defects: [],
     knownIssues: [],
     signoff: { status: 'not-approved', signer: '', recordedAt: '', evidence: [] },
@@ -117,9 +128,19 @@ export function evaluateSinglePlayerReleaseGate(input) {
   if (rcQaVerdict === 'FAIL') failures.push('Release-candidate QA failed.');
   else if (rcQaVerdict !== 'PASS') blockers.push(`Release-candidate QA is ${rcQaVerdict}.`);
 
+  const defectAuditStatus = text(input.defectAudit?.status, 'Release defect audit status').toLowerCase();
+  if (!AUDIT_STATUSES.has(defectAuditStatus)) {
+    throw new TypeError(`Release defect audit has unsupported status ${defectAuditStatus}.`);
+  }
+  evidence(input.defectAudit?.evidence ?? [], candidate, 'Release defect audit', { required: defectAuditStatus === 'pass' });
+  if (defectAuditStatus === 'fail') failures.push('Release defect audit failed.');
+  else if (defectAuditStatus !== 'pass') blockers.push(`Release defect audit is ${defectAuditStatus}.`);
+
   if (!Array.isArray(input.defects)) throw new TypeError('Release defects must be an array.');
+  const defectsByIssue = new Map();
   for (const defect of input.defects) {
     const issue = text(defect?.issue, 'Release defect issue');
+    if (defectsByIssue.has(issue)) throw new Error(`Duplicate release defect entry: ${issue}.`);
     const severity = text(defect?.severity, `Release defect ${issue} severity`).toUpperCase();
     const disposition = text(defect?.disposition, `Release defect ${issue} disposition`).toLowerCase();
     if (!DEFECT_SEVERITIES.has(severity)) throw new TypeError(`Release defect ${issue} has unsupported severity ${severity}.`);
@@ -128,6 +149,8 @@ export function evaluateSinglePlayerReleaseGate(input) {
     if ((disposition === 'waived' || disposition === 'known-issue') && !String(defect?.rationale || '').trim()) {
       throw new Error(`Release defect ${issue} is ${disposition} without a rationale.`);
     }
+    const normalizedDefect = Object.freeze({ issue, severity, disposition });
+    defectsByIssue.set(issue, normalizedDefect);
     if (severity === 'P0' || severity === 'P1') {
       if (disposition !== 'fixed') blockers.push(`${issue} ${severity} remains ${disposition}; UFR-160 requires P0/P1 closure.`);
     } else if (disposition === 'blocker') {
@@ -136,18 +159,32 @@ export function evaluateSinglePlayerReleaseGate(input) {
   }
 
   if (!Array.isArray(input.knownIssues)) throw new TypeError('Known issues must be an array.');
+  const knownIssueIds = new Set();
   for (const issue of input.knownIssues) {
     const id = text(issue?.issue, 'Known issue id');
+    if (knownIssueIds.has(id)) throw new Error(`Duplicate known issue entry: ${id}.`);
     const severity = text(issue?.severity, `Known issue ${id} severity`).toUpperCase();
     text(issue?.summary, `Known issue ${id} summary`);
     if (!DEFECT_SEVERITIES.has(severity)) throw new TypeError(`Known issue ${id} has unsupported severity ${severity}.`);
+    const defect = defectsByIssue.get(id);
+    if (!defect) throw new Error(`Known issue ${id} is missing from the release defect inventory.`);
+    if (defect.severity !== severity) throw new Error(`Known issue ${id} severity does not match the release defect inventory.`);
+    if (defect.disposition !== 'known-issue') {
+      throw new Error(`Known issue ${id} must have known-issue disposition in the release defect inventory.`);
+    }
+    knownIssueIds.add(id);
     if (severity === 'P0' || severity === 'P1') blockers.push(`${id} ${severity} cannot be published as a releasable known issue.`);
+  }
+  for (const defect of defectsByIssue.values()) {
+    if (defect.disposition === 'known-issue' && !knownIssueIds.has(defect.issue)) {
+      throw new Error(`Release defect ${defect.issue} is marked known-issue but is missing from published known issues.`);
+    }
   }
 
   const signoffStatus = text(input.signoff?.status, 'Release sign-off status').toLowerCase();
   if (signoffStatus === 'approved') {
     text(input.signoff?.signer, 'Release sign-off signer');
-    text(input.signoff?.recordedAt, 'Release sign-off timestamp');
+    timestamp(input.signoff?.recordedAt, 'Release sign-off timestamp');
     evidence(input.signoff?.evidence ?? [], candidate, 'Release sign-off', { required: true });
   } else {
     blockers.push(`Release sign-off is ${signoffStatus}.`);
