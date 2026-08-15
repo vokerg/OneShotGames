@@ -52,6 +52,27 @@ const server = createServer(async (request, response) => {
   try {
     const pathname = decodeURIComponent(new URL(request.url, pageUrl).pathname);
     const requested = pathname === '/' ? 'visual-regression.html' : pathname.replace(/^\/+/, '');
+
+    // Reconstruct BUG-242's exact pre-fix presentation from the active app by
+    // serving index.html with only this branch's operation-selector override removed.
+    // This keeps before/after evidence on the same runtime/content revision.
+    if (requested === 'bug-242-before.html') {
+      const indexHtml = await readFile(resolve(root, 'index.html'), 'utf8');
+      const beforeHtml = indexHtml.replace('href="operation-cards.css"', 'href="bug-242-before.css"');
+      if (beforeHtml === indexHtml) throw new Error('BUG-242 baseline could not replace operation-cards.css.');
+      response.setHeader('content-type', 'text/html');
+      response.end(beforeHtml);
+      return;
+    }
+    if (requested === 'bug-242-before.css') {
+      const operationCss = await readFile(resolve(root, 'operation-cards.css'), 'utf8');
+      const beforeCss = operationCss.replace(/#missionSelect\s*>\s*\.book\s*\{[\s\S]*?\}\s*/, '');
+      if (beforeCss === operationCss) throw new Error('BUG-242 baseline could not remove the selector override.');
+      response.setHeader('content-type', 'text/css');
+      response.end(beforeCss);
+      return;
+    }
+
     const file = resolve(root, requested);
     const projectRelative = relative(root, file);
     if (isAbsolute(projectRelative) || projectRelative === '..' || projectRelative.startsWith(`..${sep}`)) throw new Error('Invalid path');
@@ -78,6 +99,37 @@ try {
   await runBrowser(browser, [...common, '--window-size=1920,1080', `--screenshot=${screenshot}`, pageUrl]);
   const screenshotStat = await stat(screenshot);
   if (screenshotStat.size < 4096) throw new Error(`Visual-regression screenshot is unexpectedly small (${screenshotStat.size} bytes).`);
+
+  // BUG-242 requires real-application before/after evidence, not only Art Lab or
+  // synthetic scenes. Capture the exact pre-fix CSS baseline, the fixed release
+  // viewport, and the application's supported 960px minimum-width boundary.
+  const operationCaptures = [];
+  for (const target of [
+    { width: 1920, height: 1080, label: 'desktop-before', page: 'bug-242-before.html', variant: 'before' },
+    { width: 1920, height: 1080, label: 'desktop-after', page: 'index.html', variant: 'after' },
+    { width: 960, height: 900, label: 'supported-960-after', page: 'index.html', variant: 'after' },
+  ]) {
+    const name = `bug-242-operation-selector-${target.label}.png`;
+    const output = resolve(artifacts, name);
+    const url = `http://${host}:${port}/${target.page}`;
+    const review = await runBrowser(browser, [
+      '--headless=new', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--hide-scrollbars', '--virtual-time-budget=6000',
+      `--window-size=${target.width},${target.height}`, '--dump-dom', `--screenshot=${output}`, url,
+    ], { timeoutMs: 60_000 });
+    if (!review.stdout.includes('id="missionSelect"')) throw new Error('BUG-242 operation selector was not present in the real application DOM.');
+    if (review.stdout.includes('id="missionSelect" class="hidden"')) throw new Error('BUG-242 operation selector unexpectedly started hidden.');
+    if (!review.stdout.includes('class="missionCard')) throw new Error('BUG-242 operation cards did not render before capture.');
+    const captureStat = await stat(output);
+    if (captureStat.size < 4096) throw new Error(`BUG-242 operation-selector capture ${name} is unexpectedly small (${captureStat.size} bytes).`);
+    operationCaptures.push({
+      file: name,
+      page: target.page,
+      variant: target.variant,
+      width: target.width,
+      height: target.height,
+      bytes: captureStat.size,
+    });
+  }
 
   // Keep CI bounded: the Art Lab retains four manual pages covering all 32 identities,
   // while automation captures one faction in color and the opposing support page in
@@ -109,6 +161,12 @@ try {
     screenshot: 'visual-regression-overview.png',
     width: 1920,
     height: 1080,
+    operationSelectorReview: {
+      page: 'index.html',
+      baselinePage: 'bug-242-before.html',
+      issue: 242,
+      captures: operationCaptures,
+    },
     supportReview: {
       page: 'art-lab.html',
       width: 1600,
@@ -119,7 +177,7 @@ try {
     },
     ...summary,
   }, null, 2));
-  console.log(`[visual-regression-browser] captured ${summary.total} scenes and ${supportCaptures.length} bounded UFR-114 Art Lab reviews to artifacts/visual-regression`);
+  console.log(`[visual-regression-browser] captured ${summary.total} scenes, ${operationCaptures.length} BUG-242 operation-selector reviews, and ${supportCaptures.length} bounded UFR-114 Art Lab reviews to artifacts/visual-regression`);
 } finally {
   await new Promise((resolveClose) => server.close(resolveClose));
 }
