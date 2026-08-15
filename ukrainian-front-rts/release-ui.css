@@ -22,12 +22,10 @@
   white-space: nowrap;
 }
 
+/* The eight-control worker matrix is useful on wide desktops, but it must not turn
+   the release HUD into a two-row control block at 1280px/standard laptop widths. */
 #workerOverview.workerOverview {
-  grid-template-columns: repeat(4, minmax(48px, 1fr)) !important;
-  min-width: 220px !important;
-  max-width: 250px !important;
-  align-self: stretch;
-  gap: 2px !important;
+  display: none !important;
 }
 
 #workerOverview .workerOverviewButton {
@@ -151,30 +149,18 @@
 
 @media (min-width: 1720px) {
   #workerOverview.workerOverview {
+    display: grid !important;
     grid-template-columns: repeat(8, minmax(48px, 1fr)) !important;
     min-width: 410px !important;
     max-width: 440px !important;
-  }
-}
-
-@media (max-width: 1050px) and (min-width: 761px) {
-  :root {
-    --release-topbar-height: 72px;
-  }
-
-  #workerOverview.workerOverview {
-    min-width: 200px !important;
-    max-width: 220px !important;
+    align-self: center;
+    gap: 2px !important;
   }
 }
 
 @media (max-width: 760px) {
   :root {
     --release-topbar-height: 54px;
-  }
-
-  #workerOverview.workerOverview {
-    display: none !important;
   }
 
   .commandCardAction.ability {
