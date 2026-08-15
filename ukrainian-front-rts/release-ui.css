@@ -23,9 +23,23 @@
 }
 
 /* The eight-control worker matrix is useful on ultrawide desktops, but it must not
-   displace release controls at 1280px/1920px standard review widths. */
+   displace release controls at 1280px/1920px standard review widths. Keep a zero-width
+   in-row box instead of display:none so layout diagnostics measure it inside #topbar. */
 #workerOverview.workerOverview {
-  display: none !important;
+  display: grid !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  max-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  gap: 0 !important;
+  overflow: hidden !important;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 #workerOverview .workerOverviewButton {
@@ -151,10 +165,18 @@
    the optional worker matrix only once the viewport has enough ultrawide headroom. */
 @media (min-width: 2240px) {
   #workerOverview.workerOverview {
-    display: grid !important;
-    grid-template-columns: repeat(8, minmax(48px, 1fr)) !important;
+    width: auto !important;
     min-width: 410px !important;
     max-width: 440px !important;
+    height: auto !important;
+    min-height: initial !important;
+    max-height: none !important;
+    padding: initial !important;
+    margin: initial !important;
+    border: initial !important;
+    visibility: visible;
+    pointer-events: auto;
+    grid-template-columns: repeat(8, minmax(48px, 1fr)) !important;
     align-self: center;
     gap: 2px !important;
   }
