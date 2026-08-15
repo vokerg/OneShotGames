@@ -1,6 +1,12 @@
 /* Operation-selection readability overrides.
- * Loaded after ui-skin.css so the parchment frame cannot paint a dark fill beneath dark text.
+ * Loaded after ui-skin.css so operation-specific material/readability rules win.
  */
+#missionSelect > .book {
+  /* Keep the parchment nine-slice border, but remove its opaque center fill so
+   * the book's own parchment background image remains visible. */
+  border-image-slice: 12;
+}
+
 .missionCard {
   grid-template-columns: 130px minmax(0, 1fr) max-content;
   color: #2d2417;
