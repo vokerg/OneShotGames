@@ -2,8 +2,8 @@
  * Loaded after ui-skin.css so operation-specific material/readability rules win.
  */
 #missionSelect > .book {
-  /* Keep the parchment nine-slice border, but remove its opaque center fill so
-   * the book's own parchment background image remains visible. */
+  /* Keep the parchment nine-slice border, but remove its dark center fill so
+   * the book's light background surface remains visible behind header/footer copy. */
   border-image-slice: 12;
 }
 
