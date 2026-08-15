@@ -11,7 +11,23 @@ const [indexHtml, uiSkinCss, operationCardsCss] = await Promise.all([
   readProjectFile('operation-cards.css'),
 ]);
 
-test('operation material override composes after the global parchment skin', () => {
+function relativeLuminance(hex) {
+  const channels = hex.match(/[0-9a-f]{2}/gi).map((value) => Number.parseInt(value, 16) / 255);
+  const linear = channels.map((value) => (
+    value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4
+  ));
+  return (0.2126 * linear[0]) + (0.7152 * linear[1]) + (0.0722 * linear[2]);
+}
+
+function contrastRatio(foreground, background) {
+  const foregroundLuminance = relativeLuminance(foreground);
+  const backgroundLuminance = relativeLuminance(background);
+  const lighter = Math.max(foregroundLuminance, backgroundLuminance);
+  const darker = Math.min(foregroundLuminance, backgroundLuminance);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+test('operation contrast override composes after the global parchment skin', () => {
   const skinLink = '<link rel="stylesheet" href="ui-skin.css" />';
   const operationLink = '<link rel="stylesheet" href="operation-cards.css" />';
 
@@ -19,31 +35,35 @@ test('operation material override composes after the global parchment skin', () 
   assert.ok(indexHtml.includes(operationLink), 'index must load operation-specific card styles');
   assert.ok(
     indexHtml.indexOf(operationLink) > indexHtml.indexOf(skinLink),
-    'operation-specific material overrides must load after the global skin',
+    'operation-specific readability overrides must load after the global skin',
   );
   assert.match(
     indexHtml,
     /<div id="missionSelect">\s*<div class="book">/,
-    'the material override must target the operation selector book container',
+    'the readability override must target the operation selector book container',
   );
 });
 
-test('operation selector removes only the opaque nine-slice center fill', () => {
-  const globalBookRule = uiSkinCss.match(/\.book\s*\{([\s\S]*?)\}/);
-  assert.ok(globalBookRule, 'global .book parchment rule must exist');
-  assert.match(globalBookRule[1], /background-image:\s*url\(['"]textures\/parchment\.svg['"]\)/);
-  assert.match(globalBookRule[1], /border-image:\s*url\(['"]textures\/parchment\.svg['"]\)\s+12\s+fill\s+stretch/);
+test('operation selector removes the dark nine-slice center fill and exposes a readable book surface', () => {
+  const parchmentRule = uiSkinCss.match(/\.book,\s*\.endgameCard\s*\{([\s\S]*?)\}/);
+  assert.ok(parchmentRule, 'global parchment frame rule must exist');
+  assert.match(parchmentRule[1], /border-image-source:\s*url\(["']assets\/ui\/skin\/parchment\.svg["']\)/);
+  assert.match(parchmentRule[1], /border-image-slice:\s*12\s+fill\s*;/);
+
+  const bookSurfaceRule = uiSkinCss.match(/\.book\s*\{([^}]*)background-color:\s*(#[0-9a-f]{6})\s*;([^}]*)\}/i);
+  assert.ok(bookSurfaceRule, 'global book rule must provide the light fallback surface');
+  const bookBackground = bookSurfaceRule[2].toLowerCase();
 
   const selectorRule = operationCardsCss.match(/#missionSelect\s*>\s*\.book\s*\{([\s\S]*?)\}/);
-  assert.ok(selectorRule, 'operation selector must override the global book material');
+  assert.ok(selectorRule, 'operation selector must override the global parchment frame');
   const declarations = stripComments(selectorRule[1]);
-
   assert.match(declarations, /border-image-slice:\s*12\s*;/);
-  assert.doesNotMatch(declarations, /\bfill\b/, 'selector override must not repaint the nine-slice center');
-  assert.doesNotMatch(
-    declarations,
-    /background(?:-image)?\s*:/,
-    'selector override must preserve the global parchment background image',
+  assert.doesNotMatch(declarations, /\bfill\b/, 'selector override must not repaint the dark center fill');
+  assert.doesNotMatch(declarations, /background(?:-color|-image)?\s*:/, 'selector override must preserve the book surface');
+
+  assert.ok(
+    contrastRatio('#2d2417', bookBackground) >= 4.5,
+    `book copy contrast against ${bookBackground} must meet WCAG AA for normal text`,
   );
 });
 
