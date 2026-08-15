@@ -36,9 +36,10 @@ A promotable record requires all of the following against the exact candidate co
 2. `schemas`, `assets`, and `content` each have `status: "frozen"` and commit-bound evidence.
 3. UFR-159 release-candidate QA has `verdict: "PASS"` with evidence against the candidate.
 4. A release-candidate tag is recorded with commit-bound evidence.
-5. Every P0/P1 release defect is `fixed` with commit-bound evidence. A waiver or known-issue disposition is not sufficient at UFR-160.
-6. Published known issues contain only P2/P3 items.
-7. Release sign-off is approved by a named signer, timestamped, and backed by commit-bound evidence.
+5. The release-defect audit has `status: "pass"` with commit-bound evidence establishing the candidate's complete release-defect inventory. Omitting the inventory is not a passing state.
+6. Every P0/P1 release defect is `fixed` with commit-bound evidence. A waiver or known-issue disposition is not sufficient at UFR-160.
+7. Published known issues contain only P2/P3 items and reconcile exactly with `known-issue` dispositions in the defect inventory.
+8. Release sign-off is approved by a named signer, has a valid ISO-8601 timestamp with explicit offset, and is backed by commit-bound evidence.
 
 A Git commit already gives the freeze an immutable technical boundary. The freeze evidence should point to verification proving that the schemas, runtime content, and packaged asset/provenance inventories correspond to that exact commit and did not drift after the candidate was cut.
 
