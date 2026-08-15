@@ -1,0 +1,207 @@
+/* UFR-160 release-gate corrections for command-card and top-HUD composition. */
+
+:root {
+  --release-topbar-height: 64px;
+}
+
+#topbar {
+  height: var(--release-topbar-height);
+  min-height: var(--release-topbar-height);
+  max-height: var(--release-topbar-height);
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+#topbar > * {
+  flex: 0 0 auto;
+}
+
+#topbar button,
+#topbar .resource,
+#topbar .threat {
+  white-space: nowrap;
+}
+
+#workerOverview.workerOverview {
+  grid-template-columns: repeat(4, minmax(48px, 1fr)) !important;
+  min-width: 220px !important;
+  max-width: 250px !important;
+  align-self: stretch;
+  gap: 2px !important;
+}
+
+#workerOverview .workerOverviewButton {
+  min-height: 24px !important;
+  padding: 1px 3px !important;
+  overflow: hidden;
+  border-width: 3px;
+}
+
+#workerOverview .workerOverviewButton strong,
+#workerOverview .workerOverviewButton small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#abilities {
+  min-height: 0;
+  gap: 3px;
+}
+
+.commandCardGrid {
+  min-height: 0;
+  gap: 3px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(34px, 1fr));
+}
+
+.commandCardAction.ability {
+  position: relative;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  align-items: center;
+  min-height: 34px;
+  padding: 3px 5px;
+  column-gap: 5px;
+  row-gap: 1px;
+  overflow: hidden;
+  border-width: 3px;
+  text-align: left;
+}
+
+.commandCardIcon {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  width: 20px;
+  height: 20px;
+  align-self: center;
+  justify-self: center;
+  color: var(--ui-color-text, #f3ead5);
+  pointer-events: none;
+}
+
+.commandCardIcon[data-icon-status='fallback'] {
+  color: #ff4fa3;
+}
+
+.commandCardAction .commandTitle {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 10px;
+  line-height: 1.05;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commandCardAction .commandDescription,
+.commandCardAction .commandGroupLabel {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.commandCardAction .commandHotkey,
+.commandCardAction .abilityMeta,
+.commandCardAction .commandDisabledReason {
+  grid-column: 2;
+  grid-row: 2;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 8px;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commandCardAction .commandDisabledReason {
+  color: var(--ui-color-warning, #d49a55);
+}
+
+.commandCardPager {
+  min-height: 28px;
+  height: 28px;
+  gap: 4px;
+}
+
+.commandCardPageButton {
+  min-height: 28px;
+  padding: 2px 7px;
+  border-width: 3px;
+}
+
+.notificationCenter {
+  top: calc(var(--release-topbar-height) + 18px) !important;
+}
+
+@media (max-width: 1400px) and (min-width: 761px) {
+  #threatStatus {
+    display: none;
+  }
+}
+
+@media (min-width: 1720px) {
+  #workerOverview.workerOverview {
+    grid-template-columns: repeat(8, minmax(48px, 1fr)) !important;
+    min-width: 410px !important;
+    max-width: 440px !important;
+  }
+}
+
+@media (max-width: 1050px) and (min-width: 761px) {
+  :root {
+    --release-topbar-height: 72px;
+  }
+
+  #workerOverview.workerOverview {
+    min-width: 200px !important;
+    max-width: 220px !important;
+  }
+}
+
+@media (max-width: 760px) {
+  :root {
+    --release-topbar-height: 54px;
+  }
+
+  #workerOverview.workerOverview {
+    display: none !important;
+  }
+
+  .commandCardAction.ability {
+    grid-template-columns: 20px minmax(0, 1fr);
+    padding-inline: 4px;
+  }
+
+  .commandCardIcon {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .commandCardAction,
+  .commandCardIcon {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .commandCardIcon {
+    color: ButtonText;
+  }
+
+  .commandCardIcon[data-icon-status='fallback'] {
+    color: Highlight;
+  }
+}
