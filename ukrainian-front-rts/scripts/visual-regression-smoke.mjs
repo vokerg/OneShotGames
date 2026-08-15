@@ -79,6 +79,29 @@ try {
   const screenshotStat = await stat(screenshot);
   if (screenshotStat.size < 4096) throw new Error(`Visual-regression screenshot is unexpectedly small (${screenshotStat.size} bytes).`);
 
+  // BUG-242 requires real-application operation-selector evidence, not only
+  // Art Lab/synthetic scenes. Capture the release viewport and the narrowest
+  // operation-card breakpoint while also proving the selector stayed visible.
+  const operationCaptures = [];
+  for (const target of [
+    { width: 1920, height: 1080, label: 'desktop' },
+    { width: 760, height: 900, label: 'responsive-760' },
+  ]) {
+    const name = `bug-242-operation-selector-${target.label}.png`;
+    const output = resolve(artifacts, name);
+    const url = `http://${host}:${port}/index.html`;
+    const review = await runBrowser(browser, [
+      '--headless=new', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--hide-scrollbars', '--virtual-time-budget=6000',
+      `--window-size=${target.width},${target.height}`, '--dump-dom', `--screenshot=${output}`, url,
+    ], { timeoutMs: 60_000 });
+    if (!review.stdout.includes('id="missionSelect"')) throw new Error('BUG-242 operation selector was not present in the real application DOM.');
+    if (review.stdout.includes('id="missionSelect" class="hidden"')) throw new Error('BUG-242 operation selector unexpectedly started hidden.');
+    if (!review.stdout.includes('class="missionCard')) throw new Error('BUG-242 operation cards did not render before capture.');
+    const captureStat = await stat(output);
+    if (captureStat.size < 4096) throw new Error(`BUG-242 operation-selector capture ${name} is unexpectedly small (${captureStat.size} bytes).`);
+    operationCaptures.push({ file: name, width: target.width, height: target.height, bytes: captureStat.size });
+  }
+
   // Keep CI bounded: the Art Lab retains four manual pages covering all 32 identities,
   // while automation captures one faction in color and the opposing support page in
   // grayscale. Unit tests and the support verifier enforce exact 32-identity coverage.
@@ -109,6 +132,11 @@ try {
     screenshot: 'visual-regression-overview.png',
     width: 1920,
     height: 1080,
+    operationSelectorReview: {
+      page: 'index.html',
+      issue: 242,
+      captures: operationCaptures,
+    },
     supportReview: {
       page: 'art-lab.html',
       width: 1600,
@@ -119,7 +147,7 @@ try {
     },
     ...summary,
   }, null, 2));
-  console.log(`[visual-regression-browser] captured ${summary.total} scenes and ${supportCaptures.length} bounded UFR-114 Art Lab reviews to artifacts/visual-regression`);
+  console.log(`[visual-regression-browser] captured ${summary.total} scenes, ${operationCaptures.length} BUG-242 operation-selector reviews, and ${supportCaptures.length} bounded UFR-114 Art Lab reviews to artifacts/visual-regression`);
 } finally {
   await new Promise((resolveClose) => server.close(resolveClose));
 }
