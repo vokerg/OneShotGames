@@ -4,7 +4,7 @@
   display: flex;
   flex-direction: column;
   gap: 5px;
-  overflow: hidden;
+  overflow: visible;
   padding: 2px 6px 2px 2px;
 }
 
@@ -22,7 +22,18 @@
   min-height: var(--ui-target-min, 32px);
   height: 100%;
   padding: 18px 7px 17px;
+  overflow: visible;
+  isolation: isolate;
+}
+
+.commandCardAction > .commandTitle,
+.commandCardAction > .commandDescription,
+.commandCardAction > .abilityMeta,
+.commandCardAction > .commandDisabledReason {
+  min-width: 0;
+  max-width: 100%;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .commandCardAction[data-targeting='true'] {
@@ -34,13 +45,7 @@
 }
 
 .commandCardAction[data-targeting='true']::after {
-  content: 'TARGETING';
-  position: absolute;
-  left: 6px;
-  bottom: 4px;
-  color: var(--ui-color-selection);
-  font: 700 8px/1 var(--ui-data-font);
-  letter-spacing: .08em;
+  content: attr(aria-label);
 }
 
 .commandGroupLabel {
@@ -72,18 +77,43 @@
   text-shadow: none;
 }
 
+.commandCardAction:has(.commandHotkey) .commandGroupLabel {
+  max-width: calc(100% - 38px);
+}
+
 .commandCardAction .commandTitle {
+  display: block;
   overflow: hidden;
+  font-size: 12px;
+  line-height: 1.05;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .commandCardAction .commandDescription {
-  display: -webkit-box;
-  max-height: 28px;
+  display: block;
+  max-height: 12px;
   overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  font-size: 10px;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Cost/cooldown metadata is bottom-anchored. On compact 4x3 cards the description
+ * must yield that vertical lane instead of flowing underneath it. Full details stay
+ * available through the card's aria-label tooltip below. */
+.commandCardAction:has(.abilityMeta) .commandDescription,
+.commandCardAction:has(.commandDisabledReason) .commandDescription {
+  display: none;
+}
+
+.commandCardAction .abilityMeta {
+  right: 5px;
+  bottom: 3px;
+  left: 5px;
+  max-width: calc(100% - 10px);
+  white-space: nowrap;
 }
 
 .commandDisabledReason {
@@ -99,6 +129,40 @@
 .commandCardAction:disabled .abilityMeta,
 .commandCardAction:disabled .commandDescription {
   visibility: hidden;
+}
+
+/* Compact cards intentionally retain ellipsis, but never make ellipsis the only
+ * way to identify a command. The complete accessible label is also the hover/focus
+ * detail surface at desktop and responsive widths. */
+.commandCardAction::after {
+  content: attr(aria-label);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 7px);
+  width: max-content;
+  max-width: min(320px, 72vw);
+  padding: 7px 9px;
+  color: var(--ui-color-text);
+  background: var(--ui-color-panel);
+  border: 1px solid var(--ui-color-objective);
+  box-shadow: var(--ui-shadow-soft);
+  font: 11px/1.35 var(--ui-body-font);
+  text-align: left;
+  text-shadow: none;
+  white-space: normal;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, 4px);
+  transition: opacity var(--ui-transition) linear, transform var(--ui-transition) linear;
+  z-index: 60;
+}
+
+.commandCardAction:hover::after,
+.commandCardAction:focus-visible::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
 }
 
 .commandGroup-targeting { background-color: #34413a; }
@@ -131,10 +195,12 @@
 @media (max-width: 1050px) {
   .commandCardGrid { gap: 5px; }
   .commandCardAction { padding-inline: 5px; }
+  .commandCardAction::after { max-width: min(280px, 84vw); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .commandCardAction[data-targeting='true'] { filter: none; }
+  .commandCardAction::after { transition: none; }
 }
 
 @media (forced-colors: active) {
@@ -146,5 +212,11 @@
   .commandCardAction[data-targeting='true'] {
     outline: 3px solid Highlight;
     outline-offset: -3px;
+  }
+  .commandCardAction::after {
+    color: CanvasText;
+    background: Canvas;
+    border-color: CanvasText;
+    box-shadow: none;
   }
 }
