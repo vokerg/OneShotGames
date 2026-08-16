@@ -155,7 +155,9 @@
   top: calc(var(--release-topbar-height) + 18px) !important;
 }
 
-@media (max-width: 1400px) and (min-width: 761px) {
+/* Threat detail is secondary to the utility controls. Reserve it for wide desktops so
+   common 1280/1440-class viewports keep pause/objectives/fullscreen/messages visible. */
+@media (max-width: 1600px) and (min-width: 761px) {
   #threatStatus {
     display: none;
   }
