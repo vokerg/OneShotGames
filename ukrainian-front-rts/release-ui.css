@@ -167,15 +167,17 @@
   }
 }
 
-/* Headed browser runners and small desktop windows can be narrower than the supported
-   1280px release floor. Preserve pause/objectives/fullscreen/messages access there by
-   dropping only the decorative wordmark and tightening inter-control spacing. */
+/* Hosted headed-browser desktops can be narrower than the supported 1280px release
+   floor. Keep operational release utilities reachable there by dropping the decorative
+   wordmark and the economy/tech shortcuts; those panels remain in the supported UI. */
 @media (max-width: 1100px) and (min-width: 761px) {
   #topbar {
     gap: 3px;
   }
 
-  #topbar .crest {
+  #topbar .crest,
+  #economyHudToggle,
+  #techTreeToggle {
     display: none;
   }
 }
