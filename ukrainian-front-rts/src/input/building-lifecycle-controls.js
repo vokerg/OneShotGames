@@ -11,9 +11,11 @@ export function installBuildingLifecycleControls({ game, ui } = {}) {
     if (building.team !== 0) return;
     const snapshot = game.buildingLifecycleSnapshot(building);
     ui.commandButton({
+      id: 'sell-structure',
       title: 'Sell Structure',
       description: 'Remove this completed empty structure for a partial integrity-scaled refund.',
       meta: snapshot?.sellable ? 'Refund resources' : 'Unavailable',
+      group: 'construction',
       className: 'building-lifecycle-command',
       disabled: !snapshot?.sellable,
       onClick: () => {
@@ -23,9 +25,11 @@ export function installBuildingLifecycleControls({ game, ui } = {}) {
       },
     });
     ui.commandButton({
+      id: 'scuttle-structure',
       title: 'Scuttle Structure',
       description: 'Destroy this structure immediately and leave a wreck/rubble obstruction.',
       meta: snapshot?.scuttleAvailable ? 'No refund' : 'Unavailable',
+      group: 'construction',
       className: 'building-lifecycle-command danger',
       disabled: !snapshot?.scuttleAvailable,
       onClick: () => {
