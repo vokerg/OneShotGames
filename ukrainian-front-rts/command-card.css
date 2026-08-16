@@ -143,6 +143,13 @@
   z-index: 60;
 }
 
+/* Each card is an isolated stacking context; raise the active card itself so the
+ * complete label paints above neighboring cards rather than underneath them. */
+.commandCardAction:hover,
+.commandCardAction:focus-visible {
+  z-index: 80;
+}
+
 .commandCardAction:hover::after,
 .commandCardAction:focus-visible::after {
   opacity: 1;
