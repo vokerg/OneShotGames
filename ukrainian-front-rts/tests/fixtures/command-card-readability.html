@@ -119,18 +119,10 @@
     for (const action of actions) controller.add(action);
     controller.commit();
 
-    await document.fonts.ready;
-    await Promise.all([...document.styleSheets].map((sheet) => {
-      const owner = sheet.ownerNode;
-      if (!(owner instanceof HTMLLinkElement)) return Promise.resolve();
-      if (owner.sheet) return Promise.resolve();
-      return new Promise((resolve) => {
-        owner.addEventListener('load', resolve, { once: true });
-        owner.addEventListener('error', resolve, { once: true });
-      });
-    }));
-    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-
+    // Keep diagnostics synchronous. Chromium's --dump-dom snapshot does not wait for
+    // top-level module awaits even when the later screenshot has finished rendering.
+    // Stylesheets block module execution here, and getComputedStyle()/client rect reads
+    // synchronously flush the layout used by the assertions below.
     const isVisible = (element) => {
       const style = getComputedStyle(element);
       const rect = element.getBoundingClientRect();
@@ -177,7 +169,6 @@
       || !card?.getAttribute('aria-label')?.includes(action.description));
 
     english?.focus();
-    await new Promise((resolve) => requestAnimationFrame(resolve));
     const focusedStyle = english ? getComputedStyle(english) : null;
     const focusedDetailStyle = english ? getComputedStyle(english, '::after') : null;
 
