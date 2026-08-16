@@ -161,6 +161,19 @@
   }
 }
 
+/* Headed browser runners and small desktop windows can be narrower than the supported
+   1280px release floor. Preserve pause/objectives/fullscreen/messages access there by
+   dropping only the decorative wordmark and tightening inter-control spacing. */
+@media (max-width: 1100px) and (min-width: 761px) {
+  #topbar {
+    gap: 5px;
+  }
+
+  #topbar .crest {
+    display: none;
+  }
+}
+
 /* The 1920px release/localization review needs the full trailing control set. Restore
    the optional worker matrix only once the viewport has enough ultrawide headroom. */
 @media (min-width: 2240px) {
