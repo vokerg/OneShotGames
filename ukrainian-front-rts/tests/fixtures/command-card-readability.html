@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <base href="/">
+  <title>Command Card Readability Review</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="ui-skin.css">
+</head>
+<body>
+  <div id="shell">
+    <canvas id="game" width="1600" height="1000" aria-hidden="true"></canvas>
+    <section id="commandPanel" aria-label="Command card readability review HUD">
+      <div class="portrait">
+        <canvas id="portrait" width="144" height="144" aria-hidden="true"></canvas>
+        <div>
+          <h3>Representative Selection</h3>
+          <p>Production, repair, stance, construction, modernization, and ability labels.</p>
+        </div>
+      </div>
+      <div id="abilities"></div>
+      <div class="minimapFrame"><canvas id="minimap" width="230" height="150" aria-hidden="true"></canvas></div>
+    </section>
+  </div>
+
+  <script type="module">
+    import { createCommandCardController } from './src/ui/command-card.js';
+
+    const actions = [
+      {
+        id: 'production-long-en',
+        title: 'Ukrainian Mechanized Infantry Section',
+        description: 'Train a mechanized infantry section with transport-ready battlefield support.',
+        meta: '120M 35F',
+        className: 'production-command',
+        group: 'production',
+        onClick() {},
+      },
+      {
+        id: 'return-for-repair',
+        title: 'Return for Repair',
+        description: 'Send damaged vehicles to the nearest operational repair workshop.',
+        meta: 'R',
+        hotkey: 'R',
+        className: 'command',
+        group: 'order',
+        onClick() {},
+      },
+      {
+        id: 'production-long-uk',
+        title: 'Виробництво українського механізованого піхотного відділення',
+        description: 'Підготувати механізоване піхотне відділення для підтримки на полі бою.',
+        meta: '120М 35П',
+        className: 'production-command',
+        group: 'production',
+        onClick() {},
+      },
+      {
+        id: 'repair-disabled',
+        title: 'Return for Repair',
+        description: 'Send damaged vehicles to the nearest operational repair workshop.',
+        meta: 'R',
+        hotkey: 'R',
+        className: 'command',
+        group: 'order',
+        disabled: true,
+        disabledReason: 'No operational repair workshop is available.',
+        onClick() {},
+      },
+      {
+        id: 'build-workshop',
+        title: 'Build Repair Workshop',
+        description: 'Place an operational repair and vehicle-support workshop.',
+        meta: '180M 60F',
+        className: 'build-command',
+        group: 'construction',
+        onClick() {},
+      },
+      {
+        id: 'modernization',
+        title: 'Advanced Battlefield Logistics',
+        description: 'Improve sustained resupply and repair throughput.',
+        meta: '90M 40I',
+        className: 'upgrade-command',
+        group: 'modernization',
+        onClick() {},
+      },
+      {
+        id: 'stance',
+        title: 'Auto-Fire: ON',
+        description: 'Automatically engage valid hostile contacts in weapon range.',
+        meta: 'T',
+        hotkey: 'T',
+        className: 'command stance-on',
+        group: 'stance',
+        onClick() {},
+      },
+      {
+        id: 'ability',
+        title: 'Emergency Smoke Deployment',
+        description: 'Deploy screening smoke around the selected formation.',
+        meta: '30s',
+        className: 'command',
+        group: 'ability',
+        onClick() {},
+      },
+    ];
+
+    const root = document.querySelector('#abilities');
+    const controller = createCommandCardController({
+      root,
+      game: { mouse: {}, player: {} },
+      documentTarget: document,
+    });
+    controller.begin([{ id: 1, type: 'uaInfantry' }]);
+    for (const action of actions) controller.add(action);
+    controller.commit();
+
+    await document.fonts.ready;
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+    const isVisible = (element) => {
+      const style = getComputedStyle(element);
+      const rect = element.getBoundingClientRect();
+      return style.display !== 'none'
+        && style.visibility !== 'hidden'
+        && Number(style.opacity || 1) !== 0
+        && rect.width > 0
+        && rect.height > 0;
+    };
+    const intersects = (left, right) => {
+      const horizontal = Math.min(left.right, right.right) - Math.max(left.left, right.left);
+      const vertical = Math.min(left.bottom, right.bottom) - Math.max(left.top, right.top);
+      return horizontal > 0.5 && vertical > 0.5;
+    };
+
+    const diagnostics = [];
+    const cards = [...root.querySelectorAll('.commandCardAction')];
+    for (const card of cards) {
+      const parts = [...card.querySelectorAll('.commandGroupLabel, .commandHotkey, .commandTitle, .commandDescription, .abilityMeta, .commandDisabledReason')]
+        .filter(isVisible);
+      for (let leftIndex = 0; leftIndex < parts.length; leftIndex += 1) {
+        for (let rightIndex = leftIndex + 1; rightIndex < parts.length; rightIndex += 1) {
+          const left = parts[leftIndex];
+          const right = parts[rightIndex];
+          if (intersects(left.getBoundingClientRect(), right.getBoundingClientRect())) {
+            diagnostics.push({
+              commandId: card.dataset.commandId,
+              left: left.className,
+              right: right.className,
+            });
+          }
+        }
+      }
+    }
+
+    const english = cards.find((card) => card.dataset.commandId === 'production-long-en');
+    const ukrainian = cards.find((card) => card.dataset.commandId === 'production-long-uk');
+    const repair = cards.find((card) => card.dataset.commandId === 'return-for-repair');
+    const detailFailures = [
+      [english, actions[0]],
+      [ukrainian, actions[2]],
+      [repair, actions[1]],
+    ].filter(([card, action]) => !card?.getAttribute('aria-label')?.includes(action.title)
+      || !card?.getAttribute('aria-label')?.includes(action.description));
+
+    english?.focus();
+    document.documentElement.dataset.commandCardReviewReady = 'true';
+    document.documentElement.dataset.commandCardActionCount = String(cards.length);
+    document.documentElement.dataset.commandCardOverlapCount = String(diagnostics.length);
+    document.documentElement.dataset.commandCardDetailFailureCount = String(detailFailures.length);
+    document.documentElement.dataset.commandCardViewport = `${innerWidth}x${innerHeight}`;
+
+    const report = document.createElement('pre');
+    report.id = 'commandCardReadabilityDiagnostics';
+    report.hidden = true;
+    report.textContent = JSON.stringify({ diagnostics, detailFailures: detailFailures.length }, null, 2);
+    document.body.append(report);
+  </script>
+</body>
+</html>
