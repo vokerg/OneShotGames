@@ -167,15 +167,22 @@
   }
 }
 
+/* At the supported 1280px floor, all functional resources and controls take priority
+   over the decorative wordmark. This keeps fullscreen/help inside the declared row. */
+@media (max-width: 1280px) and (min-width: 761px) {
+  #topbar .crest {
+    display: none;
+  }
+}
+
 /* Hosted headed-browser desktops can be narrower than the supported 1280px release
-   floor. Keep operational release utilities reachable there by dropping the decorative
-   wordmark and the economy/tech shortcuts; those panels remain in the supported UI. */
+   floor. Keep operational release utilities reachable there by additionally dropping
+   the economy/tech shortcuts; those panels remain available at supported widths. */
 @media (max-width: 1100px) and (min-width: 761px) {
   #topbar {
     gap: 3px;
   }
 
-  #topbar .crest,
   #economyHudToggle,
   #techTreeToggle {
     display: none;
