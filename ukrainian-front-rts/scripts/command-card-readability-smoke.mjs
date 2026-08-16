@@ -54,11 +54,27 @@ function runBrowser(browser, arguments_, { timeoutMs = 45_000 } = {}) {
         stdout: Buffer.concat(stdout).toString(),
         stderr: Buffer.concat(stderr).toString(),
       };
-      code === 0
-        ? finish(resolveRun, result)
-        : finish(rejectRun, new Error(`Chrome exited with ${code ?? signal}: ${result.stderr}`));
+      if (code === 0) {
+        finish(resolveRun, result);
+        return;
+      }
+      const error = new Error(`Chrome exited with ${code ?? signal}: ${result.stderr}`);
+      error.result = result;
+      finish(rejectRun, error);
     });
   });
+}
+
+function dataAttribute(dom, name) {
+  return dom.match(new RegExp(`\\b${name}="([^"]*)"`))?.[1] ?? null;
+}
+
+async function fileBytes(path) {
+  try {
+    return (await stat(path)).size;
+  } catch {
+    return 0;
+  }
 }
 
 await mkdir(artifacts, { recursive: true });
@@ -97,44 +113,78 @@ const targets = [
   { label: 'responsive-760', width: 760, height: 900 },
 ];
 const captures = [];
+let activeTarget = null;
 
 try {
   for (const target of targets) {
+    activeTarget = target;
     const filename = `${target.label}.png`;
     const output = resolve(artifacts, filename);
-    const result = await runBrowser(browser, [
-      '--headless=new',
-      '--no-sandbox',
-      '--disable-gpu',
-      '--disable-dev-shm-usage',
-      '--hide-scrollbars',
-      '--force-device-scale-factor=1',
-      '--virtual-time-budget=4000',
-      `--window-size=${target.width},${target.height}`,
-      '--dump-dom',
-      `--screenshot=${output}`,
-      pageUrl,
-    ], { timeoutMs: 60_000 });
+    let result;
+    try {
+      result = await runBrowser(browser, [
+        '--headless=new',
+        '--no-sandbox',
+        '--disable-gpu',
+        '--disable-dev-shm-usage',
+        '--hide-scrollbars',
+        '--force-device-scale-factor=1',
+        '--virtual-time-budget=4000',
+        `--window-size=${target.width},${target.height}`,
+        '--dump-dom',
+        `--screenshot=${output}`,
+        pageUrl,
+      ], { timeoutMs: 60_000 });
+    } catch (error) {
+      const failedResult = error.result || { stdout: '', stderr: String(error), code: null, signal: null };
+      await writeFile(resolve(artifacts, `${target.label}-failure.json`), JSON.stringify({
+        target,
+        message: error.message,
+        browserExitCode: failedResult.code,
+        browserSignal: failedResult.signal,
+        screenshotBytes: await fileBytes(output),
+        stdoutTail: failedResult.stdout.slice(-12_000),
+        stderrTail: failedResult.stderr.slice(-12_000),
+      }, null, 2));
+      throw error;
+    }
 
-    if (!result.stdout.includes('data-command-card-review-ready="true"')) {
+    const screenshotBytes = await fileBytes(output);
+    const diagnostic = {
+      target,
+      browserExitCode: result.code,
+      ready: dataAttribute(result.stdout, 'data-command-card-review-ready'),
+      actionCount: dataAttribute(result.stdout, 'data-command-card-action-count'),
+      overlapCount: dataAttribute(result.stdout, 'data-command-card-overlap-count'),
+      overlapPairs: dataAttribute(result.stdout, 'data-command-card-overlap-pairs'),
+      detailFailureCount: dataAttribute(result.stdout, 'data-command-card-detail-failure-count'),
+      detailZIndex: dataAttribute(result.stdout, 'data-command-card-detail-z-index'),
+      detailOpacity: dataAttribute(result.stdout, 'data-command-card-detail-opacity'),
+      viewport: dataAttribute(result.stdout, 'data-command-card-viewport'),
+      screenshotBytes,
+      stderrTail: result.stderr.slice(-4_000),
+    };
+    await writeFile(resolve(artifacts, `${target.label}-diagnostic.json`), JSON.stringify(diagnostic, null, 2));
+
+    if (diagnostic.ready !== 'true') {
       throw new Error(`${target.label} command-card fixture did not reach its ready state.`);
     }
-    if (!result.stdout.includes('data-command-card-action-count="8"')) {
-      throw new Error(`${target.label} command-card fixture did not render all representative actions.`);
+    if (diagnostic.actionCount !== '8') {
+      throw new Error(`${target.label} command-card fixture rendered ${diagnostic.actionCount ?? 'unknown'} representative actions instead of 8.`);
     }
-    if (!result.stdout.includes('data-command-card-overlap-count="0"')) {
-      const diagnostic = result.stdout.match(/<pre[^>]*id="commandCardReadabilityDiagnostics"[^>]*>([\s\S]*?)<\/pre>/)?.[1] || 'no DOM diagnostic';
-      throw new Error(`${target.label} command-card text overlap detected: ${diagnostic}`);
+    if (diagnostic.overlapCount !== '0') {
+      throw new Error(`${target.label} command-card text overlap detected (${diagnostic.overlapCount ?? 'unknown'}): ${diagnostic.overlapPairs || 'no overlap pair diagnostic'}`);
     }
-    if (!result.stdout.includes('data-command-card-detail-failure-count="0"')) {
-      throw new Error(`${target.label} command-card full-detail accessibility contract failed.`);
+    if (diagnostic.detailFailureCount !== '0') {
+      throw new Error(`${target.label} command-card full-detail accessibility contract failed (${diagnostic.detailFailureCount ?? 'unknown'}).`);
     }
-
-    const screenshot = await stat(output);
-    if (screenshot.size < 10_000) {
-      throw new Error(`${target.label} command-card screenshot is unexpectedly small (${screenshot.size} bytes).`);
+    if (diagnostic.detailZIndex !== '80' || Number(diagnostic.detailOpacity) < 0.99) {
+      throw new Error(`${target.label} focused full-detail surface is not foreground-visible (z=${diagnostic.detailZIndex}, opacity=${diagnostic.detailOpacity}).`);
     }
-    captures.push({ ...target, file: filename, bytes: screenshot.size });
+    if (screenshotBytes < 10_000) {
+      throw new Error(`${target.label} command-card screenshot is unexpectedly small (${screenshotBytes} bytes).`);
+    }
+    captures.push({ ...target, file: filename, bytes: screenshotBytes });
   }
 
   await writeFile(resolve(artifacts, 'command-card-readability-manifest.json'), JSON.stringify({
@@ -145,11 +195,18 @@ try {
       representativeActions: 8,
       textOverlapCount: 0,
       fullDetailFailures: 0,
-      focusedDetailSurface: 'aria-label tooltip on the long English production command',
+      focusedDetailSurface: 'foreground aria-label tooltip on the long English production command',
     },
     captures,
   }, null, 2));
-  console.log(`[command-card-readability-browser] captured ${captures.length} real-HUD reviews with zero text overlaps`);
+  console.log(`[command-card-readability-browser] captured ${captures.length} real-HUD reviews with zero text overlaps and foreground full-detail labels`);
+} catch (error) {
+  await writeFile(resolve(artifacts, 'failure.json'), JSON.stringify({
+    status: 'failed',
+    activeTarget,
+    message: error.message,
+  }, null, 2));
+  throw error;
 } finally {
   await new Promise((resolveClose) => server.close(resolveClose));
 }
