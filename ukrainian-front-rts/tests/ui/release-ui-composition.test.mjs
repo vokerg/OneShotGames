@@ -36,7 +36,7 @@ test('UFR-160 release UI keeps the action card compact and bounds top-HUD growth
   assert.match(css, /--release-topbar-height:\s*64px/);
   assert.match(css, /#workerOverview\.workerOverview\s*\{[^}]*width:\s*0 !important[^}]*visibility:\s*hidden/s);
   assert.match(css, /@media \(min-width:\s*2240px\)[\s\S]*visibility:\s*visible[\s\S]*grid-template-columns:\s*repeat\(8,/);
-  assert.match(css, /@media \(max-width:\s*1600px\) and \(min-width:\s*761px\)[\s\S]*#threatStatus/);
+  assert.match(css, /@media \(max-width:\s*1600px\) and \(min-width:\s*761px\)[\s\S]*#topbar \.resource\.threat\s*\{[^}]*display:\s*none/s);
   assert.match(css, /@media \(max-width:\s*1100px\) and \(min-width:\s*761px\)[\s\S]*#topbar \.crest\s*\{[^}]*display:\s*none/s);
   assert.match(css, /\.notificationCenter\s*\{[^}]*top:\s*calc\(var\(--release-topbar-height\) \+ 18px\)/s);
 });
