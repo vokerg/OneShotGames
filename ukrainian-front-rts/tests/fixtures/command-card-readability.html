@@ -7,7 +7,7 @@
   <title>Command Card Readability Review</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="ui-skin.css">
-  <link rel="stylesheet" href="command-card.css">
+  <link rel="stylesheet" href="command-card.css" data-command-card-styles="true">
 </head>
 <body>
   <div id="shell">
@@ -168,6 +168,8 @@
     ].filter(([card, action]) => !card?.getAttribute('aria-label')?.includes(action.title)
       || !card?.getAttribute('aria-label')?.includes(action.description));
 
+    // Measure the final focused state, not the first frame of the opacity transition.
+    document.documentElement.style.setProperty('--ui-transition', '0s');
     english?.focus();
     const focusedStyle = english ? getComputedStyle(english) : null;
     const focusedDetailStyle = english ? getComputedStyle(english, '::after') : null;
