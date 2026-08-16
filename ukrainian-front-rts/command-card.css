@@ -144,13 +144,17 @@
 }
 
 /* Each card is an isolated stacking context; raise the active card itself so the
- * complete label paints above neighboring cards rather than underneath them. */
+ * complete label paints above neighboring cards rather than underneath them. Use
+ * :focus as well as :focus-visible so programmatic focus from command-card keyboard
+ * navigation exposes the same complete detail surface. */
 .commandCardAction:hover,
+.commandCardAction:focus,
 .commandCardAction:focus-visible {
   z-index: 80;
 }
 
 .commandCardAction:hover::after,
+.commandCardAction:focus::after,
 .commandCardAction:focus-visible::after {
   opacity: 1;
   visibility: visible;
