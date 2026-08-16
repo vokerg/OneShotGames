@@ -122,24 +122,36 @@ try {
   if (screenshotStat.size < 4096) throw new Error(`Visual-regression screenshot is unexpectedly small (${screenshotStat.size} bytes).`);
 
   // Keep CI bounded: the Art Lab retains four manual pages covering all 32 identities,
-  // while automation captures one faction in color and the opposing support page in
-  // grayscale. Unit tests and the support verifier enforce exact 32-identity coverage.
+  // while automation validates readiness and captures one faction in color and the
+  // opposing support page in grayscale. DOM validation and screenshot capture run in
+  // separate Chrome processes because combining --dump-dom and --screenshot can hang
+  // indefinitely on GitHub-hosted runners despite either mode completing immediately.
   const reviewTargets = [
     { page: 0, value: false, label: 'ua-uas-fires' },
     { page: 3, value: true, label: 'ru-support' },
   ];
   const supportCaptures = [];
   for (const target of reviewTargets) {
-    const name = `ufr-114-${target.label}-${target.value ? 'value' : 'color'}.png`;
+    const mode = target.value ? 'value' : 'color';
+    const name = `ufr-114-${target.label}-${mode}.png`;
     const output = resolve(artifacts, name);
     const url = `http://${host}:${port}/art-lab.html?supportPage=${target.page}${target.value ? '&value=1' : ''}`;
-    const review = await runBrowserWithRetry([
-      '--headless=new', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--hide-scrollbars', '--virtual-time-budget=6000',
-      '--window-size=1600,900', '--dump-dom', `--screenshot=${output}`, url,
-    ], { label: `support-page-${target.page + 1}-${target.value ? 'value' : 'color'}`, timeoutMs: 90_000, retries: 1 });
+    const supportCommon = [
+      '--headless=new', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--hide-scrollbars',
+      '--virtual-time-budget=6000', '--window-size=1600,900',
+    ];
+    const review = await runBrowserWithRetry(
+      [...supportCommon, '--dump-dom', url],
+      { label: `support-page-${target.page + 1}-${mode}-dom`, timeoutMs: 60_000, retries: 1 },
+    );
     if (!review.stdout.includes('data-support-visual-ready="true"')) throw new Error(`UFR-114 Art Lab page ${target.page + 1} did not reach ready state.`);
     if (!review.stdout.includes(`data-support-visual-page="${target.page}"`)) throw new Error(`UFR-114 Art Lab page ${target.page + 1} did not select the requested review page.`);
     if (review.stdout.includes('data-support-visual-error=')) throw new Error(`UFR-114 Art Lab page ${target.page + 1} reported a runtime load error.`);
+
+    await runBrowserWithRetry(
+      [...supportCommon, `--screenshot=${output}`, url],
+      { label: `support-page-${target.page + 1}-${mode}-screenshot`, timeoutMs: 60_000, retries: 1 },
+    );
     const captureStat = await stat(output);
     if (captureStat.size < 4096) throw new Error(`UFR-114 Art Lab capture ${name} is unexpectedly small (${captureStat.size} bytes).`);
     supportCaptures.push({ page: target.page + 1, file: name, valueCheck: target.value, bytes: captureStat.size });
@@ -156,7 +168,7 @@ try {
       width: 1600,
       height: 900,
       manualPageCount: 4,
-      automatedCaptureStrategy: 'representative-opposing-faction-color-and-grayscale',
+      automatedCaptureStrategy: 'separate-readiness-and-representative-opposing-faction-captures',
       captures: supportCaptures,
     },
     browserAttempts,
