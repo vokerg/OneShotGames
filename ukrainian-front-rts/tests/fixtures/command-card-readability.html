@@ -7,6 +7,7 @@
   <title>Command Card Readability Review</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="ui-skin.css">
+  <link rel="stylesheet" href="command-card.css">
 </head>
 <body>
   <div id="shell">
@@ -103,6 +104,7 @@
         meta: '30s',
         className: 'command',
         group: 'ability',
+        targeting: true,
         onClick() {},
       },
     ];
@@ -118,6 +120,15 @@
     controller.commit();
 
     await document.fonts.ready;
+    await Promise.all([...document.styleSheets].map((sheet) => {
+      const owner = sheet.ownerNode;
+      if (!(owner instanceof HTMLLinkElement)) return Promise.resolve();
+      if (owner.sheet) return Promise.resolve();
+      return new Promise((resolve) => {
+        owner.addEventListener('load', resolve, { once: true });
+        owner.addEventListener('error', resolve, { once: true });
+      });
+    }));
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
     const isVisible = (element) => {
@@ -166,16 +177,30 @@
       || !card?.getAttribute('aria-label')?.includes(action.description));
 
     english?.focus();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    const focusedStyle = english ? getComputedStyle(english) : null;
+    const focusedDetailStyle = english ? getComputedStyle(english, '::after') : null;
+
     document.documentElement.dataset.commandCardReviewReady = 'true';
     document.documentElement.dataset.commandCardActionCount = String(cards.length);
     document.documentElement.dataset.commandCardOverlapCount = String(diagnostics.length);
+    document.documentElement.dataset.commandCardOverlapPairs = diagnostics
+      .map(({ commandId, left, right }) => `${commandId}:${left}:${right}`)
+      .join('|');
     document.documentElement.dataset.commandCardDetailFailureCount = String(detailFailures.length);
+    document.documentElement.dataset.commandCardDetailZIndex = focusedStyle?.zIndex || '';
+    document.documentElement.dataset.commandCardDetailOpacity = focusedDetailStyle?.opacity || '';
     document.documentElement.dataset.commandCardViewport = `${innerWidth}x${innerHeight}`;
 
     const report = document.createElement('pre');
     report.id = 'commandCardReadabilityDiagnostics';
     report.hidden = true;
-    report.textContent = JSON.stringify({ diagnostics, detailFailures: detailFailures.length }, null, 2);
+    report.textContent = JSON.stringify({
+      diagnostics,
+      detailFailures: detailFailures.length,
+      detailZIndex: focusedStyle?.zIndex,
+      detailOpacity: focusedDetailStyle?.opacity,
+    }, null, 2);
     document.body.append(report);
   </script>
 </body>
