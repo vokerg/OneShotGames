@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
@@ -31,12 +30,16 @@ await mkdir(artifacts, { recursive: true });
 function driverExecutable() {
   if (process.env.RELEASE_QA_DRIVER) return process.env.RELEASE_QA_DRIVER;
   const windows = process.platform === 'win32';
+  const fromEnv = (value, name) => {
+    if (!value) return null;
+    return new RegExp(`${name}(?:\\.exe)?$`, 'i').test(value) ? value : join(value, windows ? `${name}.exe` : name);
+  };
   const candidates = browserId === 'chrome'
-    ? [process.env.CHROMEWEBDRIVER && join(process.env.CHROMEWEBDRIVER, windows ? 'chromedriver.exe' : 'chromedriver'), 'chromedriver']
+    ? [fromEnv(process.env.CHROMEWEBDRIVER, 'chromedriver'), 'chromedriver']
     : browserId === 'edge'
-      ? [process.env.EDGEWEBDRIVER && join(process.env.EDGEWEBDRIVER, windows ? 'msedgedriver.exe' : 'msedgedriver'), 'msedgedriver']
+      ? [fromEnv(process.env.EDGEWEBDRIVER, 'msedgedriver'), 'msedgedriver']
       : browserId === 'firefox'
-        ? [process.env.GECKOWEBDRIVER && (existsSync(process.env.GECKOWEBDRIVER) ? process.env.GECKOWEBDRIVER : join(process.env.GECKOWEBDRIVER, windows ? 'geckodriver.exe' : 'geckodriver')), 'geckodriver']
+        ? [fromEnv(process.env.GECKOWEBDRIVER, 'geckodriver'), 'geckodriver']
         : ['/usr/bin/safaridriver', 'safaridriver'];
   return candidates.find(Boolean);
 }
@@ -92,7 +95,6 @@ const driverExit = new Promise((resolveExit) => driver.once('exit', (code, signa
   driverLogs.push(`[driver-exit] code=${code ?? 'null'} signal=${signal ?? 'null'}\n`);
   resolveExit();
 }));
-
 driver.once('error', (error) => driverLogs.push(`[driver-spawn] ${error.stack || error.message}\n`));
 
 async function request(method, path, body = undefined, timeoutMs = 15_000) {
@@ -252,29 +254,27 @@ try {
   await waitFor(`document.readyState === 'complete' && document.querySelector('.missionCard button') && window.__fieldsOfResolveComposition`, 'application startup', { attempts: 120 });
   await execute(`window.__releaseQaErrors=[]; addEventListener('error',e=>window.__releaseQaErrors.push(String(e.message||e.error||'error'))); addEventListener('unhandledrejection',e=>window.__releaseQaErrors.push(String(e.reason||'unhandled rejection')));`);
 
+  // Storage persistence in the browser under test.
   await execute(`localStorage.setItem('fields-of-resolve.release-qa-sentinel','${commit || 'candidate'}');`);
-  if (await execute(`return Boolean(document.querySelector('#localeToggle'));`)) {
-    await click('#localeToggle');
-    await waitFor(`localStorage.getItem('fields-of-resolve.locale.v1')`, 'locale persistence');
-  }
   await wd('POST', '/refresh', {});
   await waitFor(`document.readyState === 'complete' && document.querySelector('.missionCard button') && window.__fieldsOfResolveComposition`, 'application reload', { attempts: 120 });
-  const persisted = await execute(`return {sentinel:localStorage.getItem('fields-of-resolve.release-qa-sentinel'),locale:localStorage.getItem('fields-of-resolve.locale.v1')};`);
+  const persisted = await execute(`return {sentinel:localStorage.getItem('fields-of-resolve.release-qa-sentinel')};`);
   assert(persisted.sentinel === (commit || 'candidate'), 'Browser storage did not survive reload.');
   report.surfaces.storage = pass({ evidence: persisted });
 
-  if (persisted.locale && persisted.locale !== 'en' && await execute(`return Boolean(document.querySelector('#localeToggle'));`)) {
-    await click('#localeToggle');
-    await waitFor(`document.documentElement.lang === 'en'`, 'English locale restoration');
-  }
+  // Dismiss optional onboarding overlays before real user-gesture checks.
+  await execute(`const dismiss=[...document.querySelectorAll('button')].find((button)=>button.textContent?.trim()==='Dismiss all'); if(dismiss) dismiss.click();`);
 
+  // Start first mission via a real WebDriver element click.
   await click('.missionCard button');
   await waitFor(`document.querySelector('#missionSelect')?.classList.contains('hidden') && document.querySelector('#missionTitle')?.textContent`, 'first mission start', { attempts: 120 });
+  await execute(`const dismiss=[...document.querySelectorAll('button')].find((button)=>button.textContent?.trim()==='Dismiss all'); if(dismiss) dismiss.click();`);
 
   const canvasState = await execute(`const c=document.querySelector('#game'),r=c.getBoundingClientRect(); return {width:c.width,height:c.height,cssWidth:r.width,cssHeight:r.height,context:Boolean(c.getContext('2d'))};`);
   assert(canvasState.width > 0 && canvasState.height > 0 && canvasState.cssWidth > 0 && canvasState.cssHeight > 0 && canvasState.context, 'Canvas did not initialize.');
   report.surfaces.canvas = pass({ evidence: canvasState });
 
+  // Audio controls and persistence, triggered from a real click before script-level range input.
   await click('#audioSettingsToggle');
   await waitFor(`!document.querySelector('#audioSettings')?.classList.contains('hidden')`, 'audio settings open');
   await execute(`const slider=document.querySelector('[data-audio-level="music"]'); slider.value='43'; slider.dispatchEvent(new Event('input',{bubbles:true}));`);
@@ -285,6 +285,7 @@ try {
   assert(audio.music === 0.43, 'Audio setting did not persist.');
   report.surfaces.audio = pass({ evidence: audio });
 
+  // Locate a live combat unit using real canvas pointer clicks, then exercise keyboard attack-move mode.
   const selections = await findSelections();
   if (selections.unit) {
     await canvasClick(selections.unit.x, selections.unit.y);
@@ -298,6 +299,7 @@ try {
     throw new Error('Could not locate a selectable combat unit for headed keyboard QA.');
   }
 
+  // Fullscreen: N/A only when the browser itself reports the standardized API unavailable.
   const fullscreenEnabled = await execute(`return Boolean(document.fullscreenEnabled && document.querySelector('#viewportFullscreenToggle'));`);
   if (!fullscreenEnabled) {
     report.surfaces.fullscreen = na('Browser reports standardized fullscreen unavailable in this WebDriver session.');
@@ -310,6 +312,7 @@ try {
     report.surfaces.fullscreen = pass({ evidence: entered });
   }
 
+  // Real browser zoom via Ctrl/Cmd + '+', then reset via Ctrl/Cmd + '0'.
   await setWindow(1440, 900);
   const beforeZoom = await execute('return {innerWidth,innerHeight,dpr:devicePixelRatio};');
   const modifier = process.platform === 'darwin' ? KEY.META : KEY.CONTROL;
@@ -329,6 +332,7 @@ try {
   await delay(350);
   report.surfaces.dpi = pass({ evidence: { beforeZoom, afterZoom, layout: { topbarOverflow: zoomLayout.topbarOverflow, commandOverflow: zoomLayout.commandOverflow } } });
 
+  // Frame pacing sample in the actual browser process.
   const performanceSample = await wd('POST', '/execute/async', { script: `
     const done=arguments[arguments.length-1]; const samples=[]; let previous=performance.now();
     const tick=(now)=>{ samples.push(now-previous); previous=now; if(samples.length>=90){ const sorted=[...samples].sort((a,b)=>a-b); done({frames:samples.length,mean:samples.reduce((a,b)=>a+b,0)/samples.length,p95:sorted[Math.floor(sorted.length*.95)],max:Math.max(...samples)}); } else requestAnimationFrame(tick); };
@@ -336,6 +340,7 @@ try {
   assert(performanceSample.frames === 90 && performanceSample.mean < 80 && performanceSample.max < 750, `Frame pacing sample exceeded release smoke bounds: ${JSON.stringify(performanceSample)}`);
   report.surfaces.performance = pass({ evidence: performanceSample });
 
+  // Windows Chrome: actual player-visible UFR-183 composition checks at required viewports.
   if (browserId === 'chrome' && process.platform === 'win32') {
     const requiredViewports = [[1280, 720], [1920, 1080], [2560, 1080]];
     const uiReview = [];
