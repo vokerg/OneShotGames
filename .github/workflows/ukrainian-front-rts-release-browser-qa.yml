@@ -47,7 +47,7 @@ jobs:
           Write-Host "Using $driver"
       - name: Run headed release browser QA
         shell: pwsh
-        run: node scripts/release-headed-browser-qa-v2.mjs
+        run: node scripts/release-headed-browser-qa-v3.mjs
       - name: Upload headed browser evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -81,7 +81,7 @@ jobs:
           set +e
           open -a Safari about:blank
           sleep 5
-          node scripts/release-headed-browser-qa-v2.mjs
+          node scripts/release-headed-browser-qa-v3.mjs
           status=$?
           if [ "$status" -eq 0 ]; then
             exit 0
@@ -91,7 +91,7 @@ jobs:
           sleep 2
           open -a Safari about:blank
           sleep 5
-          node scripts/release-headed-browser-qa-v2.mjs
+          node scripts/release-headed-browser-qa-v3.mjs
       - name: Upload headed browser evidence
         if: always()
         uses: actions/upload-artifact@v4
