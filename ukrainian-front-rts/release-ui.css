@@ -158,6 +158,10 @@
 /* Threat detail is secondary to the utility controls. Reserve it for wide desktops so
    common 1280/1440-class viewports keep pause/objectives/fullscreen/messages visible. */
 @media (max-width: 1600px) and (min-width: 761px) {
+  #topbar {
+    gap: 5px;
+  }
+
   #topbar .resource.threat {
     display: none;
   }
@@ -168,7 +172,7 @@
    dropping only the decorative wordmark and tightening inter-control spacing. */
 @media (max-width: 1100px) and (min-width: 761px) {
   #topbar {
-    gap: 5px;
+    gap: 3px;
   }
 
   #topbar .crest {
