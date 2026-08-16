@@ -17,19 +17,26 @@
   flex: 1 1 auto;
 }
 
+/* The production grid can compress to roughly 32px rows once panel chrome and the
+ * pager are accounted for. Treat each card as one compact information row instead
+ * of stacking legacy 72px-card content into that space. */
 .commandCardAction {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr);
+  align-items: center;
+  column-gap: 4px;
   min-width: 0;
   min-height: var(--ui-target-min, 32px);
   height: 100%;
-  padding: 18px 7px 17px;
+  padding: 3px 5px;
   overflow: visible;
   isolation: isolate;
 }
 
 .commandCardAction > .commandTitle,
-.commandCardAction > .commandDescription,
 .commandCardAction > .abilityMeta,
-.commandCardAction > .commandDisabledReason {
+.commandCardAction > .commandHotkey {
   min-width: 0;
   max-width: 100%;
   overflow: hidden;
@@ -44,30 +51,31 @@
   filter: brightness(1.12);
 }
 
-.commandCardAction[data-targeting='true']::after {
-  content: attr(aria-label);
+/* Group is already conveyed by command-group color treatment. Description and
+ * disabled detail stay in the complete hover/focus label below, where they cannot
+ * compete with the actionable title for the 32px card lane. */
+.commandGroupLabel,
+.commandCardAction .commandDescription,
+.commandDisabledReason {
+  display: none;
 }
 
-.commandGroupLabel {
-  position: absolute;
-  top: 4px;
-  left: 6px;
-  max-width: calc(100% - 12px);
-  overflow: hidden;
-  color: var(--ui-color-text-muted);
-  font: 700 8px/1 var(--ui-data-font);
-  letter-spacing: .08em;
+.commandCardAction .commandTitle {
+  grid-column: 1;
+  grid-row: 1;
+  display: block;
+  font-size: 12px;
+  line-height: 1.05;
   text-overflow: ellipsis;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 
 .commandHotkey {
-  position: absolute;
-  top: 4px;
-  right: 5px;
+  position: static;
+  grid-column: 2;
+  grid-row: 1;
   min-width: 16px;
-  padding: 2px 4px;
+  padding: 1px 3px;
   color: var(--ui-color-ink);
   background: var(--ui-color-selection);
   border: 1px solid rgb(255 255 255 / 34%);
@@ -75,59 +83,20 @@
   font: 800 9px/1 var(--ui-data-font);
   text-align: center;
   text-shadow: none;
-}
-
-.commandCardAction:has(.commandHotkey) .commandGroupLabel {
-  max-width: calc(100% - 38px);
-}
-
-.commandCardAction .commandTitle {
-  display: block;
-  overflow: hidden;
-  font-size: 12px;
-  line-height: 1.05;
-  text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.commandCardAction .commandDescription {
-  display: block;
-  max-height: 12px;
-  overflow: hidden;
-  font-size: 10px;
-  line-height: 1.1;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Cost/cooldown metadata is bottom-anchored. On compact 4x3 cards the description
- * must yield that vertical lane instead of flowing underneath it. Full details stay
- * available through the card's aria-label tooltip below. */
-.commandCardAction:has(.abilityMeta) .commandDescription,
-.commandCardAction:has(.commandDisabledReason) .commandDescription {
-  display: none;
 }
 
 .commandCardAction .abilityMeta {
-  right: 5px;
-  bottom: 3px;
-  left: 5px;
-  max-width: calc(100% - 10px);
+  position: static;
+  grid-column: 2;
+  grid-row: 1;
+  padding: 1px 3px;
+  font-size: 9px;
+  line-height: 1;
   white-space: nowrap;
 }
 
-.commandDisabledReason {
-  position: absolute;
-  inset: auto 5px 4px;
-  overflow: hidden;
-  color: #ffd1c7;
-  font: 700 8px/1.1 var(--ui-data-font);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.commandCardAction:disabled .abilityMeta,
-.commandCardAction:disabled .commandDescription {
+.commandCardAction:disabled .abilityMeta {
   visibility: hidden;
 }
 
@@ -194,7 +163,7 @@
 
 @media (max-width: 1050px) {
   .commandCardGrid { gap: 5px; }
-  .commandCardAction { padding-inline: 5px; }
+  .commandCardAction { padding-inline: 4px; column-gap: 3px; }
   .commandCardAction::after { max-width: min(280px, 84vw); }
 }
 
