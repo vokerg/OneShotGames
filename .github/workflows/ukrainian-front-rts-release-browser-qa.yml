@@ -32,6 +32,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Resolve installed WebDriver
+        shell: pwsh
+        run: |
+          $driver = switch ("${{ matrix.browser }}") {
+            "chrome" { Join-Path $env:CHROMEWEBDRIVER "chromedriver.exe" }
+            "edge" { Join-Path $env:EDGEWEBDRIVER "msedgedriver.exe" }
+            "firefox" { Join-Path $env:GECKOWEBDRIVER "geckodriver.exe" }
+          }
+          if (-not (Test-Path $driver -PathType Leaf)) {
+            throw "Installed WebDriver not found: $driver"
+          }
+          "RELEASE_QA_DRIVER=$driver" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Host "Using $driver"
       - name: Run headed release browser QA
         shell: pwsh
         run: node scripts/release-headed-browser-qa.mjs
@@ -63,7 +76,22 @@ jobs:
       - name: Enable Safari remote automation
         run: sudo safaridriver --enable
       - name: Run headed release browser QA
-        run: node scripts/release-headed-browser-qa.mjs
+        shell: bash
+        run: |
+          set +e
+          open -a Safari about:blank
+          sleep 5
+          node scripts/release-headed-browser-qa.mjs
+          status=$?
+          if [ "$status" -eq 0 ]; then
+            exit 0
+          fi
+          echo "First Safari automation attempt failed; restarting Safari once and retrying the bounded release pass."
+          pkill -x Safari || true
+          sleep 2
+          open -a Safari about:blank
+          sleep 5
+          node scripts/release-headed-browser-qa.mjs
       - name: Upload headed browser evidence
         if: always()
         uses: actions/upload-artifact@v4
