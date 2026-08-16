@@ -89,19 +89,33 @@ test('command-card model preserves complete long English and Ukrainian copy for 
   assert.equal(repair.hotkey, 'R');
 });
 
-test('compact command-card stylesheet separates metadata from descriptions and exposes full aria-label detail', async () => {
+test('compact command-card stylesheet uses one collision-proof information row and exposes full aria-label detail', async () => {
   const [stylesheet, source] = await Promise.all([
     readFile(stylesheetUrl, 'utf8'),
     readFile(sourceUrl, 'utf8'),
   ]);
 
   assert.match(stylesheet, /#abilities\s*\{[^}]*overflow:\s*visible/s);
-  assert.match(stylesheet, /\.commandCardAction\s*\{[^}]*overflow:\s*visible/s);
   assert.match(
     stylesheet,
-    /\.commandCardAction:has\(\.abilityMeta\) \.commandDescription,[\s\S]*\.commandCardAction:has\(\.commandDisabledReason\) \.commandDescription\s*\{[^}]*display:\s*none/s,
+    /\.commandCardAction\s*\{[^}]*display:\s*grid[^}]*grid-template-columns:\s*minmax\(0, 1fr\) auto[^}]*align-items:\s*center[^}]*overflow:\s*visible/s,
   );
-  assert.match(stylesheet, /\.commandCardAction \.abilityMeta\s*\{[^}]*left:\s*5px[^}]*max-width:\s*calc\(100% - 10px\)/s);
+  assert.match(
+    stylesheet,
+    /\.commandGroupLabel,[\s\S]*\.commandCardAction \.commandDescription,[\s\S]*\.commandDisabledReason\s*\{[^}]*display:\s*none/s,
+  );
+  assert.match(
+    stylesheet,
+    /\.commandCardAction \.commandTitle\s*\{[^}]*grid-column:\s*1[^}]*text-overflow:\s*ellipsis[^}]*white-space:\s*nowrap/s,
+  );
+  assert.match(
+    stylesheet,
+    /\.commandCardAction \.abilityMeta\s*\{[^}]*position:\s*static[^}]*grid-column:\s*2[^}]*white-space:\s*nowrap/s,
+  );
+  assert.match(
+    stylesheet,
+    /\.commandHotkey\s*\{[^}]*position:\s*static[^}]*grid-column:\s*2[^}]*white-space:\s*nowrap/s,
+  );
   assert.match(stylesheet, /\.commandCardAction::after\s*\{[^}]*content:\s*attr\(aria-label\)/s);
   assert.match(stylesheet, /\.commandCardAction:hover::after,[\s\S]*\.commandCardAction:focus-visible::after/);
   assert.match(stylesheet, /@media \(max-width:\s*1050px\)/);
