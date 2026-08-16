@@ -22,7 +22,7 @@
  * of stacking legacy 72px-card content into that space. */
 .commandCardAction {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
   grid-template-rows: minmax(0, 1fr);
   align-items: center;
   column-gap: 4px;
@@ -51,6 +51,22 @@
   filter: brightness(1.12);
 }
 
+/* Preserve the pre-existing explicit targeting state without stacking it above the
+ * command title. The existing decorative ::before becomes a compact grid badge only
+ * while targeting is armed. */
+.commandCardAction[data-targeting='true']::before {
+  content: 'TARGETING';
+  position: static;
+  inset: auto;
+  grid-column: 2;
+  grid-row: 1;
+  border: 0;
+  color: var(--ui-color-selection);
+  font: 700 8px/1 var(--ui-data-font);
+  letter-spacing: .05em;
+  pointer-events: none;
+}
+
 /* Group is already conveyed by command-group color treatment. Description and
  * disabled detail stay in the complete hover/focus label below, where they cannot
  * compete with the actionable title for the 32px card lane. */
@@ -72,7 +88,7 @@
 
 .commandCardAction .abilityMeta {
   position: static;
-  grid-column: 2;
+  grid-column: 3;
   grid-row: 1;
   padding: 1px 3px;
   font-size: 9px;
@@ -82,7 +98,7 @@
 
 .commandHotkey {
   position: static;
-  grid-column: 3;
+  grid-column: 4;
   grid-row: 1;
   min-width: 16px;
   padding: 1px 3px;
@@ -182,6 +198,7 @@
     outline: 3px solid Highlight;
     outline-offset: -3px;
   }
+  .commandCardAction[data-targeting='true']::before { color: Highlight; }
   .commandCardAction::after {
     color: CanvasText;
     background: Canvas;
