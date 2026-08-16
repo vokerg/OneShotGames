@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        browser: [chrome, edge, firefox]
+        browser: [edge, firefox]
     defaults:
       run:
         working-directory: ukrainian-front-rts
@@ -36,7 +36,6 @@ jobs:
         shell: pwsh
         run: |
           $driver = switch ("${{ matrix.browser }}") {
-            "chrome" { Join-Path $env:CHROMEWEBDRIVER "chromedriver.exe" }
             "edge" { Join-Path $env:EDGEWEBDRIVER "msedgedriver.exe" }
             "firefox" { Join-Path $env:GECKOWEBDRIVER "geckodriver.exe" }
           }
@@ -54,6 +53,41 @@ jobs:
         with:
           name: ufrts-release-browser-${{ matrix.browser }}-${{ github.run_id }}
           path: ukrainian-front-rts/artifacts/release-browser-qa/${{ matrix.browser }}/
+          if-no-files-found: error
+          retention-days: 30
+
+  windows-chrome-ui:
+    name: Windows Chrome UFR-183 UI review
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: ukrainian-front-rts
+    env:
+      RELEASE_QA_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Resolve ChromeDriver
+        shell: pwsh
+        run: |
+          $driver = Join-Path $env:CHROMEWEBDRIVER "chromedriver.exe"
+          if (-not (Test-Path $driver -PathType Leaf)) {
+            throw "Installed ChromeDriver not found: $driver"
+          }
+          "RELEASE_QA_DRIVER=$driver" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Run Windows Chrome release UI review
+        shell: pwsh
+        run: node scripts/windows-chrome-ui-release-review.mjs
+      - name: Upload Windows Chrome UI evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ufrts-release-browser-chrome-${{ github.run_id }}
+          path: ukrainian-front-rts/artifacts/release-browser-qa/chrome/
           if-no-files-found: error
           retention-days: 30
 
