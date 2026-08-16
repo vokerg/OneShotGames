@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { spawn } from 'node:child_process';
+import { existsSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
@@ -32,7 +33,8 @@ function driverExecutable() {
   const windows = process.platform === 'win32';
   const fromEnv = (value, name) => {
     if (!value) return null;
-    return new RegExp(`${name}(?:\\.exe)?$`, 'i').test(value) ? value : join(value, windows ? `${name}.exe` : name);
+    if (existsSync(value) && statSync(value).isDirectory()) return join(value, windows ? `${name}.exe` : name);
+    return value;
   };
   const candidates = browserId === 'chrome'
     ? [fromEnv(process.env.CHROMEWEBDRIVER, 'chromedriver'), 'chromedriver']
@@ -219,7 +221,7 @@ async function findSelections() {
     for (const x of xs) {
       await canvasClick(x, y);
       const state = await layoutSnapshot();
-      if (!unit && state.buttons.length && state.groups.some((group) => ['order', 'targeting', 'stance', 'ability'].includes(group))) {
+      if (!unit && state.buttons.some((button) => button.id === 'attack-move')) {
         unit = { x: Math.round(x), y: Math.round(y), name: state.selectionName, groups: state.groups };
       }
       if (!building && state.buttons.length && state.groups.some((group) => ['production', 'modernization', 'construction'].includes(group))) {
@@ -252,7 +254,6 @@ try {
   await setWindow(1440, 900);
   await wd('POST', '/url', { url: pageUrl });
   await waitFor(`document.readyState === 'complete' && document.querySelector('.missionCard button') && window.__fieldsOfResolveComposition`, 'application startup', { attempts: 120 });
-  await execute(`window.__releaseQaErrors=[]; addEventListener('error',e=>window.__releaseQaErrors.push(String(e.message||e.error||'error'))); addEventListener('unhandledrejection',e=>window.__releaseQaErrors.push(String(e.reason||'unhandled rejection')));`);
 
   // Storage persistence in the browser under test.
   await execute(`localStorage.setItem('fields-of-resolve.release-qa-sentinel','${commit || 'candidate'}');`);
@@ -261,6 +262,7 @@ try {
   const persisted = await execute(`return {sentinel:localStorage.getItem('fields-of-resolve.release-qa-sentinel')};`);
   assert(persisted.sentinel === (commit || 'candidate'), 'Browser storage did not survive reload.');
   report.surfaces.storage = pass({ evidence: persisted });
+  await execute(`window.__releaseQaErrors=[]; addEventListener('error',e=>window.__releaseQaErrors.push(String(e.message||e.error||'error'))); addEventListener('unhandledrejection',e=>window.__releaseQaErrors.push(String(e.reason||'unhandled rejection')));`);
 
   // Dismiss optional onboarding overlays before real user-gesture checks.
   await execute(`const dismiss=[...document.querySelectorAll('button')].find((button)=>button.textContent?.trim()==='Dismiss all'); if(dismiss) dismiss.click();`);
@@ -293,7 +295,6 @@ try {
     await delay(200);
     const keyboard = await execute(`const b=document.querySelector('[data-command-id="attack-move"]'); return {found:Boolean(b), targeting:b?.dataset?.targeting, ariaCurrent:b?.getAttribute('aria-current')};`);
     assert(keyboard.found && (keyboard.targeting === 'true' || keyboard.ariaCurrent === 'true'), 'Keyboard Q did not arm attack-move through the active command path.');
-    await key(KEY.ESCAPE);
     report.surfaces.keyboard = pass({ evidence: { ...keyboard, selected: selections.unit.name } });
   } else {
     throw new Error('Could not locate a selectable combat unit for headed keyboard QA.');
@@ -309,6 +310,10 @@ try {
     const entered = await execute(`return {active:Boolean(document.fullscreenElement),width:innerWidth,height:innerHeight};`);
     await key(KEY.ESCAPE);
     await waitFor(`document.fullscreenElement === null`, 'fullscreen exit', { attempts: 60, interval: 150 });
+    if (await execute(`return Boolean(document.querySelector('#pauseMenu') && !document.querySelector('#pauseMenu').classList.contains('hidden'));`)) {
+      await click('#pauseMenuClose');
+      await waitFor(`document.querySelector('#pauseMenu')?.classList.contains('hidden')`, 'pause menu close after fullscreen');
+    }
     report.surfaces.fullscreen = pass({ evidence: entered });
   }
 
