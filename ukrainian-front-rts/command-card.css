@@ -4,7 +4,7 @@
   display: flex;
   flex-direction: column;
   gap: 5px;
-  overflow: hidden;
+  overflow: visible;
   padding: 2px 6px 2px 2px;
 }
 
@@ -17,12 +17,30 @@
   flex: 1 1 auto;
 }
 
+/* The production grid can compress to roughly 32px rows once panel chrome and the
+ * pager are accounted for. Treat each card as one compact information row instead
+ * of stacking legacy 72px-card content into that space. */
 .commandCardAction {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  grid-template-rows: minmax(0, 1fr);
+  align-items: center;
+  column-gap: 4px;
   min-width: 0;
   min-height: var(--ui-target-min, 32px);
   height: 100%;
-  padding: 18px 7px 17px;
+  padding: 3px 5px;
+  overflow: visible;
+  isolation: isolate;
+}
+
+.commandCardAction > .commandTitle,
+.commandCardAction > .abilityMeta,
+.commandCardAction > .commandHotkey {
+  min-width: 0;
+  max-width: 100%;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .commandCardAction[data-targeting='true'] {
@@ -33,36 +51,57 @@
   filter: brightness(1.12);
 }
 
-.commandCardAction[data-targeting='true']::after {
+/* Preserve the pre-existing explicit targeting state without stacking it above the
+ * command title. The existing decorative ::before becomes a compact grid badge only
+ * while targeting is armed. */
+.commandCardAction[data-targeting='true']::before {
   content: 'TARGETING';
-  position: absolute;
-  left: 6px;
-  bottom: 4px;
+  position: static;
+  inset: auto;
+  grid-column: 2;
+  grid-row: 1;
+  border: 0;
   color: var(--ui-color-selection);
   font: 700 8px/1 var(--ui-data-font);
-  letter-spacing: .08em;
+  letter-spacing: .05em;
+  pointer-events: none;
 }
 
-.commandGroupLabel {
-  position: absolute;
-  top: 4px;
-  left: 6px;
-  max-width: calc(100% - 12px);
-  overflow: hidden;
-  color: var(--ui-color-text-muted);
-  font: 700 8px/1 var(--ui-data-font);
-  letter-spacing: .08em;
+/* Group is already conveyed by command-group color treatment. Description and
+ * disabled detail stay in the complete hover/focus label below, where they cannot
+ * compete with the actionable title for the 32px card lane. */
+.commandGroupLabel,
+.commandCardAction .commandDescription,
+.commandDisabledReason {
+  display: none;
+}
+
+.commandCardAction .commandTitle {
+  grid-column: 1;
+  grid-row: 1;
+  display: block;
+  font-size: 12px;
+  line-height: 1.05;
   text-overflow: ellipsis;
-  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.commandCardAction .abilityMeta {
+  position: static;
+  grid-column: 3;
+  grid-row: 1;
+  padding: 1px 3px;
+  font-size: 9px;
+  line-height: 1;
   white-space: nowrap;
 }
 
 .commandHotkey {
-  position: absolute;
-  top: 4px;
-  right: 5px;
+  position: static;
+  grid-column: 4;
+  grid-row: 1;
   min-width: 16px;
-  padding: 2px 4px;
+  padding: 1px 3px;
   color: var(--ui-color-ink);
   background: var(--ui-color-selection);
   border: 1px solid rgb(255 255 255 / 34%);
@@ -70,35 +109,56 @@
   font: 800 9px/1 var(--ui-data-font);
   text-align: center;
   text-shadow: none;
-}
-
-.commandCardAction .commandTitle {
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.commandCardAction .commandDescription {
-  display: -webkit-box;
-  max-height: 28px;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-
-.commandDisabledReason {
-  position: absolute;
-  inset: auto 5px 4px;
-  overflow: hidden;
-  color: #ffd1c7;
-  font: 700 8px/1.1 var(--ui-data-font);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.commandCardAction:disabled .abilityMeta,
-.commandCardAction:disabled .commandDescription {
+.commandCardAction:disabled .abilityMeta {
   visibility: hidden;
+}
+
+/* Compact cards intentionally retain ellipsis, but never make ellipsis the only
+ * way to identify a command. The complete accessible label is also the hover/focus
+ * detail surface at desktop and responsive widths. */
+.commandCardAction::after {
+  content: attr(aria-label);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 7px);
+  width: max-content;
+  max-width: min(320px, 72vw);
+  padding: 7px 9px;
+  color: var(--ui-color-text);
+  background: var(--ui-color-panel);
+  border: 1px solid var(--ui-color-objective);
+  box-shadow: var(--ui-shadow-soft);
+  font: 11px/1.35 var(--ui-body-font);
+  text-align: left;
+  text-shadow: none;
+  white-space: normal;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, 4px);
+  transition: opacity var(--ui-transition) linear, transform var(--ui-transition) linear;
+  z-index: 60;
+}
+
+/* Each card is an isolated stacking context; raise the active card itself so the
+ * complete label paints above neighboring cards rather than underneath them. Use
+ * :focus as well as :focus-visible so programmatic focus from command-card keyboard
+ * navigation exposes the same complete detail surface. */
+.commandCardAction:hover,
+.commandCardAction:focus,
+.commandCardAction:focus-visible {
+  z-index: 80;
+}
+
+.commandCardAction:hover::after,
+.commandCardAction:focus::after,
+.commandCardAction:focus-visible::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
 }
 
 .commandGroup-targeting { background-color: #34413a; }
@@ -130,11 +190,13 @@
 
 @media (max-width: 1050px) {
   .commandCardGrid { gap: 5px; }
-  .commandCardAction { padding-inline: 5px; }
+  .commandCardAction { padding-inline: 4px; column-gap: 3px; }
+  .commandCardAction::after { max-width: min(280px, 84vw); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .commandCardAction[data-targeting='true'] { filter: none; }
+  .commandCardAction::after { transition: none; }
 }
 
 @media (forced-colors: active) {
@@ -146,5 +208,12 @@
   .commandCardAction[data-targeting='true'] {
     outline: 3px solid Highlight;
     outline-offset: -3px;
+  }
+  .commandCardAction[data-targeting='true']::before { color: Highlight; }
+  .commandCardAction::after {
+    color: CanvasText;
+    background: Canvas;
+    border-color: CanvasText;
+    box-shadow: none;
   }
 }

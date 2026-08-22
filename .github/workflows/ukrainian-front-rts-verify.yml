@@ -52,6 +52,9 @@ jobs:
       - name: Browser startup and mission smoke
         if: always()
         run: node scripts/browser-startup-smoke.mjs
+      - name: Command card real-HUD readability review
+        if: always()
+        run: node scripts/command-card-readability-smoke.mjs
       - name: UFR-110 Ukrainian infantry Art Lab browser review
         if: always()
         run: node scripts/ukrainian-infantry-art-lab-smoke.mjs
