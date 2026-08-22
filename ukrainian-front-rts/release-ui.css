@@ -68,17 +68,20 @@
   grid-template-rows: repeat(3, minmax(34px, 1fr));
 }
 
+/* Layer the release icon lane onto the collision-free compact card from command-card.css.
+   Keep title, targeting state, cost/meta, and hotkey in distinct grid lanes, and preserve
+   overflow for the complete hover/focus detail surface introduced by BUG-244. */
 .commandCardAction.ability {
   position: relative;
   display: grid;
-  grid-template-columns: 22px minmax(0, 1fr);
+  grid-template-columns: 22px minmax(0, 1fr) auto auto;
   grid-template-rows: minmax(0, 1fr) auto;
   align-items: center;
   min-height: 34px;
   padding: 3px 5px;
   column-gap: 5px;
   row-gap: 1px;
-  overflow: hidden;
+  overflow: visible;
   border-width: 3px;
   text-align: left;
 }
@@ -103,31 +106,23 @@
   grid-row: 1;
   min-width: 0;
   overflow: hidden;
-  font-size: 10px;
   line-height: 1.05;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .commandCardAction .commandDescription,
-.commandCardAction .commandGroupLabel {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-  border: 0;
+.commandCardAction .commandGroupLabel,
+.commandCardAction .commandDisabledReason {
+  display: none;
 }
 
-.commandCardAction .commandHotkey,
-.commandCardAction .abilityMeta,
-.commandCardAction .commandDisabledReason {
-  grid-column: 2;
+.commandCardAction .abilityMeta {
+  grid-column: 2 / span 2;
   grid-row: 2;
+  justify-self: start;
   min-width: 0;
+  max-width: 100%;
   overflow: hidden;
   font-size: 8px;
   line-height: 1;
@@ -135,8 +130,16 @@
   white-space: nowrap;
 }
 
-.commandCardAction .commandDisabledReason {
-  color: var(--ui-color-warning, #d49a55);
+.commandCardAction .commandHotkey {
+  grid-column: 4;
+  grid-row: 1;
+  justify-self: end;
+}
+
+.commandCardAction.ability[data-targeting='true']::before {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
 }
 
 .commandCardPager {
@@ -216,7 +219,7 @@
   }
 
   .commandCardAction.ability {
-    grid-template-columns: 20px minmax(0, 1fr);
+    grid-template-columns: 20px minmax(0, 1fr) auto auto;
     padding-inline: 4px;
   }
 
