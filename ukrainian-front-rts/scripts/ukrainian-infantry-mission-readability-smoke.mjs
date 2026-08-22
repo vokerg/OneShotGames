@@ -62,6 +62,28 @@ const browser = findBrowser();
 if (!browser) throw new Error('No Chrome/Chromium executable found. Set CHROME_BIN.');
 if (typeof WebSocket !== 'function') throw new Error('The mission readability smoke requires the Node.js WebSocket global.');
 
+const diagnostic = {
+  schemaVersion: 1,
+  status: 'running',
+  phase: 'server-startup',
+  scene: null,
+  captures: [],
+  verificationPassed: false,
+  primaryError: null,
+  cleanup: {
+    socket: null,
+    chrome: null,
+    server: null,
+    profile: null,
+    errors: [],
+  },
+};
+
+function setPhase(phase, scene = null) {
+  diagnostic.phase = phase;
+  diagnostic.scene = scene;
+}
+
 const server = createServer(async (request, response) => {
   try {
     const pathname = decodeURIComponent(new URL(request.url, pageUrl).pathname);
@@ -93,6 +115,7 @@ await new Promise((resolveReady, rejectReady) => {
   server.listen(port, host, resolveReady);
 });
 
+setPhase('browser-startup');
 const profile = await mkdtemp(join(tmpdir(), 'ufrts-infantry-readability-'));
 const logs = [];
 const chrome = spawn(browser, [
@@ -108,13 +131,41 @@ const chrome = spawn(browser, [
 ], { stdio: ['ignore', 'ignore', 'pipe'] });
 chrome.stderr.on('data', (chunk) => logs.push(chunk.toString()));
 let chromeExited = false;
+let chromeExitResult = null;
 const chromeExit = new Promise((resolveExit) => {
   chrome.once('exit', (code, signal) => {
     chromeExited = true;
+    chromeExitResult = { code: code ?? null, signal: signal ?? null };
     logs.push(`[exit] code=${code ?? 'null'} signal=${signal ?? 'null'}\n`);
-    resolveExit();
+    resolveExit(chromeExitResult);
   });
 });
+
+async function waitForChromeExit(timeoutMilliseconds) {
+  if (chromeExited) return true;
+  await Promise.race([chromeExit, delay(timeoutMilliseconds)]);
+  return chromeExited;
+}
+
+async function terminateChrome() {
+  const result = {
+    termSent: false,
+    killSent: false,
+    exited: chromeExited,
+    exit: chromeExitResult,
+  };
+  if (!chromeExited) result.termSent = chrome.kill('SIGTERM');
+  if (!await waitForChromeExit(2000) && !chromeExited) {
+    result.killSent = chrome.kill('SIGKILL');
+    await waitForChromeExit(2000);
+  }
+  result.exited = chromeExited;
+  result.exit = chromeExitResult;
+  if (!result.exited) {
+    throw Object.assign(new Error('Chrome did not exit within the bounded SIGTERM/SIGKILL teardown window.'), { result });
+  }
+  return result;
+}
 
 let socket;
 let nextId = 1;
@@ -276,6 +327,7 @@ async function focusObservedInfantry(faction, label) {
 }
 
 async function captureReview({ faction, label, zoom, file, grayscale = false, anchor }) {
+  setPhase('capture', file);
   const actualZoom = await setZoom(zoom, anchor, label);
   const observed = await focusObservedInfantry(faction, label);
   if (grayscale) {
@@ -283,7 +335,7 @@ async function captureReview({ faction, label, zoom, file, grayscale = false, an
     await delay(150);
   }
   try {
-    return {
+    const review = {
       faction,
       file,
       expectedZoom: zoom,
@@ -292,27 +344,36 @@ async function captureReview({ faction, label, zoom, file, grayscale = false, an
       grayscale,
       bytes: await capture(file),
     };
+    diagnostic.captures.push(file);
+    return review;
   } finally {
     if (grayscale) await evaluate(`document.documentElement.style.filter = ''`);
   }
 }
 
+let primaryError = null;
 try {
+  setPhase('devtools-connect');
   await connect();
+  setPhase('devtools-enable');
   await call('Runtime.enable');
   await call('Log.enable');
   await call('Page.enable');
   await call('Network.enable');
+  setPhase('page-navigation');
   await call('Page.navigate', { url: pageUrl });
+  setPhase('mission-selection-readiness');
   await waitFor(
     `document.readyState === 'complete' && window.__infantryReview?.game && window.__infantryReview?.renderer && document.querySelector('.missionCard button')`,
     'mission selection and runtime review bridge',
   );
+  setPhase('mission-start');
   await evaluate(`document.querySelector('.missionCard button').click()`);
   const missionTitle = await waitFor(
     `document.querySelector('#missionSelect')?.classList.contains('hidden') && document.querySelector('#missionTitle')?.textContent`,
     'first mission start',
   );
+  setPhase('atlas-readiness');
   await waitFor(
     `(async () => {
       const { Renderer } = await import('./src/render.js');
@@ -323,6 +384,7 @@ try {
     'both infantry atlases readiness',
     { awaitPromise: true },
   );
+  setPhase('runtime-entity-readiness');
   await waitFor(infantryObservationExpression('ua'), 'live Ukrainian infantry runtime entity');
   await waitFor(infantryObservationExpression('ru'), 'live Russian infantry runtime entity');
   await delay(300);
@@ -338,6 +400,7 @@ try {
   captures.push(await captureReview({ faction: 'ru', label: 'Russian infantry at strategic zoom', zoom: 0.55, file: 'ru-strategic-color.png', anchor: ruReviewAnchor }));
   captures.push(await captureReview({ faction: 'ru', label: 'Russian infantry at strategic value zoom', zoom: 0.55, file: 'ru-strategic-value.png', grayscale: true, anchor: ruReviewAnchor }));
 
+  setPhase('post-capture-validation');
   const observedInfantry = {
     ua: await evaluate(infantryObservationExpression('ua')),
     ru: await evaluate(infantryObservationExpression('ru')),
@@ -380,16 +443,72 @@ try {
       factions: ['ua', 'ru'],
     },
   };
+  setPhase('manifest-write');
   await writeFile(resolve(artifacts, 'mission-readability-smoke.json'), JSON.stringify(manifest, null, 2));
+  diagnostic.verificationPassed = true;
+  diagnostic.status = 'passed';
+  setPhase('verification-complete');
   console.log(`[infantry-mission-readability] captured ${captures.length} actual-mission reviews for ${missionTitle}`);
 } catch (error) {
+  primaryError = error;
+  diagnostic.status = 'failed';
+  diagnostic.primaryError = {
+    message: error.message,
+    stack: error.stack,
+  };
   await writeFile(resolve(artifacts, 'mission-readability-failure.log'), `${logs.join('')}\n${error.stack}\n`);
   throw error;
 } finally {
-  socket?.close();
-  if (!chromeExited) chrome.kill('SIGTERM');
-  await Promise.race([chromeExit, delay(2000)]);
-  if (!chromeExited) chrome.kill('SIGKILL');
-  await new Promise((resolveClose) => server.close(resolveClose));
-  await rm(profile, { recursive: true, force: true });
+  const verificationPhase = diagnostic.phase;
+  const verificationScene = diagnostic.scene;
+  setPhase('cleanup', verificationScene);
+
+  try {
+    if (socket && socket.readyState !== WebSocket.CLOSED) socket.close();
+    diagnostic.cleanup.socket = 'close-requested';
+  } catch (error) {
+    diagnostic.cleanup.errors.push({ phase: 'socket-close', message: error.message });
+  }
+
+  try {
+    diagnostic.cleanup.chrome = await terminateChrome();
+  } catch (error) {
+    diagnostic.cleanup.chrome = error.result ?? { exited: chromeExited, exit: chromeExitResult };
+    diagnostic.cleanup.errors.push({ phase: 'chrome-termination', message: error.message });
+  }
+
+  try {
+    await new Promise((resolveClose, rejectClose) => {
+      server.close((error) => error ? rejectClose(error) : resolveClose());
+    });
+    diagnostic.cleanup.server = 'closed';
+  } catch (error) {
+    diagnostic.cleanup.errors.push({ phase: 'server-close', message: error.message });
+  }
+
+  try {
+    await rm(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+    diagnostic.cleanup.profile = 'removed';
+  } catch (error) {
+    diagnostic.cleanup.profile = 'retained';
+    diagnostic.cleanup.errors.push({
+      phase: 'profile-remove',
+      code: error.code ?? null,
+      message: error.message,
+    });
+  }
+
+  if (diagnostic.cleanup.errors.length && diagnostic.verificationPassed) {
+    diagnostic.status = 'passed-with-cleanup-warning';
+    console.warn(`[infantry-mission-readability] verification passed; teardown warning: ${JSON.stringify(diagnostic.cleanup.errors)}`);
+  }
+  diagnostic.phase = primaryError ? verificationPhase : 'complete';
+  diagnostic.scene = verificationScene;
+  diagnostic.finishedAt = new Date().toISOString();
+
+  try {
+    await writeFile(resolve(artifacts, 'mission-readability-diagnostic.json'), JSON.stringify(diagnostic, null, 2));
+  } catch (error) {
+    console.warn(`[infantry-mission-readability] could not persist teardown diagnostic: ${error.message}`);
+  }
 }
