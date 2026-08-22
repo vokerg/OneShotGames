@@ -27,12 +27,16 @@ test('UFR-160 command cards resolve catalog-backed icons before diagnostic fallb
   assert.equal(unknown.asset.key, 'fallback:missing');
 });
 
-test('UFR-160 release UI keeps the action card compact and bounds top-HUD growth', async () => {
+test('UFR-160 release UI keeps the action card compact, collision-free, and bounds top-HUD growth', async () => {
   const css = await readFile(resolve(projectRoot, 'release-ui.css'), 'utf8');
   assert.match(css, /grid-template-columns:\s*repeat\(4,\s*minmax\(0,\s*1fr\)\)/);
   assert.match(css, /grid-template-rows:\s*repeat\(3,\s*minmax\(34px,\s*1fr\)\)/);
+  assert.match(css, /\.commandCardAction\.ability\s*\{[^}]*grid-template-columns:\s*22px\s+minmax\(0,\s*1fr\)\s+auto\s+auto[^}]*overflow:\s*visible/s);
   assert.match(css, /\.commandCardIcon\s*\{/);
-  assert.match(css, /\.commandDescription,\s*\n\.commandCardAction \.commandGroupLabel\s*\{[^}]*clip:/s);
+  assert.match(css, /\.commandCardAction \.abilityMeta\s*\{[^}]*grid-column:\s*2\s*\/\s*span\s*2[^}]*grid-row:\s*2/s);
+  assert.match(css, /\.commandCardAction \.commandHotkey\s*\{[^}]*grid-column:\s*4[^}]*grid-row:\s*1/s);
+  assert.match(css, /\.commandCardAction\.ability\[data-targeting='true'\]::before\s*\{[^}]*grid-column:\s*3[^}]*grid-row:\s*1/s);
+  assert.match(css, /\.commandCardAction \.commandDescription,\s*\n\.commandCardAction \.commandGroupLabel,\s*\n\.commandCardAction \.commandDisabledReason\s*\{[^}]*display:\s*none/s);
   assert.match(css, /--release-topbar-height:\s*64px/);
   assert.match(css, /#workerOverview\.workerOverview\s*\{[^}]*width:\s*0 !important[^}]*visibility:\s*hidden/s);
   assert.match(css, /@media \(min-width:\s*2240px\)[\s\S]*visibility:\s*visible[\s\S]*grid-template-columns:\s*repeat\(8,/);
