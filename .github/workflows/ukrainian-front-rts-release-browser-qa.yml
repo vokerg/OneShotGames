@@ -57,7 +57,7 @@ jobs:
           retention-days: 30
 
   windows-chrome-ui:
-    name: Windows Chrome UFR-183 UI review
+    name: Windows Chrome release UI review
     runs-on: windows-latest
     defaults:
       run:
@@ -79,9 +79,12 @@ jobs:
             throw "Installed ChromeDriver not found: $driver"
           }
           "RELEASE_QA_DRIVER=$driver" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-      - name: Run Windows Chrome release UI review
+      - name: Run Windows Chrome command-card and HUD review
         shell: pwsh
         run: node scripts/windows-chrome-ui-release-review-v2.mjs
+      - name: Run Windows Chrome operation and skirmish menu review
+        shell: pwsh
+        run: node scripts/windows-chrome-menu-release-review.mjs
       - name: Upload Windows Chrome UI evidence
         if: always()
         uses: actions/upload-artifact@v4
