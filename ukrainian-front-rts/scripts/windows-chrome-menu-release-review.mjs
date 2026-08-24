@@ -52,7 +52,7 @@ async function http(method, path, body, timeoutMs = 20000) {
   try {
     const response = await fetch(`http://${host}:${driverPort}${path}`, {
       method,
-      headers: body === undefined ? undefined : { 'content-type': 'application/json' },
+      headers: body === undefined ? undefined : { 'content-type':'application/json' },
       body: body === undefined ? undefined : JSON.stringify(body),
       signal: controller.signal,
     });
@@ -66,10 +66,7 @@ async function http(method, path, body, timeoutMs = 20000) {
 async function waitDriver() {
   for (let attempt = 0; attempt < 120; attempt += 1) {
     if (exited) break;
-    try {
-      const status = await http('GET', '/status', undefined, 1200);
-      if (status?.ready !== false) return;
-    } catch {}
+    try { const status = await http('GET', '/status', undefined, 1200); if (status?.ready !== false) return; } catch {}
     await delay(200);
   }
   throw new Error(`ChromeDriver unavailable: ${driverLog.join('')}`);
@@ -92,36 +89,30 @@ async function screenshot(name) {
 }
 async function cdp(cmd, params) { return wd('POST', '/goog/cdp/execute', { cmd, params }); }
 async function setMetrics(width, height, dpr = 1) {
-  await cdp('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: dpr, mobile: false });
+  await cdp('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor:dpr, mobile:false });
   await delay(180);
 }
 async function clearMetrics() { try { await cdp('Emulation.clearDeviceMetricsOverride', {}); } catch {} }
 async function keyChord(key) {
-  await wd('POST', '/actions', { actions: [{ type: 'key', id: 'kbd', actions: [
-    { type: 'keyDown', value: CTRL }, { type: 'keyDown', value: key }, { type: 'keyUp', value: key }, { type: 'keyUp', value: CTRL },
+  await wd('POST', '/actions', { actions:[{ type:'key', id:'kbd', actions:[
+    { type:'keyDown', value:CTRL }, { type:'keyDown', value:key }, { type:'keyUp', value:key }, { type:'keyUp', value:CTRL },
   ] }] });
   await wd('DELETE', '/actions');
   await delay(250);
 }
+const zoomChanged = (before, after) => after.viewport.dpr > before.viewport.dpr || after.viewport.width < before.viewport.width;
 
 async function menuSnapshot() {
   return js(`
-    const rect = (element) => { const r = element?.getBoundingClientRect(); return r ? { left:r.left, top:r.top, right:r.right, bottom:r.bottom, width:r.width, height:r.height } : null; };
-    const rgb = (value) => { const m = String(value).match(/rgba?\\((\\d+)\\D+(\\d+)\\D+(\\d+)/); return m ? [Number(m[1]), Number(m[2]), Number(m[3])] : null; };
-    const luminance = (color) => { const c = rgb(color)?.map(v => { const n=v/255; return n<=0.03928?n/12.92:((n+0.055)/1.055)**2.4; }); return c ? 0.2126*c[0]+0.7152*c[1]+0.0722*c[2] : null; };
-    const ratio = (fg, bg) => { const a=luminance(fg), b=luminance(bg); if(a===null||b===null)return null; const hi=Math.max(a,b), lo=Math.min(a,b); return (hi+0.05)/(lo+0.05); };
-    const book=document.querySelector('.book'), bookStyle=getComputedStyle(book), background=bookStyle.backgroundColor;
-    const textNodes=[document.querySelector('.book h1'), ...document.querySelectorAll('.book > p')].filter(Boolean);
-    const contrast=textNodes.map(node=>({ text:(node.textContent||'').trim().slice(0,100), color:getComputedStyle(node).color, ratio:ratio(getComputedStyle(node).color,background), rect:rect(node) }));
-    const card=document.querySelector('.skirmishMissionCard'), body=card?.children?.[1], action=card?.querySelector(':scope > button'), field=card?.querySelector('.skirmishSetupField'), select=field?.querySelector('select');
-    const cardRect=rect(card), bodyRect=rect(body), actionRect=rect(action), fieldRect=rect(field), selectRect=rect(select);
-    return {
-      viewport:{ width:innerWidth, height:innerHeight, dpr:devicePixelRatio },
-      book:{ rect:rect(book), background, borderImageSlice:bookStyle.borderImageSlice, color:bookStyle.color },
-      contrast,
-      skirmish:{ card:cardRect, body:bodyRect, action:actionRect, field:fieldRect, select:selectRect, value:select?.value || null },
-      horizontalOverflow:document.documentElement.scrollWidth > document.documentElement.clientWidth,
-    };
+    const rect=(element)=>{const r=element?.getBoundingClientRect();return r?{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}:null};
+    const rgb=(value)=>{const m=String(value).match(/rgba?\\((\\d+)\\D+(\\d+)\\D+(\\d+)/);return m?[Number(m[1]),Number(m[2]),Number(m[3])]:null};
+    const luminance=(color)=>{const c=rgb(color)?.map(v=>{const n=v/255;return n<=0.03928?n/12.92:((n+0.055)/1.055)**2.4});return c?0.2126*c[0]+0.7152*c[1]+0.0722*c[2]:null};
+    const ratio=(fg,bg)=>{const a=luminance(fg),b=luminance(bg);if(a===null||b===null)return null;const hi=Math.max(a,b),lo=Math.min(a,b);return(hi+0.05)/(lo+0.05)};
+    const book=document.querySelector('.book'),bookStyle=getComputedStyle(book),background=bookStyle.backgroundColor;
+    const textNodes=[document.querySelector('.book h1'),...document.querySelectorAll('.book > p')].filter(Boolean);
+    const contrast=textNodes.map(node=>({text:(node.textContent||'').trim().slice(0,100),color:getComputedStyle(node).color,ratio:ratio(getComputedStyle(node).color,background),rect:rect(node)}));
+    const card=document.querySelector('.skirmishMissionCard'),body=card?.children?.[1],action=card?.querySelector(':scope > button'),field=card?.querySelector('.skirmishSetupField'),select=field?.querySelector('select');
+    return{viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},book:{rect:rect(book),background,borderImageSlice:bookStyle.borderImageSlice,color:bookStyle.color},contrast,skirmish:{card:rect(card),body:rect(body),action:rect(action),field:rect(field),select:rect(select),value:select?.value||null},horizontalOverflow:document.documentElement.scrollWidth>document.documentElement.clientWidth};
   `);
 }
 
@@ -140,66 +131,59 @@ function validate(snapshot, label) {
   if (body.right <= action.left) assert(select.right <= action.left + 0.5, `${label}: battlefield select overlaps action column`);
 }
 
-const report = {
-  schema: 'fields-of-resolve.windows-chrome-menu-release-review',
-  version: 1,
-  candidateCommit: commit,
-  browser: 'chrome',
-  headed: true,
-  runner: { os: process.env.ImageOS || process.platform, imageVersion: process.env.ImageVersion || null },
-  tester: 'OpenAI assistant via native headed Windows Chrome automation and real application captures',
-  status: 'FAIL',
-  viewports: [],
-  zoom: null,
-  screenshots: [],
-};
+const report = { schema:'fields-of-resolve.windows-chrome-menu-release-review', version:1, candidateCommit:commit, browser:'chrome', headed:true, runner:{os:process.env.ImageOS||process.platform,imageVersion:process.env.ImageVersion||null}, tester:'OpenAI assistant via native headed Windows Chrome automation and real application captures', status:'FAIL', viewports:[], zoom:null, screenshots:[] };
 
 try {
   await waitDriver();
-  const created = await http('POST', '/session', { capabilities: { alwaysMatch: { browserName:'chrome', 'goog:chromeOptions':{ args:['--disable-search-engine-choice-screen','--disable-dev-shm-usage'] } } } }, 60000);
+  const created = await http('POST', '/session', { capabilities:{ alwaysMatch:{ browserName:'chrome', 'goog:chromeOptions':{ args:['--disable-search-engine-choice-screen','--disable-dev-shm-usage'] } } } }, 60000);
   session = created?.sessionId || created?.value?.sessionId;
   report.capabilities = created?.capabilities || created?.value?.capabilities || {};
   assert(session, 'No Chrome session');
   await wd('POST', '/window/rect', { x:0, y:0, width:1440, height:900 });
-  await wd('POST', '/url', { url: pageUrl });
-  await waitFor(`document.readyState==='complete' && document.querySelector('.book h1') && document.querySelector('.skirmishMissionCard .skirmishSetupField select')`, 'operation and skirmish menu');
+  await wd('POST', '/url', { url:pageUrl });
+  await waitFor(`document.readyState==='complete'&&document.querySelector('.book h1')&&document.querySelector('.skirmishMissionCard .skirmishSetupField select')`, 'operation and skirmish menu');
 
-  for (const [width, height] of [[1280,720],[1920,1080],[900,760]]) {
-    await setMetrics(width, height, 1);
+  for (const [width,height] of [[1280,720],[1920,1080],[900,760]]) {
+    await setMetrics(width,height,1);
     const snapshot = await menuSnapshot();
-    assert(snapshot.viewport.width === width && snapshot.viewport.height === height, `viewport mismatch ${width}x${height}`);
+    assert(snapshot.viewport.width===width&&snapshot.viewport.height===height, `viewport mismatch ${width}x${height}`);
     validate(snapshot, `${width}x${height}`);
     await js(`document.querySelector('.skirmishMissionCard')?.scrollIntoView({block:'center'});`);
     await delay(100);
-    const file = `windows-chrome-menu-${width}x${height}.png`;
+    const file=`windows-chrome-menu-${width}x${height}.png`;
     report.screenshots.push(await screenshot(file));
-    report.viewports.push({ width, height, snapshot });
+    report.viewports.push({width,height,snapshot});
   }
 
   await clearMetrics();
   await wd('POST', '/window/rect', { x:0, y:0, width:1440, height:900 });
   const beforeZoom = await menuSnapshot();
-  await keyChord('+');
-  const afterZoom = await menuSnapshot();
-  validate(afterZoom, 'browser zoom +');
-  assert(afterZoom.viewport.dpr > beforeZoom.viewport.dpr || afterZoom.viewport.width < beforeZoom.viewport.width,
-    `Ctrl+plus did not change browser zoom: before=${JSON.stringify(beforeZoom.viewport)} after=${JSON.stringify(afterZoom.viewport)}`);
-  report.zoom = { before: beforeZoom.viewport, after: afterZoom.viewport, status:'PASS' };
+  let shortcut = 'Ctrl+=';
+  await keyChord('=');
+  let afterZoom = await menuSnapshot();
+  if (!zoomChanged(beforeZoom, afterZoom)) {
+    shortcut = 'Ctrl++ fallback';
+    await keyChord('+');
+    afterZoom = await menuSnapshot();
+  }
+  validate(afterZoom, 'browser zoom');
+  assert(zoomChanged(beforeZoom, afterZoom), `Native Chrome zoom shortcut did not change browser scale: before=${JSON.stringify(beforeZoom.viewport)} after=${JSON.stringify(afterZoom.viewport)}`);
+  report.zoom = { before:beforeZoom.viewport, after:afterZoom.viewport, shortcut, status:'PASS' };
   await keyChord('0');
 
-  report.status = 'PASS';
-  await writeFile(join(out, 'menu-ui-review.json'), `${JSON.stringify(report, null, 2)}\n`);
-  console.log(`[windows-chrome-menu-release-review] PASS ${report.capabilities?.browserVersion || 'unknown'} operation contrast, skirmish containment, responsive layout, browser zoom`);
+  report.status='PASS';
+  await writeFile(join(out,'menu-ui-review.json'), `${JSON.stringify(report,null,2)}\n`);
+  console.log(`[windows-chrome-menu-release-review] PASS ${report.capabilities?.browserVersion||'unknown'} operation contrast, skirmish containment, responsive layout, browser zoom`);
 } catch (error) {
-  report.error = error.stack || String(error);
-  try { if (session) report.screenshots.push(await screenshot('windows-chrome-menu-failure.png')); } catch {}
-  await writeFile(join(out, 'menu-ui-review.json'), `${JSON.stringify(report, null, 2)}\n`);
+  report.error=error.stack||String(error);
+  try { if(session) report.screenshots.push(await screenshot('windows-chrome-menu-failure.png')); } catch {}
+  await writeFile(join(out,'menu-ui-review.json'), `${JSON.stringify(report,null,2)}\n`);
   throw error;
 } finally {
   await clearMetrics();
-  if (session) try { await http('DELETE', `/session/${session}`, undefined, 5000); } catch {}
-  if (!exited) driver.kill('SIGTERM');
+  if(session) try { await http('DELETE',`/session/${session}`,undefined,5000); } catch {}
+  if(!exited) driver.kill('SIGTERM');
   await delay(300);
-  if (!exited) driver.kill('SIGKILL');
-  await new Promise((done) => server.close(done));
+  if(!exited) driver.kill('SIGKILL');
+  await new Promise((done)=>server.close(done));
 }
