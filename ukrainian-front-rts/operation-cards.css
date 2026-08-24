@@ -1,6 +1,24 @@
 /* Operation-selection readability overrides.
  * Loaded after ui-skin.css so the parchment frame cannot paint a dark fill beneath dark text.
  */
+.book {
+  color: #2d2417;
+  background: #d7c792;
+  border-image-slice: 12;
+}
+
+.book h1 {
+  color: #241b11;
+}
+
+.book > p {
+  color: #382b1c;
+}
+
+.book .disclaimer {
+  color: #55452c;
+}
+
 .missionCard {
   grid-template-columns: 130px minmax(0, 1fr) max-content;
   color: #2d2417;
@@ -37,6 +55,36 @@
   overflow-wrap: anywhere;
 }
 
+/* Skirmish option labels are intentionally descriptive. Keep that intrinsic text width
+ * inside the form track rather than allowing a select to claim space from the action
+ * column. The native control can elide its closed label while the option list retains
+ * the complete text when opened. */
+.skirmishMissionCard > div,
+.skirmishSetupFields,
+.skirmishSetupField {
+  min-width: 0;
+}
+
+.skirmishSetupFields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px 9px;
+}
+
+.skirmishSetupField {
+  display: grid;
+  gap: 3px;
+}
+
+.skirmishSetupField select {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 @media (max-width: 960px) {
   .missionCard {
     grid-template-columns: 130px minmax(0, 1fr);
@@ -58,15 +106,23 @@
   .missionCard canvas {
     display: none;
   }
+
+  .skirmishSetupFields {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 @media (prefers-contrast: more) {
+  .book,
   .missionCard {
     background: #efe2b5;
     color: #18130d;
     filter: contrast(1.08);
   }
 
+  .book h1,
+  .book > p,
+  .book .disclaimer,
   .missionCard h3,
   .missionCard small,
   .missionCard p,
@@ -76,6 +132,7 @@
 }
 
 @media (forced-colors: active) {
+  .book,
   .missionCard {
     border-image: none;
     border-color: CanvasText;
@@ -83,6 +140,9 @@
     color: CanvasText;
   }
 
+  .book h1,
+  .book > p,
+  .book .disclaimer,
   .missionCard h3,
   .missionCard small,
   .missionCard p,
