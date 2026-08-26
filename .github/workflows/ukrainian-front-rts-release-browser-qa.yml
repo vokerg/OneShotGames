@@ -1,0 +1,139 @@
+name: Ukrainian Front RTS headed release browser QA
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'ukrainian-front-rts/**'
+      - '.github/workflows/ukrainian-front-rts-release-browser-qa.yml'
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  windows-browsers:
+    name: Windows ${{ matrix.browser }} headed release QA
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [edge, firefox]
+    defaults:
+      run:
+        working-directory: ukrainian-front-rts
+    env:
+      RELEASE_QA_BROWSER: ${{ matrix.browser }}
+      RELEASE_QA_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Resolve installed WebDriver
+        shell: pwsh
+        run: |
+          $driver = switch ("${{ matrix.browser }}") {
+            "edge" { Join-Path $env:EDGEWEBDRIVER "msedgedriver.exe" }
+            "firefox" { Join-Path $env:GECKOWEBDRIVER "geckodriver.exe" }
+          }
+          if (-not (Test-Path $driver -PathType Leaf)) {
+            throw "Installed WebDriver not found: $driver"
+          }
+          "RELEASE_QA_DRIVER=$driver" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Host "Using $driver"
+      - name: Run headed release browser QA
+        shell: pwsh
+        run: node scripts/release-headed-browser-qa-final.mjs
+      - name: Upload headed browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ufrts-release-browser-${{ matrix.browser }}-${{ github.run_id }}
+          path: ukrainian-front-rts/artifacts/release-browser-qa/${{ matrix.browser }}/
+          if-no-files-found: error
+          retention-days: 30
+
+  windows-chrome-ui:
+    name: Windows Chrome release UI review
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: ukrainian-front-rts
+    env:
+      RELEASE_QA_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Resolve ChromeDriver
+        shell: pwsh
+        run: |
+          $driver = Join-Path $env:CHROMEWEBDRIVER "chromedriver.exe"
+          if (-not (Test-Path $driver -PathType Leaf)) {
+            throw "Installed ChromeDriver not found: $driver"
+          }
+          "RELEASE_QA_DRIVER=$driver" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Run Windows Chrome command-card and HUD review
+        shell: pwsh
+        run: node scripts/windows-chrome-ui-release-review-v2.mjs
+      - name: Run Windows Chrome operation and skirmish menu review
+        shell: pwsh
+        run: node scripts/windows-chrome-menu-release-review.mjs
+      - name: Upload Windows Chrome UI evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ufrts-release-browser-chrome-${{ github.run_id }}
+          path: ukrainian-front-rts/artifacts/release-browser-qa/chrome/
+          if-no-files-found: error
+          retention-days: 30
+
+  safari:
+    name: macOS Safari headed release QA
+    runs-on: macos-14
+    defaults:
+      run:
+        working-directory: ukrainian-front-rts
+    env:
+      RELEASE_QA_BROWSER: safari
+      RELEASE_QA_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Enable Safari remote automation
+        run: sudo safaridriver --enable
+      - name: Run headed release browser QA
+        shell: bash
+        run: |
+          set +e
+          open -a Safari about:blank
+          sleep 5
+          node scripts/release-headed-browser-qa-final.mjs
+          status=$?
+          if [ "$status" -eq 0 ]; then
+            exit 0
+          fi
+          echo "First Safari automation attempt failed; restarting Safari once and retrying the bounded release pass."
+          pkill -x Safari || true
+          sleep 2
+          open -a Safari about:blank
+          sleep 5
+          node scripts/release-headed-browser-qa-final.mjs
+      - name: Upload headed browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ufrts-release-browser-safari-${{ github.run_id }}
+          path: ukrainian-front-rts/artifacts/release-browser-qa/safari/
+          if-no-files-found: error
+          retention-days: 30

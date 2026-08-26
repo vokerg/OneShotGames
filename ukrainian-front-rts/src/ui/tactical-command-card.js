@@ -1,6 +1,9 @@
 import { BUILDING_TYPES, TEAM, UNIT_TYPES } from '../config.js';
 import { TACTICAL_COMMAND_KINDS } from '../core/tactical-command-contract.js';
+import { createCommandCardIcon } from './command-card-icons.js';
 import { installProductionCommandCard } from './command-card.js';
+
+export const RELEASE_UI_STYLESHEET = 'release-ui.css';
 
 const COMMANDS = Object.freeze([
   Object.freeze({
@@ -77,6 +80,48 @@ function consumeCommandMessage(game, fallback) {
   return message;
 }
 
+function installReleaseUiStylesheet(documentTarget) {
+  if (!documentTarget?.head || typeof documentTarget.createElement !== 'function') return () => {};
+  const existing = documentTarget.querySelector?.('link[data-release-ui-styles="true"]');
+  if (existing) return () => {};
+  const link = documentTarget.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = RELEASE_UI_STYLESHEET;
+  link.dataset.releaseUiStyles = 'true';
+  documentTarget.head.append(link);
+  return () => link.remove?.();
+}
+
+function decorateCommandCard(root, documentTarget) {
+  if (!root?.querySelectorAll || !documentTarget?.createElementNS) return;
+  for (const button of root.querySelectorAll('.commandCardAction')) {
+    if (button.querySelector?.('.commandCardIcon')) continue;
+    const title = button.querySelector?.('.commandTitle')?.textContent || '';
+    const description = button.querySelector?.('.commandDescription')?.textContent || '';
+    const disabledReasonNode = button.querySelector?.('.commandDisabledReason');
+    const disabledReason = disabledReasonNode?.dataset?.fullReason || disabledReasonNode?.textContent || '';
+    const icon = createCommandCardIcon(documentTarget, {
+      id: button.dataset?.commandId || '',
+      title,
+      group: button.dataset?.commandGroup || '',
+    });
+    if (icon) {
+      button.prepend(icon);
+      button.dataset.iconKey = icon.dataset.iconKey || '';
+      button.dataset.iconStatus = icon.dataset.iconStatus || 'fallback';
+    }
+    if (disabledReasonNode && disabledReason) {
+      disabledReasonNode.dataset.fullReason = disabledReason;
+      disabledReasonNode.textContent = 'Blocked';
+    }
+    const tooltip = [title, description, disabledReason].filter(Boolean).join('\n');
+    if (tooltip) {
+      button.title = tooltip;
+      button.dataset.tooltip = tooltip;
+    }
+  }
+}
+
 export function installTacticalCommandCard(ui) {
   if (!ui?.g || typeof ui.appendUnitCommands !== 'function' || typeof ui.commandStateSignature !== 'function') {
     throw new TypeError('Tactical command card requires a UI instance with unit command hooks.');
@@ -85,11 +130,21 @@ export function installTacticalCommandCard(ui) {
     throw new TypeError('Tactical command card requires UI commandButton() and toast().');
   }
 
+  const documentTarget = ui.e?.abilities?.ownerDocument || globalThis.document;
   let disposeCommandCard = () => {};
   if (ui?.e?.abilities) {
     const disposeProductionCommandCard = installProductionCommandCard(ui);
     disposeCommandCard = disposeProductionCommandCard;
   }
+  const disposeReleaseUiStylesheet = installReleaseUiStylesheet(documentTarget);
+  const productionRefresh = ui.refresh;
+  const releaseRefresh = function refreshWithReleaseCommandPresentation(...args) {
+    const result = productionRefresh.apply(this, args);
+    decorateCommandCard(this.e?.abilities, documentTarget);
+    return result;
+  };
+  ui.refresh = releaseRefresh;
+
   const originalAppendUnitCommands = ui.appendUnitCommands;
   const originalCommandStateSignature = ui.commandStateSignature;
 
@@ -190,9 +245,13 @@ export function installTacticalCommandCard(ui) {
     });
   };
 
+  decorateCommandCard(ui.e?.abilities, documentTarget);
+
   return () => {
     ui.appendUnitCommands = originalAppendUnitCommands;
     ui.commandStateSignature = originalCommandStateSignature;
+    if (ui.refresh === releaseRefresh) ui.refresh = productionRefresh;
+    disposeReleaseUiStylesheet();
     disposeCommandCard();
   };
 }
