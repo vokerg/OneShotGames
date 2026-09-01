@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 import { createVisualRegressionScenes, summarizeVisualRegressionScenes } from '../src/render/visual-regression-scenes.js';
 import { runBrowserWithTimeoutRetry } from './lib/browser-process.mjs';
+import { openChromeDevToolsSession } from './lib/chrome-devtools-session.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const artifacts = resolve(root, 'artifacts/visual-regression');
@@ -14,6 +15,7 @@ const browserAttemptsPath = resolve(artifacts, 'visual-regression-browser-attemp
 const failurePath = resolve(artifacts, 'visual-regression-failure.json');
 const host = '127.0.0.1';
 const port = 4174;
+const devToolsPort = 9234;
 const pageUrl = `http://${host}:${port}/visual-regression.html`;
 const mime = { '.css': 'text/css', '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml' };
 const timeoutRetryCount = 1;
@@ -50,6 +52,7 @@ const browserAttemptDiagnostics = [];
 let phase = 'server-startup';
 let activeTarget = null;
 let lastBrowserResult = null;
+let devToolsDiagnostics = null;
 
 async function recordBrowserAttemptFailure(target, output, failure) {
   const details = failure.details ?? {};
@@ -139,36 +142,89 @@ try {
   // Keep CI bounded: the Art Lab retains four manual pages covering all 32 identities,
   // while automation captures one faction in color and the opposing support page in
   // grayscale. Unit tests and the support verifier enforce exact 32-identity coverage.
+  // The live Art Lab has a perpetual requestAnimationFrame renderer, so capture it through
+  // DevTools instead of relying on Chromium's CLI --dump-dom + --screenshot process exit.
   const reviewTargets = [
     { page: 0, value: false, label: 'ua-uas-fires' },
     { page: 3, value: true, label: 'ru-support' },
   ];
   const supportCaptures = [];
-  for (const target of reviewTargets) {
-    phase = `support-review-${target.page + 1}`;
-    const name = `ufr-114-${target.label}-${target.value ? 'value' : 'color'}.png`;
-    const output = resolve(artifacts, name);
-    const url = `http://${host}:${port}/art-lab.html?supportPage=${target.page}${target.value ? '&value=1' : ''}`;
-    const review = await runVisualBrowser([
-      '--headless=new', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage', '--hide-scrollbars', '--virtual-time-budget=6000',
-      '--window-size=1600,900', '--dump-dom', `--screenshot=${output}`, url,
-    ], {
-      timeoutMs: 60_000,
-      target: { kind: 'support-review', page: target.page + 1, label: target.label, valueCheck: target.value, url },
-      output,
+  phase = 'support-devtools-startup';
+  const devTools = await openChromeDevToolsSession({
+    browser,
+    browserPort: devToolsPort,
+    profilePrefix: 'ufrts-visual-regression-',
+    windowSize: '1600,900',
+  });
+  try {
+    await devTools.call('Emulation.setDeviceMetricsOverride', {
+      width: 1600,
+      height: 900,
+      deviceScaleFactor: 1,
+      mobile: false,
     });
-    if (!review.stdout.includes('data-support-visual-ready="true"')) throw new Error(`UFR-114 Art Lab page ${target.page + 1} did not reach ready state.`);
-    if (!review.stdout.includes(`data-support-visual-page="${target.page}"`)) throw new Error(`UFR-114 Art Lab page ${target.page + 1} did not select the requested review page.`);
-    if (review.stdout.includes('data-support-visual-error=')) throw new Error(`UFR-114 Art Lab page ${target.page + 1} reported a runtime load error.`);
-    const captureStat = await stat(output);
-    if (captureStat.size < 4096) throw new Error(`UFR-114 Art Lab capture ${name} is unexpectedly small (${captureStat.size} bytes).`);
-    supportCaptures.push({
-      page: target.page + 1,
-      file: name,
-      valueCheck: target.value,
-      bytes: captureStat.size,
-      browserAttempts: review.attemptCount,
-    });
+    for (const target of reviewTargets) {
+      phase = `support-review-${target.page + 1}`;
+      const name = `ufr-114-${target.label}-${target.value ? 'value' : 'color'}.png`;
+      const output = resolve(artifacts, name);
+      const url = `http://${host}:${port}/art-lab.html?supportPage=${target.page}${target.value ? '&value=1' : ''}`;
+      activeTarget = {
+        kind: 'support-review',
+        page: target.page + 1,
+        label: target.label,
+        valueCheck: target.value,
+        url,
+        output: name,
+        captureMode: 'devtools',
+      };
+      await rm(output, { force: true });
+      await devTools.call('Page.navigate', { url });
+      await devTools.waitFor(
+        `document.body?.dataset.supportVisualReady === 'true' || Boolean(document.body?.dataset.supportVisualError)`,
+        `UFR-114 Art Lab page ${target.page + 1} readiness`,
+        { timeoutMs: 20_000 },
+      );
+      const review = await devTools.evaluate(`({
+        ready: document.body?.dataset.supportVisualReady ?? null,
+        page: document.body?.dataset.supportVisualPage ?? null,
+        state: document.body?.dataset.supportVisualState ?? null,
+        direction: document.body?.dataset.supportVisualDirection ?? null,
+        value: document.body?.dataset.supportVisualValue ?? null,
+        error: document.body?.dataset.supportVisualError ?? null,
+      })`);
+      if (review.error) throw new Error(`UFR-114 Art Lab page ${target.page + 1} reported a runtime load error: ${review.error}`);
+      if (review.ready !== 'true') throw new Error(`UFR-114 Art Lab page ${target.page + 1} did not reach ready state.`);
+      if (review.page !== String(target.page)) throw new Error(`UFR-114 Art Lab page ${target.page + 1} did not select the requested review page.`);
+      if (review.value !== String(target.value)) throw new Error(`UFR-114 Art Lab page ${target.page + 1} did not apply the requested value-check mode.`);
+      await devTools.evaluate(`new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))`, {
+        awaitPromise: true,
+        timeoutMs: 8_000,
+      });
+      await devTools.captureScreenshot(output);
+      const captureStat = await stat(output);
+      if (captureStat.size < 4096) throw new Error(`UFR-114 Art Lab capture ${name} is unexpectedly small (${captureStat.size} bytes).`);
+      supportCaptures.push({
+        page: target.page + 1,
+        file: name,
+        valueCheck: target.value,
+        bytes: captureStat.size,
+        captureMode: 'devtools',
+        state: review.state,
+        direction: review.direction,
+      });
+    }
+    devToolsDiagnostics = {
+      ...devTools.diagnostics(),
+      stderr: textTail(devTools.diagnostics().stderr),
+    };
+  } catch (error) {
+    devToolsDiagnostics = {
+      ...devTools.diagnostics(),
+      stderr: textTail(devTools.diagnostics().stderr),
+    };
+    throw error;
+  } finally {
+    await devTools.close();
   }
 
   phase = 'manifest';
@@ -181,6 +237,7 @@ try {
     browserPolicy: {
       timeoutRetries: timeoutRetryCount,
       recoveredAttemptFailures: browserAttemptDiagnostics.length,
+      liveArtLabCapture: 'chrome-devtools-protocol',
     },
     supportReview: {
       page: 'art-lab.html',
@@ -211,6 +268,7 @@ try {
     capture: await captureState(activeOutput),
     lastBrowserResult,
     browserAttempts: browserAttemptDiagnostics,
+    devTools: devToolsDiagnostics ?? error.devToolsDiagnostics ?? null,
   }, null, 2));
   throw error;
 } finally {
