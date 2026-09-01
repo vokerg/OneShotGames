@@ -83,6 +83,7 @@ async function runVisualBrowser(arguments_, { target, output = null, timeoutMs =
   const result = await runBrowserWithTimeoutRetry(browser, arguments_, {
     timeoutMs,
     retries: timeoutRetryCount,
+    beforeAttempt: output ? () => rm(output, { force: true }) : null,
     onAttemptFailure: (failure) => recordBrowserAttemptFailure(activeTarget, output, failure),
   });
   lastBrowserResult = {
