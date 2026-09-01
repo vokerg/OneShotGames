@@ -20,10 +20,12 @@ function browserFailure({ timedOut, message = 'browser failure' } = {}) {
 
 test('visual regression browser runner retries one transient timeout and preserves diagnostics', async () => {
   let calls = 0;
+  const preparedAttempts = [];
   const failures = [];
   const result = await runBrowserWithTimeoutRetry('chromium', ['--test'], {
     timeoutMs: 60_000,
     retries: 1,
+    beforeAttempt: async (attempt) => preparedAttempts.push(attempt),
     run: async () => {
       calls += 1;
       if (calls === 1) throw browserFailure({ timedOut: true, message: 'slow CI startup' });
@@ -33,6 +35,7 @@ test('visual regression browser runner retries one transient timeout and preserv
   });
 
   assert.equal(calls, 2);
+  assert.deepEqual(preparedAttempts, [1, 2]);
   assert.equal(result.attemptCount, 2);
   assert.equal(result.priorFailures.length, 1);
   assert.equal(result.priorFailures[0].retryable, true);
