@@ -70,12 +70,14 @@ export async function runBrowserWithTimeoutRetry(browser, arguments_, {
   timeoutMs = 45_000,
   retries = 0,
   run = runBrowserProcess,
+  beforeAttempt = null,
   onAttemptFailure = null,
 } = {}) {
   const failures = [];
   const maxAttempts = retries + 1;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    if (beforeAttempt) await beforeAttempt(attempt);
     try {
       const result = await run(browser, arguments_, { timeoutMs });
       return {
