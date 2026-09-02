@@ -66,6 +66,12 @@ test('two compatible engineers expose their common construction actions', () => 
   assert.equal(result, 'base-result');
   const buildActions = actions.filter((action) => action.className === 'build-command');
   assert.equal(buildActions.length, 3);
+  assert.deepEqual(buildActions.map((action) => action.id), [
+    'group-buildDepot',
+    'group-buildBarracks',
+    'group-buildWorkshop',
+  ]);
+  assert.equal(new Set(buildActions.map((action) => action.id)).size, buildActions.length);
   assert.ok(buildActions.every((action) => action.meta.startsWith('2× Combat Engineers · ')));
 
   buildActions[0].onClick();
@@ -95,4 +101,14 @@ test('mixed unit/building selections do not inherit engineer-only construction a
   installGroupConstructionCommands(ui);
   ui.appendUnitCommands([engineer]);
   assert.equal(actions.filter((action) => action.className === 'build-command').length, 0);
+});
+
+test('installer fails fast when its localization dependency is missing', () => {
+  const engineers = [unit(1, 'uaEngineer'), unit(2, 'uaEngineer')];
+  const { ui } = fixture(engineers);
+  delete ui.t;
+  assert.throws(
+    () => installGroupConstructionCommands(ui),
+    /requires ui\.t\(\)/,
+  );
 });
