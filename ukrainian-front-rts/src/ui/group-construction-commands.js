@@ -6,20 +6,30 @@ const BUILD_ACTIONS = Object.freeze({
   buildWorkshop: 'workshop',
 });
 
-export function commonConstructionAbilityIds(entities) {
-  if (!Array.isArray(entities) || entities.length < 2) return Object.freeze([]);
-  if (entities.some((entity) => {
-    const stats = UNIT_TYPES[entity?.type];
-    return entity?.team !== TEAM.UA || !stats?.worker;
-  })) {
-    return Object.freeze([]);
-  }
+const INCOMPATIBLE_SELECTION_REASON = 'Select only compatible Ukrainian engineers to construct this structure.';
 
+function isConstructionWorker(entity) {
+  const stats = UNIT_TYPES[entity?.type];
+  return Boolean(
+    entity?.team === TEAM.UA
+      && entity.hp > 0
+      && stats?.worker,
+  );
+}
+
+function sharedConstructionAbilityIds(builders) {
+  if (!builders.length) return Object.freeze([]);
   return Object.freeze(
     Object.keys(BUILD_ACTIONS).filter((abilityId) =>
-      entities.every((entity) => (UNIT_TYPES[entity.type].abilities || []).includes(abilityId)),
+      builders.every((entity) => (UNIT_TYPES[entity.type].abilities || []).includes(abilityId)),
     ),
   );
+}
+
+export function commonConstructionAbilityIds(entities) {
+  if (!Array.isArray(entities) || entities.length < 2) return Object.freeze([]);
+  if (entities.some((entity) => !isConstructionWorker(entity))) return Object.freeze([]);
+  return sharedConstructionAbilityIds(entities);
 }
 
 export function installGroupConstructionCommands(ui) {
@@ -45,11 +55,14 @@ export function installGroupConstructionCommands(ui) {
   ui.appendUnitCommands = function appendGroupConstructionCommands(units) {
     const result = originalAppendUnitCommands.call(this, units);
     const selectedEntities = this.g.selectedEntities();
-    if (selectedEntities.length !== units.length) return result;
+    const builders = units.filter(isConstructionWorker);
+    if (!builders.length) return result;
 
-    const abilityIds = commonConstructionAbilityIds(units);
+    const abilityIds = sharedConstructionAbilityIds(builders);
     if (!abilityIds.length) return result;
-    const builderSummary = this.selectionSummary(units);
+
+    const compatibleSelection = selectedEntities.length === units.length && builders.length === units.length;
+    const builderSummary = this.selectionSummary(builders);
 
     for (const abilityId of abilityIds) {
       const ability = ABILITIES[abilityId];
@@ -58,9 +71,12 @@ export function installGroupConstructionCommands(ui) {
       this.commandButton({
         id: `group-${abilityId}`,
         title: ability.name,
-        description: ability.desc,
+        description: compatibleSelection
+          ? ability.desc
+          : `${ability.desc} ${INCOMPATIBLE_SELECTION_REASON}`,
         meta: `${builderSummary} · ${this.formatCost(BUILDING_TYPES[buildType].cost)}`,
         className: 'build-command',
+        disabled: !compatibleSelection,
         onClick: () => {
           if (this.g.useAbility(abilityId)) {
             this.toast(this.t(
