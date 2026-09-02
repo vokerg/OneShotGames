@@ -308,5 +308,6 @@ try {
     await Promise.race([chromeExit, delay(3_000)]);
   }
   await new Promise((resolveClose) => server.close(resolveClose));
+  if (!chromeExited) throw new Error('Chromium did not exit after forced compact viewport teardown.');
   await rm(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 }
