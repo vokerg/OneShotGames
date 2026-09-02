@@ -191,6 +191,7 @@ async function snapshot() {
       fullscreenText: document.querySelector('#viewportFullscreenToggle')?.textContent,
       fullscreenAria: document.querySelector('#viewportFullscreenToggle')?.getAttribute('aria-label'),
       viewportNoticeHeading: document.querySelector('#minimumViewportNotice strong')?.textContent,
+      viewportNoticeBody: document.querySelector('#minimumViewportNotice span')?.textContent,
       disclaimer: document.querySelector('#missionSelect .disclaimer')?.textContent,
       minimapAria: document.querySelector('#minimap')?.getAttribute('aria-label'),
       missionButton: document.querySelector('.missionCard button')?.textContent,
@@ -228,6 +229,8 @@ try {
   assert(report.initial.htmlLang === 'en' && report.initial.dataLocale === 'en', 'English locale was not applied to the root element.');
   assert(report.initial.toggleTarget === 'uk', 'English locale control must target Ukrainian.');
   assert(report.initial.persistedLocale === null, 'Initial locale should not persist until the player changes it.');
+  assert(report.initial.viewportNoticeHeading === 'Viewport below supported minimum', 'English minimum viewport heading is stale.');
+  assert(report.initial.viewportNoticeBody === 'Use at least 960 × 600 CSS pixels or enter fullscreen. Supported compact layouts automatically collapse secondary panels to keep core commands reachable.', 'English minimum viewport guidance is stale.');
   assert(report.initial.diagnostics?.missingSelectors?.length === 0, `Missing English bindings: ${report.initial.diagnostics?.missingSelectors}`);
   assert(report.initial.topbarChildOverflow === false, 'English top-bar controls exceed the top-bar bounds.');
   assert(report.initial.viewportOverflow === false, 'English localization creates horizontal viewport overflow.');
@@ -245,7 +248,8 @@ try {
   assert(/[А-ЯІЇЄҐа-яіїєґ]/u.test(report.ukrainian.minimapAria || ''), 'Ukrainian ARIA copy was not applied.');
   assert(report.ukrainian.fullscreenText === 'На весь екран', 'Viewport fullscreen action did not localize.');
   assert(/[А-ЯІЇЄҐа-яіїєґ]/u.test(report.ukrainian.fullscreenAria || ''), 'Viewport fullscreen ARIA copy did not localize.');
-  assert(report.ukrainian.viewportNoticeHeading === 'Замала область перегляду', 'Minimum viewport notice did not localize.');
+  assert(report.ukrainian.viewportNoticeHeading === 'Область перегляду менша за підтримуваний мінімум', 'Minimum viewport notice heading did not localize to the supported-minimum contract.');
+  assert(report.ukrainian.viewportNoticeBody === 'Використовуйте щонайменше 960 × 600 CSS-пікселів або повноекранний режим. У підтримуваному компактному режимі другорядні панелі автоматично згортаються, щоб основні команди залишалися доступними.', 'Minimum viewport notice body did not localize to the compact-layout contract.');
   assert(report.ukrainian.missionButton === 'Почати операцію', 'Mission action did not rerender in Ukrainian.');
   assert(report.ukrainian.missionPacing?.includes('Заплановано хвиль'), 'Mission pacing did not rerender in Ukrainian.');
   assert(report.ukrainian.diagnostics?.fontCoverageReady === true, 'Browser font loading API did not confirm the Latin/Cyrillic stack.');
@@ -272,6 +276,8 @@ try {
   assert(report.restored.locale === 'en', 'Locale switch did not restore English.');
   assert(report.restored.missionButton === 'Begin Operation', 'Mission action did not restore English.');
   assert(report.restored.fullscreenText === 'Fullscreen', 'Viewport fullscreen action did not restore English.');
+  assert(report.restored.viewportNoticeHeading === 'Viewport below supported minimum', 'English minimum viewport heading did not restore.');
+  assert(report.restored.viewportNoticeBody === 'Use at least 960 × 600 CSS pixels or enter fullscreen. Supported compact layouts automatically collapse secondary panels to keep core commands reachable.', 'English minimum viewport guidance did not restore.');
 
   report.browserErrors = events
     .filter((event) => event.method === 'Runtime.exceptionThrown'
@@ -280,7 +286,7 @@ try {
   assert(report.browserErrors.length === 0, `Browser reported ${report.browserErrors.length} localization error(s).`);
 
   await writeFile(join(artifacts, 'localization-smoke.json'), `${JSON.stringify(report, null, 2)}\n`);
-  console.log('[localization-smoke] English/Ukrainian switch, persistence, font, layout, DOM, tooltip, and ARIA checks passed.');
+  console.log('[localization-smoke] English/Ukrainian switch, persistence, font, layout, DOM, tooltip, ARIA, and viewport-guidance checks passed.');
 } catch (error) {
   report.error = error.stack || error.message;
   report.browserLogs = browserLogs;
