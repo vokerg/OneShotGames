@@ -13,7 +13,7 @@ const host = '127.0.0.1';
 const appPort = 4191;
 const browserPort = 9241;
 const pageUrl = `http://${host}:${appPort}/`;
-const delay = (milliseconds) => new Promise((resolveDelay) => setTimeout(resolveDelay, milliseconds));
+const delay = (ms) => new Promise((resolveDelay) => setTimeout(resolveDelay, ms));
 const mime = {
   '.css': 'text/css', '.html': 'text/html', '.ico': 'image/x-icon', '.js': 'text/javascript',
   '.json': 'application/json', '.mjs': 'text/javascript', '.png': 'image/png', '.svg': 'image/svg+xml',
@@ -54,7 +54,7 @@ if (!browser) throw new Error('No Chrome/Chromium executable found. Set CHROME_B
 let session = null;
 const report = {
   schema: 'fields-of-resolve.group-construction-browser-smoke',
-  version: 3,
+  version: 4,
   status: 'FAIL',
   browser,
   marquee: null,
@@ -65,11 +65,9 @@ const report = {
   placementArmed: false,
 };
 
-async function dispatchKey(call, key, code, { shift = false } = {}) {
-  const modifiers = shift ? 8 : 0;
-  const common = { key, code, modifiers };
-  await call('Input.dispatchKeyEvent', { type: 'keyDown', ...common });
-  await call('Input.dispatchKeyEvent', { type: 'keyUp', ...common });
+async function dispatchKey(call, key, code) {
+  await call('Input.dispatchKeyEvent', { type: 'keyDown', key, code });
+  await call('Input.dispatchKeyEvent', { type: 'keyUp', key, code });
   await delay(100);
 }
 
@@ -118,7 +116,7 @@ async function constructionState(evaluate) {
   throw new Error('Construction commands were not found within six command-card pages.');
 }
 
-async function cycleUntilEngineer(call, evaluate, { maxCycles = 10 } = {}) {
+async function cycleUntilEngineer(call, evaluate, maxCycles = 10) {
   for (let cycle = 0; cycle < maxCycles; cycle += 1) {
     const selection = await selectionState(evaluate);
     if (/Combat Engineers/i.test(selection.primaryName)) return selection;
@@ -141,34 +139,23 @@ try {
   await waitFor(`document.readyState === 'complete' && document.querySelector('.missionCard button')`, 'mission selection');
   await evaluate(`document.querySelector('.missionCard button').click()`);
   await waitFor(`document.querySelector('#missionSelect')?.classList.contains('hidden') && document.querySelector('#missionTitle')?.textContent`, 'first mission startup');
-
-  await evaluate(`(() => {
-    const dismissAll = [...document.querySelectorAll('button')]
-      .find((button) => button.textContent?.trim() === 'Dismiss all');
-    dismissAll?.click();
-  })()`);
+  await evaluate(`[...document.querySelectorAll('button')].find((button) => button.textContent?.trim() === 'Dismiss all')?.click()`);
   await delay(120);
 
   const marquee = await evaluate(`(() => {
-    const canvas = document.querySelector('#game')?.getBoundingClientRect();
-    const panel = document.querySelector('#commandPanel')?.getBoundingClientRect();
+    const canvas = document.querySelector('#game');
     if (!canvas) return null;
-    const left = Math.max(canvas.left + 180, 180);
-    const right = Math.min(canvas.right - 28, innerWidth - 28);
-    const top = Math.max(canvas.top + 150, 150);
-    const panelTop = panel?.top && panel.top > top + 120 ? panel.top : canvas.bottom;
-    const bottom = Math.min(canvas.bottom - 24, panelTop - 12, innerHeight - 24);
-    return { left, right, top, bottom, canvas: { left: canvas.left, top: canvas.top, right: canvas.right, bottom: canvas.bottom }, panelTop, viewport: { width: innerWidth, height: innerHeight } };
+    const rect = { left: 140, top: 160, right: Math.min(innerWidth - 180, 1100), bottom: Math.min(innerHeight - 140, 760) };
+    const fire = (type, x, y) => canvas.dispatchEvent(new MouseEvent(type, {
+      bubbles: true, cancelable: true, clientX: x, clientY: y, button: 0, buttons: type === 'mouseup' ? 0 : 1,
+    }));
+    fire('mousedown', rect.left, rect.top);
+    fire('mousemove', rect.right, rect.bottom);
+    fire('mouseup', rect.right, rect.bottom);
+    return { ...rect, delivery: 'direct-canvas-production-input', viewport: { width: innerWidth, height: innerHeight } };
   })()`);
-  if (!marquee || marquee.right <= marquee.left + 20 || marquee.bottom <= marquee.top + 120) {
-    throw new Error(`Could not resolve a usable battlefield marquee: ${JSON.stringify(marquee)}`);
-  }
+  if (!marquee) throw new Error('Could not dispatch the battlefield selection marquee.');
   report.marquee = marquee;
-
-  await call('Input.dispatchMouseEvent', { type: 'mouseMoved', x: marquee.left, y: marquee.top, button: 'none', buttons: 0 });
-  await call('Input.dispatchMouseEvent', { type: 'mousePressed', x: marquee.left, y: marquee.top, button: 'left', buttons: 1, clickCount: 1 });
-  await call('Input.dispatchMouseEvent', { type: 'mouseMoved', x: marquee.right, y: marquee.bottom, button: 'left', buttons: 1 });
-  await call('Input.dispatchMouseEvent', { type: 'mouseReleased', x: marquee.right, y: marquee.bottom, button: 'left', buttons: 0, clickCount: 1 });
   await waitFor(`document.querySelectorAll('#selectionGrid .selectionUnitCard').length >= 4`, 'mixed starting-force selection');
 
   const selected = await selectionState(evaluate);
