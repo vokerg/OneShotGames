@@ -85,6 +85,16 @@ test('two compatible engineers expose their common construction actions', () => 
   dispose();
 });
 
+test('single engineers stay on the existing appendAbilities path without duplicate group commands', () => {
+  const engineer = unit(1, 'uaEngineer');
+  assert.deepEqual(commonConstructionAbilityIds([engineer]), []);
+
+  const { ui, actions } = fixture([engineer]);
+  installGroupConstructionCommands(ui);
+  ui.appendUnitCommands([engineer]);
+  assert.equal(actions.filter((action) => action.className === 'build-command').length, 0);
+});
+
 test('mixed engineer and infantry selections expose disabled construction actions with an explanatory reason', () => {
   const entities = [unit(1, 'uaEngineer'), unit(3, 'uaInfantry')];
   assert.deepEqual(commonConstructionAbilityIds(entities), []);
