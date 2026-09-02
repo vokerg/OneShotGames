@@ -59,6 +59,17 @@
   max-height: min(34vh, 15rem);
 }
 
+/*
+ * Viewport mode is the final layout authority.  Static minimap-alert rules are
+ * intentionally loaded after styles.css and may restore `.minimapFrame` to
+ * display:block; the runtime stylesheet is appended last and keeps secondary
+ * tactical chrome collapsed whenever the supported compact layout is active.
+ */
+:root[data-viewport-mode='compact'] #commandPanel > .minimapFrame,
+:root[data-viewport-mode='minimum'] #commandPanel > .minimapFrame {
+  display: none;
+}
+
 :root[data-viewport-mode='minimum'] #topbar {
   overflow-x: auto;
   overscroll-behavior-inline: contain;
