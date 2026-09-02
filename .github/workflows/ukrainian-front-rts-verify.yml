@@ -52,6 +52,9 @@ jobs:
       - name: Browser startup and mission smoke
         if: always()
         run: node scripts/browser-startup-smoke.mjs
+      - name: Engineer subgroup construction browser regression
+        if: always()
+        run: node scripts/group-construction-browser-smoke.mjs
       - name: Command card real-HUD readability review
         if: always()
         run: node scripts/command-card-readability-smoke.mjs
