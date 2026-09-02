@@ -44,10 +44,8 @@ function serializeError(error) {
   };
 }
 
+await rm(artifacts, { recursive: true, force: true });
 await mkdir(artifacts, { recursive: true });
-await rm(resolve(artifacts, 'failure.log'), { force: true });
-await rm(resolve(artifacts, 'teardown.json'), { force: true });
-await rm(resolve(artifacts, 'teardown-failure.json'), { force: true });
 
 const browser = findBrowser();
 if (!browser) throw new Error('No Chrome/Chromium executable found. Set CHROME_BIN.');
