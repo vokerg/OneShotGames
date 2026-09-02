@@ -6,6 +6,8 @@ const BUILD_ABILITY_BY_TYPE = Object.freeze({
   workshop: 'buildWorkshop',
 });
 
+const INACTIVE_SUBGROUP_REASON = 'Make a compatible Ukrainian engineer subgroup active before constructing this structure.';
+
 function stableEntityId(left, right) {
   if (Number.isInteger(left.id) && Number.isInteger(right.id)) return left.id - right.id;
   return String(left.id).localeCompare(String(right.id));
@@ -18,6 +20,11 @@ function isActiveUnit(game, unit) {
       unit.hp > 0 &&
       (game.units || []).includes(unit),
   );
+}
+
+function primarySelectedUnit(game, units) {
+  if (game?.primarySelectedId == null) return null;
+  return units.find((unit) => unit.id === game.primarySelectedId) || null;
 }
 
 export function canConstructType(unit, type) {
@@ -33,9 +40,24 @@ export function canConstructType(unit, type) {
 }
 
 export function compatibleConstructionBuilders(game, type) {
-  return (game.selectedUnits?.() || [])
-    .filter((unit) => isActiveUnit(game, unit) && canConstructType(unit, type))
-    .sort(stableEntityId);
+  const selectedUnits = (game.selectedUnits?.() || [])
+    .filter((unit) => isActiveUnit(game, unit));
+  if (!selectedUnits.length) return [];
+
+  const selectedEntities = game.selectedEntities?.() || selectedUnits;
+  if (selectedEntities.length !== selectedUnits.length) return [];
+
+  const primary = primarySelectedUnit(game, selectedUnits);
+  if (primary) {
+    if (!canConstructType(primary, type)) return [];
+    return selectedUnits
+      .filter((unit) => unit.type === primary.type && canConstructType(unit, type))
+      .sort(stableEntityId);
+  }
+
+  const compatible = selectedUnits.filter((unit) => canConstructType(unit, type));
+  if (compatible.length !== selectedUnits.length) return [];
+  return compatible.sort(stableEntityId);
 }
 
 function pendingBuilderIds(game, pending) {
@@ -63,14 +85,11 @@ export function createGroupConstructionController(game) {
 
   game.beginBuild = function beginGroupBuild(type) {
     game.lastError = '';
-    const selectedUnits = game.selectedUnits();
     const builders = compatibleConstructionBuilders(game, type);
-    if (selectedUnits.length > 1 && builders.length !== selectedUnits.length) {
-      return game.fail('Select only compatible Ukrainian engineers to construct this structure.');
-    }
+    if (!builders.length) return game.fail(INACTIVE_SUBGROUP_REASON);
 
     const accepted = originalBeginBuild.call(game, type);
-    if (!accepted || !game.pendingBuild || !builders.length) return accepted;
+    if (!accepted || !game.pendingBuild) return accepted;
 
     const workerIds = builders.map((unit) => unit.id);
     game.pendingBuild = {
