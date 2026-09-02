@@ -54,7 +54,7 @@ export function updateProjectiles(game, dt) {
         recordDamageSource(target, projectile.source);
         const damage = rollImpactDamage(projectile.damage);
         const hpBefore = Math.max(0, target.hp);
-        target.hp -= damage;
+        target.hp = Math.max(0, target.hp - damage);
         resolvedDamage = Math.min(hpBefore, damage);
       }
       projectile.life = 0;
