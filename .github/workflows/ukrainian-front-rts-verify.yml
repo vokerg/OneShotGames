@@ -52,6 +52,9 @@ jobs:
       - name: Browser startup and mission smoke
         if: always()
         run: node scripts/browser-startup-smoke.mjs
+      - name: Compact viewport command-layout review
+        if: always()
+        run: node scripts/compact-viewport-layout-smoke.mjs
       - name: Command card real-HUD readability review
         if: always()
         run: node scripts/command-card-readability-smoke.mjs
