@@ -28,6 +28,7 @@ export function installGroupConstructionCommands(ui) {
     'commandButton',
     'formatCost',
     'selectionSummary',
+    't',
     'toast',
     'refresh',
   ]) {
