@@ -72,6 +72,7 @@ test('two compatible engineers expose their common construction actions', () => 
     'group-buildWorkshop',
   ]);
   assert.equal(new Set(buildActions.map((action) => action.id)).size, buildActions.length);
+  assert.ok(buildActions.every((action) => action.disabled === false));
   assert.ok(buildActions.every((action) => action.meta.startsWith('2× Combat Engineers · ')));
 
   buildActions[0].onClick();
@@ -84,22 +85,38 @@ test('two compatible engineers expose their common construction actions', () => 
   dispose();
 });
 
-test('mixed engineer and infantry selections do not expose misleading construction actions', () => {
+test('mixed engineer and infantry selections expose disabled construction actions with an explanatory reason', () => {
   const entities = [unit(1, 'uaEngineer'), unit(3, 'uaInfantry')];
   assert.deepEqual(commonConstructionAbilityIds(entities), []);
 
   const { ui, actions } = fixture(entities);
   installGroupConstructionCommands(ui);
   ui.appendUnitCommands(entities);
-  assert.equal(actions.filter((action) => action.className === 'build-command').length, 0);
+
+  const buildActions = actions.filter((action) => action.className === 'build-command');
+  assert.equal(buildActions.length, 3);
+  assert.ok(buildActions.every((action) => action.disabled === true));
+  assert.ok(buildActions.every((action) => /Select only compatible Ukrainian engineers/.test(action.description)));
 });
 
-test('mixed unit/building selections do not inherit engineer-only construction actions', () => {
+test('mixed unit/building selections expose disabled construction actions with an explanatory reason', () => {
   const engineer = unit(1, 'uaEngineer');
   const building = { id: 9, type: 'depot', team: TEAM.UA, hp: 680 };
   const { ui, actions } = fixture([engineer, building]);
   installGroupConstructionCommands(ui);
   ui.appendUnitCommands([engineer]);
+
+  const buildActions = actions.filter((action) => action.className === 'build-command');
+  assert.equal(buildActions.length, 3);
+  assert.ok(buildActions.every((action) => action.disabled === true));
+  assert.ok(buildActions.every((action) => /Select only compatible Ukrainian engineers/.test(action.description)));
+});
+
+test('selections without engineers do not expose construction actions', () => {
+  const infantry = [unit(3, 'uaInfantry'), unit(4, 'uaInfantry')];
+  const { ui, actions } = fixture(infantry);
+  installGroupConstructionCommands(ui);
+  ui.appendUnitCommands(infantry);
   assert.equal(actions.filter((action) => action.className === 'build-command').length, 0);
 });
 
