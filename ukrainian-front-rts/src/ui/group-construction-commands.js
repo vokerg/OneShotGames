@@ -55,6 +55,8 @@ export function installGroupConstructionCommands(ui) {
   ui.appendUnitCommands = function appendGroupConstructionCommands(units) {
     const result = originalAppendUnitCommands.call(this, units);
     const selectedEntities = this.g.selectedEntities();
+    if (selectedEntities.length < 2) return result;
+
     const builders = units.filter(isConstructionWorker);
     if (!builders.length) return result;
 
