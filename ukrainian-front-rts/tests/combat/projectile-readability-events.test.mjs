@@ -57,5 +57,5 @@ test('reports actual bounded damage after applying a hit', () => {
   const [event] = game.events.drain();
   assert.equal(event.payload.outcome, 'penetrate');
   assert.equal(event.payload.damage, 8);
-  assert.ok(target.hp < 0);
+  assert.equal(target.hp, 0);
 });
