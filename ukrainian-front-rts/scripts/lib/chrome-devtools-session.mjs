@@ -170,8 +170,8 @@ export async function openChromeDevToolsSession({
       chrome.kill('SIGKILL');
       await Promise.race([chromeExit, delay(3000)]);
     }
-    await rm(profile, { recursive: true, force: true });
     if (!chromeExited) throw new Error('Chromium did not exit after forced DevTools teardown.');
+    await rm(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   }
 
   try {
