@@ -69,11 +69,13 @@ if (!browser) throw new Error('No Chrome/Chromium executable found. Set CHROME_B
 let session = null;
 const report = {
   schema: 'fields-of-resolve.group-construction-browser-smoke',
-  version: 1,
+  version: 2,
   status: 'FAIL',
   browser,
+  marquee: null,
   mixedSelection: null,
   engineerSubgroup: null,
+  engineerSubgroupRestored: null,
   singleEngineer: null,
   placementArmed: false,
 };
@@ -83,20 +85,36 @@ async function dispatchKey(call, key, code, { shift = false } = {}) {
   const common = { key, code, modifiers };
   await call('Input.dispatchKeyEvent', { type: 'keyDown', ...common });
   await call('Input.dispatchKeyEvent', { type: 'keyUp', ...common });
-  await delay(80);
+  await delay(100);
+}
+
+async function selectionState(evaluate) {
+  return evaluate(`(() => {
+    const cards = [...document.querySelectorAll('#selectionGrid .selectionUnitCard')];
+    const primary = cards.find((card) => card.classList.contains('primary'));
+    return {
+      count: cards.length,
+      primaryName: primary?.querySelector('.selectionUnitName')?.textContent || '',
+      names: cards.map((card) => card.querySelector('.selectionUnitName')?.textContent || ''),
+      subgroupTabs: [...document.querySelectorAll('#selectionSubgroups .selectionSubgroupTab')]
+        .map((button) => button.textContent?.trim() || ''),
+    };
+  })()`);
 }
 
 async function constructionState(evaluate) {
-  for (let page = 0; page < 4; page += 1) {
+  for (let page = 0; page < 6; page += 1) {
     const state = await evaluate(`(() => {
       const actions = [...document.querySelectorAll('.commandCardAction')];
       const builds = actions.filter((button) => button.dataset.commandGroup === 'construction');
       const next = [...document.querySelectorAll('.commandCardPageButton')]
         .find((button) => button.textContent?.trim() === 'Next');
+      const primary = document.querySelector('#selectionGrid .selectionUnitCard.primary .selectionUnitName');
       return {
         page: Number(document.querySelector('#abilities')?.dataset?.commandCardPage || 0),
         pages: Number(document.querySelector('#abilities')?.dataset?.commandCardPages || 1),
         canAdvance: Boolean(next && !next.disabled),
+        primaryName: primary?.textContent || '',
         builds: builds.map((button) => ({
           id: button.dataset.commandId,
           disabled: button.disabled,
@@ -110,9 +128,19 @@ async function constructionState(evaluate) {
     if (state.builds.length || !state.canAdvance) return state;
     await evaluate(`[...document.querySelectorAll('.commandCardPageButton')]
       .find((button) => button.textContent?.trim() === 'Next' && !button.disabled)?.click()`);
-    await delay(60);
+    await delay(70);
   }
-  throw new Error('Construction commands were not found within four command-card pages.');
+  throw new Error('Construction commands were not found within six command-card pages.');
+}
+
+async function cycleUntilEngineer(call, evaluate, { maxCycles = 10 } = {}) {
+  for (let cycle = 0; cycle < maxCycles; cycle += 1) {
+    const selection = await selectionState(evaluate);
+    if (/Combat Engineers/i.test(selection.primaryName)) return selection;
+    await dispatchKey(call, 'Tab', 'Tab');
+  }
+  const selection = await selectionState(evaluate);
+  throw new Error(`Engineer subgroup was not restored after ${maxCycles} cycles: ${JSON.stringify(selection)}`);
 }
 
 try {
@@ -135,42 +163,60 @@ try {
     'first mission startup',
   );
 
-  const viewport = await evaluate(`({ width: innerWidth, height: innerHeight })`);
-  const screen = (worldX, worldY) => ({
-    x: viewport.width / 2 + (worldX - 390) * 0.85,
-    y: viewport.height / 2 + (worldY - 1320) * 0.85,
-  });
-  const start = screen(295, 1335);
-  const end = screen(525, 1445);
+  const marquee = await evaluate(`(() => {
+    const canvas = document.querySelector('#game')?.getBoundingClientRect();
+    const panel = document.querySelector('#commandPanel')?.getBoundingClientRect();
+    if (!canvas) return null;
+    const left = Math.max(canvas.left + 24, 24);
+    const right = Math.min(canvas.right - 28, innerWidth - 28);
+    const top = Math.max(canvas.top + 24, 80);
+    const panelTop = panel?.top && panel.top > top + 80 ? panel.top : canvas.bottom;
+    const bottom = Math.min(canvas.bottom - 24, panelTop - 12, innerHeight - 24);
+    return { left, right, top, bottom, canvas: { left: canvas.left, top: canvas.top, right: canvas.right, bottom: canvas.bottom }, panelTop };
+  })()`);
+  if (!marquee || marquee.right <= marquee.left + 20 || marquee.bottom <= marquee.top + 20) {
+    throw new Error(`Could not resolve a usable battlefield marquee: ${JSON.stringify(marquee)}`);
+  }
+  report.marquee = marquee;
 
   await call('Input.dispatchMouseEvent', {
-    type: 'mouseMoved', x: start.x, y: start.y, button: 'none', buttons: 0,
+    type: 'mouseMoved', x: marquee.left, y: marquee.top, button: 'none', buttons: 0,
   });
   await call('Input.dispatchMouseEvent', {
-    type: 'mousePressed', x: start.x, y: start.y, button: 'left', buttons: 1, clickCount: 1,
+    type: 'mousePressed', x: marquee.left, y: marquee.top, button: 'left', buttons: 1, clickCount: 1,
   });
   await call('Input.dispatchMouseEvent', {
-    type: 'mouseMoved', x: end.x, y: end.y, button: 'left', buttons: 1,
+    type: 'mouseMoved', x: marquee.right, y: marquee.bottom, button: 'left', buttons: 1,
   });
   await call('Input.dispatchMouseEvent', {
-    type: 'mouseReleased', x: end.x, y: end.y, button: 'left', buttons: 0, clickCount: 1,
+    type: 'mouseReleased', x: marquee.right, y: marquee.bottom, button: 'left', buttons: 0, clickCount: 1,
   });
   await waitFor(
     `document.querySelectorAll('#selectionGrid .selectionUnitCard').length >= 4`,
     'mixed starting-force selection',
   );
 
-  const initial = await constructionState(evaluate);
-  if (initial.builds.length !== 3 || initial.builds.some((build) => build.disabled)) {
-    throw new Error(`Engineer-primary mixed selection did not expose enabled construction actions: ${JSON.stringify(initial)}`);
+  const selected = await selectionState(evaluate);
+  if (!selected.names.filter((name) => /Combat Engineers/i.test(name)).length) {
+    throw new Error(`Battlefield marquee selected no engineers: ${JSON.stringify(selected)}`);
   }
-  if (!initial.builds.every((build) => /2×\s*Combat Engineers/i.test(build.meta))) {
-    throw new Error(`Engineer subgroup ownership was not visible in command metadata: ${JSON.stringify(initial.builds)}`);
+  await cycleUntilEngineer(call, evaluate);
+
+  const engineer = await constructionState(evaluate);
+  if (engineer.builds.length !== 3 || engineer.builds.some((build) => build.disabled)) {
+    throw new Error(`Engineer-primary mixed selection did not expose enabled construction actions: ${JSON.stringify(engineer)}`);
   }
-  report.engineerSubgroup = initial;
+  if (!engineer.builds.every((build) => /2×\s*Combat Engineers/i.test(build.meta))) {
+    throw new Error(`Engineer subgroup ownership was not visible in command metadata: ${JSON.stringify(engineer.builds)}`);
+  }
+  report.engineerSubgroup = engineer;
 
   await dispatchKey(call, 'Tab', 'Tab');
-  const mixed = await constructionState(evaluate);
+  let mixed = await constructionState(evaluate);
+  if (/Combat Engineers/i.test(mixed.primaryName)) {
+    await dispatchKey(call, 'Tab', 'Tab');
+    mixed = await constructionState(evaluate);
+  }
   if (mixed.builds.length !== 3 || mixed.builds.some((build) => !build.disabled)) {
     throw new Error(`Non-engineer subgroup did not disable construction actions: ${JSON.stringify(mixed)}`);
   }
@@ -179,11 +225,12 @@ try {
   }
   report.mixedSelection = mixed;
 
-  await dispatchKey(call, 'Tab', 'Tab');
+  const restoredSelection = await cycleUntilEngineer(call, evaluate);
   const engineerAgain = await constructionState(evaluate);
   if (engineerAgain.builds.length !== 3 || engineerAgain.builds.some((build) => build.disabled)) {
     throw new Error(`Cycling back to the engineer subgroup did not restore construction: ${JSON.stringify(engineerAgain)}`);
   }
+  report.engineerSubgroupRestored = { selection: restoredSelection, commands: engineerAgain };
 
   await evaluate(`document.querySelector('.commandCardAction[data-command-id="group-buildDepot"]')?.click()`);
   await waitFor(`document.body.classList.contains('placing')`, 'group construction placement to arm');
@@ -193,7 +240,7 @@ try {
 
   const clickedEngineer = await evaluate(`(() => {
     const button = [...document.querySelectorAll('#selectionGrid .selectionUnitCard')]
-      .find((candidate) => /Engineer/i.test(candidate.querySelector('.selectionUnitName')?.textContent || ''));
+      .find((candidate) => /Combat Engineers/i.test(candidate.querySelector('.selectionUnitName')?.textContent || ''));
     if (!button) return false;
     button.click();
     return true;
