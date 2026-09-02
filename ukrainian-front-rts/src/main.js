@@ -37,6 +37,7 @@ import {
 import { createCommandCapacityController } from './systems/command-capacity-system.js';
 import { createConstructionPlacementController } from './systems/construction-placement-system.js';
 import { createConstructionProgressController } from './systems/construction-progress-runtime.js';
+import { createGroupConstructionController } from './systems/group-construction-runtime.js';
 import { synchronizeNavigationGrid } from './systems/navigation-movement-system.js';
 import { createProductionExitController } from './systems/production-exit-system.js';
 import { createProductionQueueController } from './systems/production-queue-system.js';
@@ -67,6 +68,7 @@ import { installCombatReadabilityFeedback } from './ui/combat-readability-feedba
 import { createCombatReadabilityController } from './ui/combat-readability-runtime.js';
 import { installCommandCapacityFeedback } from './ui/command-capacity-feedback.js';
 import { installEconomyHudOverview } from './ui/economy-hud-overview.js';
+import { installGroupConstructionCommands } from './ui/group-construction-commands.js';
 import { installMenuStackComposition } from './ui/menu-stack-composition.js';
 import { installMinimapAlerts } from './ui/minimap-alerts.js';
 import { installProductionExitFeedback } from './ui/production-exit-feedback.js';
@@ -122,6 +124,7 @@ const modules = [
     synchronizeNavigation: synchronizeNavigationGrid,
   })),
   module('construction-progress-controller', () => createConstructionProgressController(game)),
+  module('group-construction-controller', () => createGroupConstructionController(game)),
   module('building-lifecycle-controller', () => installControllerWithSimulationDelegates({
     game,
     name: 'building-lifecycle-controller',
@@ -237,6 +240,7 @@ const modules = [
   module('production-queue-controls', () => installProductionQueueControls({ game, ui })),
   module('tactical-command-card', () => installTacticalCommandCard(ui)),
   module('stance-command-card', () => installStanceCommandCard(ui)),
+  module('group-construction-commands', () => installGroupConstructionCommands(ui)),
   module('veterancy-indicator', () => installVeterancyIndicator({ game, ui })),
   module('selection-panel', () => installSelectionPanel({ game, ui })),
   module('production-exit-feedback', () => installProductionExitFeedback({ game, ui })),
