@@ -54,7 +54,7 @@ if (!browser) throw new Error('No Chrome/Chromium executable found. Set CHROME_B
 let session = null;
 const report = {
   schema: 'fields-of-resolve.group-construction-browser-smoke',
-  version: 5,
+  version: 6,
   status: 'FAIL',
   browser,
   marquee: null,
@@ -205,7 +205,21 @@ try {
   }
   await waitFor(`document.body.classList.contains('placing')`, 'group construction placement to arm');
   report.placementArmed = true;
-  await dispatchKey(call, 'Escape', 'Escape');
+
+  const cancelledPlacement = await evaluate(`(() => {
+    const canvas = document.querySelector('#game');
+    if (!canvas) return false;
+    canvas.dispatchEvent(new MouseEvent('contextmenu', {
+      bubbles: true,
+      cancelable: true,
+      clientX: 320,
+      clientY: 320,
+      button: 2,
+      buttons: 2,
+    }));
+    return true;
+  })()`);
+  if (!cancelledPlacement) throw new Error('Could not dispatch production context-menu construction cancellation.');
   await waitFor(`!document.body.classList.contains('placing')`, 'group construction placement cancellation');
 
   const clickedEngineer = await evaluate(`(() => {
