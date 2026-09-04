@@ -54,7 +54,7 @@ if (!browser) throw new Error('No Chrome/Chromium executable found. Set CHROME_B
 let session = null;
 const report = {
   schema: 'fields-of-resolve.group-construction-browser-smoke',
-  version: 4,
+  version: 5,
   status: 'FAIL',
   browser,
   marquee: null,
@@ -194,7 +194,15 @@ try {
   }
   report.engineerSubgroupRestored = { selection: restoredSelection, commands: engineerAgain };
 
-  await evaluate(`document.querySelector('.commandCardAction[data-command-id="group-buildDepot"]')?.click()`);
+  const clickedBuild = await evaluate(`(() => {
+    const button = document.querySelector('.commandCardAction[data-command-id="group-builddepot"]');
+    if (!button || button.disabled) return false;
+    button.click();
+    return true;
+  })()`);
+  if (!clickedBuild) {
+    throw new Error(`Could not activate the enabled group-builddepot command: ${JSON.stringify(engineerAgain.builds)}`);
+  }
   await waitFor(`document.body.classList.contains('placing')`, 'group construction placement to arm');
   report.placementArmed = true;
   await dispatchKey(call, 'Escape', 'Escape');
