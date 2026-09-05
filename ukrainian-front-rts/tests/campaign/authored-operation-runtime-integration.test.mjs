@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import { WORLD } from '../../src/config.js';
 import { CAMPAIGN_OPERATION_SEQUENCE } from '../../src/content/campaign/campaign-operation-registry.js';
+import { createCampaignProfile } from '../../src/core/campaign-profile.js';
 import { Game } from '../../src/game.js';
 import { initializeAuthoredOperation } from '../../src/systems/authored-operation-runtime.js';
 import { RUNTIME_TERRAIN_BY_VALUE } from '../../src/systems/terrain-movement-system.js';
@@ -23,21 +24,15 @@ function metadataStartCount(map) {
 test('every authored campaign operation mounts its own battlefield, forces, objectives, and script contract', () => {
   assert.equal(CAMPAIGN_OPERATION_SEQUENCE.length, 9);
   const mountedMapIds = new Set();
+  const finaleProfile = createCampaignProfile({
+    profileId: 'runtime-test',
+    initialOperationIds: CAMPAIGN_OPERATION_SEQUENCE.map((entry) => entry.id),
+  });
 
   CAMPAIGN_OPERATION_SEQUENCE.forEach((operation, operationIndex) => {
     const game = new Game();
     const runtimeOperation = operation.missionFactory
-      ? { ...operation, mission: operation.missionFactory({
-          profileId: 'runtime-test',
-          difficulty: 'standard',
-          unlockedOperationIds: CAMPAIGN_OPERATION_SEQUENCE.map((entry) => entry.id),
-          completedOperationIds: CAMPAIGN_OPERATION_SEQUENCE.slice(0, -1).map((entry) => entry.id),
-          missionResults: {},
-          choices: {},
-          unlockedUpgradeIds: [],
-          medalIds: [],
-          revision: 0,
-        }) }
+      ? { ...operation, mission: operation.missionFactory(finaleProfile) }
       : operation;
     const mounted = initializeAuthoredOperation(game, runtimeOperation, { operationIndex });
 
