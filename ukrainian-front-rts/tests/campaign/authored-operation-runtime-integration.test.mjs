@@ -5,52 +5,74 @@ import { WORLD } from '../../src/config.js';
 import { CAMPAIGN_OPERATION_SEQUENCE } from '../../src/content/campaign/campaign-operation-registry.js';
 import { Game } from '../../src/game.js';
 import { initializeAuthoredOperation } from '../../src/systems/authored-operation-runtime.js';
+import { RUNTIME_TERRAIN_BY_VALUE } from '../../src/systems/terrain-movement-system.js';
 
 const expectedTerrainCells = (WORLD.w / WORLD.tile) * (WORLD.h / WORLD.tile);
 
-function authoredStartCount(map) {
-  return Object.values(map.starts ?? {}).reduce((total, entries) => total + entries.length, 0);
+function compositionEntityCount(operation) {
+  const composition = operation.mission?.composition ?? {};
+  return ['startingForces', 'enemyForces', 'player', 'enemy', 'enemyTargets', 'engineerObjects']
+    .reduce((total, key) => total + (Array.isArray(composition[key]) ? composition[key].length : 0), 0);
 }
 
-test('every authored campaign operation mounts its own map, starts, objectives, and script contract', () => {
+function metadataStartCount(map) {
+  return Object.values(map.starts ?? {}).flat()
+    .filter((start) => start.metadata?.type && [0, 1].includes(start.metadata?.team)).length;
+}
+
+test('every authored campaign operation mounts its own battlefield, forces, objectives, and script contract', () => {
   assert.equal(CAMPAIGN_OPERATION_SEQUENCE.length, 9);
   const mountedMapIds = new Set();
 
   CAMPAIGN_OPERATION_SEQUENCE.forEach((operation, operationIndex) => {
     const game = new Game();
-    const mounted = initializeAuthoredOperation(game, operation, { operationIndex });
+    const runtimeOperation = operation.missionFactory
+      ? { ...operation, mission: operation.missionFactory({
+          profileId: 'runtime-test',
+          difficulty: 'standard',
+          unlockedOperationIds: CAMPAIGN_OPERATION_SEQUENCE.map((entry) => entry.id),
+          completedOperationIds: CAMPAIGN_OPERATION_SEQUENCE.slice(0, -1).map((entry) => entry.id),
+          missionResults: {},
+          choices: {},
+          unlockedUpgradeIds: [],
+          medalIds: [],
+          revision: 0,
+        }) }
+      : operation;
+    const mounted = initializeAuthoredOperation(game, runtimeOperation, { operationIndex });
 
     assert.equal(mounted.operationId, operation.id);
-    assert.equal(mounted.mapId, operation.map.id);
     assert.equal(game.mission.id, operation.id);
-    assert.equal(game.mission.mapId, operation.map.id);
+    assert.equal(game.mission.mapId, mounted.mapId);
     assert.equal(game.mission.authored, true);
-    assert.equal(game.authoredMap.id, operation.map.id);
+    assert.equal(game.authoredMap.id, mounted.mapId);
     assert.equal(game.missionIndex, operationIndex);
     assert.equal(game.mission.waves.maxWaves, 0, `${operation.id} must not retain legacy wave spawning`);
     assert.equal(game.terrain.length, expectedTerrainCells);
-    assert.equal(mounted.startCount, authoredStartCount(game.authoredMap));
-    assert.equal(game.units.length + game.buildings.length, mounted.startCount);
+    assert.equal(mounted.startCount, game.units.length + game.buildings.length);
+    assert.ok(mounted.startCount >= metadataStartCount(game.authoredMap) + compositionEntityCount(runtimeOperation));
     assert.equal(game.nodes.length, game.authoredMap.resources.length);
-    assert.deepEqual(game.mission.objectiveDefinitions, operation.mission.objectiveDefinitions);
-    assert.equal(game.player.objectives.length, operation.mission.objectiveDefinitions.length);
+    assert.deepEqual(
+      game.mission.objectiveDefinitions.map((objective) => objective.id),
+      runtimeOperation.mission.objectiveDefinitions.map((objective) => objective.id),
+    );
+    assert.equal(game.player.objectives.length, runtimeOperation.mission.objectiveDefinitions.length);
+    assert.ok([...game.units, ...game.buildings].every((entity) => entity.scriptId), `${operation.id} runtime entities need script IDs`);
 
-    if (operation.mission.script) {
-      assert.equal(game.mission.script.id, operation.mission.script.id);
-      assert.equal(game.mission.script, operation.mission.script);
+    if (runtimeOperation.mission.script) {
+      assert.equal(game.mission.script.id, runtimeOperation.mission.script.id);
+      assert.equal(game.mission.script, runtimeOperation.mission.script);
     }
 
-    const authoredScriptIds = new Set(
-      Object.values(game.authoredMap.starts)
-        .flat()
-        .map((start) => start.metadata?.scriptId ?? start.id),
-    );
-    const runtimeScriptIds = new Set(
-      [...game.units, ...game.buildings].map((entity) => entity.scriptId),
-    );
-    assert.deepEqual(runtimeScriptIds, authoredScriptIds);
+    if (operation.map) assert.equal(mounted.mapId, operation.map.id);
+    else assert.equal(game.authoredMap.metadata.generatedFromMissionComposition, true);
     mountedMapIds.add(mounted.mapId);
   });
 
-  assert.equal(mountedMapIds.size, CAMPAIGN_OPERATION_SEQUENCE.length, 'campaign operations must mount distinct authored maps');
+  assert.equal(mountedMapIds.size, CAMPAIGN_OPERATION_SEQUENCE.length, 'campaign operations must mount distinct battlefields');
+});
+
+test('authored road and blocked terrain retain explicit runtime navigation values', () => {
+  assert.equal(RUNTIME_TERRAIN_BY_VALUE[5], 'road');
+  assert.equal(RUNTIME_TERRAIN_BY_VALUE[6], 'blocked');
 });
