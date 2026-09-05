@@ -1,4 +1,4 @@
-import { TEAM, WORLD } from '../config.js';
+import { MISSIONS, TEAM, WORLD } from '../config.js';
 import { loadAuthoredMap } from '../core/authored-map.js';
 
 const RUNTIME_TERRAIN = Object.freeze({
@@ -238,4 +238,23 @@ export function initializeAuthoredOperation(game, operation, { operationIndex = 
     startCount: starts.length,
     resourceCount: game.nodes.length,
   });
+}
+
+export function installAuthoredOperationRuntime(game) {
+  if (!game || typeof game.start !== 'function') {
+    throw new TypeError('Authored operation installer requires game.start().');
+  }
+  const previousStart = game.start;
+  game.start = function authoredOperationAwareStart(index = 0, ...args) {
+    const prepared = game.pendingAuthoredCampaignOperation
+      ?? (game.mission?.authored ? game.authoredCampaignOperation : null);
+    if (!prepared) return previousStart.call(this, index, ...args);
+    const operationIndex = Number.isInteger(index) && index >= 0 ? index : 0;
+    const legacyIndex = Math.max(0, Math.min(MISSIONS.length - 1, operationIndex));
+    previousStart.call(this, legacyIndex, ...args);
+    return initializeAuthoredOperation(this, prepared, { operationIndex });
+  };
+  return () => {
+    game.start = previousStart;
+  };
 }
