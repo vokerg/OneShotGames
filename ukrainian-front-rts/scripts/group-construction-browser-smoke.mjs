@@ -36,33 +36,20 @@ const server = createServer(async (request, response) => {
     if (isAbsolute(projectRelative) || projectRelative === '..' || projectRelative.startsWith(`..${sep}`)) throw new Error('Invalid path');
     response.setHeader('content-type', mime[extname(file)] || 'application/octet-stream');
     response.end(await readFile(file));
-  } catch (error) {
-    response.statusCode = 404;
-    response.end(error.message);
-  }
+  } catch (error) { response.statusCode = 404; response.end(error.message); }
 });
 
 await mkdir(artifacts, { recursive: true });
-await new Promise((resolveReady, rejectReady) => {
-  server.once('error', rejectReady);
-  server.listen(appPort, host, resolveReady);
-});
+await new Promise((resolveReady, rejectReady) => { server.once('error', rejectReady); server.listen(appPort, host, resolveReady); });
 
 const browser = findBrowser();
 if (!browser) throw new Error('No Chrome/Chromium executable found. Set CHROME_BIN.');
 
 let session = null;
 const report = {
-  schema: 'fields-of-resolve.group-construction-browser-smoke',
-  version: 6,
-  status: 'FAIL',
-  browser,
-  marquee: null,
-  mixedSelection: null,
-  engineerSubgroup: null,
-  engineerSubgroupRestored: null,
-  singleEngineer: null,
-  placementArmed: false,
+  schema: 'fields-of-resolve.group-construction-browser-smoke', version: 7, status: 'FAIL', browser,
+  marquee: null, mixedSelection: null, engineerSubgroup: null, engineerSubgroupRestored: null,
+  singleEngineer: null, placementArmed: false, authoredCampaign: null,
 };
 
 async function dispatchKey(call, key, code) {
@@ -79,8 +66,7 @@ async function selectionState(evaluate) {
       count: cards.length,
       primaryName: primary?.querySelector('.selectionUnitName')?.textContent || '',
       names: cards.map((card) => card.querySelector('.selectionUnitName')?.textContent || ''),
-      subgroupTabs: [...document.querySelectorAll('#selectionSubgroups .selectionSubgroupTab')]
-        .map((button) => button.textContent?.trim() || ''),
+      subgroupTabs: [...document.querySelectorAll('#selectionSubgroups .selectionSubgroupTab')].map((button) => button.textContent?.trim() || ''),
     };
   })()`);
 }
@@ -90,8 +76,7 @@ async function constructionState(evaluate) {
     const state = await evaluate(`(() => {
       const actions = [...document.querySelectorAll('.commandCardAction')];
       const builds = actions.filter((button) => button.dataset.commandGroup === 'construction');
-      const next = [...document.querySelectorAll('.commandCardPageButton')]
-        .find((button) => button.textContent?.trim() === 'Next');
+      const next = [...document.querySelectorAll('.commandCardPageButton')].find((button) => button.textContent?.trim() === 'Next');
       const primary = document.querySelector('#selectionGrid .selectionUnitCard.primary .selectionUnitName');
       return {
         page: Number(document.querySelector('#abilities')?.dataset?.commandCardPage || 0),
@@ -99,18 +84,15 @@ async function constructionState(evaluate) {
         canAdvance: Boolean(next && !next.disabled),
         primaryName: primary?.textContent || '',
         builds: builds.map((button) => ({
-          id: button.dataset.commandId,
-          disabled: button.disabled,
+          id: button.dataset.commandId, disabled: button.disabled,
           title: button.querySelector('.commandTitle')?.textContent || '',
           description: button.querySelector('.commandDescription')?.textContent || '',
-          meta: button.querySelector('.abilityMeta')?.textContent || '',
-          ariaLabel: button.getAttribute('aria-label') || '',
+          meta: button.querySelector('.abilityMeta')?.textContent || '', ariaLabel: button.getAttribute('aria-label') || '',
         })),
       };
     })()`);
     if (state.builds.length || !state.canAdvance) return state;
-    await evaluate(`[...document.querySelectorAll('.commandCardPageButton')]
-      .find((button) => button.textContent?.trim() === 'Next' && !button.disabled)?.click()`);
+    await evaluate(`[...document.querySelectorAll('.commandCardPageButton')].find((button) => button.textContent?.trim() === 'Next' && !button.disabled)?.click()`);
     await delay(70);
   }
   throw new Error('Construction commands were not found within six command-card pages.');
@@ -126,19 +108,24 @@ async function cycleUntilEngineer(call, evaluate, maxCycles = 10) {
   throw new Error(`Engineer subgroup was not restored after ${maxCycles} cycles: ${JSON.stringify(selection)}`);
 }
 
+async function startFirstAuthoredOperation(evaluate, waitFor) {
+  await waitFor(`document.querySelector('[data-campaign-operation-id] button:not([disabled])')`, 'first unlocked authored operation');
+  await evaluate(`document.querySelector('[data-campaign-operation-id] button:not([disabled])').click()`);
+  await waitFor(`document.querySelector('[data-campaign-briefing] button.primary')`, 'authored briefing');
+  await evaluate(`document.querySelector('[data-campaign-briefing] button.primary').click()`);
+  await waitFor(
+    `document.querySelector('#missionSelect')?.classList.contains('hidden') && window.__fieldsOfResolveAuthoredCampaign?.snapshot()?.stage === 'battlefield'`,
+    'authored battlefield',
+  );
+  return evaluate(`window.__fieldsOfResolveAuthoredCampaign?.snapshot?.()`);
+}
+
 try {
-  session = await openChromeDevToolsSession({
-    browser,
-    browserPort,
-    profilePrefix: 'ufrts-group-construction-',
-    windowSize: '1280,900',
-    startupTimeoutMs: 15_000,
-  });
+  session = await openChromeDevToolsSession({ browser, browserPort, profilePrefix: 'ufrts-group-construction-', windowSize: '1280,900', startupTimeoutMs: 15_000 });
   const { call, evaluate, waitFor, captureScreenshot } = session;
   await call('Page.navigate', { url: pageUrl });
   await waitFor(`document.readyState === 'complete' && document.querySelector('.missionCard button')`, 'mission selection');
-  await evaluate(`document.querySelector('.missionCard button').click()`);
-  await waitFor(`document.querySelector('#missionSelect')?.classList.contains('hidden') && document.querySelector('#missionTitle')?.textContent`, 'first mission startup');
+  report.authoredCampaign = await startFirstAuthoredOperation(evaluate, waitFor);
   await evaluate(`[...document.querySelectorAll('button')].find((button) => button.textContent?.trim() === 'Dismiss all')?.click()`);
   await delay(120);
 
@@ -149,9 +136,7 @@ try {
     const fire = (type, x, y) => canvas.dispatchEvent(new MouseEvent(type, {
       bubbles: true, cancelable: true, clientX: x, clientY: y, button: 0, buttons: type === 'mouseup' ? 0 : 1,
     }));
-    fire('mousedown', rect.left, rect.top);
-    fire('mousemove', rect.right, rect.bottom);
-    fire('mouseup', rect.right, rect.bottom);
+    fire('mousedown', rect.left, rect.top); fire('mousemove', rect.right, rect.bottom); fire('mouseup', rect.right, rect.bottom);
     return { ...rect, delivery: 'direct-canvas-production-input', viewport: { width: innerWidth, height: innerHeight } };
   })()`);
   if (!marquee) throw new Error('Could not dispatch the battlefield selection marquee.');
@@ -175,10 +160,7 @@ try {
 
   await dispatchKey(call, 'Tab', 'Tab');
   let mixed = await constructionState(evaluate);
-  if (/Combat Engineers/i.test(mixed.primaryName)) {
-    await dispatchKey(call, 'Tab', 'Tab');
-    mixed = await constructionState(evaluate);
-  }
+  if (/Combat Engineers/i.test(mixed.primaryName)) { await dispatchKey(call, 'Tab', 'Tab'); mixed = await constructionState(evaluate); }
   if (mixed.builds.length !== 3 || mixed.builds.some((build) => !build.disabled)) {
     throw new Error(`Non-engineer subgroup did not disable construction actions: ${JSON.stringify(mixed)}`);
   }
@@ -197,50 +179,34 @@ try {
   const clickedBuild = await evaluate(`(() => {
     const button = document.querySelector('.commandCardAction[data-command-id="group-builddepot"]');
     if (!button || button.disabled) return false;
-    button.click();
-    return true;
+    button.click(); return true;
   })()`);
-  if (!clickedBuild) {
-    throw new Error(`Could not activate the enabled group-builddepot command: ${JSON.stringify(engineerAgain.builds)}`);
-  }
+  if (!clickedBuild) throw new Error(`Could not activate the enabled group-builddepot command: ${JSON.stringify(engineerAgain.builds)}`);
   await waitFor(`document.body.classList.contains('placing')`, 'group construction placement to arm');
   report.placementArmed = true;
 
   const cancelledPlacement = await evaluate(`(() => {
-    const canvas = document.querySelector('#game');
-    if (!canvas) return false;
-    canvas.dispatchEvent(new MouseEvent('contextmenu', {
-      bubbles: true,
-      cancelable: true,
-      clientX: 320,
-      clientY: 320,
-      button: 2,
-      buttons: 2,
-    }));
+    const canvas = document.querySelector('#game'); if (!canvas) return false;
+    canvas.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 320, clientY: 320, button: 2, buttons: 2 }));
     return true;
   })()`);
   if (!cancelledPlacement) throw new Error('Could not dispatch production context-menu construction cancellation.');
   await waitFor(`!document.body.classList.contains('placing')`, 'group construction placement cancellation');
 
   const clickedEngineer = await evaluate(`(() => {
-    const button = [...document.querySelectorAll('#selectionGrid .selectionUnitCard')]
-      .find((candidate) => /Combat Engineers/i.test(candidate.querySelector('.selectionUnitName')?.textContent || ''));
-    if (!button) return false;
-    button.click();
-    return true;
+    const button = [...document.querySelectorAll('#selectionGrid .selectionUnitCard')].find((candidate) => /Combat Engineers/i.test(candidate.querySelector('.selectionUnitName')?.textContent || ''));
+    if (!button) return false; button.click(); return true;
   })()`);
   if (!clickedEngineer) throw new Error('Could not find an engineer card for the single-engineer browser case.');
   await waitFor(`document.querySelectorAll('#selectionGrid .selectionUnitCard').length === 1`, 'single engineer selection');
   const single = await constructionState(evaluate);
-  if (single.builds.length !== 3 || single.builds.some((build) => build.disabled)) {
-    throw new Error(`Single engineer did not retain construction actions: ${JSON.stringify(single)}`);
-  }
+  if (single.builds.length !== 3 || single.builds.some((build) => build.disabled)) throw new Error(`Single engineer did not retain construction actions: ${JSON.stringify(single)}`);
   report.singleEngineer = single;
 
   report.status = 'PASS';
   await captureScreenshot(resolve(artifacts, 'group-construction-browser.png'));
   await writeFile(resolve(artifacts, 'group-construction-browser.json'), `${JSON.stringify(report, null, 2)}\n`);
-  console.log('[group-construction-browser] PASS mixed selection, engineer subgroup, placement arming, and single engineer');
+  console.log('[group-construction-browser] PASS authored campaign, mixed selection, engineer subgroup, placement arming, and single engineer');
 } catch (error) {
   report.error = error.stack || String(error);
   try { if (session) await session.captureScreenshot(resolve(artifacts, 'group-construction-browser-failure.png')); } catch {}
