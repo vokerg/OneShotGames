@@ -35,6 +35,41 @@ function operationIndex(operationId) {
   return index;
 }
 
+function operationMapId(operation) {
+  return operation?.map?.id ?? operation?.mission?.mapId ?? `${operation?.id ?? 'operation'}.runtime-map`;
+}
+
+function normalizedBriefingSource(operation) {
+  const source = operation?.briefing ?? {};
+  return {
+    ...source,
+    operationId: source.operationId ?? operation.id,
+    title: source.title ?? operation.title ?? operation.id,
+    summary: source.summary ?? 'Authored campaign operation.',
+    mapPreview: source.mapPreview ?? {
+      mapId: operationMapId(operation),
+      caption: 'Battlefield generated from the authored campaign-state force composition.',
+      markers: [],
+    },
+    forces: source.forces ?? [{ id: 'field-force', label: 'Field force', category: 'combined-arms', count: 1 }],
+    objectives: source.objectives ?? (operation.mission?.objectiveDefinitions ?? []).map((objective) => ({
+      id: objective.id,
+      title: objective.label ?? objective.id,
+      description: `Complete ${objective.label ?? objective.id}.`,
+      optional: Boolean(objective.optional),
+    })),
+    intelligence: source.intelligence ?? [],
+    difficulty: source.difficulty ?? 'standard',
+    difficultyNotes: source.difficultyNotes ?? {
+      label: 'Standard',
+      summary: 'Authored campaign baseline.',
+      modifiers: [],
+    },
+    loadingHints: source.loadingHints ?? [],
+    metadata: source.metadata ?? {},
+  };
+}
+
 function medalResults(operation, game) {
   const completedObjectives = new Set(
     (game.objectiveResults ?? []).filter((result) => result.complete).map((result) => result.id),
@@ -51,7 +86,11 @@ function medalResults(operation, game) {
       if (condition.all === true && !values.every(Boolean)) return false;
       if (condition.all !== true && !values.some(Boolean)) return false;
     }
-    return Boolean(condition.objectiveId || condition.variables?.length);
+    if (condition.variable) {
+      const value = variables[condition.variable];
+      if (condition.operator === 'eq' && value !== condition.value) return false;
+    }
+    return Boolean(condition.objectiveId || condition.variables?.length || condition.variable);
   }).map((rule) => ({ id: rule.id, title: rule.title, description: '' }));
 }
 
@@ -136,18 +175,38 @@ export function installAuthoredCampaignBrowserRuntime({
     canvas.height = 76;
     drawPreview(canvas, operation, summary.order - 1);
     const body = element(documentTarget, 'div');
-    const title = element(documentTarget, 'h3', '', `${summary.order}. ${summary.title}`);
     const status = summary.completed ? 'COMPLETED' : summary.unlocked ? 'AVAILABLE' : 'LOCKED';
-    const mapLabel = operation.map?.id ?? operation.mission?.mapId ?? 'authored map';
-    const meta = element(documentTarget, 'small', '', `${status} · ${mapLabel}`);
-    const description = element(documentTarget, 'p', '', operation.briefing?.summary ?? 'Authored campaign operation.');
-    const pacing = element(documentTarget, 'p', 'missionPacing', `${operation.briefing?.objectives?.length ?? 0} objectives · scripted mission pressure`);
-    body.append(title, meta, description, pacing);
-    const begin = button(documentTarget, summary.unlocked ? 'Review Briefing' : 'Locked', () => beginOperation(summary.id), {
-      disabled: !summary.unlocked,
-      primary: summary.unlocked && !summary.completed,
-    });
+    body.append(
+      element(documentTarget, 'h3', '', `${summary.order}. ${summary.title}`),
+      element(documentTarget, 'small', '', `${status} · ${operationMapId(operation)}`),
+      element(documentTarget, 'p', '', operation.briefing?.summary ?? 'Authored campaign operation.'),
+      element(
+        documentTarget,
+        'p',
+        'missionPacing',
+        `${ui.t('runtime.mission.plannedWaves', { count: 0 })} · ${operation.briefing?.objectives?.length ?? operation.mission?.objectiveDefinitions?.length ?? 0} objectives · scripted pressure`,
+      ),
+    );
+    const begin = button(
+      documentTarget,
+      summary.unlocked ? ui.t('runtime.mission.begin') : 'Locked',
+      () => beginOperation(summary.id),
+      { disabled: !summary.unlocked, primary: summary.unlocked && !summary.completed },
+    );
     card.append(canvas, body, begin);
+    return card;
+  }
+
+  function prologueCard() {
+    const card = element(documentTarget, 'div', 'missionCard');
+    card.dataset.campaignPrologueCard = 'true';
+    const body = element(documentTarget, 'div');
+    body.append(
+      element(documentTarget, 'h3', '', `Prologue — ${TUTORIAL_PROLOGUE.title}`),
+      element(documentTarget, 'small', '', 'TUTORIAL / FIRST COMMAND'),
+      element(documentTarget, 'p', '', TUTORIAL_PROLOGUE.summary),
+    );
+    card.append(body, button(documentTarget, 'Open Prologue', renderPrologue));
     return card;
   }
 
@@ -164,9 +223,7 @@ export function installAuthoredCampaignBrowserRuntime({
       element(documentTarget, 'p', '', TUTORIAL_PROLOGUE.summary),
     );
     const list = element(documentTarget, 'ol');
-    for (const step of TUTORIAL_PROLOGUE.steps.slice(0, 6)) {
-      list.append(element(documentTarget, 'li', '', step.title ?? step.id));
-    }
+    for (const step of TUTORIAL_PROLOGUE.steps.slice(0, 6)) list.append(element(documentTarget, 'li', '', step.title ?? step.id));
     body.append(list);
     const actions = element(documentTarget, 'div');
     actions.append(
@@ -187,18 +244,9 @@ export function installAuthoredCampaignBrowserRuntime({
     showSelector();
     setStage(CAMPAIGN_FLOW_STAGES.OPERATIONS);
     ui.e.cards.replaceChildren();
-    const prologue = element(documentTarget, 'div', 'missionCard');
-    prologue.dataset.campaignPrologueCard = 'true';
-    const prologueBody = element(documentTarget, 'div');
-    prologueBody.append(
-      element(documentTarget, 'h3', '', `Prologue — ${TUTORIAL_PROLOGUE.title}`),
-      element(documentTarget, 'small', '', 'TUTORIAL / FIRST COMMAND'),
-      element(documentTarget, 'p', '', TUTORIAL_PROLOGUE.summary),
-    );
-    prologue.append(prologueBody, button(documentTarget, 'Open Prologue', renderPrologue));
-    ui.e.cards.append(prologue);
     const snapshot = game.campaignRuntime.snapshot();
     for (const summary of snapshot.operations) ui.e.cards.append(campaignOperationCard(summary));
+    ui.e.cards.append(prologueCard());
   }
 
   function renderBriefing() {
@@ -214,13 +262,13 @@ export function installAuthoredCampaignBrowserRuntime({
       element(documentTarget, 'h3', '', briefing.title),
       element(documentTarget, 'small', '', `${briefing.difficulty.label.toUpperCase()} · ${briefing.mapPreview.mapId}`),
       element(documentTarget, 'p', '', briefing.summary),
+      element(documentTarget, 'strong', '', 'Objectives'),
     );
-    const objectiveTitle = element(documentTarget, 'strong', '', 'Objectives');
     const objectives = element(documentTarget, 'ul');
     for (const objective of briefing.objectives) {
       objectives.append(element(documentTarget, 'li', '', `${objective.optional ? 'Optional — ' : ''}${objective.title}`));
     }
-    body.append(objectiveTitle, objectives);
+    body.append(objectives);
     if (briefing.intelligence.length) {
       body.append(element(documentTarget, 'strong', '', 'Intelligence'));
       const intel = element(documentTarget, 'ul');
@@ -290,7 +338,7 @@ export function installAuthoredCampaignBrowserRuntime({
   function beginOperation(operationId) {
     clearLoadingTimer();
     activeOperation = game.campaignRuntime.beginOperation(operationId);
-    const briefing = createMissionBriefingModel(activeOperation.briefing);
+    const briefing = createMissionBriefingModel(normalizedBriefingSource(activeOperation));
     flowState = createCampaignFlowState(briefing);
     renderBriefing();
   }
@@ -307,12 +355,13 @@ export function installAuthoredCampaignBrowserRuntime({
       losses: {},
     };
     const progressionDebrief = game.campaignRuntime.recordResult(activeOperation.id, result);
-    const next = progressionDebrief.nextOperationId ? getCampaignOperation(progressionDebrief.nextOperationId) : null;
+    const nextOperationId = progressionDebrief.nextOperationId ?? null;
+    const next = nextOperationId ? getCampaignOperation(nextOperationId) : null;
     return createMissionDebriefModel({
       operationId: activeOperation.id,
       title: game.outcome === 'victory'
-        ? activeOperation.debrief?.victoryTitle ?? 'Operation Complete'
-        : activeOperation.debrief?.defeatTitle ?? 'Operation Failed',
+        ? activeOperation.debrief?.victoryTitle ?? progressionDebrief.title ?? 'Operation Complete'
+        : activeOperation.debrief?.defeatTitle ?? progressionDebrief.title ?? 'Operation Failed',
       outcome: game.outcome,
       score,
       completedTick,
@@ -326,10 +375,11 @@ export function installAuthoredCampaignBrowserRuntime({
         unlocked: game.campaignRuntime.snapshot().profile.unlockedOperationIds.includes(next.id),
         recommended: true,
       }] : [],
-      summary: game.endReason ?? '',
+      summary: progressionDebrief.summary ?? game.endReason ?? '',
       campaignConsequences: {
         profileRevision: game.campaignRuntime.snapshot().profile.revision,
-        nextOperationId: progressionDebrief.nextOperationId ?? null,
+        nextOperationId,
+        campaignComplete: progressionDebrief.campaignConsequences?.campaignComplete ?? false,
       },
     });
   }
