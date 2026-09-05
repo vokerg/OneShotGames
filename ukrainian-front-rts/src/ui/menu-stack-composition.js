@@ -1,3 +1,4 @@
+import { installAuthoredCampaignBrowserRuntime } from '../app/authored-campaign-browser-runtime.js';
 import { installCampaignProgressionRuntime } from './campaign-progression-runtime.js';
 import {
   ACCESSIBILITY_FOCUS_PAUSE_REASON,
@@ -38,6 +39,14 @@ export function installMenuStackComposition({
     registerCleanup(registerMenuPauseRuntime(game, runtime));
     const campaign = installCampaignProgressionRuntime({ game, windowTarget });
     registerCleanup(() => campaign.dispose());
+    const authoredCampaign = installAuthoredCampaignBrowserRuntime({
+      game,
+      ui,
+      runtime,
+      documentTarget,
+      windowTarget,
+    });
+    registerCleanup(() => authoredCampaign.dispose());
     const onAccessibilityPause = () => runtime.pause(ACCESSIBILITY_FOCUS_PAUSE_REASON);
     const onAccessibilityResume = () => runtime.resume(ACCESSIBILITY_FOCUS_PAUSE_REASON);
     documentTarget.addEventListener?.(ACCESSIBILITY_PAUSE_EVENT, onAccessibilityPause);
