@@ -30,6 +30,7 @@ import { installCombatReadabilityOverlay } from './render/combat-readability-ove
 import { installConstructionPreview } from './render/construction-preview.js';
 import { installEffectsAtlasRenderer } from './render/effects-atlas-renderer.js';
 import { installSkirmishFramework } from './skirmish/skirmish-runtime.js';
+import { installAuthoredOperationRuntime } from './systems/authored-operation-runtime.js';
 import {
   createBuildingLifecycleController,
   updateBuildingCaptures,
@@ -251,6 +252,7 @@ const modules = [
   module('economy-hud-overview', () => installEconomyHudOverview({ game, ui })),
   module('minimap-alerts', () => installMinimapAlerts({ game, ui, renderer, minimap })),
   module('tech-tree-screen', () => installTechTreeScreen({ game, ui })),
+  module('authored-operation-runtime', () => installAuthoredOperationRuntime(game)),
   module('menu-stack', () => installMenuStackComposition({
     game,
     ui,
