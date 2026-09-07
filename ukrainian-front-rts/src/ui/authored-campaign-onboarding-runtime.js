@@ -120,6 +120,13 @@ export function installAuthoredCampaignBrowserRuntime(options = {}) {
     }
   }
 
+  function renderRuntimeAwareOperations(...args) {
+    clearTutorialRuntime('campaign-selector');
+    const result = baseRuntime.renderOperations(...args);
+    decorateOperationCards();
+    return result;
+  }
+
   ui.buildMissionCards = function buildRuntimeAwareCampaignCards(...args) {
     clearTutorialRuntime('campaign-selector');
     const result = baseBuildMissionCards.apply(this, args);
@@ -139,6 +146,7 @@ export function installAuthoredCampaignBrowserRuntime(options = {}) {
 
   return Object.freeze({
     ...baseRuntime,
+    renderOperations: renderRuntimeAwareOperations,
     beginOperation(operationId) {
       clearTutorialRuntime('operation-start');
       return baseRuntime.beginOperation(operationId);
