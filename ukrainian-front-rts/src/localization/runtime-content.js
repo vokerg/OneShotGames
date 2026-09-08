@@ -1,7 +1,12 @@
-function translated(t, key, fallback) {
+function translated(t, key, fallback, variables) {
   if (typeof t !== 'function') return fallback;
-  const value = t(key);
+  const value = t(key, variables);
   return value === `[${key}]` ? fallback : value;
+}
+
+export function localizedGameplayLabel(t, domain, id, field, fallback) {
+  if (!domain || !id || !field) return fallback;
+  return translated(t, `gameContent.${domain}.${id}.${field}`, fallback);
 }
 
 export function createLocalizedMissionPresentation(t, mission, region) {
