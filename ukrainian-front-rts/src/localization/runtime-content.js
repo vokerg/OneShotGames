@@ -1,3 +1,9 @@
+import { installLiveRuntimeLocalizationBridge } from './live-runtime-bridge.js';
+
+// Legacy UI modules still emit literal runtime copy. Keep that presentation-only
+// compatibility layer with localization ownership until those surfaces migrate to keys.
+installLiveRuntimeLocalizationBridge();
+
 function translated(t, key, fallback, variables) {
   if (typeof t !== 'function') return fallback;
   const value = t(key, variables);
