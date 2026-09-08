@@ -84,13 +84,27 @@ const DIRECT_REPLACEMENTS = Object.freeze([
   ['+12% vehicle movement speed.', '+12% до швидкості руху техніки.'],
 ]);
 
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function replacePhrase(value, english, ukrainian) {
+  const escaped = escapeRegExp(english);
+  const beginsWithWord = /^[A-Za-z0-9]/.test(english);
+  const endsWithWord = /[A-Za-z0-9]$/.test(english);
+  if (!beginsWithWord && !endsWithWord) return value.replaceAll(english, ukrainian);
+  const prefix = beginsWithWord ? '(^|[^A-Za-z0-9])' : '';
+  const suffix = endsWithWord ? '(?=$|[^A-Za-z0-9])' : '';
+  return value.replace(new RegExp(`${prefix}${escaped}${suffix}`, 'g'), (_, leading = '') => `${leading}${ukrainian}`);
+}
+
 function normalizeLegacyArtifacts(value) {
   let normalized = String(value)
     .replaceAll('Завданняs', 'Завдання')
     .replaceAll('АТАКАed', 'атаковано')
     .replaceAll('Паузаd', 'призупинено');
   for (const [english, ukrainian] of DIRECT_REPLACEMENTS) {
-    if (normalized.includes(english)) normalized = normalized.split(english).join(ukrainian);
+    normalized = replacePhrase(normalized, english, ukrainian);
   }
   return normalized;
 }
