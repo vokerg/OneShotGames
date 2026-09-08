@@ -56,6 +56,7 @@ const report = { selector: {}, mission: {}, browserErrors: [] };
 async function snapshot() {
   return JSON.parse(await session.evaluate(`JSON.stringify((() => {
     const text = (selector) => document.querySelector(selector)?.textContent?.trim() || '';
+    const operationCards = [...document.querySelectorAll('[data-campaign-operation-id]')];
     return {
       locale: window.__fieldsOfResolveLocalization?.locale,
       lang: document.documentElement.lang,
@@ -70,6 +71,8 @@ async function snapshot() {
       notificationToggle: text('.notificationHistoryToggle'),
       missionCards: text('#missionCards'),
       skirmishCard: text('[data-skirmish-setup]'),
+      operationHeadings: operationCards.map((card) => card.querySelector('h3')?.textContent?.trim() || ''),
+      operationCards: operationCards.map((card) => card.textContent?.trim() || ''),
       authoredStage: window.__fieldsOfResolveAuthoredCampaign?.snapshot?.()?.stage || null,
       bridgeLocale: window.__fieldsOfResolveLiveRuntimeLocalization?.locale || null,
     };
@@ -130,21 +133,26 @@ try {
   report.selector.english = await snapshot();
   assert(report.selector.english.locale === 'en', 'Selector must begin in English.');
   assert(report.selector.english.pauseToggle === 'Pause', 'Selector English pause action changed unexpectedly.');
+  assert(report.selector.english.operationHeadings.length === 9, 'Expected all nine authored operation cards in English.');
 
   await switchLocale('uk');
   report.selector.ukrainian = await snapshot();
   assertUkrainianSurface(report.selector.ukrainian, 'operation selector');
   assert(report.selector.ukrainian.pauseToggle === 'Пауза', 'Pause action did not localize on selector.');
+  assert(report.selector.ukrainian.operationHeadings.length === 9, 'Expected all nine authored operation cards in Ukrainian.');
+  assert(report.selector.ukrainian.operationHeadings.every((heading) => /[А-ЯІЇЄҐа-яіїєґ]/u.test(heading)), 'An authored operation title remained non-Ukrainian.');
+  assert(report.selector.ukrainian.operationCards.every((card) => card.includes('Авторська операція кампанії')), 'An authored operation summary did not localize.');
 
   await switchLocale('en');
   report.selector.restored = await snapshot();
   assert(report.selector.restored.pauseToggle === 'Pause', 'Selector did not restore English pause action.');
-  assert(report.selector.restored.missionCards.includes('Begin') || report.selector.restored.authoredStage === 'operations', 'Selector did not restore English operation copy.');
+  assert(report.selector.restored.operationHeadings.length === 9, 'Selector lost authored operation cards after English restoration.');
+  assert(report.selector.restored.operationHeadings.every((heading) => !/[А-ЯІЇЄҐа-яіїєґ]/u.test(heading)), 'Selector retained stale Ukrainian operation titles.');
 
   await startFirstAuthoredOperation();
   report.mission.english = await snapshot();
   assert(report.mission.english.locale === 'en' && report.mission.english.authoredStage === 'battlefield', 'Mission did not start in English.');
-  assert(/Mission deployed|First enemy assault|/.test(report.mission.english.toast), 'Expected English mission deployment toast before locale switch.');
+  assert(/Mission deployed|First enemy assault/.test(report.mission.english.toast), 'Expected English mission deployment toast before locale switch.');
 
   await switchLocale('uk');
   await session.waitFor(`document.querySelector('#missionTitle')?.textContent && document.querySelector('#pauseMenuToggle')?.textContent === 'Пауза'`, 'Ukrainian active mission presentation');
