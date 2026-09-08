@@ -1,4 +1,4 @@
-import { installLiveRuntimeLocalizationBridge } from './live-runtime-bridge.js';
+import { installLiveRuntimeLocalizationBridge } from './live-runtime-bridge-v2.js';
 
 // Legacy UI modules still emit literal runtime copy. Keep that presentation-only
 // compatibility layer with localization ownership until those surfaces migrate to keys.
