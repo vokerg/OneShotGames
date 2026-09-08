@@ -26,6 +26,15 @@ const AUTHORED_OPERATION_TITLES = Object.freeze({
 });
 
 const DIRECT_REPLACEMENTS = Object.freeze([
+  ['Mission розгорнуто.', 'Місію розгорнуто.'],
+  ['Hold the Crossing', 'Утримати переправу'],
+  ['Build a support area west of the Siverskyi Donets, absorb an escalating mechanized attack, and dismantle the opposing forward command.', 'Розгорніть район забезпечення на захід від Сіверського Дінця, витримайте наростаючу механізовану атаку та знищте передове командування противника.'],
+  ['Recover 500 materiel', 'Зібрати 500 одиниць матеріальних ресурсів'],
+  ['Establish an infantry assembly area', 'Розгорнути район збору піхоти'],
+  ['Establish a repair and recovery point', 'Розгорнути ремонтно-евакуаційний пункт'],
+  ['Hold the west bridgehead through the escalation', 'Утримати західний плацдарм протягом ескалації'],
+  ['Destroy the Russian forward command post', 'Знищити російський передовий командний пункт'],
+  ['Recover the isolated repair team', 'Евакуювати ізольовану ремонтну групу'],
   ['COMPLETED', 'ЗАВЕРШЕНО'],
   ['AVAILABLE', 'ДОСТУПНО'],
   ['LOCKED', 'ЗАБЛОКОВАНО'],
