@@ -8,6 +8,7 @@ import {
   UNIT_TYPES,
   UPGRADES,
 } from './config.js';
+import { createLocalizedMissionPresentation } from './localization/runtime-content.js';
 import { installRuntimeLocalization } from './localization/runtime-localization.js';
 import { installNotificationCenter } from './ui/notification-center.js';
 
@@ -53,9 +54,7 @@ export class UI {
       this.commandSignature = '';
       if (this.startMission) this.buildMissionCards(this.startMission);
       if (this.g.mission) {
-        const region = REGIONS[this.g.mission.region];
-        this.e.missionTitle.textContent = this.g.mission.title;
-        this.e.missionStory.textContent = `${region.name} — ${region.subtitle}. ${this.t('runtime.mission.storySeparator')} ${this.g.mission.story}`;
+        this.renderMissionPresentation();
         if (this.g.gameOver) this.lastOutcome = null;
         this.refresh();
       }
@@ -66,6 +65,21 @@ export class UI {
   setEndgameActions({ retry, operations }) {
     this.e.retry.onclick = retry;
     this.e.operations.onclick = operations;
+  }
+
+  missionPresentation(mission = this.g.mission) {
+    if (!mission) return null;
+    return createLocalizedMissionPresentation(this.t, mission, REGIONS[mission.region]);
+  }
+
+  renderMissionPresentation() {
+    const presentation = this.missionPresentation();
+    if (!presentation) return;
+    this.e.missionTitle.textContent = presentation.title;
+    this.e.missionStory.textContent = `${presentation.region.name} — ${presentation.region.subtitle}. ${this.t('runtime.mission.storySeparator')} ${presentation.story}`;
+    this.e.objectiveList.innerHTML = presentation.objectives
+      .map((objective, index) => `<li data-i="${index}">${objective}</li>`)
+      .join('');
   }
 
   buildMissionCards(start) {
@@ -93,13 +107,13 @@ export class UI {
         context.fillRect(82 + unit * 14, 24 + (unit % 2) * 9, 10, 20);
       }
 
-      const region = REGIONS[mission.region];
+      const presentation = this.missionPresentation(mission);
       const text = document.createElement('div');
       const pacing = [
         this.t('runtime.mission.firstAssault', { seconds: mission.waves.firstDelay }),
         this.t('runtime.mission.plannedWaves', { count: mission.waves.maxWaves }),
       ].join(' · ');
-      text.innerHTML = `<h3>${mission.title}</h3><small>${region.name} · ${region.subtitle} · ${this.t('runtime.mission.versus')}</small><p>${mission.story}</p><p class="missionPacing">${pacing}</p>`;
+      text.innerHTML = `<h3>${presentation.title}</h3><small>${presentation.region.name} · ${presentation.region.subtitle} · ${this.t('runtime.mission.versus')}</small><p>${presentation.story}</p><p class="missionPacing">${pacing}</p>`;
       const button = document.createElement('button');
       button.textContent = this.t('runtime.mission.begin');
       button.onclick = () => {
@@ -112,12 +126,7 @@ export class UI {
   }
 
   setMission() {
-    const region = REGIONS[this.g.mission.region];
-    this.e.missionTitle.textContent = this.g.mission.title;
-    this.e.missionStory.textContent = `${region.name} — ${region.subtitle}. ${this.t('runtime.mission.storySeparator')} ${this.g.mission.story}`;
-    this.e.objectiveList.innerHTML = this.g.mission.objectives
-      .map((objective, index) => `<li data-i="${index}">${objective}</li>`)
-      .join('');
+    this.renderMissionPresentation();
     this.e.endgame.classList.add('hidden');
     this.e.select.classList.add('hidden');
     this.lastOutcome = null;
