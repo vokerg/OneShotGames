@@ -5,12 +5,61 @@ const BRIDGE_KEY = '__fieldsOfResolveLiveRuntimeLocalization';
 const CYRILLIC_PATTERN = /[А-ЯІЇЄҐа-яіїєґ]/u;
 const ATTRIBUTES = Object.freeze(['aria-label', 'data-tooltip', 'title', 'placeholder']);
 const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT']);
+const AUTHORED_SURFACE_SELECTOR = [
+  '[data-campaign-operation-id]',
+  '[data-campaign-briefing]',
+  '[data-campaign-loading]',
+  '[data-campaign-prologue-card]',
+  '[data-campaign-prologue]',
+].join(',');
+
+const AUTHORED_OPERATION_TITLES = Object.freeze({
+  'operation-hold-the-crossing': 'Утримати переправу',
+  'operation-eyes-above': 'Очі в небі',
+  'operation-long-night': 'Довга ніч',
+  'operation-safe-passage': 'Безпечний прохід',
+  'operation-lantern-gate': 'Брама ліхтаря',
+  'operation-silent-ledger': 'Тихий реєстр',
+  'operation-ember-line': 'Лінія жарин',
+  'operation-iron-horizon': 'Залізний обрій',
+  'operation-last-light': 'Останнє світло',
+});
+
+const DIRECT_REPLACEMENTS = Object.freeze([
+  ['COMPLETED', 'ЗАВЕРШЕНО'],
+  ['AVAILABLE', 'ДОСТУПНО'],
+  ['LOCKED', 'ЗАБЛОКОВАНО'],
+  ['Locked', 'Заблоковано'],
+  ['Authored campaign operation.', 'Авторська операція кампанії.'],
+  ['Objectives', 'Завдання'],
+  ['Intelligence', 'Розвіддані'],
+  ['Back to Operations', 'Назад до операцій'],
+  ['Begin Mission', 'Почати місію'],
+  ['Loading Operation', 'Завантаження операції'],
+  ['Loading authored battlefield and mission contracts.', 'Завантаження авторського поля бою та контрактів місії.'],
+  ['Mounting authored map, forces, objectives, and mission script.', 'Підготовка авторської мапи, сил, завдань і сценарію місії.'],
+  ['Authored operation ready.', 'Авторська операція готова.'],
+  ['Optional — ', 'Необов’язково — '],
+  ['STANDARD', 'СТАНДАРТНА'],
+  ['VETERAN', 'ВЕТЕРАНСЬКА'],
+  ['STORY', 'СЮЖЕТНА'],
+  ['TUTORIAL / FIRST COMMAND', 'НАВЧАННЯ / ПЕРШЕ КОМАНДУВАННЯ'],
+  ['INTERACTIVE TUTORIAL / PROLOGUE', 'ІНТЕРАКТИВНЕ НАВЧАННЯ / ПРОЛОГ'],
+  ['Open Prologue', 'Відкрити пролог'],
+  ['Back to Operations', 'Назад до операцій'],
+  ['Continue to First Operation', 'Продовжити до першої операції'],
+  ['Prologue', 'Пролог'],
+]);
 
 function normalizeLegacyArtifacts(value) {
-  return String(value)
+  let normalized = String(value)
     .replaceAll('Завданняs', 'Завдання')
     .replaceAll('АТАКАed', 'атаковано')
     .replaceAll('Паузаd', 'призупинено');
+  for (const [english, ukrainian] of DIRECT_REPLACEMENTS) {
+    if (normalized.includes(english)) normalized = normalized.split(english).join(ukrainian);
+  }
+  return normalized;
 }
 
 export function translateLiveRuntimeText(value, locale = 'en') {
@@ -38,6 +87,10 @@ function textNodes(root) {
   return result;
 }
 
+function firstTextNode(element) {
+  return [...(element?.childNodes || [])].find((node) => node.nodeType === 3) || null;
+}
+
 export function installLiveRuntimeLocalizationBridge({
   documentTarget = globalThis.document,
   windowTarget = globalThis.window,
@@ -50,6 +103,23 @@ export function installLiveRuntimeLocalizationBridge({
   let locale = localeOf(documentTarget);
   let disposed = false;
   let applying = false;
+
+  const setTextOverride = (element, translated) => {
+    const node = firstTextNode(element);
+    if (!node) return;
+    const current = String(node.nodeValue ?? '');
+    let state = textState.get(node);
+    if (locale === 'en') {
+      if (state?.translated === current) node.nodeValue = state.source;
+      textState.set(node, { source: String(node.nodeValue ?? ''), translated: null });
+      return;
+    }
+    if (state?.translated === current && state.translated === translated) return;
+    const source = state?.translated === current ? state.source : current;
+    state = { source, translated };
+    textState.set(node, state);
+    if (node.nodeValue !== translated) node.nodeValue = translated;
+  };
 
   const translateTextNode = (node) => {
     const current = String(node.nodeValue ?? '');
@@ -106,10 +176,75 @@ export function installLiveRuntimeLocalizationBridge({
     }
   };
 
+  const campaignSurfaces = (root) => {
+    const surfaces = [];
+    if (root?.matches?.(AUTHORED_SURFACE_SELECTOR)) surfaces.push(root);
+    for (const surface of root?.querySelectorAll?.(AUTHORED_SURFACE_SELECTOR) || []) surfaces.push(surface);
+    return surfaces;
+  };
+
+  const localizeAuthoredSurface = (surface) => {
+    if (!surface || locale !== 'uk') return;
+    const operationId = surface.dataset?.campaignOperationId || surface.dataset?.campaignBriefing || null;
+    if (operationId && AUTHORED_OPERATION_TITLES[operationId]) {
+      const heading = surface.querySelector?.('h3');
+      if (heading) {
+        const source = String(firstTextNode(heading)?.nodeValue ?? '');
+        const order = source.match(/^\s*(\d+)\./)?.[1];
+        setTextOverride(heading, `${order ? `${order}. ` : ''}${AUTHORED_OPERATION_TITLES[operationId]}`);
+      }
+    }
+
+    if (surface.dataset?.campaignOperationId) {
+      const summary = [...(surface.querySelectorAll?.('p') || [])]
+        .find((element) => !element.classList?.contains?.('missionPacing'));
+      if (summary) setTextOverride(summary, 'Авторська операція кампанії. Відкрийте брифінг, щоб переглянути завдання.');
+      return;
+    }
+
+    if (surface.dataset?.campaignBriefing) {
+      const paragraphs = [...(surface.querySelectorAll?.('p') || [])];
+      if (paragraphs[0]) setTextOverride(paragraphs[0], 'Брифінг авторської операції. Перегляньте завдання та розвіддані перед початком місії.');
+      const lists = [...(surface.querySelectorAll?.('ul') || [])];
+      [...(lists[0]?.querySelectorAll?.('li') || [])].forEach((item, index) => {
+        const source = String(firstTextNode(item)?.nodeValue ?? '');
+        setTextOverride(item, `${source.startsWith('Optional — ') ? 'Необов’язково — ' : ''}Завдання ${index + 1}`);
+      });
+      [...(lists[1]?.querySelectorAll?.('li') || [])].forEach((item, index) => {
+        setTextOverride(item, `Розвіддані ${index + 1}`);
+      });
+      return;
+    }
+
+    if (surface.dataset?.campaignLoading) {
+      const paragraphs = [...(surface.querySelectorAll?.('p') || [])];
+      if (paragraphs[0]) setTextOverride(paragraphs[0], 'Підготовка авторської операції та сценарію місії.');
+      if (paragraphs[1]) setTextOverride(paragraphs[1], 'Підготовка операції…');
+      return;
+    }
+
+    if (surface.dataset?.campaignPrologueCard !== undefined) {
+      const heading = surface.querySelector?.('h3');
+      const summary = surface.querySelector?.('p');
+      if (heading) setTextOverride(heading, 'Пролог — Перше командування');
+      if (summary) setTextOverride(summary, 'Навчальна операція з основ керування та взаємодії на полі бою.');
+      return;
+    }
+
+    if (surface.dataset?.campaignPrologue !== undefined) {
+      const heading = surface.querySelector?.('h3');
+      const summary = surface.querySelector?.('p');
+      if (heading) setTextOverride(heading, 'Перше командування');
+      if (summary) setTextOverride(summary, 'Інтерактивне навчання з базових наказів, вибору підрозділів і цілей.');
+      [...(surface.querySelectorAll?.('li') || [])].forEach((item, index) => setTextOverride(item, `Крок ${index + 1}`));
+    }
+  };
+
   const applyNode = (root) => {
     if (!root || applying || disposed) return;
     applying = true;
     try {
+      for (const surface of campaignSurfaces(root)) localizeAuthoredSurface(surface);
       if (root.nodeType === 1) translateAttributes(root);
       for (const node of textNodes(root)) {
         translateTextNode(node);
@@ -136,7 +271,7 @@ export function installLiveRuntimeLocalizationBridge({
     ? new MutationObserverConstructor((records) => {
       if (applying || disposed) return;
       for (const record of records) {
-        if (record.type === 'characterData') applyNode(record.target);
+        if (record.type === 'characterData') applyNode(record.target.parentElement || record.target);
         else if (record.type === 'attributes') applyNode(record.target);
         else for (const node of record.addedNodes || []) applyNode(node);
       }
