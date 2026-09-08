@@ -52,6 +52,6 @@ test('UFR-160 active tactical seam installs release presentation after productio
   const presentationInstall = source.indexOf('const disposeReleaseUiStylesheet = installReleaseUiStylesheet(documentTarget);');
   assert.ok(productionInstall >= 0, 'production command card must remain installed');
   assert.ok(presentationInstall > productionInstall, 'release presentation must layer after production command-card ownership');
-  assert.match(source, /decorateCommandCard\(this\.e\?\.abilities, documentTarget\)/);
-  assert.match(source, /disabledReasonNode\.textContent = 'Blocked'/);
+  assert.match(source, /decorateCommandCard\(this\.e\?\.abilities, documentTarget, this\)/);
+  assert.match(source, /disabledReasonNode\.textContent = localized\(ui, 'commandCard\.blocked', 'Blocked'\)/);
 });
