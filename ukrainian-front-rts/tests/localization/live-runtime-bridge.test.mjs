@@ -73,6 +73,9 @@ test('translates dynamic legacy runtime copy into Ukrainian without partial-word
   );
   assert.equal(translateLiveRuntimeText('Messages (3)', 'uk'), 'Повідомлення (3)');
   assert.equal(translateLiveRuntimeText('Objectives', 'uk'), 'Завдання');
+  assert.equal(translateLiveRuntimeText('OBJECTIVE', 'uk'), 'ЗАВДАННЯ');
+  assert.equal(translateLiveRuntimeText('National Rally', 'uk'), 'Національне згуртування');
+  assert.match(translateLiveRuntimeText('Mechanized Squad is under attack.', 'uk'), /під атакою/u);
   assert.match(translateLiveRuntimeText('Skirmish — Custom Match', 'uk'), /Сутичка/u);
   assert.equal(translateLiveRuntimeText('Pause', 'en'), 'Pause');
 });
