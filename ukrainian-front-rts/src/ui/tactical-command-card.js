@@ -8,23 +8,39 @@ export const RELEASE_UI_STYLESHEET = 'release-ui.css';
 const COMMANDS = Object.freeze([
   Object.freeze({
     kind: TACTICAL_COMMAND_KINDS.PATROL,
+    copyKey: 'patrol',
     title: 'Patrol',
     description: 'Cycle between this position and a chosen point, engaging contacts en route.',
     key: 'P',
   }),
   Object.freeze({
     kind: TACTICAL_COMMAND_KINDS.GUARD,
+    copyKey: 'guard',
     title: 'Guard',
     description: 'Protect a friendly unit or structure and return to its perimeter.',
     key: 'G',
   }),
   Object.freeze({
     kind: TACTICAL_COMMAND_KINDS.FOLLOW,
+    copyKey: 'follow',
     title: 'Follow',
     description: 'Maintain a stable escort position around another friendly unit.',
     key: 'Y',
   }),
 ]);
+
+function localized(ui, key, fallback, variables) {
+  if (typeof ui?.t !== 'function') return fallback;
+  const value = ui.t(key, variables);
+  return value === `[${key}]` ? fallback : value;
+}
+
+function commandCopy(ui, command) {
+  return {
+    title: localized(ui, `commandCard.tactical.${command.copyKey}.title`, command.title),
+    description: localized(ui, `commandCard.tactical.${command.copyKey}.description`, command.description),
+  };
+}
 
 function runtimeStats(game, unit) {
   if (unit?.team === TEAM.UA && typeof game?.unitStats === 'function') return game.unitStats(unit.type);
@@ -92,7 +108,7 @@ function installReleaseUiStylesheet(documentTarget) {
   return () => link.remove?.();
 }
 
-function decorateCommandCard(root, documentTarget) {
+function decorateCommandCard(root, documentTarget, ui) {
   if (!root?.querySelectorAll || !documentTarget?.createElementNS) return;
   for (const button of root.querySelectorAll('.commandCardAction')) {
     if (button.querySelector?.('.commandCardIcon')) continue;
@@ -112,7 +128,7 @@ function decorateCommandCard(root, documentTarget) {
     }
     if (disabledReasonNode && disabledReason) {
       disabledReasonNode.dataset.fullReason = disabledReason;
-      disabledReasonNode.textContent = 'Blocked';
+      disabledReasonNode.textContent = localized(ui, 'commandCard.blocked', 'Blocked');
     }
     const tooltip = [title, description, disabledReason].filter(Boolean).join('\n');
     if (tooltip) {
@@ -140,7 +156,7 @@ export function installTacticalCommandCard(ui) {
   const productionRefresh = ui.refresh;
   const releaseRefresh = function refreshWithReleaseCommandPresentation(...args) {
     const result = productionRefresh.apply(this, args);
-    decorateCommandCard(this.e?.abilities, documentTarget);
+    decorateCommandCard(this.e?.abilities, documentTarget, this);
     return result;
   };
   ui.refresh = releaseRefresh;
@@ -168,70 +184,114 @@ export function installTacticalCommandCard(ui) {
     const repairFacilityCount = operationalRepairFacilities(this.g).length;
 
     if (typeof this.g.armAttackGround === 'function') {
+      const attackGroundTitle = localized(this, 'commandCard.tactical.attackGround.title', 'Attack Ground');
       this.commandButton({
         id: 'attack-ground',
-        title: 'Attack Ground',
-        description: 'Force-fire a battlefield point without requiring a visible target.',
+        title: attackGroundTitle,
+        description: localized(
+          this,
+          'commandCard.tactical.attackGround.description',
+          'Force-fire a battlefield point without requiring a visible target.',
+        ),
         meta: 'F',
         hotkey: 'F',
         group: 'targeting',
         className: `command ${this.g.isAttackGroundArmed?.() ? 'stance-on' : ''}`,
         disabled: armedCount === 0,
-        disabledReason: armedCount === 0 ? 'Select at least one armed Ukrainian unit.' : '',
+        disabledReason: armedCount === 0
+          ? localized(this, 'commandCard.tactical.selectArmed', 'Select at least one armed Ukrainian unit.')
+          : '',
         targeting: Boolean(this.g.isAttackGroundArmed?.()),
         onClick: () => {
-          if (this.g.armAttackGround()) notify('Force-fire armed: left-click a battlefield point.');
-          else notify('Select at least one armed Ukrainian unit.');
+          if (this.g.armAttackGround()) {
+            notify(localized(
+              this,
+              'commandCard.tactical.forceFireArmed',
+              'Force-fire armed: left-click a battlefield point.',
+            ));
+          } else {
+            notify(localized(this, 'commandCard.tactical.selectArmed', 'Select at least one armed Ukrainian unit.'));
+          }
         },
       });
     }
 
     for (const command of COMMANDS) {
       const disabled = command.kind === TACTICAL_COMMAND_KINDS.GUARD && armedCount === 0;
+      const copy = commandCopy(this, command);
       this.commandButton({
         id: command.kind,
-        title: `${pendingKind === command.kind ? '✓ ' : ''}${command.title}`,
-        description: command.description,
+        title: `${pendingKind === command.kind ? '✓ ' : ''}${copy.title}`,
+        description: copy.description,
         meta: command.key,
         hotkey: command.key,
         group: 'targeting',
         className: `command ${pendingKind === command.kind ? 'stance-on' : ''}`,
         disabled,
-        disabledReason: disabled ? 'Select at least one armed Ukrainian unit to guard another entity.' : '',
+        disabledReason: disabled
+          ? localized(
+            this,
+            'commandCard.tactical.guardRequiresArmed',
+            'Select at least one armed Ukrainian unit to guard another entity.',
+          )
+          : '',
         targeting: pendingKind === command.kind,
         onClick: () => {
           if (this.g.armTacticalCommand(command.kind)) {
-            notify(`${command.title} armed: right-click a valid target.`);
+            notify(localized(
+              this,
+              'commandCard.tactical.armed',
+              `${copy.title} armed: right-click a valid target.`,
+              { command: copy.title },
+            ));
           } else {
-            notify(`${command.title} is unavailable.`);
+            notify(localized(
+              this,
+              'commandCard.tactical.unavailable',
+              `${copy.title} is unavailable.`,
+              { command: copy.title },
+            ));
           }
         },
       });
     }
 
+    const holdPositionTitle = localized(this, 'commandCard.tactical.holdPosition.title', 'Hold Position');
     this.commandButton({
       id: 'hold-position-order',
-      title: 'Hold Position',
-      description: 'Cancel movement and chasing while retaining local weapon response.',
+      title: holdPositionTitle,
+      description: localized(
+        this,
+        'commandCard.tactical.holdPosition.description',
+        'Cancel movement and chasing while retaining local weapon response.',
+      ),
       meta: 'H',
       hotkey: 'H',
       group: 'order',
       className: 'command',
       onClick: () => {
         this.g.holdSelected();
-        notify('Hold-position order issued.');
+        notify(localized(this, 'commandCard.tactical.holdPositionIssued', 'Hold-position order issued.'));
       },
     });
 
     const repairDisabledReason = damagedVehicleCount === 0
-      ? 'Select at least one damaged vehicle.'
+      ? localized(this, 'commandCard.tactical.selectDamagedVehicle', 'Select at least one damaged vehicle.')
       : repairFacilityCount === 0
-        ? 'No operational repair workshop is available.'
+        ? localized(
+          this,
+          'commandCard.tactical.noRepairWorkshop',
+          'No operational repair workshop is available.',
+        )
         : '';
     this.commandButton({
       id: 'return-for-repair',
-      title: 'Return for Repair',
-      description: 'Send damaged vehicles to the nearest operational repair workshop.',
+      title: localized(this, 'commandCard.tactical.returnForRepair.title', 'Return for Repair'),
+      description: localized(
+        this,
+        'commandCard.tactical.returnForRepair.description',
+        'Send damaged vehicles to the nearest operational repair workshop.',
+      ),
       meta: 'R',
       hotkey: 'R',
       group: 'order',
@@ -240,12 +300,16 @@ export function installTacticalCommandCard(ui) {
       disabledReason: repairDisabledReason,
       onClick: () => {
         this.g.returnSelectedForRepair();
-        notify('Return-for-repair order issued.');
+        notify(localized(
+          this,
+          'commandCard.tactical.returnForRepairIssued',
+          'Return-for-repair order issued.',
+        ));
       },
     });
   };
 
-  decorateCommandCard(ui.e?.abilities, documentTarget);
+  decorateCommandCard(ui.e?.abilities, documentTarget, ui);
 
   return () => {
     ui.appendUnitCommands = originalAppendUnitCommands;

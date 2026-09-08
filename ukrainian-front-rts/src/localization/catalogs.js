@@ -40,8 +40,117 @@ const ENGLISH_MESSAGES = {
     ready: 'Ready', busy: 'Busy', queued: 'Queued', constructing: 'Constructing', researching: 'Researching',
     damaged: 'Damaged', destroyed: 'Destroyed', selected: 'Selected', unselected: 'Not selected', unknown: 'Unknown',
   },
+  campaignContent: {
+    regions: {
+      donbas: {
+        name: 'Donbas operational sector',
+        subtitle: 'Siverskyi Donets line',
+        terrain: 'industrial steppe',
+      },
+      zaporizhzhia: {
+        name: 'Zaporizhzhia axis',
+        subtitle: 'Orikhiv–Tokmak approach',
+        terrain: 'open steppe and shelterbelts',
+      },
+      kherson: {
+        name: 'Kherson bridgehead',
+        subtitle: 'Lower Dnipro sector',
+        terrain: 'floodplain and villages',
+      },
+    },
+    missions: {
+      donbas: {
+        title: '1. Siverskyi Donets: Hold the Crossing',
+        story: 'A Russian mechanized group probes the Siverskyi Donets crossing. Establish a Ukrainian support area, reinforce the shelterbelt, and deny the bridgehead.',
+        objective1: 'Recover 500 units of materiel',
+        objective2: 'Establish infantry and repair facilities',
+        objective3: 'Destroy the Russian forward command post',
+      },
+      zaporizhzhia: {
+        title: '2. Orikhiv Axis: Eyes Above',
+        story: 'Russian artillery covers the Orikhiv–Tokmak approach. Build a Ukrainian unmanned-systems group, establish reconnaissance coverage, and conduct counter-battery operations.',
+        objective1: 'Accumulate 250 intelligence',
+        objective2: 'Field four Ukrainian FPV teams',
+        objective3: 'Destroy all Russian artillery batteries',
+      },
+      kherson: {
+        title: '3. Lower Dnipro: The Long Night',
+        story: 'A Ukrainian bridgehead must survive six deliberate Russian assault groups before a counterattack toward the left bank.',
+        objective1: 'Assemble both Ukrainian command heroes',
+        objective2: 'Defeat six Russian assault waves',
+        objective3: 'Destroy the Russian command bunker',
+      },
+    },
+  },
   commandCard: {
-    groups: { movement: 'Movement', combat: 'Combat', abilities: 'Abilities', build: 'Construction', production: 'Production', research: 'Research' },
+    groups: {
+      movement: 'Movement', combat: 'Combat', abilities: 'Abilities', build: 'Construction',
+      production: 'Production', research: 'Research',
+    },
+    blocked: 'Blocked',
+    stance: {
+      returnFire: {
+        title: 'Return Fire',
+        description: 'Engage only the most recent attacker while it remains in weapon range.',
+      },
+      holdFire: {
+        title: 'Hold Fire',
+        description: 'Do not acquire targets automatically; explicit attack orders still fire.',
+      },
+      fireAtWill: {
+        title: 'Fire at Will',
+        description: 'Engage hostile targets already within weapon range without pursuing.',
+      },
+      defensive: {
+        title: 'Defensive',
+        description: 'Acquire within sight and pursue only inside a short stance leash.',
+      },
+      aggressive: {
+        title: 'Aggressive',
+        description: 'Acquire farther contacts and pursue within an extended stance leash.',
+      },
+      holdPosition: {
+        title: 'Hold Position',
+        description: 'Cancel movement, remain anchored, and engage only targets in weapon range.',
+      },
+      selected: '{command} selected.',
+      unavailable: '{command} is unavailable.',
+    },
+    tactical: {
+      patrol: {
+        title: 'Patrol',
+        description: 'Cycle between this position and a chosen point, engaging contacts en route.',
+      },
+      guard: {
+        title: 'Guard',
+        description: 'Protect a friendly unit or structure and return to its perimeter.',
+      },
+      follow: {
+        title: 'Follow',
+        description: 'Maintain a stable escort position around another friendly unit.',
+      },
+      attackGround: {
+        title: 'Attack Ground',
+        description: 'Force-fire a battlefield point without requiring a visible target.',
+      },
+      holdPosition: {
+        title: 'Hold Position',
+        description: 'Cancel movement and chasing while retaining local weapon response.',
+      },
+      returnForRepair: {
+        title: 'Return for Repair',
+        description: 'Send damaged vehicles to the nearest operational repair workshop.',
+      },
+      selectArmed: 'Select at least one armed Ukrainian unit.',
+      guardRequiresArmed: 'Select at least one armed Ukrainian unit to guard another entity.',
+      selectDamagedVehicle: 'Select at least one damaged vehicle.',
+      noRepairWorkshop: 'No operational repair workshop is available.',
+      forceFireArmed: 'Force-fire armed: left-click a battlefield point.',
+      armed: '{command} armed: right-click a valid target.',
+      unavailable: '{command} is unavailable.',
+      holdPositionIssued: 'Hold-position order issued.',
+      returnForRepairIssued: 'Return-for-repair order issued.',
+    },
   },
 };
 
@@ -81,8 +190,117 @@ const UKRAINIAN_MESSAGES = {
     ready: 'Готово', busy: 'Зайнято', queued: 'У черзі', constructing: 'Будується', researching: 'Досліджується',
     damaged: 'Пошкоджено', destroyed: 'Знищено', selected: 'Вибрано', unselected: 'Не вибрано', unknown: 'Невідомо',
   },
+  campaignContent: {
+    regions: {
+      donbas: {
+        name: 'Донбаський оперативний сектор',
+        subtitle: 'Лінія Сіверського Дінця',
+        terrain: 'промисловий степ',
+      },
+      zaporizhzhia: {
+        name: 'Запорізький напрямок',
+        subtitle: 'Підступи Оріхів–Токмак',
+        terrain: 'відкритий степ і лісосмуги',
+      },
+      kherson: {
+        name: 'Херсонський плацдарм',
+        subtitle: 'Сектор нижнього Дніпра',
+        terrain: 'заплава та села',
+      },
+    },
+    missions: {
+      donbas: {
+        title: '1. Сіверський Донець: утримати переправу',
+        story: 'Російська механізована група розвідує боєм переправу через Сіверський Донець. Розгорніть український район забезпечення, посильте лісосмугу та не дайте ворогу закріпитися на плацдармі.',
+        objective1: 'Зібрати 500 одиниць матеріальних ресурсів',
+        objective2: 'Розгорнути піхотну та ремонтну інфраструктуру',
+        objective3: 'Знищити російський передовий командний пункт',
+      },
+      zaporizhzhia: {
+        title: '2. Оріхівський напрямок: очі в небі',
+        story: 'Російська артилерія прикриває підступи Оріхів–Токмак. Створіть українську групу безпілотних систем, забезпечте розвідувальне покриття та проведіть контрбатарейні дії.',
+        objective1: 'Накопичити 250 розвідданих',
+        objective2: 'Розгорнути чотири українські групи FPV',
+        objective3: 'Знищити всі російські артилерійські батареї',
+      },
+      kherson: {
+        title: '3. Нижній Дніпро: довга ніч',
+        story: 'Український плацдарм має витримати шість послідовних російських штурмових груп перед контратакою в напрямку лівого берега.',
+        objective1: 'Зібрати обох українських командирів-героїв',
+        objective2: 'Відбити шість російських штурмових хвиль',
+        objective3: 'Знищити російський командний бункер',
+      },
+    },
+  },
   commandCard: {
-    groups: { movement: 'Рух', combat: 'Бій', abilities: 'Здібності', build: 'Будівництво', production: 'Виробництво', research: 'Дослідження' },
+    groups: {
+      movement: 'Рух', combat: 'Бій', abilities: 'Здібності', build: 'Будівництво',
+      production: 'Виробництво', research: 'Дослідження',
+    },
+    blocked: 'Заблоковано',
+    stance: {
+      returnFire: {
+        title: 'Вогонь у відповідь',
+        description: 'Відкривати вогонь лише по останньому нападнику, поки він залишається в радіусі дії зброї.',
+      },
+      holdFire: {
+        title: 'Не відкривати вогонь',
+        description: 'Не шукати цілі автоматично; прямі накази атакувати все одно дозволяють вести вогонь.',
+      },
+      fireAtWill: {
+        title: 'Вогонь на розсуд',
+        description: 'Атакувати ворожі цілі, що вже перебувають у радіусі дії зброї, без переслідування.',
+      },
+      defensive: {
+        title: 'Оборонна',
+        description: 'Виявляти цілі в межах видимості й переслідувати лише в короткому радіусі позиції.',
+      },
+      aggressive: {
+        title: 'Агресивна',
+        description: 'Виявляти дальші цілі й переслідувати їх у розширеному радіусі позиції.',
+      },
+      holdPosition: {
+        title: 'Утримувати позицію',
+        description: 'Скасувати рух, залишатися на місці й атакувати лише цілі в радіусі дії зброї.',
+      },
+      selected: 'Обрано: {command}.',
+      unavailable: 'Команда «{command}» недоступна.',
+    },
+    tactical: {
+      patrol: {
+        title: 'Патруль',
+        description: 'Рухатися між цією позицією та вибраною точкою, атакуючи виявлені цілі на маршруті.',
+      },
+      guard: {
+        title: 'Охорона',
+        description: 'Захищати союзний підрозділ або споруду й повертатися до її периметра.',
+      },
+      follow: {
+        title: 'Слідувати',
+        description: 'Утримувати стабільну позицію супроводу біля іншого союзного підрозділу.',
+      },
+      attackGround: {
+        title: 'Вогонь по місцевості',
+        description: 'Примусово атакувати точку на полі бою без видимої цілі.',
+      },
+      holdPosition: {
+        title: 'Утримувати позицію',
+        description: 'Скасувати рух і переслідування, зберігши вогонь по цілях поруч.',
+      },
+      returnForRepair: {
+        title: 'Повернутися на ремонт',
+        description: 'Відправити пошкоджену техніку до найближчої діючої ремонтної майстерні.',
+      },
+      selectArmed: 'Виберіть щонайменше один озброєний український підрозділ.',
+      guardRequiresArmed: 'Виберіть щонайменше один озброєний український підрозділ для охорони іншої цілі.',
+      selectDamagedVehicle: 'Виберіть щонайменше одну пошкоджену машину.',
+      noRepairWorkshop: 'Немає доступної діючої ремонтної майстерні.',
+      forceFireArmed: 'Вогонь по місцевості готовий: клацніть лівою кнопкою точку на полі бою.',
+      armed: 'Команда «{command}» готова: клацніть правою кнопкою допустиму ціль.',
+      unavailable: 'Команда «{command}» недоступна.',
+      holdPositionIssued: 'Наказ утримувати позицію віддано.',
+      returnForRepairIssued: 'Наказ повернутися на ремонт віддано.',
+    },
   },
 };
 

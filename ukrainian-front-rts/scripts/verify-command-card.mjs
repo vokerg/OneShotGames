@@ -73,7 +73,14 @@ if (!tacticalInstaller.includes("import { installProductionCommandCard } from '.
 if (!tacticalInstaller.includes('const disposeProductionCommandCard = installProductionCommandCard(ui);')) {
   fail('Production command card is not installed through the active UI composition seam.');
 }
-if (!tacticalInstaller.includes("title: 'Attack Ground'")) fail('Existing attack-ground semantics are not exposed in the command card.');
+if (
+  !tacticalInstaller.includes("id: 'attack-ground'")
+  || !tacticalInstaller.includes("'commandCard.tactical.attackGround.title'")
+  || !tacticalInstaller.includes("'Attack Ground'")
+  || !tacticalInstaller.includes('this.g.armAttackGround()')
+) {
+  fail('Existing attack-ground semantics are not exposed in the localized command card.');
+}
 if (!tacticalInstaller.includes('disabledReason:')) fail('Command-card extensions do not provide disabled reasons.');
 if (!mainSource.includes("module('tactical-command-card', () => installTacticalCommandCard(ui))")) {
   fail('Active runtime no longer installs the tactical command-card seam.');
