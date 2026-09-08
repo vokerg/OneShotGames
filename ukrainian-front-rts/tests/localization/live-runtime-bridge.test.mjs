@@ -75,6 +75,8 @@ test('translates dynamic legacy runtime copy into Ukrainian without partial-word
   assert.equal(translateLiveRuntimeText('Objectives', 'uk'), 'Завдання');
   assert.equal(translateLiveRuntimeText('OBJECTIVE', 'uk'), 'ЗАВДАННЯ');
   assert.equal(translateLiveRuntimeText('National Rally', 'uk'), 'Національне згуртування');
+  assert.equal(translateLiveRuntimeText('Russia', 'uk'), 'Росія');
+  assert.equal(translateLiveRuntimeText('Russian', 'uk'), 'Russian');
   assert.match(translateLiveRuntimeText('Mechanized Squad is under attack.', 'uk'), /під атакою/u);
   assert.match(translateLiveRuntimeText('Skirmish — Custom Match', 'uk'), /Сутичка/u);
   assert.equal(translateLiveRuntimeText('Pause', 'en'), 'Pause');
