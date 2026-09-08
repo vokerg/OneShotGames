@@ -4,7 +4,7 @@ import test from 'node:test';
 import {
   installLiveRuntimeLocalizationBridge,
   translateLiveRuntimeText,
-} from '../../src/localization/live-runtime-bridge.js';
+} from '../../src/localization/live-runtime-bridge-v2.js';
 
 class FakeText {
   constructor(value) {
@@ -66,16 +66,14 @@ class FakeDocument {
   }
 }
 
-test('translates dynamic legacy runtime copy into Ukrainian', () => {
+test('translates dynamic legacy runtime copy into Ukrainian without partial-word corruption', () => {
   assert.equal(
     translateLiveRuntimeText('Mission deployed. First enemy assault in 70 seconds.', 'uk'),
     'Місію розгорнуто. Перший ворожий штурм через 70 с.',
   );
   assert.equal(translateLiveRuntimeText('Messages (3)', 'uk'), 'Повідомлення (3)');
-  assert.match(
-    translateLiveRuntimeText('Skirmish — Custom Match', 'uk'),
-    /Сутичка/u,
-  );
+  assert.equal(translateLiveRuntimeText('Objectives', 'uk'), 'Завдання');
+  assert.match(translateLiveRuntimeText('Skirmish — Custom Match', 'uk'), /Сутичка/u);
   assert.equal(translateLiveRuntimeText('Pause', 'en'), 'Pause');
 });
 
@@ -101,5 +99,10 @@ test('bridge switches legacy text and attributes uk then restores exact English 
   assert.equal(text.nodeValue, 'Pause');
   assert.equal(button.getAttribute('aria-label'), 'Resume operation and close menu');
 
+  documentTarget.documentElement.lang = 'uk';
+  documentTarget.dispatch('fields-of-resolve:localechange');
+  assert.equal(text.nodeValue, 'Пауза');
   assert.equal(dispose(), true);
+  assert.equal(text.nodeValue, 'Pause');
+  assert.equal(button.getAttribute('aria-label'), 'Resume operation and close menu');
 });
