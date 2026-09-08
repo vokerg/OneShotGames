@@ -6,6 +6,8 @@ import { delimiter, dirname, extname, isAbsolute, join, relative, resolve, sep }
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
+import { TUTORIAL_PROLOGUE_ID, TUTORIAL_STEPS } from '../src/content/campaign/tutorial-prologue.js';
+
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const artifacts = join(root, 'artifacts');
 const host = '127.0.0.1';
@@ -127,14 +129,64 @@ async function waitFor(expression, description) {
 
 async function startFirstAuthoredOperation() {
   await waitFor(
-    `document.querySelector('[data-campaign-operation-id] button:not([disabled])') && window.__fieldsOfResolveAuthoredCampaign?.snapshot()?.operationCount === 9`,
-    'authored operation selector',
+    `document.querySelector('[data-campaign-operation-id] button:not([disabled])') && document.querySelector('[data-campaign-prologue-card] button') && window.__fieldsOfResolveAuthoredCampaign?.snapshot()?.operationCount === 9 && window.__fieldsOfResolveAuthoredCampaign?.tutorialSnapshot && window.__fieldsOfResolveOnboarding?.snapshot`,
+    'authored operation selector and onboarding runtime',
   );
-  await evaluate(`document.querySelector('[data-campaign-operation-id] button:not([disabled])').click()`);
+  await delay(850);
+  const selectorState = JSON.parse(await evaluate(`JSON.stringify({
+    tutorial: window.__fieldsOfResolveAuthoredCampaign.tutorialSnapshot(),
+    hintVisible: Boolean(document.querySelector('[data-onboarding-hint]') && !document.querySelector('[data-onboarding-hint]').hidden),
+    guides: window.__fieldsOfResolveOnboarding.search('', { category: 'guide' }).length,
+    glossary: window.__fieldsOfResolveOnboarding.search('', { category: 'glossary' }).length
+  })`));
+  if (selectorState.tutorial.status !== 'inactive' || selectorState.hintVisible || selectorState.guides !== 0 || selectorState.glossary < 1) {
+    throw new Error(`Fresh selector leaked tutorial onboarding: ${JSON.stringify(selectorState)}`);
+  }
+
+  await evaluate(`document.querySelector('[data-campaign-prologue-card] button').click()`);
   await waitFor(
-    `document.querySelector('[data-campaign-briefing] button.primary') && window.__fieldsOfResolveAuthoredCampaign?.snapshot()?.stage === 'briefing'`,
-    'authored operation briefing',
+    `window.__fieldsOfResolveAuthoredCampaign.tutorialSnapshot().activeStepId === ${JSON.stringify(TUTORIAL_STEPS[0].id)} && !document.querySelector('[data-onboarding-hint]')?.hidden`,
+    'first authored tutorial marker',
   );
+  const firstHint = JSON.parse(await evaluate(`JSON.stringify({
+    tutorial: window.__fieldsOfResolveAuthoredCampaign.tutorialSnapshot(),
+    title: document.querySelector('[data-onboarding-hint] [data-hint-title]')?.textContent,
+    prompt: document.querySelector('[data-onboarding-hint] [data-hint-prompt]')?.textContent
+  })`));
+  if (firstHint.tutorial.runtimeId !== TUTORIAL_PROLOGUE_ID || firstHint.tutorial.marker?.id !== TUTORIAL_STEPS[0].id || !firstHint.title || !firstHint.prompt) {
+    throw new Error(`First authored tutorial marker did not render: ${JSON.stringify(firstHint)}`);
+  }
+
+  const rejectedForeign = await evaluate(`window.__fieldsOfResolveAuthoredCampaign.tutorialEvent('selection.click', 'foreign-runtime') === false`);
+  if (!rejectedForeign) throw new Error('Foreign tutorial runtime event was accepted.');
+  await evaluate(`window.__fieldsOfResolveAuthoredCampaign.tutorialEvent('selection.click', ${JSON.stringify(TUTORIAL_PROLOGUE_ID)})`);
+  await evaluate(`window.__fieldsOfResolveAuthoredCampaign.tutorialEvent('selection.box', ${JSON.stringify(TUTORIAL_PROLOGUE_ID)})`);
+  await waitFor(
+    `window.__fieldsOfResolveAuthoredCampaign.tutorialSnapshot().activeStepId === ${JSON.stringify(TUTORIAL_STEPS[1].id)}`,
+    'next authored tutorial marker',
+  );
+  const nextHint = JSON.parse(await evaluate(`JSON.stringify({
+    tutorial: window.__fieldsOfResolveAuthoredCampaign.tutorialSnapshot(),
+    title: document.querySelector('[data-onboarding-hint] [data-hint-title]')?.textContent
+  })`));
+  if (nextHint.tutorial.marker?.id !== TUTORIAL_STEPS[1].id || !nextHint.title || nextHint.title === firstHint.title) {
+    throw new Error(`Authored tutorial runtime did not advance onboarding: ${JSON.stringify({ firstHint, nextHint })}`);
+  }
+
+  await evaluate(`[...document.querySelectorAll('[data-campaign-prologue] button')].find((button) => button.textContent.includes('Continue to First Operation'))?.click()`);
+  await waitFor(
+    `document.querySelector('[data-campaign-briefing] button.primary') && window.__fieldsOfResolveAuthoredCampaign?.snapshot()?.stage === 'briefing' && window.__fieldsOfResolveAuthoredCampaign.tutorialSnapshot().status === 'inactive'`,
+    'authored operation briefing after tutorial',
+  );
+  const operationHelp = JSON.parse(await evaluate(`JSON.stringify({
+    hintVisible: Boolean(document.querySelector('[data-onboarding-hint]') && !document.querySelector('[data-onboarding-hint]').hidden),
+    guides: window.__fieldsOfResolveOnboarding.search('', { category: 'guide' }).length,
+    glossary: window.__fieldsOfResolveOnboarding.search('', { category: 'glossary' }).length
+  })`));
+  if (operationHelp.hintVisible || operationHelp.guides !== 0 || operationHelp.glossary < 1) {
+    throw new Error(`Non-tutorial operation leaked tutorial onboarding: ${JSON.stringify(operationHelp)}`);
+  }
+
   await evaluate(`document.querySelector('[data-campaign-briefing] button.primary').click()`);
   await waitFor(
     `document.querySelector('#missionSelect')?.classList.contains('hidden') && document.querySelector('#missionTitle')?.textContent && window.__fieldsOfResolveAuthoredCampaign?.snapshot()?.stage === 'battlefield' && window.__fieldsOfResolveAuthoredCampaign?.snapshot()?.authoredMission === true`,
@@ -242,7 +294,7 @@ try {
   }
 
   await writeFile(join(artifacts, 'browser-startup-smoke.json'), JSON.stringify({ status: 'passed', state, warnings }, null, 2));
-  console.log(`[browser-smoke] authored mission started: ${state.title}; audio settings and pause menu exercised; warnings: ${warnings.length}`);
+  console.log(`[browser-smoke] authored mission started after runtime-aware tutorial onboarding: ${state.title}; audio settings and pause menu exercised; warnings: ${warnings.length}`);
 } catch (error) {
   await writeFile(join(artifacts, 'browser-startup.log'), `${logs.join('')}\n${error.stack}\n`);
   throw error;

@@ -1,4 +1,4 @@
-import { TUTORIAL_STEPS } from '../content/campaign/tutorial-prologue.js';
+import { TUTORIAL_PROLOGUE_ID, TUTORIAL_STEPS } from '../content/campaign/tutorial-prologue.js';
 import {
   INPUT_ACTION_IDS,
   INPUT_ACTION_LABELS,
@@ -6,6 +6,11 @@ import {
 } from '../core/input-action-map.js';
 import { createLocalizer } from '../localization/localization.js';
 import { ONBOARDING_HELP_CATALOGS } from '../localization/onboarding-help-catalogs.js';
+import {
+  ONBOARDING_TUTORIAL_RUNTIME_EVENT,
+  normalizeTutorialRuntimeSnapshot,
+  readTutorialRuntimeSnapshot,
+} from './onboarding-runtime-contract.js';
 
 export const ONBOARDING_HELP_VERSION = 1;
 export const ONBOARDING_STORAGE_KEY = 'fields-of-resolve:onboarding-help:v1';
@@ -142,8 +147,9 @@ export function createControlReference(keyBindings = getRuntimeKeyBindings(), { 
 export function createOnboardingHelpCatalog({
   keyBindings = getRuntimeKeyBindings(),
   translate = defaultTranslator(),
+  includeTutorials = true,
 } = {}) {
-  const tutorials = TUTORIAL_STEPS.map((step) => {
+  const tutorials = includeTutorials ? TUTORIAL_STEPS.map((step) => {
     const messageId = camelId(step.id);
     return {
       id: `guide-${step.id}`,
@@ -155,7 +161,7 @@ export function createOnboardingHelpCatalog({
       tags: [step.topic, ...step.events, step.title, step.prompt, ...step.hints],
       keys: [],
     };
-  });
+  }) : [];
   const glossary = GLOSSARY_IDS.map((id) => ({
     id: `glossary-${id}`,
     category: 'glossary',
@@ -441,6 +447,7 @@ export function installOnboardingHelp({
   schedule = (callback) => windowTarget.setTimeout(callback, 600),
   cancelSchedule = (handle) => windowTarget.clearTimeout?.(handle),
   createView = createDefaultView,
+  resolveTutorialRuntime = () => readTutorialRuntimeSnapshot(windowTarget),
 } = {}) {
   if (!windowTarget?.addEventListener || !windowTarget?.removeEventListener) {
     throw new TypeError('Onboarding help requires a window-like event target.');
@@ -449,6 +456,7 @@ export function installOnboardingHelp({
     throw new TypeError('Onboarding help requires a document with a body.');
   }
   if (typeof createView !== 'function') throw new TypeError('Onboarding help createView must be a function.');
+  if (typeof resolveTutorialRuntime !== 'function') throw new TypeError('Onboarding help tutorial runtime resolver must be a function.');
   const bindingProvider = typeof keyBindings === 'function'
     ? keyBindings
     : keyBindings
@@ -458,14 +466,42 @@ export function installOnboardingHelp({
     locale: documentTarget.documentElement?.lang ?? 'en',
   });
   const state = createOnboardingHelpState({ storage });
-  let catalog = createOnboardingHelpCatalog({ keyBindings: bindingProvider(), translate: localizer.t });
+
+  function currentTutorialRuntime() {
+    try {
+      return normalizeTutorialRuntimeSnapshot(resolveTutorialRuntime());
+    } catch {
+      return null;
+    }
+  }
+
+  function activeRuntimeStep() {
+    const runtime = currentTutorialRuntime();
+    if (
+      !runtime ||
+      runtime.runtimeId !== TUTORIAL_PROLOGUE_ID ||
+      runtime.tutorialId !== TUTORIAL_PROLOGUE_ID ||
+      runtime.status !== 'active' ||
+      !runtime.activeStepId
+    ) return null;
+    const step = TUTORIAL_STEPS.find((candidate) => candidate.id === runtime.activeStepId) ?? null;
+    if (!step || runtime.marker?.id !== step.id || runtime.marker?.topic !== step.topic) return null;
+    return Object.freeze({ runtime, step });
+  }
+
+  const buildCatalog = () => createOnboardingHelpCatalog({
+    keyBindings: bindingProvider(),
+    translate: localizer.t,
+    includeTutorials: Boolean(activeRuntimeStep()),
+  });
+  let catalog = buildCatalog();
   const view = createView({ documentTarget, catalog, state, translate: localizer.t });
   const previousGlobal = windowTarget[ONBOARDING_GLOBAL];
   let disposed = false;
   let scheduledHintHandle = null;
 
   function refreshCatalog() {
-    catalog = createOnboardingHelpCatalog({ keyBindings: bindingProvider(), translate: localizer.t });
+    catalog = buildCatalog();
     view.setLocale?.({ catalog, translate: localizer.t });
     return catalog;
   }
@@ -475,12 +511,19 @@ export function installOnboardingHelp({
     return view.open(options);
   }
 
-  function notify(topic, { includeSeen = false } = {}) {
+  function showActiveTutorialHint({ topic = null, includeSeen = false } = {}) {
     refreshCatalog();
-    const step = state.hintForTopic(topic, { includeSeen });
-    if (!step) return false;
-    state.markSeen(step.id);
-    return view.showHint(step);
+    const active = activeRuntimeStep();
+    if (!active || (topic && active.step.topic !== topic)) return false;
+    const snapshot = state.snapshot();
+    if (snapshot.dismissedHintIds.includes(active.step.id)) return false;
+    if (!includeSeen && snapshot.seenHintIds.includes(active.step.id)) return false;
+    state.markSeen(active.step.id);
+    return view.showHint(active.step);
+  }
+
+  function notify(topic, { includeSeen = false } = {}) {
+    return showActiveTutorialHint({ topic, includeSeen });
   }
 
   function inferTopic(target) {
@@ -506,6 +549,17 @@ export function installOnboardingHelp({
     if (topic) notify(topic);
   };
   const onContext = (event) => notify(event?.detail?.topic);
+  const onTutorialRuntime = (event) => {
+    const eventRuntimeId = canonicalText(event?.detail?.runtimeId ?? event?.detail?.snapshot?.runtimeId);
+    const active = activeRuntimeStep();
+    refreshCatalog();
+    if (!active) {
+      view.hideHint();
+      return;
+    }
+    if (eventRuntimeId && eventRuntimeId !== active.runtime.runtimeId) return;
+    showActiveTutorialHint({ includeSeen: true });
+  };
   const onLocaleChange = (event) => {
     if (localizer.setLocale(event?.detail?.locale)) refreshCatalog();
   };
@@ -514,12 +568,19 @@ export function installOnboardingHelp({
   documentTarget.addEventListener('click', onClick, true);
   documentTarget.addEventListener(ONBOARDING_LOCALE_EVENT, onLocaleChange);
   windowTarget.addEventListener(ONBOARDING_CONTEXT_EVENT, onContext);
+  windowTarget.addEventListener(ONBOARDING_TUTORIAL_RUNTIME_EVENT, onTutorialRuntime);
   windowTarget[ONBOARDING_GLOBAL] = Object.freeze({
     open,
     close: view.close,
     notify,
     reset: state.reset,
-    snapshot: () => deepFreeze({ state: state.snapshot(), catalogSize: catalog.length, open: view.isOpen(), locale: localizer.locale }),
+    snapshot: () => deepFreeze({
+      state: state.snapshot(),
+      catalogSize: catalog.length,
+      open: view.isOpen(),
+      locale: localizer.locale,
+      tutorialRuntime: currentTutorialRuntime(),
+    }),
     search(query, options) {
       refreshCatalog();
       return searchOnboardingHelp(catalog, query, options);
@@ -530,12 +591,7 @@ export function installOnboardingHelp({
     scheduleCompleted = true;
     scheduledHintHandle = null;
     if (disposed) return;
-    refreshCatalog();
-    const step = state.nextHint();
-    if (step) {
-      state.markSeen(step.id);
-      view.showHint(step);
-    }
+    showActiveTutorialHint();
   });
   if (scheduleCompleted) scheduledHintHandle = null;
 
@@ -548,6 +604,7 @@ export function installOnboardingHelp({
     documentTarget.removeEventListener('click', onClick, true);
     documentTarget.removeEventListener(ONBOARDING_LOCALE_EVENT, onLocaleChange);
     windowTarget.removeEventListener(ONBOARDING_CONTEXT_EVENT, onContext);
+    windowTarget.removeEventListener(ONBOARDING_TUTORIAL_RUNTIME_EVENT, onTutorialRuntime);
     view.dispose();
     if (windowTarget[ONBOARDING_GLOBAL]?.notify === notify) {
       if (previousGlobal === undefined) delete windowTarget[ONBOARDING_GLOBAL];

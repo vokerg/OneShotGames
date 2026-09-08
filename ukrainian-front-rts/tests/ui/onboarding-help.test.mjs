@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { TUTORIAL_STEPS } from '../../src/content/campaign/tutorial-prologue.js';
+import { TUTORIAL_PROLOGUE_ID, TUTORIAL_STEPS } from '../../src/content/campaign/tutorial-prologue.js';
 import { ONBOARDING_HELP_CATALOGS } from '../../src/localization/onboarding-help-catalogs.js';
 import { createLocalizer, validateCatalogs } from '../../src/localization/localization.js';
 import {
@@ -22,6 +22,22 @@ function createStorage(initial = {}) {
     setItem(key, value) { values.set(String(key), String(value)); },
     removeItem(key) { values.delete(String(key)); },
     snapshot() { return Object.fromEntries(values); },
+  };
+}
+
+function tutorialRuntime(stepId = TUTORIAL_STEPS[0].id) {
+  const step = TUTORIAL_STEPS.find((candidate) => candidate.id === stepId);
+  return {
+    runtimeId: TUTORIAL_PROLOGUE_ID,
+    tutorialId: TUTORIAL_PROLOGUE_ID,
+    status: 'active',
+    activeStepId: step.id,
+    marker: {
+      id: step.id,
+      topic: step.topic,
+      title: step.title,
+      prompt: step.prompt,
+    },
   };
 }
 
@@ -78,6 +94,16 @@ test('catalog combines every tutorial step, current controls, and glossary entri
     ['Q'],
   );
   assert.equal(Object.isFrozen(catalog), true);
+});
+
+test('catalog can omit authored tutorial guides while preserving generic controls and glossary', () => {
+  const catalog = createOnboardingHelpCatalog({
+    keyBindings: { q: 'attackMove' },
+    includeTutorials: false,
+  });
+  assert.equal(catalog.some((entry) => entry.category === 'guide'), false);
+  assert.equal(catalog.some((entry) => entry.category === 'controls'), true);
+  assert.equal(catalog.some((entry) => entry.category === 'glossary'), true);
 });
 
 test('English and Ukrainian help catalogs are structurally valid and searchable', () => {
@@ -154,17 +180,19 @@ test('malformed stored hint identifiers are normalized without leaking invalid v
   assert.deepEqual(snapshot.seenHintIds, [TUTORIAL_STEPS[1].id, 'false'].sort());
 });
 
-test('installation exposes F1 help, contextual prompts, reset, locale updates, and exact teardown', () => {
+test('installation exposes F1 help and only shows contextual prompts from the active tutorial step', () => {
   const windowTarget = new FakeWindow();
   const documentTarget = new FakeDocument();
   const storage = createStorage();
   const calls = [];
   let open = false;
+  let activeRuntime = tutorialRuntime();
   const dispose = installOnboardingHelp({
     windowTarget,
     documentTarget,
     storage,
     keyBindings: { q: 'attackMove' },
+    resolveTutorialRuntime: () => activeRuntime,
     schedule(callback) { callback(); },
     createView({ catalog, state }) {
       calls.push(['created', catalog.length, state.snapshot().remainingHintIds.length]);
@@ -174,20 +202,23 @@ test('installation exposes F1 help, contextual prompts, reset, locale updates, a
         showHint(step) { calls.push(['hint', step.topic]); return true; },
         hideHint() { calls.push(['hide']); },
         isOpen() { return open; },
-        setLocale(next) { calls.push(['locale', next.catalog[0].title]); },
+        setLocale(next) { calls.push(['locale', next.catalog[0]?.title ?? null]); },
         dispose() { calls.push(['dispose']); },
       };
     },
   });
 
   assert.equal(typeof windowTarget[ONBOARDING_GLOBAL].search, 'function');
-  assert.equal(calls.some(([kind]) => kind === 'hint'), true);
+  assert.equal(calls.some(([kind, topic]) => kind === 'hint' && topic === 'selection'), true);
 
   const key = new KeyEvent('F1');
   windowTarget.dispatchEvent(key);
   assert.equal(key.defaultPrevented, true);
   assert.equal(open, true);
 
+  windowTarget.dispatchEvent(new ContextEvent('minimap'));
+  assert.equal(calls.some(([kind, topic]) => kind === 'hint' && topic === 'minimap'), false);
+  activeRuntime = tutorialRuntime('use-minimap');
   windowTarget.dispatchEvent(new ContextEvent('minimap'));
   assert.equal(calls.some(([kind, topic]) => kind === 'hint' && topic === 'minimap'), true);
   documentTarget.dispatchEvent(new LocaleEvent('uk'));
@@ -223,6 +254,7 @@ test('installation refreshes bindings and cancels a pending first-time hint', ()
         showHint(step) { hints.push(step.id); return true; },
         hideHint() {},
         isOpen() { return false; },
+        setLocale() {},
         dispose() {},
       };
     },

@@ -1,5 +1,5 @@
 import { installCampaignProgressionRuntime } from './campaign-progression-runtime.js';
-import { installAuthoredCampaignBrowserRuntime } from './authored-campaign-browser-runtime.js';
+import { installAuthoredCampaignBrowserRuntime } from './authored-campaign-onboarding-runtime.js';
 import {
   ACCESSIBILITY_FOCUS_PAUSE_REASON,
   ACCESSIBILITY_PAUSE_EVENT,
