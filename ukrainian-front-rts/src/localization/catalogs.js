@@ -40,6 +40,48 @@ const ENGLISH_MESSAGES = {
     ready: 'Ready', busy: 'Busy', queued: 'Queued', constructing: 'Constructing', researching: 'Researching',
     damaged: 'Damaged', destroyed: 'Destroyed', selected: 'Selected', unselected: 'Not selected', unknown: 'Unknown',
   },
+  campaignContent: {
+    regions: {
+      donbas: {
+        name: 'Donbas operational sector',
+        subtitle: 'Siverskyi Donets line',
+        terrain: 'industrial steppe',
+      },
+      zaporizhzhia: {
+        name: 'Zaporizhzhia axis',
+        subtitle: 'Orikhiv–Tokmak approach',
+        terrain: 'open steppe and shelterbelts',
+      },
+      kherson: {
+        name: 'Kherson bridgehead',
+        subtitle: 'Lower Dnipro sector',
+        terrain: 'floodplain and villages',
+      },
+    },
+    missions: {
+      donbas: {
+        title: '1. Siverskyi Donets: Hold the Crossing',
+        story: 'A Russian mechanized group probes the Siverskyi Donets crossing. Establish a Ukrainian support area, reinforce the shelterbelt, and deny the bridgehead.',
+        objective1: 'Recover 500 units of materiel',
+        objective2: 'Establish infantry and repair facilities',
+        objective3: 'Destroy the Russian forward command post',
+      },
+      zaporizhzhia: {
+        title: '2. Orikhiv Axis: Eyes Above',
+        story: 'Russian artillery covers the Orikhiv–Tokmak approach. Build a Ukrainian unmanned-systems group, establish reconnaissance coverage, and conduct counter-battery operations.',
+        objective1: 'Accumulate 250 intelligence',
+        objective2: 'Field four Ukrainian FPV teams',
+        objective3: 'Destroy all Russian artillery batteries',
+      },
+      kherson: {
+        title: '3. Lower Dnipro: The Long Night',
+        story: 'A Ukrainian bridgehead must survive six deliberate Russian assault groups before a counterattack toward the left bank.',
+        objective1: 'Assemble both Ukrainian command heroes',
+        objective2: 'Defeat six Russian assault waves',
+        objective3: 'Destroy the Russian command bunker',
+      },
+    },
+  },
   commandCard: {
     groups: {
       movement: 'Movement', combat: 'Combat', abilities: 'Abilities', build: 'Construction',
@@ -147,6 +189,48 @@ const UKRAINIAN_MESSAGES = {
   status: {
     ready: 'Готово', busy: 'Зайнято', queued: 'У черзі', constructing: 'Будується', researching: 'Досліджується',
     damaged: 'Пошкоджено', destroyed: 'Знищено', selected: 'Вибрано', unselected: 'Не вибрано', unknown: 'Невідомо',
+  },
+  campaignContent: {
+    regions: {
+      donbas: {
+        name: 'Донбаський оперативний сектор',
+        subtitle: 'Лінія Сіверського Дінця',
+        terrain: 'промисловий степ',
+      },
+      zaporizhzhia: {
+        name: 'Запорізький напрямок',
+        subtitle: 'Підступи Оріхів–Токмак',
+        terrain: 'відкритий степ і лісосмуги',
+      },
+      kherson: {
+        name: 'Херсонський плацдарм',
+        subtitle: 'Сектор нижнього Дніпра',
+        terrain: 'заплава та села',
+      },
+    },
+    missions: {
+      donbas: {
+        title: '1. Сіверський Донець: утримати переправу',
+        story: 'Російська механізована група розвідує боєм переправу через Сіверський Донець. Розгорніть український район забезпечення, посильте лісосмугу та не дайте ворогу закріпитися на плацдармі.',
+        objective1: 'Зібрати 500 одиниць матеріальних ресурсів',
+        objective2: 'Розгорнути піхотну та ремонтну інфраструктуру',
+        objective3: 'Знищити російський передовий командний пункт',
+      },
+      zaporizhzhia: {
+        title: '2. Оріхівський напрямок: очі в небі',
+        story: 'Російська артилерія прикриває підступи Оріхів–Токмак. Створіть українську групу безпілотних систем, забезпечте розвідувальне покриття та проведіть контрбатарейні дії.',
+        objective1: 'Накопичити 250 розвідданих',
+        objective2: 'Розгорнути чотири українські групи FPV',
+        objective3: 'Знищити всі російські артилерійські батареї',
+      },
+      kherson: {
+        title: '3. Нижній Дніпро: довга ніч',
+        story: 'Український плацдарм має витримати шість послідовних російських штурмових груп перед контратакою в напрямку лівого берега.',
+        objective1: 'Зібрати обох українських командирів-героїв',
+        objective2: 'Відбити шість російських штурмових хвиль',
+        objective3: 'Знищити російський командний бункер',
+      },
+    },
   },
   commandCard: {
     groups: {
