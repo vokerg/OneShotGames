@@ -230,6 +230,15 @@ button:disabled { opacity: .45; filter: none; cursor: not-allowed; }
   background: radial-gradient(circle, #45533d, #121712 70%);
   z-index: 10;
 }
+
+body:has(#missionSelect:not(.hidden)) #topbar {
+  justify-content: flex-end;
+  z-index: 11;
+}
+body:has(#missionSelect:not(.hidden)) #topbar > :not(#localeToggle):not(#audioSettingsToggle):not([data-onboarding-help-toggle]):not(#viewportFullscreenToggle) {
+  display: none;
+}
+
 .book {
   width: min(920px, 94vw);
   max-height: 94vh;
