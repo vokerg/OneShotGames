@@ -233,7 +233,14 @@ button:disabled { opacity: .45; filter: none; cursor: not-allowed; }
 
 body:has(#missionSelect:not(.hidden)) #topbar {
   justify-content: flex-end;
+  pointer-events: none;
   z-index: 11;
+}
+body:has(#missionSelect:not(.hidden)) #topbar > #localeToggle,
+body:has(#missionSelect:not(.hidden)) #topbar > #audioSettingsToggle,
+body:has(#missionSelect:not(.hidden)) #topbar > [data-onboarding-help-toggle],
+body:has(#missionSelect:not(.hidden)) #topbar > #viewportFullscreenToggle {
+  pointer-events: auto;
 }
 body:has(#missionSelect:not(.hidden)) #topbar > :not(#localeToggle):not(#audioSettingsToggle):not([data-onboarding-help-toggle]):not(#viewportFullscreenToggle) {
   display: none;
