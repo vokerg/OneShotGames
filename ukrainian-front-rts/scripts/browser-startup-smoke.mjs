@@ -6,6 +6,7 @@ import { delimiter, dirname, extname, isAbsolute, join, relative, resolve, sep }
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
+import './operation-selector-utility-smoke.mjs';
 import { TUTORIAL_PROLOGUE_ID, TUTORIAL_STEPS } from '../src/content/campaign/tutorial-prologue.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
