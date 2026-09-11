@@ -6,7 +6,6 @@ import { delimiter, dirname, extname, isAbsolute, join, relative, resolve, sep }
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
-import './operation-selector-utility-smoke.mjs';
 import { TUTORIAL_PROLOGUE_ID, TUTORIAL_STEPS } from '../src/content/campaign/tutorial-prologue.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -20,6 +19,15 @@ const mime = {
   '.json': 'application/json', '.mjs': 'text/javascript', '.png': 'image/png', '.svg': 'image/svg+xml', '.webp': 'image/webp',
 };
 const delay = (milliseconds) => new Promise((resolveDelay) => setTimeout(resolveDelay, milliseconds));
+
+const selectorUtilityControls = Object.freeze([
+  Object.freeze({ name: 'language', selector: '#localeToggle' }),
+  Object.freeze({ name: 'audio', selector: '#audioSettingsToggle' }),
+  Object.freeze({ name: 'help', selector: '[data-onboarding-help-toggle]' }),
+  Object.freeze({ name: 'fullscreen', selector: '#viewportFullscreenToggle' }),
+]);
+const battlefieldOnlyControls = Object.freeze(['#economyHudToggle', '#techTreeToggle', '#objectivesBtn']);
+
 
 await mkdir(artifacts, { recursive: true });
 const pathEntries = (process.env.PATH || '').split(delimiter);
@@ -128,6 +136,131 @@ async function waitFor(expression, description) {
   throw new Error(`Timed out waiting for ${description}.`);
 }
 
+async function selectorControlSnapshot() {
+  const controls = JSON.stringify(selectorUtilityControls);
+  return JSON.parse(await evaluate(`JSON.stringify((${controls}).map(({ name, selector }) => {
+    const element = document.querySelector(selector);
+    if (!element) return { name, selector, exists: false };
+    const rect = element.getBoundingClientRect();
+    const style = getComputedStyle(element);
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    const target = document.elementFromPoint(x, y);
+    return {
+      name,
+      selector,
+      exists: true,
+      visible: style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0,
+      enabled: !element.disabled,
+      keyboardReachable: element.tabIndex >= 0,
+      hit: Boolean(target && (target === element || element.contains(target))),
+      hitTarget: target?.id || (target?.hasAttribute?.('data-onboarding-help-toggle') ? 'onboarding-help-toggle' : target?.tagName || null),
+      x,
+      y,
+    };
+  }))`));
+}
+
+async function assertSelectorUtilityHitTargets(context) {
+  const snapshot = await selectorControlSnapshot();
+  const failures = snapshot.filter((control) =>
+    !control.exists || !control.visible || !control.enabled || !control.keyboardReachable || !control.hit,
+  );
+  if (failures.length) throw new Error(`${context} utility controls are not reachable: ${JSON.stringify(failures)}`);
+  return snapshot;
+}
+
+async function selectorBattlefieldControlSnapshot() {
+  const selectors = JSON.stringify(battlefieldOnlyControls);
+  return JSON.parse(await evaluate(`JSON.stringify((${selectors}).map((selector) => {
+    const element = document.querySelector(selector);
+    const style = element ? getComputedStyle(element) : null;
+    const rect = element?.getBoundingClientRect?.();
+    return {
+      selector,
+      exists: Boolean(element),
+      visible: Boolean(element && style?.display !== 'none' && style?.visibility !== 'hidden' && rect?.width > 0 && rect?.height > 0),
+    };
+  }))`));
+}
+
+async function pointerActivate(selector, label) {
+  const point = JSON.parse(await evaluate(`JSON.stringify((() => {
+    const element = document.querySelector(${JSON.stringify(selector)});
+    if (!element) return null;
+    const rect = element.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    const target = document.elementFromPoint(x, y);
+    return { x, y, hit: Boolean(target && (target === element || element.contains(target))) };
+  })())`));
+  if (!point?.hit) throw new Error(`${label} pointer hit target is intercepted before activation.`);
+  await call('Input.dispatchMouseEvent', { type: 'mouseMoved', x: point.x, y: point.y });
+  await call('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', buttons: 1, clickCount: 1 });
+  await call('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', buttons: 0, clickCount: 1 });
+}
+
+async function keyboardActivate(selector, label) {
+  const focused = await evaluate(`(() => {
+    const element = document.querySelector(${JSON.stringify(selector)});
+    element?.focus();
+    return Boolean(element && document.activeElement === element);
+  })()`);
+  if (!focused) throw new Error(`${label} could not receive keyboard focus.`);
+  const key = { key: ' ', code: 'Space', text: ' ', unmodifiedText: ' ', windowsVirtualKeyCode: 32, nativeVirtualKeyCode: 32 };
+  await call('Input.dispatchKeyEvent', { type: 'keyDown', ...key });
+  await call('Input.dispatchKeyEvent', { type: 'keyUp', key: ' ', code: 'Space', windowsVirtualKeyCode: 32, nativeVirtualKeyCode: 32 });
+}
+
+async function exerciseSelectorUtilities() {
+  const initialLocale = await evaluate('document.documentElement.lang');
+  await pointerActivate('#localeToggle', 'Language control');
+  await waitFor(`document.documentElement.lang !== ${JSON.stringify(initialLocale)}`, 'pointer locale activation');
+  await keyboardActivate('#localeToggle', 'Language control');
+  await waitFor(`document.documentElement.lang === ${JSON.stringify(initialLocale)}`, 'keyboard locale activation');
+
+  await pointerActivate('#audioSettingsToggle', 'Audio control');
+  await waitFor(`!document.querySelector('#audioSettings')?.classList.contains('hidden')`, 'pointer audio activation');
+  await evaluate(`document.querySelector('#audioSettingsDone')?.click()`);
+  await waitFor(`document.querySelector('#audioSettings')?.classList.contains('hidden')`, 'audio close after pointer activation');
+  await keyboardActivate('#audioSettingsToggle', 'Audio control');
+  await waitFor(`!document.querySelector('#audioSettings')?.classList.contains('hidden')`, 'keyboard audio activation');
+  await evaluate(`document.querySelector('#audioSettingsDone')?.click()`);
+  await waitFor(`document.querySelector('#audioSettings')?.classList.contains('hidden')`, 'audio close after keyboard activation');
+
+  await pointerActivate('[data-onboarding-help-toggle]', 'Help control');
+  await waitFor(`document.querySelector('#onboardingHelp')?.hidden === false`, 'pointer help activation');
+  await evaluate(`document.querySelector('[data-help-close]')?.click()`);
+  await waitFor(`document.querySelector('#onboardingHelp')?.hidden === true`, 'help close after pointer activation');
+  await keyboardActivate('[data-onboarding-help-toggle]', 'Help control');
+  await waitFor(`document.querySelector('#onboardingHelp')?.hidden === false`, 'keyboard help activation');
+  await evaluate(`document.querySelector('[data-help-close]')?.click()`);
+  await waitFor(`document.querySelector('#onboardingHelp')?.hidden === true`, 'help close after keyboard activation');
+
+  await evaluate(`(() => {
+    window.__bug273FullscreenCalls = 0;
+    window.__bug273OriginalRequestFullscreen = document.documentElement.requestFullscreen;
+    Object.defineProperty(document.documentElement, 'requestFullscreen', {
+      configurable: true,
+      value: async () => { window.__bug273FullscreenCalls += 1; },
+    });
+  })()`);
+  try {
+    await pointerActivate('#viewportFullscreenToggle', 'Fullscreen control');
+    await waitFor('window.__bug273FullscreenCalls === 1', 'pointer fullscreen activation');
+    await keyboardActivate('#viewportFullscreenToggle', 'Fullscreen control');
+    await waitFor('window.__bug273FullscreenCalls === 2', 'keyboard fullscreen activation');
+  } finally {
+    await evaluate(`(() => {
+      const original = window.__bug273OriginalRequestFullscreen;
+      if (original) Object.defineProperty(document.documentElement, 'requestFullscreen', { configurable: true, value: original });
+      else delete document.documentElement.requestFullscreen;
+      delete window.__bug273OriginalRequestFullscreen;
+      delete window.__bug273FullscreenCalls;
+    })()`);
+  }
+}
+
 async function startFirstAuthoredOperation() {
   await waitFor(
     `document.querySelector('[data-campaign-operation-id] button:not([disabled])') && document.querySelector('[data-campaign-prologue-card] button') && window.__fieldsOfResolveAuthoredCampaign?.snapshot()?.operationCount === 9 && window.__fieldsOfResolveAuthoredCampaign?.tutorialSnapshot && window.__fieldsOfResolveOnboarding?.snapshot`,
@@ -208,6 +341,20 @@ try {
     'audio settings composition to mount',
   );
 
+  const selectorUtilities = await assertSelectorUtilityHitTargets('Operation selector');
+  const selectorBattlefieldControls = await selectorBattlefieldControlSnapshot();
+  if (selectorBattlefieldControls.some((control) => !control.exists || control.visible)) {
+    throw new Error(`Battlefield-only controls remain exposed on the operation selector: ${JSON.stringify(selectorBattlefieldControls)}`);
+  }
+  const selectorLayering = JSON.parse(await evaluate(`JSON.stringify({
+    topbar: getComputedStyle(document.querySelector('#topbar')).zIndex,
+    selector: getComputedStyle(document.querySelector('#missionSelect')).zIndex,
+  })`));
+  if (!(Number(selectorLayering.topbar) > Number(selectorLayering.selector))) {
+    throw new Error(`Selector utility tray is not above the selector: ${JSON.stringify(selectorLayering)}`);
+  }
+  await exerciseSelectorUtilities();
+
   await evaluate(`(() => { const toggle = document.querySelector('#audioSettingsToggle'); toggle.focus(); toggle.click(); })()`);
   await waitFor(`!document.querySelector('#audioSettings')?.classList.contains('hidden') && document.querySelector('#shell')?.inert === true`, 'audio settings modal isolation');
   await evaluate(`(() => { const slider = document.querySelector('[data-audio-level="music"]'); slider.value = '37'; slider.dispatchEvent(new Event('input', { bubbles: true })); })()`);
@@ -235,6 +382,11 @@ try {
   audioState.focusRestored = true;
 
   await startFirstAuthoredOperation();
+  const battlefieldUtilities = await assertSelectorUtilityHitTargets('Battlefield');
+  const battlefieldControls = await selectorBattlefieldControlSnapshot();
+  if (battlefieldControls.some((control) => !control.exists || !control.visible)) {
+    throw new Error(`Battlefield controls did not return after operation start: ${JSON.stringify(battlefieldControls)}`);
+  }
   await waitFor(`document.querySelector('#pauseMenuToggle') && document.querySelector('#pauseMenu')?.getAttribute('aria-hidden') === 'true'`, 'pause menu composition to mount');
 
   await evaluate(`(() => { const toggle = document.querySelector('#pauseMenuToggle'); toggle.focus(); toggle.click(); })()`);
@@ -277,6 +429,11 @@ try {
   })`));
   state.audio = audioState;
   state.menu = menuState;
+  state.selectorUtilities = selectorUtilities;
+  state.selectorBattlefieldControls = selectorBattlefieldControls;
+  state.selectorLayering = selectorLayering;
+  state.battlefieldUtilities = battlefieldUtilities;
+  state.battlefieldControls = battlefieldControls;
   const failures = events.filter((event) =>
     event.method === 'Runtime.exceptionThrown' || event.method === 'Inspector.targetCrashed' ||
     (event.method === 'Log.entryAdded' && event.params?.entry?.level === 'error') ||
