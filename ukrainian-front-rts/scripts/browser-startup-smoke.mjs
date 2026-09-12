@@ -207,9 +207,22 @@ async function keyboardActivate(selector, label) {
     return Boolean(element && document.activeElement === element);
   })()`);
   if (!focused) throw new Error(`${label} could not receive keyboard focus.`);
-  const key = { key: ' ', code: 'Space', text: ' ', unmodifiedText: ' ', windowsVirtualKeyCode: 32, nativeVirtualKeyCode: 32 };
+  const key = {
+    key: 'Enter',
+    code: 'Enter',
+    text: '\r',
+    unmodifiedText: '\r',
+    windowsVirtualKeyCode: 13,
+    nativeVirtualKeyCode: 13,
+  };
   await call('Input.dispatchKeyEvent', { type: 'keyDown', ...key });
-  await call('Input.dispatchKeyEvent', { type: 'keyUp', key: ' ', code: 'Space', windowsVirtualKeyCode: 32, nativeVirtualKeyCode: 32 });
+  await call('Input.dispatchKeyEvent', {
+    type: 'keyUp',
+    key: 'Enter',
+    code: 'Enter',
+    windowsVirtualKeyCode: 13,
+    nativeVirtualKeyCode: 13,
+  });
 }
 
 async function exerciseSelectorUtilities() {
