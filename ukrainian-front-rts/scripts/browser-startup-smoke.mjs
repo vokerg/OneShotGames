@@ -395,10 +395,27 @@ try {
   audioState.focusRestored = true;
 
   await startFirstAuthoredOperation();
-  const battlefieldUtilities = await assertSelectorUtilityHitTargets('Battlefield');
+  const battlefieldUtilitySnapshot = await selectorControlSnapshot();
+  const battlefieldUtilities = battlefieldUtilitySnapshot.filter((control) =>
+    control.name === 'language' || control.name === 'audio',
+  );
+  const battlefieldUtilityFailures = battlefieldUtilities.filter((control) =>
+    !control.exists || !control.visible || !control.enabled || !control.keyboardReachable || !control.hit,
+  );
+  if (battlefieldUtilityFailures.length) {
+    throw new Error(`Battlefield top-bar hit targets did not recover after selector close: ${JSON.stringify(battlefieldUtilityFailures)}`);
+  }
   const battlefieldControls = await selectorBattlefieldControlSnapshot();
   if (battlefieldControls.some((control) => !control.exists || !control.visible)) {
     throw new Error(`Battlefield controls did not return after operation start: ${JSON.stringify(battlefieldControls)}`);
+  }
+  const battlefieldLayering = JSON.parse(await evaluate(`JSON.stringify({
+    selectorHidden: document.querySelector('#missionSelect')?.classList.contains('hidden'),
+    topbarPointerEvents: getComputedStyle(document.querySelector('#topbar')).pointerEvents,
+    topbarZIndex: getComputedStyle(document.querySelector('#topbar')).zIndex,
+  })`));
+  if (!battlefieldLayering.selectorHidden || battlefieldLayering.topbarPointerEvents === 'none') {
+    throw new Error(`Selector-only top-bar state leaked into the battlefield: ${JSON.stringify(battlefieldLayering)}`);
   }
   await waitFor(`document.querySelector('#pauseMenuToggle') && document.querySelector('#pauseMenu')?.getAttribute('aria-hidden') === 'true'`, 'pause menu composition to mount');
 
@@ -447,6 +464,7 @@ try {
   state.selectorLayering = selectorLayering;
   state.battlefieldUtilities = battlefieldUtilities;
   state.battlefieldControls = battlefieldControls;
+  state.battlefieldLayering = battlefieldLayering;
   const failures = events.filter((event) =>
     event.method === 'Runtime.exceptionThrown' || event.method === 'Inspector.targetCrashed' ||
     (event.method === 'Log.entryAdded' && event.params?.entry?.level === 'error') ||
