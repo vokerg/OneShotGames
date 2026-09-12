@@ -217,6 +217,15 @@ async function keyboardActivate(selector, label) {
   };
   await call('Input.dispatchKeyEvent', { type: 'rawKeyDown', ...key });
   await call('Input.dispatchKeyEvent', {
+    type: 'char',
+    key: 'Enter',
+    code: 'Enter',
+    text: '\r',
+    unmodifiedText: '\r',
+    windowsVirtualKeyCode: 13,
+    nativeVirtualKeyCode: 13,
+  });
+  await call('Input.dispatchKeyEvent', {
     type: 'keyUp',
     key: 'Enter',
     code: 'Enter',
