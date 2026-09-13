@@ -368,10 +368,19 @@ try {
     'mission selection and runtime review bridge',
   );
   setPhase('mission-start');
-  await evaluate(`document.querySelector('.missionCard button').click()`);
+  await waitFor(
+    `document.querySelector('[data-campaign-operation-id] button:not([disabled])') && window.__fieldsOfResolveAuthoredCampaign?.snapshot()?.operationCount === 9`,
+    'first unlocked authored operation',
+  );
+  await evaluate(`document.querySelector('[data-campaign-operation-id] button:not([disabled])').click()`);
+  await waitFor(
+    `document.querySelector('[data-campaign-briefing] button.primary') && window.__fieldsOfResolveAuthoredCampaign?.snapshot()?.stage === 'briefing'`,
+    'authored operation briefing',
+  );
+  await evaluate(`document.querySelector('[data-campaign-briefing] button.primary').click()`);
   const missionTitle = await waitFor(
-    `document.querySelector('#missionSelect')?.classList.contains('hidden') && document.querySelector('#missionTitle')?.textContent`,
-    'first mission start',
+    `document.querySelector('#missionSelect')?.classList.contains('hidden') && document.querySelector('#missionTitle')?.textContent && window.__fieldsOfResolveAuthoredCampaign?.snapshot()?.stage === 'battlefield'`,
+    'first authored mission start',
   );
   setPhase('atlas-readiness');
   await waitFor(
