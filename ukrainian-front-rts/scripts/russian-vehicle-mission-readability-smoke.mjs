@@ -217,13 +217,18 @@ try {
   await call('Network.enable');
   await call('Page.navigate', { url: pageUrl });
   await waitFor(
-    `document.readyState==='complete'&&window.__vehicleReview?.game&&document.querySelector('.missionCard button')`,
-    'mission selection',
+    `document.readyState==='complete'&&window.__vehicleReview?.game&&document.querySelector('[data-campaign-operation-id] button:not([disabled])')&&window.__fieldsOfResolveAuthoredCampaign?.snapshot()?.operationCount===9`,
+    'authored operation selection',
   );
-  await evaluate(`document.querySelector('.missionCard button').click()`);
+  await evaluate(`document.querySelector('[data-campaign-operation-id] button:not([disabled])').click()`);
+  await waitFor(
+    `document.querySelector('[data-campaign-briefing] button.primary')&&window.__fieldsOfResolveAuthoredCampaign?.snapshot()?.stage==='briefing'`,
+    'authored operation briefing',
+  );
+  await evaluate(`document.querySelector('[data-campaign-briefing] button.primary').click()`);
   const missionTitle = await waitFor(
-    `document.querySelector('#missionSelect')?.classList.contains('hidden')&&document.querySelector('#missionTitle')?.textContent`,
-    'mission start',
+    `document.querySelector('#missionSelect')?.classList.contains('hidden')&&window.__fieldsOfResolveAuthoredCampaign?.snapshot()?.stage==='battlefield'&&document.querySelector('#missionTitle')?.textContent`,
+    'authored mission start',
   );
   const atlasStatus = await waitFor(
     `(()=>{const r=window.__vehicleReview?.renderer;const ua=r?.ukrainianVehicleAtlasStatus?.();const ru=r?.russianVehicleAtlasStatus?.();return ua?.ready&&!ua.degraded&&ru?.ready&&!ru.degraded?{ukraine:ua,russia:ru}:false;})()`,
