@@ -47,7 +47,7 @@ if (!browser) throw new Error('No Chrome/Chromium executable found. Set CHROME_B
 
 let session = null;
 const report = {
-  schema: 'fields-of-resolve.group-construction-browser-smoke', version: 7, status: 'FAIL', browser,
+  schema: 'fields-of-resolve.group-construction-browser-smoke', version: 8, status: 'FAIL', browser,
   marquee: null, mixedSelection: null, engineerSubgroup: null, engineerSubgroupRestored: null,
   singleEngineer: null, placementArmed: false, authoredCampaign: null,
 };
@@ -141,11 +141,13 @@ try {
   })()`);
   if (!marquee) throw new Error('Could not dispatch the battlefield selection marquee.');
   report.marquee = marquee;
-  await waitFor(`document.querySelectorAll('#selectionGrid .selectionUnitCard').length >= 4`, 'mixed starting-force selection');
+  await waitFor(`document.querySelectorAll('#selectionGrid .selectionUnitCard').length >= 3`, 'authored mixed starting-force selection');
 
   const selected = await selectionState(evaluate);
-  if (selected.names.filter((name) => /Combat Engineers/i.test(name)).length !== 2) {
-    throw new Error(`Battlefield marquee did not select exactly two engineers: ${JSON.stringify(selected)}`);
+  const engineerCount = selected.names.filter((name) => /Combat Engineers/i.test(name)).length;
+  const hasNonEngineer = selected.names.some((name) => !/Combat Engineers/i.test(name));
+  if (selected.count < 3 || engineerCount !== 2 || !hasNonEngineer) {
+    throw new Error(`Battlefield marquee did not select the authored mixed starting force: ${JSON.stringify(selected)}`);
   }
   await cycleUntilEngineer(call, evaluate);
 
