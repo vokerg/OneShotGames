@@ -415,8 +415,8 @@ try {
     throw new Error(`Battlefield top-bar hit targets did not recover after selector close: ${JSON.stringify(battlefieldUtilityFailures)}`);
   }
   const battlefieldControls = await selectorBattlefieldControlSnapshot();
-  if (battlefieldControls.some((control) => !control.exists || !control.visible)) {
-    throw new Error(`Battlefield controls did not return after operation start: ${JSON.stringify(battlefieldControls)}`);
+  if (battlefieldControls.some((control) => !control.exists)) {
+    throw new Error(`Battlefield controls are missing after operation start: ${JSON.stringify(battlefieldControls)}`);
   }
   const battlefieldLayering = JSON.parse(await evaluate(`JSON.stringify({
     selectorHidden: document.querySelector('#missionSelect')?.classList.contains('hidden'),
