@@ -173,8 +173,16 @@ async function snapshot() {
     const directChildBounds = topbar
       ? [...topbar.children].map((child) => {
           const rect = child.getBoundingClientRect();
-          return { id: child.id || child.className || child.tagName, left: rect.left, right: rect.right };
-        })
+          const style = getComputedStyle(child);
+          return {
+            id: child.id || child.className || child.tagName,
+            left: rect.left,
+            right: rect.right,
+            width: rect.width,
+            height: rect.height,
+            visible: style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0,
+          };
+        }).filter((rect) => rect.visible)
       : [];
     const topbarChildOverflow = Boolean(topbarRect && directChildBounds.some((rect) =>
       rect.left < topbarRect.left - 0.5 || rect.right > topbarRect.right + 0.5));
