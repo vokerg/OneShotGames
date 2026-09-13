@@ -72,10 +72,10 @@ export function installViewportRuntime({
     className: 'viewportNotice hidden',
   });
   const noticeHeading = createElement(documentTarget, 'strong', {
-    textContent: 'Viewport too small',
+    textContent: 'Viewport below supported minimum',
   });
   const noticeBody = createElement(documentTarget, 'span', {
-    textContent: 'Use at least 960 × 600 CSS pixels or enter fullscreen for the complete command interface.',
+    textContent: 'Use at least 960 × 600 CSS pixels or enter fullscreen. Supported compact layouts automatically collapse secondary panels to keep core commands reachable.',
   });
   minimumNotice.append(noticeHeading, noticeBody);
   shell.append(minimumNotice);
@@ -107,10 +107,10 @@ export function installViewportRuntime({
     root.style.setProperty('--viewport-dpr', String(metrics.pixelRatio));
 
     minimumNotice.classList.toggle('hidden', !metrics.belowMinimum);
-    noticeHeading.textContent = localized('runtime.viewport.noticeHeading', 'Viewport too small');
+    noticeHeading.textContent = localized('runtime.viewport.noticeHeading', 'Viewport below supported minimum');
     noticeBody.textContent = localized(
       'runtime.viewport.noticeBody',
-      'Use at least 960 × 600 CSS pixels or enter fullscreen for the complete command interface.',
+      'Use at least 960 × 600 CSS pixels or enter fullscreen. Supported compact layouts automatically collapse secondary panels to keep core commands reachable.',
     );
     fullscreenButton.setAttribute('aria-pressed', String(metrics.fullscreen));
     fullscreenButton.setAttribute(
