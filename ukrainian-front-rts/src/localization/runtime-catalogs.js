@@ -95,8 +95,8 @@ const ENGLISH_RUNTIME_MESSAGES = {
     enterFullscreenAria: 'Enter fullscreen battlefield view',
     exitFullscreenAria: 'Exit fullscreen battlefield view',
     fullscreenTooltip: 'Enter or leave fullscreen battlefield view.',
-    noticeHeading: 'Viewport too small',
-    noticeBody: 'Use at least 960 × 600 CSS pixels or enter fullscreen for the complete command interface.',
+    noticeHeading: 'Viewport below supported minimum',
+    noticeBody: 'Use at least 960 × 600 CSS pixels or enter fullscreen. Supported compact layouts automatically collapse secondary panels to keep core commands reachable.',
     unavailable: 'Fullscreen unavailable: {error}',
   },
   mission: {
@@ -255,8 +255,8 @@ const UKRAINIAN_RUNTIME_MESSAGES = {
     enterFullscreenAria: 'Відкрити поле бою на весь екран',
     exitFullscreenAria: 'Вийти з повноекранного режиму поля бою',
     fullscreenTooltip: 'Увійти або вийти з повноекранного режиму поля бою.',
-    noticeHeading: 'Замала область перегляду',
-    noticeBody: 'Використовуйте щонайменше 960 × 600 CSS-пікселів або повноекранний режим для повного командного інтерфейсу.',
+    noticeHeading: 'Область перегляду менша за підтримуваний мінімум',
+    noticeBody: 'Використовуйте щонайменше 960 × 600 CSS-пікселів або повноекранний режим. У підтримуваному компактному режимі другорядні панелі автоматично згортаються, щоб основні команди залишалися доступними.',
     unavailable: 'Повноекранний режим недоступний: {error}',
   },
   mission: {
