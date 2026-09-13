@@ -379,7 +379,7 @@ try {
   );
   await evaluate(`document.querySelector('[data-campaign-briefing] button.primary').click()`);
   const missionTitle = await waitFor(
-    `document.querySelector('#missionSelect')?.classList.contains('hidden') && document.querySelector('#missionTitle')?.textContent && window.__fieldsOfResolveAuthoredCampaign?.snapshot()?.stage === 'battlefield'`,
+    `document.querySelector('#missionSelect')?.classList.contains('hidden') && window.__fieldsOfResolveAuthoredCampaign?.snapshot()?.stage === 'battlefield' && document.querySelector('#missionTitle')?.textContent`,
     'first authored mission start',
   );
   setPhase('atlas-readiness');
