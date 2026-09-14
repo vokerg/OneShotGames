@@ -165,6 +165,11 @@ export function installPerformanceDebugOverlay({
   windowTarget?.addEventListener?.('keydown', onKeyDown);
   const diagnostic = Object.freeze({
     snapshot: () => profiler.snapshot(),
+    reset: () => {
+      profiler.reset();
+      latest = profiler.snapshot();
+      return true;
+    },
     visible: () => visible,
     setVisible,
     toggle,
