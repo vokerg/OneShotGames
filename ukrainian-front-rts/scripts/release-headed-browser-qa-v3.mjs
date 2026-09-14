@@ -40,7 +40,7 @@ await new Promise((ok, bad) => { server.once('error', bad); server.listen(appPor
 
 function capabilities() {
   if (browser === 'chrome') return { browserName:'chrome', 'goog:chromeOptions':{ args:['--disable-search-engine-choice-screen','--disable-dev-shm-usage'] } };
-  if (browser === 'edge') return { browserName:'MicrosoftEdge', 'ms:edgeOptions':{ args:['--disable-search-engine-choice-screen','--disable-dev-shm-usage'] } };
+  if (browser === 'edge') return { browserName:'MicrosoftEdge', 'ms:edgeOptions':{ args:['--disable-search-engine-choice-screen','--disable-dev-shm-usage','--disable-background-timer-throttling','--disable-backgrounding-occluded-windows','--disable-renderer-backgrounding','--disable-features=CalculateNativeWinOcclusion'] } };
   if (browser === 'firefox') return { browserName:'firefox', 'moz:firefoxOptions':{ args:[], prefs:{ 'layout.css.devPixelsPerPx':'1.25' } } };
   return { browserName:'safari' };
 }
