@@ -332,7 +332,19 @@ try {
   }
 
   try {
-    await rm(profile, { recursive: true, force: true });
+    let removeError = null;
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      try {
+        await rm(profile, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+        removeError = null;
+        break;
+      } catch (error) {
+        removeError = error;
+        if (!['ENOTEMPTY', 'EBUSY', 'EPERM'].includes(error?.code) || attempt === 4) throw error;
+        await new Promise((resolveDelay) => setTimeout(resolveDelay, 100 * (attempt + 1)));
+      }
+    }
+    if (removeError) throw removeError;
     teardown.profileRemoved = true;
   } catch (error) {
     teardown.errors.push({ phase: 'chrome-profile-remove', profile, ...serializeError(error) });
