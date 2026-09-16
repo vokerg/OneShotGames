@@ -190,6 +190,7 @@ button:disabled { opacity: .45; filter: none; cursor: not-allowed; }
 #objectives {
   position: fixed;
   right: 12px;
+  pointer-events: none;
   top: 70px;
   width: 380px;
   padding: 14px;
