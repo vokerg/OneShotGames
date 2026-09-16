@@ -447,13 +447,20 @@ try {
 
   await call('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
   await call('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
-  await waitFor(
-    `document.querySelector('#objectives')?.classList.contains('hidden')
-      && document.querySelector('#objectivesBtn')?.getAttribute('aria-expanded') === 'false'
-      && document.querySelector('#objectives')?.getAttribute('aria-hidden') === 'true'
-      && document.activeElement === document.querySelector('#objectivesBtn')`,
-    'objectives Escape close and focus restoration',
-  );
+  await delay(160);
+  const objectivesEscapeState = JSON.parse(await evaluate(`JSON.stringify({
+    hidden: document.querySelector('#objectives')?.classList.contains('hidden'),
+    expanded: document.querySelector('#objectivesBtn')?.getAttribute('aria-expanded'),
+    ariaHidden: document.querySelector('#objectives')?.getAttribute('aria-hidden'),
+    activeId: document.activeElement?.id || '',
+    activeTag: document.activeElement?.tagName || ''
+  })`));
+  if (!objectivesEscapeState.hidden
+    || objectivesEscapeState.expanded !== 'false'
+    || objectivesEscapeState.ariaHidden !== 'true'
+    || objectivesEscapeState.activeId !== 'objectivesBtn') {
+    throw new Error(`Objectives Escape close/focus contract failed: ${JSON.stringify(objectivesEscapeState)}`);
+  }
   const objectivesClosedHit = await evaluate(
     `document.elementFromPoint(${objectivesProbe.point.x}, ${objectivesProbe.point.y}) === document.querySelector('#game')`,
   );
