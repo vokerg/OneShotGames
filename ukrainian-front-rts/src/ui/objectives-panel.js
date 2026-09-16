@@ -50,7 +50,7 @@ export function installObjectivesPanel({
   button.setAttribute('aria-controls', panel.id);
   setOpen(!initial.hidden);
   button.addEventListener('click', onToggle);
-  documentTarget.addEventListener('keydown', onKeyDown);
+  documentTarget.addEventListener('keydown', onKeyDown, true);
 
   let disposed = false;
   return Object.freeze({
@@ -62,7 +62,7 @@ export function installObjectivesPanel({
       if (disposed) return false;
       disposed = true;
       button.removeEventListener('click', onToggle);
-      documentTarget.removeEventListener('keydown', onKeyDown);
+      documentTarget.removeEventListener('keydown', onKeyDown, true);
       panel.classList.toggle('hidden', initial.hidden);
       restoreAttribute(button, 'aria-controls', initial.controls);
       restoreAttribute(button, 'aria-expanded', initial.expanded);
