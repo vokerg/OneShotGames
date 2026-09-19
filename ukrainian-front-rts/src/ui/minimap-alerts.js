@@ -365,7 +365,13 @@ export function installMinimapAlerts({
     latestSnapshot = null;
     lastRefresh = Number.NEGATIVE_INFINITY;
     renderedAlertSignature = '';
-    renderAlerts(queueRoot, latestAlerts, documentTarget);
+    if (queueRoot) {
+      if (typeof documentTarget?.createDocumentFragment === 'function' && typeof documentTarget?.createElement === 'function') {
+        renderAlerts(queueRoot, latestAlerts, documentTarget);
+      } else {
+        queueRoot.replaceChildren?.();
+      }
+    }
   };
 
   resetAlertState();
