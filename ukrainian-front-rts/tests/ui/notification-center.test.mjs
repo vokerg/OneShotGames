@@ -141,6 +141,56 @@ test('store bounds history, exposes feed/unread state, and collapses spam within
   assert.equal(store.clear().history.length, 0);
 });
 
+test('sustained attacks stay aggregated, bound unread count, and yield feed priority', () => {
+  const store = createNotificationStore({ historyLimit: 10, feedLimit: 4, cooldownSeconds: { attack: 1 } });
+  const first = store.publish({
+    kind: NOTIFICATION_KINDS.ATTACK,
+    key: 'attack:donbas:1',
+    title: 'Under attack',
+    message: 'First hit',
+    time: 1,
+  });
+  const second = store.publish({
+    kind: NOTIFICATION_KINDS.ATTACK,
+    key: 'attack:donbas:1',
+    title: 'Under attack',
+    message: 'Second hit',
+    time: 5,
+  });
+  const third = store.publish({
+    kind: NOTIFICATION_KINDS.ATTACK,
+    key: 'attack:donbas:1',
+    title: 'Under attack',
+    message: 'Third hit',
+    time: 20,
+  });
+
+  assert.equal(second.id, first.id);
+  assert.equal(third.id, first.id);
+  assert.equal(third.count, 3);
+  assert.equal(store.snapshot().history.filter((notice) => notice.kind === 'attack').length, 1);
+  assert.equal(store.snapshot().unread, 1, 'collapsed damage must count as one unread alert');
+
+  store.setHistoryOpen(true);
+  store.setHistoryOpen(false);
+  store.publish({
+    kind: NOTIFICATION_KINDS.ATTACK,
+    key: 'attack:donbas:1',
+    title: 'Under attack',
+    message: 'Fourth hit',
+    time: 40,
+  });
+  assert.equal(store.snapshot().unread, 1, 'a refreshed aggregate becomes one unread item after history was read');
+
+  store.publish({ kind: 'objective', title: 'Objective complete', message: 'Depot secured.', key: 'objective:1', time: 10 });
+  store.publish({ kind: 'production', title: 'Production complete', message: 'Tank deployed.', key: 'production:1', time: 11 });
+  store.publish({ kind: 'system', title: 'System', message: 'Status updated.', key: 'system:1', time: 50 });
+  assert.deepEqual(
+    store.snapshot().feed.map((notice) => notice.kind),
+    ['objective', 'production', 'attack', 'system'],
+  );
+});
+
 test('observation diff emits objective, attack, production, and research completion notices', () => {
   const game = gameFixture();
   const previous = createNotificationObservation(game);
@@ -166,7 +216,9 @@ test('observation diff emits objective, attack, production, and research complet
   assert.match(notices.find((notice) => notice.kind === 'attack').message, /26 damage/);
   assert.match(notices.find((notice) => notice.kind === 'production').message, /T-64BV deployed/);
   assert.match(notices.find((notice) => notice.kind === 'research').message, /Counter-UAS Roof Protection/);
-  assert.equal(notices.find((notice) => notice.kind === 'attack').navigation.entityId, '1');
+  const attackNotice = notices.find((notice) => notice.kind === 'attack');
+  assert.equal(attackNotice.navigation.entityId, '1');
+  assert.equal(attackNotice.key, 'attack:donbas:1');
   assert.ok(Object.isFrozen(notices));
 });
 
@@ -224,9 +276,15 @@ test('installer observes runtime changes, captures save notices, navigates, and 
   game.units[0].hp = 80;
   ui.refresh();
   ui.toast('Campaign saved to Slot 1.');
+  game.time = 25;
+  game.tick = 750;
+  game.units[0].hp = 60;
+  ui.refresh();
 
   let model = ui.notificationCenter.snapshot();
   assert.deepEqual(new Set(model.history.map((notice) => notice.kind)), new Set(['objective', 'attack', 'save']));
+  assert.equal(model.history.filter((notice) => notice.kind === 'attack').length, 1);
+  assert.equal(model.history.find((notice) => notice.kind === 'attack').count, 2);
   const attack = model.history.find((notice) => notice.kind === 'attack');
   assert.equal(navigateToNotification(game, attack.navigation, { windowTarget: { innerWidth: 1000, innerHeight: 800 } }), true);
   assert.equal(game.selected.id, 1);
@@ -237,6 +295,12 @@ test('installer observes runtime changes, captures save notices, navigates, and 
   model = ui.notificationCenter.snapshot();
   assert.equal(model.historyOpen, true);
   assert.equal(model.unread, 0);
+
+  ui.showMissionSelect();
+  model = ui.notificationCenter.snapshot();
+  assert.equal(model.history.length, 0);
+  assert.equal(model.unread, 0);
+  assert.equal(model.historyOpen, false);
 
   dispose();
   for (const [key, value] of Object.entries(originals)) assert.equal(ui[key], value);
