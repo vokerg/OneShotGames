@@ -30,11 +30,23 @@ jobs:
           node-version: '22'
       - name: Prepare diagnostics directory
         run: mkdir -p artifacts
+      - name: Verify shell checkout line endings
+        shell: bash
+        run: |
+          eol_info="$(git ls-files --eol -- verify.sh)"
+          echo "$eol_info"
+          case "$eol_info" in
+            *"i/lf"*"w/lf"*"attr/text eol=lf"*) ;;
+            *)
+              echo "::error file=ukrainian-front-rts/verify.sh::verify.sh must be stored and checked out with LF line endings (expected text eol=lf)."
+              exit 1
+              ;;
+          esac
       - name: Full assembled verifier
         shell: bash
         run: |
           set +e
-          ./verify.sh > artifacts/assembled-verifier.log 2>&1
+          bash ./verify.sh > artifacts/assembled-verifier.log 2>&1
           status=$?
           cat artifacts/assembled-verifier.log
           if [ "$status" -ne 0 ]; then
