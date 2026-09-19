@@ -134,18 +134,18 @@ const harnessHtml = `<!doctype html>
     const noticeAttack = noticesBeforeReset.history.find((notice) => notice.kind === 'attack');
 
     check(minimapBeforeReset.filter((alert) => alert.kind === 'attack').length === 1, 'minimap must keep one attack row per target/run');
-    check(minimapAttack?.count === 5, `minimap attack count expected 5, got ${minimapAttack?.count}`);
+    check(minimapAttack?.count === 5, 'minimap attack count expected 5, got ' + String(minimapAttack?.count));
     check(document.querySelector('#minimapAlertQueue').textContent.includes('×5'), 'minimap DOM must render the aggregate count');
     check(noticesBeforeReset.history.filter((notice) => notice.kind === 'attack').length === 1, 'notification history must keep one attack row per target/run');
-    check(noticeAttack?.count === 5, `notification attack count expected 5, got ${noticeAttack?.count}`);
-    check(noticesBeforeReset.unread === 3, `unread count should track three alert records, got ${noticesBeforeReset.unread}`);
+    check(noticeAttack?.count === 5, 'notification attack count expected 5, got ' + String(noticeAttack?.count));
+    check(noticesBeforeReset.unread === 3, 'unread count should track three alert records, got ' + String(noticesBeforeReset.unread));
     check(
       noticesBeforeReset.feed.slice(0, 3).map((notice) => notice.kind).join(',') === 'objective,production,attack',
-      `notification feed priority mismatch: ${noticesBeforeReset.feed.map((notice) => notice.kind).join(',')}`,
+      'notification feed priority mismatch: ' + noticesBeforeReset.feed.map((notice) => notice.kind).join(','),
     );
     check(
       minimapBeforeReset.slice(0, 3).map((alert) => alert.kind).join(',') === 'objective,production,attack',
-      `minimap priority mismatch: ${minimapBeforeReset.map((alert) => alert.kind).join(',')}`,
+      'minimap priority mismatch: ' + minimapBeforeReset.map((alert) => alert.kind).join(','),
     );
 
     unit.hp = 100;
