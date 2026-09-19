@@ -24,9 +24,9 @@ export const DEFAULT_MINIMAP_FILTERS = Object.freeze({
 });
 
 const ALERT_PRIORITY = Object.freeze({
-  attack: 3,
-  objective: 2,
-  production: 1,
+  objective: 3,
+  production: 2,
+  attack: 1,
   info: 0,
 });
 
@@ -263,24 +263,62 @@ export class MinimapAlertQueue {
     this.dedupeMs = Math.max(0, Number(dedupeMs) || 0);
   }
 
-  push({ kind = MINIMAP_ALERT_KINDS.INFO, message, worldPosition = null, source = null, createdAt = 0 } = {}) {
+  push({
+    kind = MINIMAP_ALERT_KINDS.INFO,
+    message,
+    worldPosition = null,
+    source = null,
+    aggregateKey = null,
+    createdAt = 0,
+  } = {}) {
     if (!Object.values(MINIMAP_ALERT_KINDS).includes(kind)) throw new RangeError(`Unknown minimap alert kind: ${kind}`);
     if (typeof message !== 'string' || !message.trim()) throw new TypeError('Minimap alert message is required.');
     const time = Number(createdAt) || 0;
+    const normalizedMessage = message.trim();
     const position = normalizePosition(worldPosition);
-    const dedupeKey = `${kind}:${source ?? ''}:${message.trim()}`;
-    const duplicate = this.#alerts.find((alert) => alert.dedupeKey === dedupeKey && time - alert.createdAt <= this.dedupeMs);
-    if (duplicate) return duplicate;
+    const normalizedAggregateKey = aggregateKey == null ? null : String(aggregateKey);
+    const dedupeKey = `${kind}:${source ?? ''}:${normalizedMessage}`;
+
+    if (normalizedAggregateKey) {
+      const existingIndex = this.#alerts.findIndex((alert) => alert.aggregateKey === normalizedAggregateKey);
+      if (existingIndex >= 0) {
+        const existing = this.#alerts[existingIndex];
+        const alert = deepFreeze({
+          ...existing,
+          kind,
+          priority: ALERT_PRIORITY[kind],
+          message: normalizedMessage,
+          source,
+          worldPosition: position ?? existing.worldPosition,
+          createdAt: time,
+          expiresAt: time + this.durationMs,
+          dedupeKey,
+          aggregateKey: normalizedAggregateKey,
+          count: existing.count + 1,
+        });
+        this.#alerts.splice(existingIndex, 1, alert);
+        this.#alerts = this.#alerts
+          .sort((left, right) => right.priority - left.priority || right.createdAt - left.createdAt || left.id.localeCompare(right.id))
+          .slice(0, this.maxAlerts);
+        return alert;
+      }
+    } else {
+      const duplicate = this.#alerts.find((alert) => alert.dedupeKey === dedupeKey && time - alert.createdAt <= this.dedupeMs);
+      if (duplicate) return duplicate;
+    }
+
     const alert = deepFreeze({
       id: `minimap-alert-${this.#nextSequence++}`,
       kind,
       priority: ALERT_PRIORITY[kind],
-      message: message.trim(),
+      message: normalizedMessage,
       source,
       worldPosition: position,
       createdAt: time,
       expiresAt: time + this.durationMs,
       dedupeKey,
+      aggregateKey: normalizedAggregateKey,
+      count: 1,
     });
     this.#alerts.unshift(alert);
     this.#alerts = this.#alerts
