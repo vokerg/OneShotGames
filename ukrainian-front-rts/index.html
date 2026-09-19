@@ -27,10 +27,10 @@
         <button id="economyHudToggle" aria-controls="economyHud" aria-expanded="false" data-tooltip="Open the economy and production overview.">Economy</button>
         <button id="techTreeToggle" aria-controls="techTree" aria-expanded="false" data-tooltip="Open the dedicated modernization tree.">Tech Tree</button>
         <button id="audioSettingsToggle" aria-controls="audioSettings" aria-expanded="false" data-tooltip="Open audio and hearing-accessibility settings.">Audio</button>
-        <button id="objectivesBtn" data-tooltip="Show the current mission objectives.">Objectives</button>
+        <button id="objectivesBtn" aria-controls="objectives" aria-expanded="false" data-tooltip="Show the current mission objectives.">Objectives</button>
       </div>
 
-      <aside id="objectives" class="hidden">
+      <aside id="objectives" class="hidden" aria-labelledby="missionTitle" aria-hidden="true" data-interaction-mode="click-through">
         <h2 id="missionTitle"></h2>
         <p id="missionStory"></p>
         <ol id="objectiveList"></ol>

@@ -480,14 +480,14 @@ export function installMenuStack({
       requestConfirmation(MENU_CONFIRMATIONS.DELETE, { slotId: target.dataset.slotId });
     }
   };
-  const anotherModalOpen = () => ['#techTree', '#audioSettings', '#endgame']
+  const anotherEscapeOwnerOpen = () => ['#techTree', '#audioSettings', '#endgame', '#objectives']
     .some((selector) => {
       const node = documentTarget.querySelector(selector);
       return node && !node.classList.contains('hidden');
     });
   const onKeyDown = (event) => {
     if (!state.snapshot().open) {
-      if (event.key === 'Escape' && missionActive() && !anotherModalOpen()) {
+      if (event.key === 'Escape' && missionActive() && !anotherEscapeOwnerOpen()) {
         event.preventDefault?.();
         event.stopImmediatePropagation?.();
         open();

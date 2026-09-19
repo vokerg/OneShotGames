@@ -72,6 +72,7 @@ import { installEconomyHudOverview } from './ui/economy-hud-overview.js';
 import { installGroupConstructionCommands } from './ui/group-construction-commands.js';
 import { installMenuStackComposition } from './ui/menu-stack-composition.js';
 import { installMinimapAlerts } from './ui/minimap-alerts.js';
+import { installObjectivesPanel } from './ui/objectives-panel.js';
 import { installProductionExitFeedback } from './ui/production-exit-feedback.js';
 import { installSelectionPanel } from './ui/selection-panel.js';
 import { installSkirmishSetup } from './ui/skirmish-setup.js';
@@ -251,6 +252,11 @@ const modules = [
   module('combat-readability-feedback', () => installCombatReadabilityFeedback({ game, ui })),
   module('economy-hud-overview', () => installEconomyHudOverview({ game, ui })),
   module('minimap-alerts', () => installMinimapAlerts({ game, ui, renderer, minimap })),
+  module('objectives-panel', () => installObjectivesPanel({
+    button: objectivesButton,
+    panel: ui.e.objectives,
+    documentTarget: document,
+  })),
   module('tech-tree-screen', () => installTechTreeScreen({ game, ui })),
   module('authored-operation-runtime', () => installAuthoredOperationRuntime(game)),
   module('menu-stack', () => installMenuStackComposition({
@@ -277,8 +283,6 @@ const modules = [
     const previousCards = ui.e.cards.innerHTML;
     const previousRetry = ui.e.retry.onclick;
     const previousOperations = ui.e.operations.onclick;
-    const toggleObjectives = () => ui.e.objectives.classList.toggle('hidden');
-
     ui.buildMissionCards(runtime.startMission);
     ui.setEndgameActions({
       retry: () => runtime.startMission(game.missionIndex),
@@ -287,10 +291,7 @@ const modules = [
         ui.showMissionSelect();
       },
     });
-    objectivesButton.addEventListener('click', toggleObjectives);
-
     return () => {
-      objectivesButton.removeEventListener('click', toggleObjectives);
       ui.e.retry.onclick = previousRetry;
       ui.e.operations.onclick = previousOperations;
       ui.e.cards.innerHTML = previousCards;

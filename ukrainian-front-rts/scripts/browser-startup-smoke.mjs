@@ -404,6 +404,83 @@ try {
   audioState.focusRestored = true;
 
   await startFirstAuthoredOperation();
+  const objectivesProbe = JSON.parse(await evaluate(`JSON.stringify((() => {
+    const button = document.querySelector('#objectivesBtn');
+    const panel = document.querySelector('#objectives');
+    const canvas = document.querySelector('#game');
+    if (!button || !panel || !canvas) return { error: 'Objectives UI or battlefield canvas missing.' };
+    button.click();
+    const rect = panel.getBoundingClientRect();
+    const candidates = [
+      [0.12, 0.24], [0.5, 0.24], [0.88, 0.24],
+      [0.12, 0.52], [0.5, 0.52], [0.88, 0.52],
+      [0.12, 0.8], [0.5, 0.8], [0.88, 0.8],
+    ];
+    const point = candidates
+      .map(([xRatio, yRatio]) => ({
+        x: Math.round(rect.left + rect.width * xRatio),
+        y: Math.round(rect.top + rect.height * yRatio),
+      }))
+      .find(({ x, y }) => document.elementFromPoint(x, y) === canvas);
+    window.__bug275CanvasContextMenus = 0;
+    window.__bug275ContextHandler = () => { window.__bug275CanvasContextMenus += 1; };
+    canvas.addEventListener('contextmenu', window.__bug275ContextHandler);
+    return {
+      error: point ? null : 'No click-through battlefield point found inside Objectives bounds.',
+      point,
+      open: !panel.classList.contains('hidden'),
+      pointerEvents: getComputedStyle(panel).pointerEvents,
+      expanded: button.getAttribute('aria-expanded'),
+      ariaHidden: panel.getAttribute('aria-hidden'),
+    };
+  })())`));
+  if (objectivesProbe.error || !objectivesProbe.open || objectivesProbe.pointerEvents !== 'none' || objectivesProbe.expanded !== 'true' || objectivesProbe.ariaHidden !== 'false') {
+    throw new Error(`Objectives open-state contract failed: ${JSON.stringify(objectivesProbe)}`);
+  }
+  const dispatchObjectivesRightClick = async () => {
+    const params = { x: objectivesProbe.point.x, y: objectivesProbe.point.y, button: 'right', clickCount: 1 };
+    await call('Input.dispatchMouseEvent', { ...params, type: 'mousePressed', buttons: 2 });
+    await call('Input.dispatchMouseEvent', { ...params, type: 'mouseReleased', buttons: 0 });
+  };
+  await dispatchObjectivesRightClick();
+  await waitFor('window.__bug275CanvasContextMenus === 1', 'objectives-open battlefield context command');
+
+  await call('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+  await call('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+  await delay(160);
+  const objectivesEscapeState = JSON.parse(await evaluate(`JSON.stringify({
+    hidden: document.querySelector('#objectives')?.classList.contains('hidden'),
+    expanded: document.querySelector('#objectivesBtn')?.getAttribute('aria-expanded'),
+    ariaHidden: document.querySelector('#objectives')?.getAttribute('aria-hidden'),
+    activeId: document.activeElement?.id || '',
+    activeTag: document.activeElement?.tagName || ''
+  })`));
+  if (!objectivesEscapeState.hidden
+    || objectivesEscapeState.expanded !== 'false'
+    || objectivesEscapeState.ariaHidden !== 'true'
+    || objectivesEscapeState.activeId !== 'objectivesBtn') {
+    throw new Error(`Objectives Escape close/focus contract failed: ${JSON.stringify(objectivesEscapeState)}`);
+  }
+  const objectivesClosedHit = await evaluate(
+    `document.elementFromPoint(${objectivesProbe.point.x}, ${objectivesProbe.point.y}) === document.querySelector('#game')`,
+  );
+  if (!objectivesClosedHit) throw new Error('Battlefield hit target did not remain available after Objectives closed.');
+  await dispatchObjectivesRightClick();
+  await waitFor('window.__bug275CanvasContextMenus === 2', 'objectives-closed battlefield context command');
+  const objectivesState = JSON.parse(await evaluate(`JSON.stringify({
+    openCommandCount: 1,
+    closedCommandCount: window.__bug275CanvasContextMenus,
+    panelHidden: document.querySelector('#objectives')?.classList.contains('hidden'),
+    expanded: document.querySelector('#objectivesBtn')?.getAttribute('aria-expanded'),
+    focusRestored: document.activeElement === document.querySelector('#objectivesBtn')
+  })`));
+  await evaluate(`(() => {
+    const canvas = document.querySelector('#game');
+    if (canvas && window.__bug275ContextHandler) canvas.removeEventListener('contextmenu', window.__bug275ContextHandler);
+    delete window.__bug275ContextHandler;
+    delete window.__bug275CanvasContextMenus;
+  })()`);
+
   const battlefieldUtilitySnapshot = await selectorControlSnapshot();
   const battlefieldUtilities = battlefieldUtilitySnapshot.filter((control) =>
     control.name === 'language' || control.name === 'audio',
@@ -468,6 +545,7 @@ try {
   })`));
   state.audio = audioState;
   state.menu = menuState;
+  state.objectives = objectivesState;
   state.selectorUtilities = selectorUtilities;
   state.selectorBattlefieldControls = selectorBattlefieldControls;
   state.selectorLayering = selectorLayering;
