@@ -7,6 +7,8 @@ import { tmpdir } from 'node:os';
 import { delimiter, dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { shutdownProcessBounded } from './lib/bounded-process-shutdown.mjs';
+
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const artifacts = resolve(root, 'artifacts/tactical-alert-browser-smoke');
 const host = '127.0.0.1';
@@ -24,6 +26,15 @@ const mime = {
   '.webp': 'image/webp',
 };
 const delay = (milliseconds) => new Promise((resolveDelay) => setTimeout(resolveDelay, milliseconds));
+
+function serializeError(error) {
+  return {
+    name: error?.name ?? 'Error',
+    message: error?.message ?? String(error),
+    stack: error?.stack ?? null,
+    details: error?.details ?? null,
+  };
+}
 
 const harnessHtml = `<!doctype html>
 <html>
@@ -256,6 +267,14 @@ const chromeExit = new Promise((resolveExit) => {
   });
 });
 
+async function waitForChromeExit(timeoutMilliseconds) {
+  if (chromeExited) return true;
+  return Promise.race([
+    chromeExit.then(() => true),
+    delay(timeoutMilliseconds).then(() => false),
+  ]);
+}
+
 let socket;
 let nextId = 1;
 const pending = new Map();
@@ -330,6 +349,7 @@ async function waitFor(expression, description) {
   throw new Error(`Timed out waiting for ${description}.`);
 }
 
+let runError = null;
 try {
   await connect();
   await call('Runtime.enable');
@@ -355,16 +375,107 @@ try {
   if (!result.passed) throw new Error(`Tactical alert browser smoke failed: ${result.failures.join('; ')}`);
   console.log('[tactical-alert-browser-smoke] sustained damage aggregation and lifecycle resets passed');
 } catch (error) {
-  await writeFile(resolve(artifacts, 'failure.log'), `${browserLogs.join('')}\n${error.stack}\n`);
-  throw error;
-} finally {
-  socket?.close();
-  if (!chromeExited) chrome.kill('SIGTERM');
-  await Promise.race([chromeExit, delay(2_000)]);
-  if (!chromeExited) {
-    chrome.kill('SIGKILL');
-    await Promise.race([chromeExit, delay(3_000)]);
+  runError = error;
+  try {
+    await writeFile(resolve(artifacts, 'failure.log'), `${browserLogs.join('')}\n${error.stack}\n`);
+  } catch (diagnosticError) {
+    runError = new AggregateError(
+      [error, diagnosticError],
+      `${error.message}; failed to persist browser failure diagnostics: ${diagnosticError.message}`,
+    );
   }
-  await new Promise((resolveClose) => server.close(resolveClose));
-  await rm(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+} finally {
+  const teardown = {
+    status: 'passed',
+    socketClosed: false,
+    process: null,
+    serverClosed: false,
+    profileRemoved: false,
+    errors: [],
+  };
+
+  try {
+    socket?.close();
+    teardown.socketClosed = true;
+  } catch (error) {
+    teardown.errors.push({ phase: 'devtools-socket-close', ...serializeError(error) });
+  }
+
+  try {
+    teardown.process = await shutdownProcessBounded({
+      label: 'Chromium tactical alert smoke',
+      isExited: () => chromeExited,
+      sendSignal: (signal) => chrome.kill(signal),
+      waitForExit: waitForChromeExit,
+      gracefulTimeoutMs: 2_000,
+      forcedTimeoutMs: 3_000,
+    });
+  } catch (error) {
+    teardown.errors.push({ phase: 'browser-process-shutdown', ...serializeError(error) });
+  }
+
+  try {
+    const closePromise = new Promise((resolveClose, rejectClose) => {
+      server.close((error) => error ? rejectClose(error) : resolveClose());
+    });
+    server.closeAllConnections?.();
+    await closePromise;
+    teardown.serverClosed = true;
+  } catch (error) {
+    teardown.errors.push({ phase: 'http-server-close', ...serializeError(error) });
+  }
+
+  if (!chromeExited) {
+    teardown.errors.push({
+      phase: 'chrome-profile-remove',
+      name: 'ProfileCleanupSkipped',
+      message: 'Chrome profile removal skipped because Chromium did not confirm exit.',
+      stack: null,
+      details: { profile },
+    });
+  } else {
+    try {
+      let removeError = null;
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        try {
+          await rm(profile, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+          removeError = null;
+          break;
+        } catch (error) {
+          removeError = error;
+          if (!['ENOTEMPTY', 'EBUSY', 'EPERM'].includes(error?.code) || attempt === 4) throw error;
+          await delay(100 * (attempt + 1));
+        }
+      }
+      if (removeError) throw removeError;
+      teardown.profileRemoved = true;
+    } catch (error) {
+      teardown.errors.push({ phase: 'chrome-profile-remove', profile, ...serializeError(error) });
+    }
+  }
+
+  if (teardown.errors.length) {
+    teardown.status = 'failed';
+    try {
+      await writeFile(resolve(artifacts, 'teardown-failure.json'), JSON.stringify(teardown, null, 2));
+    } catch (diagnosticError) {
+      teardown.errors.push({ phase: 'teardown-diagnostic-write', ...serializeError(diagnosticError) });
+    }
+    const teardownError = new Error(
+      `Tactical alert browser teardown failed: ${teardown.errors.map((entry) => `${entry.phase}: ${entry.message}`).join('; ')}`,
+    );
+    runError = runError
+      ? new AggregateError([runError, teardownError], `${runError.message}; ${teardownError.message}`)
+      : teardownError;
+  } else {
+    try {
+      await writeFile(resolve(artifacts, 'teardown.json'), JSON.stringify(teardown, null, 2));
+    } catch (error) {
+      runError = runError
+        ? new AggregateError([runError, error], `${runError.message}; failed to persist teardown evidence: ${error.message}`)
+        : error;
+    }
+  }
 }
+
+if (runError) throw runError;
