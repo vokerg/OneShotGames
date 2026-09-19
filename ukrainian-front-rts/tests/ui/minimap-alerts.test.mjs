@@ -131,11 +131,59 @@ test('alert queue is prioritized, bounded, deduplicated, and expires determinist
   queue.push({ kind: 'attack', message: 'HQ under attack.', worldPosition: { x: -5, y: 9999 }, createdAt: 40 });
   const active = queue.snapshot(50);
   assert.equal(active.length, 3);
-  assert.equal(active[0].kind, 'attack');
-  assert.deepEqual(active[0].worldPosition, { x: 0, y: WORLD.h });
+  assert.deepEqual(active.map((alert) => alert.kind), ['objective', 'production', 'attack']);
+  assert.deepEqual(active[2].worldPosition, { x: 0, y: WORLD.h });
   assert.equal(queue.prune(1041).length, 0);
   assert.equal(classifyMinimapAlert('Armor deployed from workshop.'), MINIMAP_ALERT_KINDS.PRODUCTION);
   assert.equal(classifyMinimapAlert('Eastern objective secured.'), MINIMAP_ALERT_KINDS.OBJECTIVE);
+});
+
+test('attack aggregation refreshes one per-run alert beyond the ordinary dedupe window', () => {
+  const queue = new MinimapAlertQueue({ maxAlerts: 4, durationMs: 1000, dedupeMs: 200 });
+  const first = queue.push({
+    kind: 'attack',
+    message: 'HQ under attack.',
+    source: 'damage:1:4',
+    aggregateKey: 'attack:1:4',
+    worldPosition: { x: 100, y: 200 },
+    createdAt: 10,
+  });
+  const second = queue.push({
+    kind: 'attack',
+    message: 'HQ under attack.',
+    source: 'damage:1:4',
+    aggregateKey: 'attack:1:4',
+    worldPosition: { x: 140, y: 240 },
+    createdAt: 700,
+  });
+  const third = queue.push({
+    kind: 'attack',
+    message: 'HQ under attack.',
+    source: 'damage:1:4',
+    aggregateKey: 'attack:1:4',
+    worldPosition: { x: 180, y: 280 },
+    createdAt: 1400,
+  });
+
+  assert.equal(second.id, first.id);
+  assert.equal(third.id, first.id);
+  assert.equal(third.count, 3);
+  assert.equal(third.createdAt, 1400);
+  assert.equal(third.expiresAt, 2400);
+  assert.deepEqual(third.worldPosition, { x: 180, y: 280 });
+  assert.equal(queue.snapshot(1500).filter((alert) => alert.kind === 'attack').length, 1);
+  assert.equal(queue.prune(2399).length, 1);
+  assert.equal(queue.prune(2400).length, 0);
+
+  const nextRun = queue.push({
+    kind: 'attack',
+    message: 'HQ under attack.',
+    source: 'damage:2:4',
+    aggregateKey: 'attack:2:4',
+    createdAt: 2500,
+  });
+  assert.notEqual(nextRun.id, first.id);
+  assert.equal(nextRun.count, 1);
 });
 
 test('runtime emits explicit pings, resets with missions, focuses camera, and restores on dispose', () => {
@@ -149,8 +197,14 @@ test('runtime emits explicit pings, resets with missions, focuses camera, and re
     height: 138,
     getBoundingClientRect: () => ({ left: 0, top: 0, width: 220, height: 138 }),
   });
-  const ui = { toast(message) { return message; } };
+  const ui = {
+    toast(message) { return message; },
+    setMission() { return 'mission-set'; },
+    showMissionSelect() { return 'mission-select'; },
+  };
   const originalToast = ui.toast;
+  const originalSetMission = ui.setMission;
+  const originalShowMissionSelect = ui.showMissionSelect;
   const documentTarget = { querySelector: () => null };
   const windowTarget = { innerWidth: 800, innerHeight: 600 };
 
@@ -170,10 +224,19 @@ test('runtime emits explicit pings, resets with missions, focuses camera, and re
   assert.equal(snapshot.schema, 'fields-of-resolve.minimap-snapshot');
   assert.ok(context.calls.some(([name]) => name === 'strokeRect'));
 
-  game.units[0].hp = 75;
+  game.units[0].hp = 90;
   time = 500;
   renderer.mini();
-  assert.equal(game.minimapAlerts.snapshot().some((alert) => alert.kind === 'attack' && alert.worldPosition.x === 220), true);
+  game.units[0].hp = 80;
+  time = 2500;
+  renderer.mini();
+  game.units[0].hp = 75;
+  time = 5000;
+  renderer.mini();
+  const sustained = game.minimapAlerts.snapshot().filter((alert) => alert.kind === 'attack');
+  assert.equal(sustained.length, 1);
+  assert.equal(sustained[0].count, 3);
+  assert.equal(sustained[0].worldPosition.x, 220);
 
   ui.toast('Armor deployed from workshop.');
   assert.equal(game.minimapAlerts.snapshot().filter((alert) => alert.kind === 'production').length, 0, 'ordinary toasts must not create duplicate alerts');
@@ -192,8 +255,17 @@ test('runtime emits explicit pings, resets with missions, focuses camera, and re
   game.missionIndex = 1;
   game.units[0].hp = 60;
   time = 0;
+  ui.setMission();
+  assert.equal(game.minimapAlerts.snapshot().length, 0, 'mission start/restart must clear stale alerts and rebaseline HP');
+
+  game.units[0].hp = 50;
+  time = 1000;
   renderer.mini();
-  assert.equal(game.minimapAlerts.snapshot().length, 0, 'mission reset must clear stale alerts and rebaseline HP');
+  const nextRunAttack = game.minimapAlerts.snapshot().find((alert) => alert.kind === 'attack');
+  assert.equal(nextRunAttack.count, 1);
+
+  ui.showMissionSelect();
+  assert.equal(game.minimapAlerts.snapshot().length, 0, 'returning to mission selection must clear active alerts');
 
   const rendered = renderMinimapSnapshot(fakeContext(), snapshot, { now: time });
   assert.equal(rendered, snapshot);
@@ -201,5 +273,7 @@ test('runtime emits explicit pings, resets with missions, focuses camera, and re
   dispose();
   assert.equal(renderer.mini, originalMini);
   assert.equal(ui.toast, originalToast);
+  assert.equal(ui.setMission, originalSetMission);
+  assert.equal(ui.showMissionSelect, originalShowMissionSelect);
   assert.equal(game.minimapAlerts, undefined);
 });

@@ -87,6 +87,7 @@ function rebaselineObserver(game, state, queue, exploredCells, time) {
   queue.clear();
   exploredCells.clear();
   state.hpById.clear();
+  state.missionRun += 1;
   for (const entity of [...(game?.units || []), ...(game?.buildings || [])]) {
     if (entity?.id != null) state.hpById.set(entity.id, Number(entity.hp) || 0);
   }
@@ -112,7 +113,8 @@ function observeState(game, queue, state, time, windowTarget) {
         kind: MINIMAP_ALERT_KINDS.ATTACK,
         message: `${displayName(entity)} is under attack.`,
         worldPosition: entity,
-        source: `damage:${entity.id}`,
+        source: `damage:${state.missionRun}:${entity.id}`,
+        aggregateKey: `attack:${state.missionRun}:${entity.id}`,
         createdAt: time,
       });
     }
@@ -275,7 +277,7 @@ function renderAlerts(root, alerts, documentTarget) {
     kind.textContent = alert.kind.toUpperCase();
     const text = documentTarget.createElement('span');
     text.className = 'minimapAlertText';
-    text.textContent = alert.message;
+    text.textContent = alert.count > 1 ? `${alert.message} ×${alert.count}` : alert.message;
     button.append(kind, text);
     item.append(button);
     fragment.append(item);
@@ -297,6 +299,8 @@ function alertSignature(alerts) {
     alert.id,
     alert.kind,
     alert.message,
+    alert.count ?? 1,
+    alert.expiresAt ?? '',
     alert.worldPosition?.x ?? '',
     alert.worldPosition?.y ?? '',
   ].join(':')).join('|');
@@ -340,6 +344,7 @@ export function installMinimapAlerts({
     hpById: new Map(),
     objectives: [],
     productionSequence: 0,
+    missionRun: 0,
     missionIdentity: missionIdentity(game),
     lastTime: Number.NEGATIVE_INFINITY,
   };
@@ -354,15 +359,28 @@ export function installMinimapAlerts({
   let lastRefresh = Number.NEGATIVE_INFINITY;
   let renderedAlertSignature = '';
 
-  rebaselineObserver(game, observer, queue, exploredCells, nowFromGame(game, clock));
+  const resetAlertState = (time = nowFromGame(game, clock)) => {
+    rebaselineObserver(game, observer, queue, exploredCells, time);
+    latestAlerts = Object.freeze([]);
+    latestSnapshot = null;
+    lastRefresh = Number.NEGATIVE_INFINITY;
+    renderedAlertSignature = '';
+    if (queueRoot) {
+      if (typeof documentTarget?.createDocumentFragment === 'function' && typeof documentTarget?.createElement === 'function') {
+        renderAlerts(queueRoot, latestAlerts, documentTarget);
+      } else {
+        queueRoot.replaceChildren?.();
+      }
+    }
+  };
+
+  resetAlertState();
 
   const refresh = (force = false) => {
     const time = nowFromGame(game, clock);
     const identity = missionIdentity(game);
     if (identity !== observer.missionIdentity || time < observer.lastTime) {
-      rebaselineObserver(game, observer, queue, exploredCells, time);
-      latestAlerts = Object.freeze([]);
-      renderedAlertSignature = '';
+      resetAlertState(time);
       force = true;
     }
     if (!force && time - lastRefresh < refreshIntervalMs && latestSnapshot) return latestSnapshot;
@@ -398,6 +416,8 @@ export function installMinimapAlerts({
   };
 
   const previousToast = ui?.toast;
+  const previousSetMission = ui?.setMission;
+  const previousShowMissionSelect = ui?.showMissionSelect;
   if (ui && typeof previousToast === 'function') {
     ui.toast = function minimapAlertToast(message, options = undefined) {
       const result = previousToast.call(ui, message);
@@ -417,6 +437,22 @@ export function installMinimapAlerts({
     };
   }
 
+  if (ui && typeof previousSetMission === 'function') {
+    ui.setMission = function minimapAlertsSetMission(...args) {
+      const result = previousSetMission.apply(this, args);
+      resetAlertState();
+      return result;
+    };
+  }
+
+  if (ui && typeof previousShowMissionSelect === 'function') {
+    ui.showMissionSelect = function minimapAlertsShowMissionSelect(...args) {
+      const result = previousShowMissionSelect.apply(this, args);
+      resetAlertState();
+      return result;
+    };
+  }
+
   const push = (alert) => {
     const created = queue.push({ ...alert, createdAt: alert?.createdAt ?? nowFromGame(game, clock) });
     refresh(true);
@@ -431,6 +467,10 @@ export function installMinimapAlerts({
       return changed;
     },
     snapshot() {
+      return latestAlerts;
+    },
+    reset() {
+      resetAlertState();
       return latestAlerts;
     },
     focus(position) {
@@ -473,6 +513,8 @@ export function installMinimapAlerts({
     disposers.splice(0).reverse().forEach((dispose) => dispose());
     renderer.mini = originalMini;
     if (ui && previousToast) ui.toast = previousToast;
+    if (ui && previousSetMission) ui.setMission = previousSetMission;
+    if (ui && previousShowMissionSelect) ui.showMissionSelect = previousShowMissionSelect;
     if (previousApi === undefined) delete game.minimapAlerts;
     else game.minimapAlerts = previousApi;
     queue.clear();

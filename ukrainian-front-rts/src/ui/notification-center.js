@@ -24,6 +24,14 @@ const PRIORITY_BY_KIND = Object.freeze({
   save: 'info',
   system: 'info',
 });
+const FEED_PRIORITY_BY_KIND = Object.freeze({
+  objective: 5,
+  production: 4,
+  research: 3,
+  attack: 2,
+  save: 1,
+  system: 0,
+});
 const DEFAULT_COOLDOWN_SECONDS = Object.freeze({
   objective: 0,
   attack: 8,
@@ -119,14 +127,16 @@ export function createNotificationStore({
   let nextId = 1;
   let history = [];
   let historyOpen = false;
-  let unread = 0;
+  let unreadIds = new Set();
 
   function publish(input) {
     const candidate = normalizeNotification(input, nextId);
     const existingIndex = history.findIndex((entry) => entry.key === candidate.key);
     const existing = existingIndex >= 0 ? history[existingIndex] : null;
-    const collapsible = existing && candidate.time >= existing.time &&
-      candidate.time - existing.time <= cooldowns[candidate.kind];
+    const collapsible = existing && candidate.time >= existing.time && (
+      candidate.kind === NOTIFICATION_KINDS.ATTACK
+      || candidate.time - existing.time <= cooldowns[candidate.kind]
+    );
     let record;
     if (collapsible) {
       record = deepFreeze({
@@ -146,37 +156,46 @@ export function createNotificationStore({
     }
     history.unshift(record);
     if (history.length > maxHistory) history.length = maxHistory;
-    unread = historyOpen ? 0 : Math.min(maxHistory, unread + 1);
+    const retainedIds = new Set(history.map((entry) => entry.id));
+    unreadIds = new Set([...unreadIds].filter((id) => retainedIds.has(id)));
+    if (historyOpen) unreadIds.clear();
+    else unreadIds.add(record.id);
     return record;
   }
 
   function setHistoryOpen(open) {
     historyOpen = Boolean(open);
-    if (historyOpen) unread = 0;
+    if (historyOpen) unreadIds.clear();
     return snapshot();
   }
 
   function clear() {
     history = [];
-    unread = 0;
+    unreadIds.clear();
     return snapshot();
   }
 
   function reset() {
     history = [];
     historyOpen = false;
-    unread = 0;
+    unreadIds.clear();
     nextId = 1;
     return snapshot();
   }
 
   function snapshot() {
+    const feed = history.slice()
+      .sort((left, right) =>
+        (FEED_PRIORITY_BY_KIND[right.kind] ?? 0) - (FEED_PRIORITY_BY_KIND[left.kind] ?? 0)
+        || right.time - left.time
+        || right.id.localeCompare(left.id))
+      .slice(0, maxFeed);
     return deepFreeze({
       schema: NOTIFICATION_CENTER_SCHEMA,
       version: NOTIFICATION_CENTER_VERSION,
       historyOpen,
-      unread,
-      feed: history.slice(0, maxFeed),
+      unread: unreadIds.size,
+      feed,
       history: history.slice(),
     });
   }
@@ -276,7 +295,7 @@ export function deriveNotificationInputs(previous, current) {
     const damage = Math.max(1, Math.ceil(before.hp - entity.hp));
     const healthRatio = entity.hp / entity.maxHp;
     inputs.push({
-      key: `attack:${entity.id}`,
+      key: `attack:${current.missionKey}:${entity.id}`,
       kind: NOTIFICATION_KINDS.ATTACK,
       priority: healthRatio <= 0.3 ? 'critical' : 'warning',
       title: `Under attack: ${entity.name}`,
