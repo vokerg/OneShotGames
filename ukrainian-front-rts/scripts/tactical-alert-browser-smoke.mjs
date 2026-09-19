@@ -86,6 +86,8 @@ const harnessHtml = `<!doctype html>
       refreshIntervalMs: 0,
     });
 
+    ui.setMission();
+
     const damage = (hp, milliseconds) => {
       unit.hp = hp;
       now = milliseconds;
