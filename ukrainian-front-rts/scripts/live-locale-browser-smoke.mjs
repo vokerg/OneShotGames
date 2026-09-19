@@ -18,6 +18,15 @@ const mime = {
 };
 const assert = (condition, message) => { if (!condition) throw new Error(message); };
 
+function serializeError(error) {
+  return {
+    name: error?.name ?? 'Error',
+    message: error?.message ?? String(error),
+    stack: error?.stack ?? null,
+    details: error?.details ?? null,
+  };
+}
+
 await mkdir(artifacts, { recursive: true });
 const pathEntries = (process.env.PATH || '').split(delimiter);
 const browser = process.env.CHROME_BIN || ['google-chrome', 'chromium', 'chromium-browser'].find((name) =>
@@ -52,6 +61,7 @@ const session = await openChromeDevToolsSession({
   windowSize: '1920,1080',
 });
 const report = { selector: {}, mission: {}, browserErrors: [] };
+let runError = null;
 
 async function snapshot() {
   return JSON.parse(await session.evaluate(`JSON.stringify((() => {
@@ -197,15 +207,61 @@ try {
     .map((event) => event.params);
   assert(report.browserErrors.length === 0, `Browser reported ${report.browserErrors.length} live-locale error(s).`);
 
-  await writeFile(join(artifacts, 'live-locale-browser-smoke.json'), `${JSON.stringify(report, null, 2)}\n`);
-  console.log('[live-locale-smoke] selector and active mission en → uk → en localization passed.');
 } catch (error) {
+  runError = error;
   report.error = error.stack || error.message;
   report.diagnostics = session.diagnostics();
-  await writeFile(join(artifacts, 'live-locale-browser-smoke.json'), `${JSON.stringify(report, null, 2)}\n`);
   try { await session.captureScreenshot(join(artifacts, 'live-locale-browser-failure.png')); } catch {}
-  throw error;
 } finally {
-  await session.close();
-  await new Promise((resolveClose) => server.close(resolveClose));
+  const teardown = {
+    status: 'passed',
+    session: null,
+    serverClosed: false,
+    errors: [],
+  };
+
+  try {
+    teardown.session = await session.close();
+  } catch (error) {
+    teardown.errors.push({ phase: 'browser-session-close', ...serializeError(error) });
+  }
+
+  try {
+    const closePromise = new Promise((resolveClose, rejectClose) => {
+      server.close((error) => error ? rejectClose(error) : resolveClose());
+    });
+    server.closeAllConnections?.();
+    await closePromise;
+    teardown.serverClosed = true;
+  } catch (error) {
+    teardown.errors.push({ phase: 'http-server-close', ...serializeError(error) });
+  }
+
+  if (teardown.errors.length) teardown.status = 'failed';
+  report.teardown = teardown;
+
+  try {
+    await writeFile(join(artifacts, 'live-locale-browser-teardown.json'), `${JSON.stringify(teardown, null, 2)}\n`);
+    await writeFile(join(artifacts, 'live-locale-browser-smoke.json'), `${JSON.stringify(report, null, 2)}\n`);
+  } catch (diagnosticError) {
+    runError = runError
+      ? new AggregateError(
+          [runError, diagnosticError],
+          `${runError.message}; failed to persist live-locale teardown diagnostics: ${diagnosticError.message}`,
+        )
+      : diagnosticError;
+  }
+
+  if (teardown.errors.length) {
+    const teardownError = new Error(
+      `Live-locale browser teardown failed: ${teardown.errors.map((entry) => `${entry.phase}: ${entry.message}`).join('; ')}`,
+    );
+    teardownError.details = teardown;
+    runError = runError
+      ? new AggregateError([runError, teardownError], `${runError.message}; ${teardownError.message}`)
+      : teardownError;
+  }
 }
+
+if (runError) throw runError;
+console.log('[live-locale-smoke] selector and active mission en → uk → en localization passed.');
