@@ -1,3 +1,5 @@
+import { TEAM } from '../config.js';
+
 function previewColor(preview) {
   if (!preview?.valid) return 'rgba(210, 70, 60, 0.78)';
   if (preview.blocksPath) return 'rgba(224, 168, 58, 0.82)';
@@ -41,6 +43,17 @@ function drawPreview(game, renderer, preview) {
     context.lineTo(topLeft.x + width, screenY);
     context.stroke();
   }
+
+  renderer.drawBuildingAtlasPreview?.({
+    type: preview.type,
+    team: TEAM.UA,
+    x: preview.x,
+    y: preview.y,
+    rotation: preview.rotation,
+  }, {
+    state: 'placement',
+    alpha: preview.valid ? 0.86 : 0.48,
+  });
 
   const text = preview.valid
     ? (preview.warning || `Valid ${preview.footprint.width}×${preview.footprint.height} footprint · R rotates`)
