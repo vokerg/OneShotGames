@@ -100,6 +100,19 @@ test('building art pass draws canonical atlas animation while preserving fallbac
   assert.equal(draws[0].animationId, 'ua.command-post.active');
   assert.equal(renderer.healthCalls, 1);
 
+  renderer.building({
+    id: 9,
+    type: 'depot',
+    team: TEAM.UA,
+    x: 120,
+    y: 220,
+    hp: 680,
+    maxHp: 680,
+    queue: [],
+    selected: false,
+  });
+  assert.equal(renderer.healthCalls, 1, 'full-health unselected buildings should not add persistent health-bar clutter');
+
   assert.equal(
     renderer.building({ id: 8, type: 'unknown', team: TEAM.UA, x: 0, y: 0, hp: 1, maxHp: 1 }),
     'fallback-building:unknown',
