@@ -60,6 +60,7 @@ for(const [teamKey,types] of Object.entries(roster)){
 game.camera={x:innerWidth/2-origin.x*.85,y:innerHeight/2-origin.y*.85,z:.85};
 let paused=false,facing=1,valueCheck=false,last=performance.now(),templateStateIndex=0;
 let ukrainianStateIndex=0,ukrainianDirectionIndex=2,supportReviewPage=-1,buildingReview=false,buildingStateIndex=0;
+globalThis.__UFR169_BUILDING_REVIEW_ACTIVE__=false;
 let templateRuntime=null,templateLoadError=null;
 let ukrainianInfantryRuntime=null,ukrainianInfantryLoadError=null;
 let russianInfantryRuntime=null,russianInfantryLoadError=null;
@@ -255,8 +256,8 @@ addEventListener('keydown',event=>{
  if(event.key.toLowerCase()==='t')templateStateIndex=(templateStateIndex+1)%TEMPLATE_UNIT_STATES.length;
  if(event.key.toLowerCase()==='u'){if(buildingReview)buildingStateIndex=(buildingStateIndex+1)%buildingReviewStates.length;else ukrainianStateIndex=(ukrainianStateIndex+1)%SUPPORT_VISUAL_REQUIRED_STATES.length;}
  if(event.key.toLowerCase()==='r')ukrainianDirectionIndex=(ukrainianDirectionIndex+1)%SUPPORT_VISUAL_REQUIRED_DIRECTIONS.length;
- if(event.key.toLowerCase()==='p'){buildingReview=false;supportReviewPage=(supportReviewPage+2)%(SUPPORT_VISUAL_REVIEW_PAGES.length+1)-1;}
- if(event.key.toLowerCase()==='b'){buildingReview=!buildingReview;if(buildingReview)supportReviewPage=-1;}
+ if(event.key.toLowerCase()==='p'){buildingReview=false;globalThis.__UFR169_BUILDING_REVIEW_ACTIVE__=false;supportReviewPage=(supportReviewPage+2)%(SUPPORT_VISUAL_REVIEW_PAGES.length+1)-1;}
+ if(event.key.toLowerCase()==='b'){buildingReview=!buildingReview;globalThis.__UFR169_BUILDING_REVIEW_ACTIVE__=buildingReview;if(buildingReview)supportReviewPage=-1;}
  if(event.key.toLowerCase()==='v')valueCheck=!valueCheck;
  if(event.key.toLowerCase()==='s')capture();
  if(event.code==='Space'){event.preventDefault();paused=!paused;for(const unit of game.units)unit.order=paused?null:{kind:'lab-motion'};}
