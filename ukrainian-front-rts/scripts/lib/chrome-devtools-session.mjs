@@ -1,9 +1,21 @@
 import { spawn } from 'node:child_process';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import { shutdownProcessBounded } from './bounded-process-shutdown.mjs';
+import { removeChromeProfileWithRetry } from './chrome-profile-cleanup.mjs';
+
 const delay = (milliseconds) => new Promise((resolveDelay) => setTimeout(resolveDelay, milliseconds));
+
+function serializeError(error) {
+  return {
+    name: error?.name ?? 'Error',
+    message: error?.message ?? String(error),
+    stack: error?.stack ?? null,
+    details: error?.details ?? null,
+  };
+}
 
 export async function openChromeDevToolsSession({
   browser,
@@ -46,6 +58,14 @@ export async function openChromeDevToolsSession({
       resolveExit();
     });
   });
+
+  async function waitForChromeExit(timeoutMilliseconds) {
+    if (chromeExited) return true;
+    return Promise.race([
+      chromeExit.then(() => true),
+      delay(timeoutMilliseconds).then(() => false),
+    ]);
+  }
 
   let socket = null;
   let nextId = 1;
@@ -161,17 +181,63 @@ export async function openChromeDevToolsSession({
   }
 
   async function close() {
+    const teardown = {
+      status: 'passed',
+      socketClosed: false,
+      process: null,
+      profileRemoved: false,
+      profileCleanup: null,
+      errors: [],
+    };
+
     try {
       socket?.close();
-    } catch {}
-    if (!chromeExited) chrome.kill('SIGTERM');
-    await Promise.race([chromeExit, delay(3000)]);
-    if (!chromeExited) {
-      chrome.kill('SIGKILL');
-      await Promise.race([chromeExit, delay(3000)]);
+      teardown.socketClosed = true;
+    } catch (error) {
+      teardown.errors.push({ phase: 'devtools-socket-close', ...serializeError(error) });
     }
-    if (!chromeExited) throw new Error('Chromium did not exit after forced DevTools teardown.');
-    await rm(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+
+    try {
+      teardown.process = await shutdownProcessBounded({
+        label: 'Chromium DevTools session',
+        isExited: () => chromeExited,
+        sendSignal: (signal) => chrome.kill(signal),
+        waitForExit: waitForChromeExit,
+        gracefulTimeoutMs: 2_000,
+        forcedTimeoutMs: 3_000,
+      });
+    } catch (error) {
+      teardown.errors.push({ phase: 'browser-process-shutdown', ...serializeError(error) });
+    }
+
+    if (!chromeExited) {
+      teardown.errors.push({
+        phase: 'chrome-profile-remove',
+        name: 'ProfileCleanupSkipped',
+        message: 'Chrome profile removal skipped because Chromium did not confirm exit.',
+        stack: null,
+        details: { profile },
+      });
+    } else {
+      try {
+        teardown.profileCleanup = await removeChromeProfileWithRetry(profile);
+        teardown.profileRemoved = true;
+      } catch (error) {
+        teardown.errors.push({ phase: 'chrome-profile-remove', profile, ...serializeError(error) });
+      }
+    }
+
+    if (teardown.errors.length) {
+      teardown.status = 'failed';
+      const error = new Error(
+        `Chromium DevTools teardown failed: ${teardown.errors.map((entry) => `${entry.phase}: ${entry.message}`).join('; ')}`,
+      );
+      error.name = 'ChromeDevToolsTeardownError';
+      error.details = teardown;
+      throw error;
+    }
+
+    return teardown;
   }
 
   try {
@@ -186,6 +252,7 @@ export async function openChromeDevToolsSession({
       await close();
     } catch (closeError) {
       browserLogs.push(`[close-after-connect-failure] ${closeError.stack || closeError.message}\n`);
+      error.devToolsTeardown = closeError.details ?? serializeError(closeError);
     }
     error.devToolsDiagnostics = diagnostics();
     throw error;
