@@ -287,6 +287,32 @@ try {
   await dispatchKey(' ', 'Space');
   screenshots.push(await capture('inspection-death-northwest-still.png'));
 
+  await dispatchKey('b', 'KeyB');
+  await waitFor(
+    `window.__UFR169_BUILDING_ART_LAB__?.ready === true`,
+    'the UFR-169 production building atlas review',
+  );
+  await dispatchKey('3', 'Digit3');
+  screenshots.push(await capture('buildings-idle-tactical-color.png'));
+
+  await dispatchKey('2', 'Digit2');
+  await dispatchKey('u', 'KeyU');
+  await dispatchKey('u', 'KeyU');
+  screenshots.push(await capture('buildings-damaged-standard-color.png'));
+
+  await dispatchKey('1', 'Digit1');
+  await dispatchKey('v', 'KeyV');
+  await dispatchKey('u', 'KeyU');
+  await dispatchKey('u', 'KeyU');
+  screenshots.push(await capture('buildings-foundation-strategic-value.png'));
+
+  const buildingReview = JSON.parse(await evaluate(`JSON.stringify(window.__UFR169_BUILDING_ART_LAB__)`));
+  if (!buildingReview?.ready || buildingReview?.error) reviewFailures.push(`building atlas review failed: ${buildingReview?.error || 'not ready'}`);
+  if (buildingReview?.state !== 'foundation') reviewFailures.push(`expected building foundation review state, found ${buildingReview?.state}`);
+  if (buildingReview?.zoom !== 0.65 || buildingReview?.valueCheck !== true) {
+    reviewFailures.push(`building strategic/value review did not apply expected presentation: ${JSON.stringify(buildingReview)}`);
+  }
+
   const runtimeFailures = events.filter((event) =>
     event.method === 'Runtime.exceptionThrown'
     || event.method === 'Inspector.targetCrashed'
@@ -302,6 +328,7 @@ try {
     status: reviewFailures.length ? 'failed' : 'passed',
     viewport: '1280x720@1x',
     review,
+    buildingReview,
     screenshots,
     warnings,
     failures: reviewFailures,
@@ -310,8 +337,8 @@ try {
   await writeFile(join(artifacts, 'ukrainian-infantry-art-lab-smoke.json'), JSON.stringify(result, null, 2));
   if (reviewFailures.length) throw new Error(`UFR-110 Art Lab browser smoke failed: ${reviewFailures.join('; ')}`);
   console.log(
-    `[ufr-110-art-lab] ${review.combinationsReviewed} combinations rendered; `
-    + `${review.frameCount} frames; ${review.animationCount} animations; screenshots: ${screenshots.join(', ')}`,
+    `[art-lab] ${review.combinationsReviewed} infantry combinations rendered; production building atlas ready; `
+    + `${review.frameCount} infantry frames; ${review.animationCount} infantry animations; screenshots: ${screenshots.join(', ')}`,
   );
 } catch (error) {
   try {
