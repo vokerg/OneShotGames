@@ -110,49 +110,115 @@ function colorsFor(faction) {
   return faction === 'ukraine' ? PALETTE.ua : PALETTE.ru;
 }
 
-function largeRoleMarkup(role, colors) {
-  switch (role) {
-    case 'command': return [
-      `<rect x="68" y="17" width="5" height="37" fill="${colors.deep}"/>`,
-      `<rect x="60" y="16" width="21" height="5" fill="${colors.accent}"/>`,
-      `<rect x="66" y="8" width="9" height="9" fill="${colors.optic}"/>`,
+function largeRoleMarkup(building, colors) {
+  const ua = building.faction === 'ukraine';
+  switch (building.role) {
+    case 'command': return ua ? [
+      `<rect x="68" y="18" width="4" height="38" fill="${PALETTE.ink}"/>`,
+      `<rect x="69" y="17" width="2" height="39" fill="${PALETTE.metal}"/>`,
+      `<path d="M58 25h24M61 19h18M64 31h12" stroke="${colors.accent}" stroke-width="3"/>`,
+      `<path d="M53 35q8-13 16 0" fill="none" stroke="${colors.optic}" stroke-width="4"/>`,
+      `<rect x="25" y="31" width="25" height="7" fill="${colors.deep}"/>`,
+      `<rect x="28" y="28" width="7" height="7" fill="${colors.optic}"/>`,
+      `<rect x="38" y="28" width="7" height="7" fill="${colors.optic}"/>`,
+    ].join('') : [
+      `<rect x="68" y="13" width="6" height="43" fill="${PALETTE.ink}"/>`,
+      `<rect x="70" y="12" width="2" height="44" fill="${PALETTE.metal}"/>`,
+      `<path d="M57 18h27M60 27h21M63 36h15" stroke="${colors.accent}" stroke-width="4"/>`,
+      `<rect x="20" y="28" width="39" height="12" fill="${colors.deep}"/>`,
+      `<rect x="24" y="31" width="12" height="5" fill="${colors.optic}"/>`,
+      `<rect x="40" y="31" width="14" height="5" fill="${colors.optic}"/>`,
     ].join('');
-    case 'logistics': return [
-      `<rect x="17" y="52" width="19" height="19" fill="${colors.shadow}"/>`,
-      `<rect x="39" y="49" width="18" height="22" fill="${colors.light}"/>`,
-      `<rect x="60" y="52" width="19" height="19" fill="${colors.shadow}"/>`,
+    case 'logistics': return ua ? [
+      `<rect x="16" y="49" width="17" height="21" fill="${colors.shadow}"/>`,
+      `<rect x="35" y="44" width="18" height="26" fill="${colors.light}"/>`,
+      `<rect x="55" y="49" width="18" height="21" fill="${colors.shadow}"/>`,
+      `<path d="M18 53h13M37 49h14M57 53h14" stroke="${colors.accent}" stroke-width="2"/>`,
+      `<rect x="22" y="72" width="48" height="5" fill="${PALETTE.metal}"/>`,
+    ].join('') : [
+      `<rect x="13" y="48" width="22" height="26" fill="${colors.deep}"/>`,
+      `<rect x="38" y="44" width="21" height="30" fill="${colors.shadow}"/>`,
+      `<rect x="62" y="48" width="22" height="26" fill="${colors.deep}"/>`,
+      `<rect x="17" y="52" width="14" height="5" fill="${colors.light}"/>`,
+      `<rect x="42" y="49" width="13" height="5" fill="${colors.light}"/>`,
+      `<rect x="66" y="52" width="14" height="5" fill="${colors.light}"/>`,
+      `<path d="M12 76h73" stroke="${PALETTE.metal}" stroke-width="5"/>`,
     ].join('');
-    case 'infantry': return [
-      `<rect x="17" y="28" width="13" height="18" fill="${colors.light}"/>`,
-      `<rect x="34" y="23" width="13" height="23" fill="${colors.shadow}"/>`,
-      `<rect x="51" y="28" width="13" height="18" fill="${colors.light}"/>`,
+    case 'infantry': return ua ? [
+      `<rect x="17" y="36" width="14" height="29" fill="${colors.shadow}"/>`,
+      `<rect x="34" y="30" width="14" height="35" fill="${colors.light}"/>`,
+      `<rect x="51" y="36" width="14" height="29" fill="${colors.shadow}"/>`,
+      `<rect x="20" y="40" width="8" height="4" fill="${colors.optic}"/>`,
+      `<rect x="37" y="34" width="8" height="4" fill="${colors.optic}"/>`,
+      `<rect x="54" y="40" width="8" height="4" fill="${colors.optic}"/>`,
+    ].join('') : [
+      `<rect x="13" y="33" width="58" height="30" fill="${colors.shadow}"/>`,
+      `<path d="M18 33v-7h8v7m9 0v-10h8v10m9 0v-7h8v7" fill="${colors.light}"/>`,
+      `<path d="M18 43h45M18 52h45" stroke="${colors.deep}" stroke-width="4"/>`,
     ].join('');
-    case 'vehicle': return [
-      `<rect x="16" y="49" width="64" height="23" fill="${colors.deep}"/>`,
-      `<rect x="22" y="54" width="52" height="14" fill="${colors.shadow}"/>`,
-      `<rect x="34" y="58" width="28" height="9" fill="${PALETTE.metal}"/>`,
+    case 'vehicle': return ua ? [
+      `<rect x="15" y="51" width="67" height="22" fill="${colors.deep}"/>`,
+      `<rect x="20" y="56" width="18" height="13" fill="${PALETTE.ink}"/>`,
+      `<rect x="42" y="56" width="18" height="13" fill="${PALETTE.ink}"/>`,
+      `<rect x="64" y="56" width="13" height="13" fill="${PALETTE.ink}"/>`,
+      `<path d="M23 53h51" stroke="${colors.accent}" stroke-width="3"/>`,
+      `<path d="M67 50V30h5v20l11-9" fill="none" stroke="${PALETTE.metal}" stroke-width="4"/>`,
+    ].join('') : [
+      `<rect x="11" y="48" width="74" height="27" fill="${colors.deep}"/>`,
+      `<rect x="17" y="54" width="28" height="16" fill="${PALETTE.ink}"/>`,
+      `<rect x="50" y="54" width="29" height="16" fill="${PALETTE.ink}"/>`,
+      `<path d="M16 49h64" stroke="${colors.light}" stroke-width="4"/>`,
+      `<path d="M70 49V25h6v24l9-12" fill="none" stroke="${PALETTE.metal}" stroke-width="5"/>`,
     ].join('');
-    case 'uas-ew': return [
-      `<rect x="46" y="14" width="5" height="37" fill="${colors.deep}"/>`,
-      `<rect x="29" y="18" width="39" height="5" fill="${colors.optic}"/>`,
-      `<rect x="37" y="27" width="22" height="11" fill="${colors.shadow}"/>`,
+    case 'uas-ew': return ua ? [
+      `<rect x="45" y="16" width="4" height="42" fill="${PALETTE.ink}"/>`,
+      `<rect x="46" y="15" width="2" height="43" fill="${PALETTE.metal}"/>`,
+      `<path d="M29 23h35M34 31h25" stroke="${colors.optic}" stroke-width="4"/>`,
+      `<path d="M32 18q14-12 28 0" fill="none" stroke="${colors.accent}" stroke-width="3"/>`,
+      `<rect x="19" y="44" width="19" height="18" fill="${colors.shadow}"/>`,
+      `<rect x="55" y="44" width="20" height="18" fill="${colors.shadow}"/>`,
+    ].join('') : [
+      `<rect x="45" y="10" width="6" height="49" fill="${PALETTE.ink}"/>`,
+      `<path d="M20 20h57M27 29h43M34 38h29" stroke="${colors.optic}" stroke-width="5"/>`,
+      `<path d="M23 17l9-8M73 17l-9-8" stroke="${PALETTE.metal}" stroke-width="4"/>`,
+      `<rect x="16" y="46" width="64" height="17" fill="${colors.deep}"/>`,
     ].join('');
-    case 'fires': return [
-      `<rect x="24" y="24" width="48" height="13" fill="${colors.shadow}"/>`,
-      `<rect x="30" y="18" width="36" height="6" fill="${PALETTE.metal}"/>`,
-      `<rect x="37" y="12" width="22" height="6" fill="${colors.accent}"/>`,
+    case 'fires': return ua ? [
+      `<rect x="22" y="38" width="51" height="16" fill="${colors.shadow}"/>`,
+      `<rect x="29" y="31" width="37" height="8" fill="${PALETTE.metal}"/>`,
+      `<path d="M32 29h31l-5-8H37z" fill="${colors.accent}"/>`,
+      `<rect x="18" y="58" width="18" height="13" fill="${colors.deep}"/>`,
+      `<rect x="59" y="58" width="18" height="13" fill="${colors.deep}"/>`,
+    ].join('') : [
+      `<rect x="16" y="38" width="64" height="17" fill="${colors.shadow}"/>`,
+      `<rect x="22" y="29" width="52" height="10" fill="${PALETTE.metal}"/>`,
+      `<path d="M27 28h42l-7-10H34z" fill="${colors.light}"/>`,
+      `<rect x="12" y="58" width="25" height="15" fill="${colors.deep}"/>`,
+      `<rect x="60" y="58" width="25" height="15" fill="${colors.deep}"/>`,
     ].join('');
-    case 'air-defense': return [
-      `<rect x="45" y="14" width="7" height="37" fill="${colors.deep}"/>`,
-      `<path d="M48 14L28 32h40z" fill="${colors.optic}"/>`,
-      `<rect x="34" y="35" width="28" height="9" fill="${colors.shadow}"/>`,
+    case 'air-defense': return ua ? [
+      `<rect x="44" y="21" width="5" height="35" fill="${PALETTE.ink}"/>`,
+      `<path d="M47 18L26 33h42z" fill="${colors.optic}" stroke="${PALETTE.ink}" stroke-width="3"/>`,
+      `<rect x="31" y="38" width="33" height="9" fill="${colors.shadow}"/>`,
+      `<path d="M18 57l12-8M77 57l-12-8" stroke="${PALETTE.metal}" stroke-width="5"/>`,
+    ].join('') : [
+      `<rect x="45" y="16" width="6" height="41" fill="${PALETTE.ink}"/>`,
+      `<path d="M48 13L22 34h52z" fill="${colors.optic}" stroke="${PALETTE.ink}" stroke-width="4"/>`,
+      `<rect x="27" y="38" width="42" height="11" fill="${colors.deep}"/>`,
+      `<path d="M14 60l17-11M82 60L65 49" stroke="${PALETTE.metal}" stroke-width="6"/>`,
     ].join('');
-    case 'engineer': return [
-      `<rect x="19" y="49" width="58" height="20" fill="${colors.shadow}"/>`,
-      `<path d="M24 49l12-16h25l12 16z" fill="${colors.light}"/>`,
-      `<rect x="45" y="29" width="7" height="20" fill="${colors.accent}"/>`,
+    case 'engineer': return ua ? [
+      `<rect x="18" y="50" width="59" height="19" fill="${colors.shadow}"/>`,
+      `<path d="M22 50l13-18h27l12 18z" fill="${colors.light}"/>`,
+      `<path d="M47 48V25h5v23l16-15" fill="none" stroke="${colors.accent}" stroke-width="4"/>`,
+      `<rect x="25" y="63" width="44" height="7" fill="${PALETTE.metal}"/>`,
+    ].join('') : [
+      `<rect x="13" y="48" width="71" height="22" fill="${colors.shadow}"/>`,
+      `<path d="M18 48l15-19h32l15 19z" fill="${colors.light}"/>`,
+      `<path d="M49 47V19h6v28l19-16" fill="none" stroke="${colors.accent}" stroke-width="5"/>`,
+      `<rect x="19" y="63" width="59" height="8" fill="${PALETTE.metal}"/>`,
     ].join('');
-    default: throw new RangeError(`Unknown building role: ${role}.`);
+    default: throw new RangeError(`Unknown building role: ${building.role}.`);
   }
 }
 
@@ -171,51 +237,99 @@ function iconRoleMarkup(role, colors) {
   }
 }
 
-function constructionMarkup(state, colors) {
-  if (state === 'placement') return `<rect x="5" y="53" width="86" height="38" fill="none" stroke="${colors.accent}" stroke-width="2" stroke-dasharray="5 3"/><path d="M9 87L87 57M9 57l78 30" stroke="${colors.optic}" stroke-width="2" opacity=".8"/>`;
-  if (state === 'foundation') return `<rect x="10" y="70" width="76" height="18" fill="${colors.deep}"/><rect x="14" y="73" width="68" height="10" fill="${PALETTE.metal}"/>`;
-  if (state === 'frame') return `<rect x="10" y="70" width="76" height="18" fill="${colors.deep}"/><path d="M16 70V32h64v38M16 35h64M31 32v38M48 32v38M65 32v38" fill="none" stroke="${PALETTE.metal}" stroke-width="5"/>`;
-  if (state === 'fitout') return `<rect x="10" y="34" width="76" height="54" fill="${colors.shadow}"/><rect x="15" y="39" width="66" height="44" fill="${colors.base}"/><path d="M15 39l13-15h40l13 15z" fill="${colors.light}"/><rect x="41" y="64" width="14" height="19" fill="${colors.deep}"/>`;
+function constructionMarkup(building, state, colors) {
+  const ua = building.faction === 'ukraine';
+  const pad = ua
+    ? `<path d="M9 78L23 61h54l10 17-7 10H16z" fill="${colors.deep}"/><path d="M16 77L28 65h43l9 12-6 6H21z" fill="${colors.shadow}"/>`
+    : `<path d="M6 77L18 58h63l10 19-7 11H13z" fill="${colors.deep}"/><path d="M11 76L23 63h52l9 13-6 7H18z" fill="${colors.shadow}"/>`;
+  if (state === 'placement') return `${pad}<path d="M10 78L24 57h52l11 21-8 10H18z" fill="none" stroke="${colors.accent}" stroke-width="2" stroke-dasharray="5 3"/><path d="M17 81L80 62M19 63l60 20" stroke="${colors.optic}" stroke-width="2" opacity=".9"/>`;
+  if (state === 'foundation') return `${pad}<path d="M18 72h61v11H18z" fill="${PALETTE.metal}"/><path d="M23 69h51v7H23z" fill="${colors.base}"/><path d="M28 68v15M48 68v15M68 68v15" stroke="${colors.deep}" stroke-width="3"/>`;
+  if (state === 'frame') return `${pad}<path d="M19 70V39l12-13h39l10 13v31M21 42h57M31 27v43M48 27v43M66 27v43" fill="none" stroke="${PALETTE.metal}" stroke-width="5"/><path d="M20 70h59" stroke="${colors.accent}" stroke-width="3"/>`;
+  if (state === 'fitout') return `${pad}<path d="M17 43l13-15h39l12 15v37H17z" fill="${colors.deep}"/><path d="M22 44l11-11h33l10 11v31H22z" fill="${colors.base}"/><path d="M22 44h54L66 33H33z" fill="${colors.light}"/><rect x="40" y="59" width="16" height="16" fill="${PALETTE.ink}"/>`;
   return null;
 }
 
+function groundAndShellMarkup(building, colors) {
+  const ua = building.faction === 'ukraine';
+  const ground = [
+    `<ellipse cx="49" cy="86" rx="${ua ? 42 : 45}" ry="${ua ? 7 : 8}" fill="${PALETTE.ink}" opacity=".7"/>`,
+    ua
+      ? `<path d="M8 76l14-21h56l10 21-9 11H17z" fill="${colors.deep}"/><path d="M14 75l13-15h46l8 15-7 7H21z" fill="${colors.shadow}"/>`
+      : `<path d="M5 76l13-24h64l11 24-9 12H13z" fill="${colors.deep}"/><path d="M11 75l13-17h52l10 17-8 8H18z" fill="${colors.shadow}"/><path d="M8 70h10M80 70h10M14 61h10M74 61h10" stroke="${PALETTE.metal}" stroke-width="4"/>`,
+  ].join('');
+  const shell = ua ? [
+    `<path d="M17 43L31 27h38l13 16v36H17z" fill="${colors.deep}"/>`,
+    `<path d="M22 44L34 32h32l11 12v30H22z" fill="${colors.base}"/>`,
+    `<path d="M22 44h55L66 32H34z" fill="${colors.light}"/>`,
+    `<path d="M22 44v30h55V44l-7 6H29z" fill="${colors.base}" opacity=".78"/>`,
+    `<path d="M29 50h41M29 56h41" stroke="${colors.shadow}" stroke-width="2"/>`,
+    `<rect x="39" y="59" width="18" height="16" fill="${PALETTE.ink}"/><rect x="43" y="63" width="10" height="12" fill="${colors.shadow}"/>`,
+    `<path d="M18 78h63" stroke="${PALETTE.metal}" stroke-width="3"/>`,
+    `<rect x="24" y="47" width="8" height="5" fill="${colors.optic}"/><rect x="67" y="47" width="7" height="5" fill="${colors.optic}"/>`,
+  ].join('') : [
+    `<path d="M12 45L25 28h48l14 17v35H12z" fill="${colors.deep}"/>`,
+    `<path d="M17 45L29 33h40l12 12v30H17z" fill="${colors.base}"/>`,
+    `<path d="M17 45h64L69 33H29z" fill="${colors.light}"/>`,
+    `<path d="M17 45v30h64V45l-8 7H25z" fill="${colors.shadow}" opacity=".7"/>`,
+    `<path d="M23 52h52M23 60h52" stroke="${colors.deep}" stroke-width="3"/>`,
+    `<rect x="38" y="59" width="21" height="17" fill="${PALETTE.ink}"/><rect x="43" y="63" width="11" height="13" fill="${colors.shadow}"/>`,
+    `<path d="M13 79h74" stroke="${PALETTE.metal}" stroke-width="4"/>`,
+    `<rect x="22" y="48" width="11" height="5" fill="${colors.optic}"/><rect x="66" y="48" width="10" height="5" fill="${colors.optic}"/>`,
+  ].join('');
+  return ground + shell;
+}
+
+function surfaceDetailMarkup(building, colors) {
+  const ua = building.faction === 'ukraine';
+  const tier = building.tier;
+  return [
+    ua
+      ? `<path d="M31 36h34M27 41h42" stroke="${colors.shadow}" stroke-width="2"/><rect x="28" y="67" width="7" height="5" fill="${colors.accent}"/>`
+      : `<path d="M28 37h42M24 42h50" stroke="${colors.shadow}" stroke-width="3"/><rect x="66" y="67" width="8" height="5" fill="${colors.accent}"/>`,
+    tier > 0 ? `<rect x="${ua ? 60 : 23}" y="54" width="10" height="5" fill="${PALETTE.metal}"/>` : '',
+    tier > 1 ? `<path d="M${ua ? 59 : 27} 54v-8h11v8" fill="none" stroke="${colors.optic}" stroke-width="3"/>` : '',
+  ].join('');
+}
+
 function damageMarkup(state) {
-  if (state === 'damaged') return '<path d="M24 28l9 9-6 8 11 10" fill="none" stroke="#111512" stroke-width="4"/><rect x="64" y="26" width="8" height="12" fill="#5e625b"/>';
-  if (state === 'critical') return '<path d="M22 25l12 12-8 10 14 13M61 25l-8 12 10 10-8 12" fill="none" stroke="#111512" stroke-width="4"/><rect x="62" y="15" width="14" height="21" fill="#5e625b"/><rect x="66" y="27" width="8" height="15" fill="#d95b3f"/>';
+  if (state === 'damaged') return '<path d="M25 34l8 8-6 9 10 9M63 45l7 7-5 10" fill="none" stroke="#111512" stroke-width="4"/><path d="M61 24h11v13H61z" fill="#5e625b" opacity=".85"/>';
+  if (state === 'critical') return '<path d="M22 31l12 11-8 11 14 12M62 29l-9 13 11 10-8 13" fill="none" stroke="#111512" stroke-width="4"/><path d="M59 17h17v24H59z" fill="#5e625b" opacity=".9"/><path d="M63 38l5-15 7 15z" fill="#d95b3f"/><rect x="67" y="28" width="5" height="12" fill="#e49346"/>';
   return '';
 }
 
 function destructionMarkup(phase, colors) {
-  const roofHeight = phase === 0 ? 28 : 18;
-  const peak = phase === 2 ? 8 : 28;
+  if (phase === 0) return `<path d="M12 58l15-24h45l14 24v27H12z" fill="${colors.deep}"/><path d="M20 57l12-17h34l12 17" fill="${colors.base}"/><path d="M18 60l14-14 9 8 12-22 20 25" fill="none" stroke="${PALETTE.ink}" stroke-width="5"/><path d="M61 25h13v18H61z" fill="${PALETTE.smoke}"/>`;
+  if (phase === 1) return `<path d="M9 67l17-25 18 13 12-21 28 32v20H9z" fill="${colors.shadow}"/><path d="M19 66l13-13 10 8 13-20 20 22" fill="none" stroke="${PALETTE.ink}" stroke-width="6"/><path d="M56 20h18v26H56z" fill="${PALETTE.smoke}"/><path d="M61 48l6-20 8 20z" fill="${PALETTE.fire}"/>`;
+  return `<path d="M7 79l15-21 16 10 12-19 15 16 13-10 12 24-6 9H13z" fill="${colors.shadow}"/><path d="M18 76l14-11 11 7 12-14 17 12" fill="none" stroke="${PALETTE.ink}" stroke-width="6"/><rect x="29" y="66" width="15" height="9" fill="${PALETTE.metal}"/><path d="M58 57l5-18 8 18z" fill="${PALETTE.fire}"/>`;
+}
+
+function rubbleMarkup(building, colors) {
+  const ua = building.faction === 'ukraine';
   return [
-    `<rect x="10" y="62" width="76" height="26" fill="${colors.deep}"/>`,
-    `<path d="M12 62l14-${roofHeight}h42l16 ${peak}z" fill="${phase === 2 ? colors.shadow : colors.base}"/>`,
-    '<path d="M18 63l13-18 10 8 12-20 21 27" fill="none" stroke="#111512" stroke-width="5"/>',
-    phase >= 1 ? '<rect x="30" y="27" width="13" height="22" fill="#5e625b"/>' : '',
-    phase === 2 ? '<rect x="58" y="49" width="12" height="18" fill="#d95b3f"/>' : '',
+    `<ellipse cx="49" cy="86" rx="${ua ? 42 : 45}" ry="8" fill="${PALETTE.ink}" opacity=".7"/>`,
+    `<path d="M7 80l14-19 13 9 14-21 12 18 14-11 15 24-7 8H14z" fill="${colors.shadow}"/>`,
+    `<path d="M18 78l13-11 10 7 10-14 15 10 10-7" fill="none" stroke="${colors.deep}" stroke-width="6"/>`,
+    `<rect x="27" y="69" width="16" height="8" fill="${PALETTE.metal}"/><rect x="57" y="72" width="14" height="7" fill="${colors.base}"/>`,
+    ua ? `<rect x="18" y="73" width="7" height="5" fill="${colors.accent}"/>` : `<rect x="72" y="73" width="8" height="5" fill="${colors.accent}"/>`,
   ].join('');
 }
 
 function runtimeMarkup(building, state, phase) {
   const colors = colorsFor(building.faction);
   if (state === 'icon') {
-    return `<rect x="2" y="2" width="36" height="36" fill="${colors.deep}"/><rect x="5" y="5" width="30" height="30" fill="${colors.base}"/>${iconRoleMarkup(building.role, colors)}<rect x="6" y="6" width="5" height="5" fill="${colors.accent}"/>`;
+    return `<rect x="2" y="2" width="36" height="36" fill="${colors.deep}"/><path d="M5 31V13l6-6h18l6 6v18z" fill="${colors.base}"/><path d="M5 13h30L29 7H11z" fill="${colors.light}"/>${iconRoleMarkup(building.role, colors)}<rect x="6" y="6" width="5" height="5" fill="${colors.accent}"/>`;
   }
-  const construction = constructionMarkup(state, colors);
-  if (construction) return `<ellipse cx="50" cy="86" rx="42" ry="7" fill="${PALETTE.ink}" opacity=".65"/>${construction}<rect x="44" y="78" width="8" height="8" fill="${colors.accent}"/>`;
-  if (state === 'destruction') return `<ellipse cx="50" cy="86" rx="42" ry="7" fill="${PALETTE.ink}" opacity=".65"/>${destructionMarkup(phase, colors)}`;
-  if (state === 'rubble') return `<ellipse cx="50" cy="86" rx="42" ry="7" fill="${PALETTE.ink}" opacity=".65"/><path d="M8 82l13-19 14 8 14-20 12 17 13-9 14 23z" fill="${colors.shadow}"/><rect x="18" y="73" width="59" height="14" fill="${colors.deep}"/><rect x="34" y="65" width="12" height="9" fill="${PALETTE.metal}"/>`;
+  const construction = constructionMarkup(building, state, colors);
+  if (construction) return `<ellipse cx="49" cy="86" rx="43" ry="7" fill="${PALETTE.ink}" opacity=".65"/>${construction}<rect x="44" y="78" width="8" height="8" fill="${colors.accent}"/>`;
+  if (state === 'destruction') return `<ellipse cx="49" cy="86" rx="44" ry="8" fill="${PALETTE.ink}" opacity=".7"/>${destructionMarkup(phase, colors)}`;
+  if (state === 'rubble') return rubbleMarkup(building, colors);
   return [
-    `<ellipse cx="50" cy="86" rx="42" ry="7" fill="${PALETTE.ink}" opacity=".65"/>`,
-    `<rect x="8" y="37" width="80" height="51" fill="${colors.deep}"/>`,
-    `<rect x="12" y="40" width="72" height="43" fill="${colors.base}"/>`,
-    `<path d="M12 40l14-18h44l14 18z" fill="${colors.light}"/>`,
-    `<rect x="41" y="62" width="14" height="21" fill="${colors.deep}"/>`,
-    `<rect x="17" y="48" width="14" height="10" fill="${colors.optic}"/>`,
-    `<rect x="65" y="48" width="14" height="10" fill="${colors.optic}"/>`,
-    largeRoleMarkup(building.role, colors),
-    state === 'active' ? `<rect x="15" y="79" width="66" height="4" fill="${colors.accent}"/><rect x="76" y="26" width="8" height="8" fill="${colors.optic}"/>` : '',
+    groundAndShellMarkup(building, colors),
+    surfaceDetailMarkup(building, colors),
+    largeRoleMarkup(building, colors),
+    state === 'active'
+      ? `<path d="M24 79h49" stroke="${colors.accent}" stroke-width="4"/><rect x="78" y="28" width="8" height="8" fill="${colors.optic}"/><rect x="80" y="30" width="4" height="4" fill="${PALETTE.white}"/>`
+      : '',
     damageMarkup(state),
     `<rect x="44" y="78" width="8" height="8" fill="${colors.accent}"/>`,
   ].join('');
