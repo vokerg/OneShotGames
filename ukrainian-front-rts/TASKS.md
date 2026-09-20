@@ -237,11 +237,10 @@ Parallel values:
 
 ## Queue extension rule
 
+New tasks start at `UFR-169` and must include priority, lane, entry point, observable acceptance criteria, dependencies, and an explicit `YES`, `LIMITED`, or `NO` parallel rule. Existing task IDs and meanings remain stable; use a completion marker to record supersession rather than deleting or renumbering work.
 
 ## Post-baseline visual integration
 
 | ID | Priority | Lane | Entry point | Acceptance criteria | Dependencies | Parallel |
 | --- | --- | --- | --- | --- | --- | --- |
 | UFR-169 | P1 | art/render | `src/render/`, `src/render.js`, Art & VFX Lab | Integrate the completed UFR-115 production building atlas into the active renderer: map current runtime building types to canonical faction art, render construction/active/damage/rubble states, preserve deterministic fallback behavior, and verify mission/art-lab readability at supported zooms without changing simulation ownership. | UFR-107, UFR-115 | LIMITED — owns building presentation/runtime integration; avoid unrelated renderer families. |
-
-New tasks start at `UFR-169` and must include priority, lane, entry point, observable acceptance criteria, dependencies, and an explicit `YES`, `LIMITED`, or `NO` parallel rule. Existing task IDs and meanings remain stable; use a completion marker to record supersession rather than deleting or renumbering work.
