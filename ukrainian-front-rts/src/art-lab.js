@@ -209,7 +209,7 @@ function worldPointForScreen(x,y){return{x:(x-game.camera.x)/game.camera.z,y:(y-
 
 function drawBuildingReview(now){
  const q=renderer.x,state=buildingReviewStates[buildingStateIndex%buildingReviewStates.length],status=renderer.buildingAtlasStatus?.();
- q.save();q.fillStyle='rgba(7,10,8,.97)';q.fillRect(0,0,canvas.width,canvas.height);
+ q.save();q.fillStyle='#070a08';q.fillRect(0,0,canvas.width,canvas.height);
  q.textAlign='center';q.font='bold 14px ui-monospace, monospace';q.fillStyle='#f0cf71';
  q.fillText(`UFR-169 BUILDINGS · ${state.toUpperCase()} · ${status?.ready?'ATLAS READY':status?.error?'ATLAS ERROR':'LOADING'}`,Math.round(canvas.width/2),62);
  q.font='10px ui-monospace, monospace';q.fillStyle='#c9c1a2';
