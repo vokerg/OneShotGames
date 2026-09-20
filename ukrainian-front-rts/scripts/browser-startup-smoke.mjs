@@ -503,6 +503,10 @@ try {
   if (!battlefieldLayering.selectorHidden || battlefieldLayering.topbarPointerEvents === 'none') {
     throw new Error(`Selector-only top-bar state leaked into the battlefield: ${JSON.stringify(battlefieldLayering)}`);
   }
+  await waitFor(
+    `window.__fieldsOfResolveComposition?.visual?.()?.buildingAtlas?.ready === true`,
+    'production building atlas to load in the authored mission',
+  );
   await waitFor(`document.querySelector('#pauseMenuToggle') && document.querySelector('#pauseMenu')?.getAttribute('aria-hidden') === 'true'`, 'pause menu composition to mount');
 
   await evaluate(`(() => { const toggle = document.querySelector('#pauseMenuToggle'); toggle.focus(); toggle.click(); })()`);
@@ -541,7 +545,8 @@ try {
     hidden: document.querySelector('#missionSelect')?.classList.contains('hidden'),
     canvas: document.querySelector('#game')?.width > 0 && document.querySelector('#game')?.height > 0,
     missionCards: document.querySelectorAll('.missionCard').length,
-    campaign: window.__fieldsOfResolveAuthoredCampaign?.snapshot?.()
+    campaign: window.__fieldsOfResolveAuthoredCampaign?.snapshot?.(),
+    buildingAtlas: window.__fieldsOfResolveComposition?.visual?.()?.buildingAtlas ?? null
   })`));
   state.audio = audioState;
   state.menu = menuState;
@@ -561,7 +566,8 @@ try {
   const audioPassed = state.audio.mounted && state.audio.panelOpen && state.audio.panelClosed && state.audio.shellIsolated && state.audio.focusRestored && state.audio.requestedMusic === 0.37 && state.audio.persistedMusic === 0.37 && state.audio.effectiveMusic === 0.37 && state.audio.visualCue?.includes('Incoming attack') && state.audio.visualCueUrgency === 'critical';
   const menuPassed = state.menu.mounted && state.menu.panelOpen && state.menu.panelClosed && state.menu.shellIsolated && state.menu.controlsView && state.menu.destructiveConfirmation && state.menu.audioSettingsHandoff && state.menu.restoredAfterSettings && state.menu.focusRestored;
   const campaignPassed = state.campaign?.operationCount === 9 && state.campaign?.authoredMission === true && state.campaign?.mapId;
-  if (!state.title || !state.hidden || !state.canvas || !audioPassed || !menuPassed || !campaignPassed || failures.length) {
+  const buildingArtPassed = state.buildingAtlas?.ready === true && !state.buildingAtlas?.error;
+  if (!state.title || !state.hidden || !state.canvas || !audioPassed || !menuPassed || !campaignPassed || !buildingArtPassed || failures.length) {
     try {
       const shot = await call('Page.captureScreenshot', { format: 'png' });
       await writeFile(join(artifacts, 'browser-startup-failure.png'), Buffer.from(shot.data, 'base64'));
@@ -570,7 +576,7 @@ try {
   }
 
   await writeFile(join(artifacts, 'browser-startup-smoke.json'), JSON.stringify({ status: 'passed', state, warnings }, null, 2));
-  console.log(`[browser-smoke] authored mission started after runtime-aware tutorial onboarding: ${state.title}; audio settings and pause menu exercised; warnings: ${warnings.length}`);
+  console.log(`[browser-smoke] authored mission started after runtime-aware tutorial onboarding: ${state.title}; production building atlas ready; audio settings and pause menu exercised; warnings: ${warnings.length}`);
 } catch (error) {
   await writeFile(join(artifacts, 'browser-startup.log'), `${logs.join('')}\n${error.stack}\n`);
   throw error;
