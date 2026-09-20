@@ -102,12 +102,22 @@ function drawSelectionAndHealth(renderer, building, view) {
       view.height + 10,
     );
   }
-  renderer.health(
-    building,
-    view.screen.x - view.width / 2,
-    view.screen.y - view.height / 2 - 11,
-    view.width,
-  );
+  const hp = Number(building.hp);
+  const maxHp = Number(building.maxHp);
+  const damaged = Number.isFinite(hp) && Number.isFinite(maxHp) && maxHp > 0 && hp < maxHp;
+  const lifecyclePhase = building.buildingLifecycleState?.phase;
+  const showHealth = building.selected
+    || building.underConstruction
+    || damaged
+    || lifecyclePhase === 'capturing';
+  if (showHealth) {
+    renderer.health(
+      building,
+      view.screen.x - view.width / 2,
+      view.screen.y - view.height / 2 - 11,
+      view.width,
+    );
+  }
 }
 
 function rememberBuilding(renderer, building, buildingId, view) {
