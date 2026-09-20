@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import { TEAM } from '../src/config.js';
 import { installBuildingArtPass } from '../src/render/building-art-pass.js';
+import { installConstructionPreview } from '../src/render/construction-preview.js';
 import {
   ACTIVE_BUILDING_ATLAS_IDS,
   buildingAtlasAnimationId,
@@ -71,7 +72,16 @@ test('building art pass draws canonical atlas animation while preserving fallbac
 
   const renderer = Object.create(Renderer.prototype);
   renderer.g = { camera: { z: 1 }, time: 1, missionIndex: 0, mission: { id: 'test' } };
-  renderer.x = { strokeRect() {}, lineWidth: 0, strokeStyle: '' };
+  const transforms = [];
+  renderer.x = {
+    strokeRect() {},
+    save() { transforms.push('save'); },
+    restore() { transforms.push('restore'); },
+    translate(x, y) { transforms.push(['translate', x, y]); },
+    rotate(radians) { transforms.push(['rotate', radians]); },
+    lineWidth: 0,
+    strokeStyle: '',
+  };
   renderer.sp = (x, y) => ({ x: x + 10, y: y + 20 });
 
   const uaHq = {
@@ -104,7 +114,68 @@ test('building art pass draws canonical atlas animation while preserving fallbac
 
   assert.equal(renderer.buildingWreck({ id: 'unseen', sourceEntityId: '999', position: { x: 0, y: 0 } }), 'fallback-wreck:unseen');
 
+  const rotated = renderer.drawBuildingAtlasPreview({
+    type: 'depot',
+    team: TEAM.UA,
+    x: 140,
+    y: 240,
+    rotation: 90,
+  }, { state: 'placement', alpha: 0.5 });
+  assert.equal(rotated.frameId, 'ua.logistics-hub.placement.frame');
+  assert.ok(transforms.some((entry) => Array.isArray(entry) && entry[0] === 'rotate' && Math.abs(entry[1] - Math.PI / 2) < 1e-9));
+  assert.equal(draws.at(-1).animationId, 'ua.logistics-hub.placement');
+  assert.equal(draws.at(-1).options.alpha, 0.5);
+
   installation.restore();
   assert.equal(Renderer.prototype.building, fallbackBuilding);
   assert.equal(Renderer.prototype.buildingWreck, fallbackWreck);
+});
+
+
+test('construction preview composes the atlas placement state over the authoritative footprint grid', () => {
+  const atlasCalls = [];
+  const context = {
+    save() {}, restore() {}, fillRect() {}, strokeRect() {}, setLineDash() {},
+    beginPath() {}, moveTo() {}, lineTo() {}, stroke() {}, fillText() {},
+    measureText(text) { return { width: String(text).length * 7 }; },
+    fillStyle: '', strokeStyle: '', lineWidth: 1, font: '', textAlign: '',
+  };
+  const preview = {
+    valid: true,
+    blocksPath: false,
+    warning: '',
+    message: '',
+    type: 'workshop',
+    rotation: 90,
+    origin: { x: 10, y: 12 },
+    footprint: { width: 3, height: 4 },
+    x: 368,
+    y: 448,
+  };
+  const game = {
+    camera: { z: 1 },
+    navigationState: { grid: { tileSize: 32 } },
+    mouse: { wx: preview.x, wy: preview.y },
+    pendingBuild: { type: 'workshop', rotation: 90 },
+    pendingBuildPreview: preview,
+    previewBuildingPlacement() { this.pendingBuildPreview = preview; return preview; },
+  };
+  const renderer = {
+    x: context,
+    sp(x, y) { return { x, y }; },
+    render() {},
+    drawBuildingAtlasPreview(building, options) { atlasCalls.push({ building, options }); },
+  };
+  const dispose = installConstructionPreview({ game, renderer });
+  renderer.render();
+  assert.equal(atlasCalls.length, 1);
+  assert.deepEqual(atlasCalls[0].building, {
+    type: 'workshop',
+    team: TEAM.UA,
+    x: preview.x,
+    y: preview.y,
+    rotation: 90,
+  });
+  assert.deepEqual(atlasCalls[0].options, { state: 'placement', alpha: 0.86 });
+  dispose();
 });
