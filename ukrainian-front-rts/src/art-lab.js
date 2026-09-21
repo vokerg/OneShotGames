@@ -1,7 +1,7 @@
 import {Game} from './game.js';
 import {Renderer} from './render.js';
 import './art-pass.js';
-import {TEAM,UNIT_TYPES} from './config.js';
+import {BUILDING_TYPES,TEAM,UNIT_TYPES} from './config.js';
 import {loadSpriteAtlas} from './render/sprite-atlas-runtime.js';
 import {TEMPLATE_UNIT_DIRECTIONS,TEMPLATE_UNIT_STATES,loadTemplateUnitAtlas} from './render/template-unit-atlas.js';
 import {
@@ -59,7 +59,8 @@ for(const [teamKey,types] of Object.entries(roster)){
 
 game.camera={x:innerWidth/2-origin.x*.85,y:innerHeight/2-origin.y*.85,z:.85};
 let paused=false,facing=1,valueCheck=false,last=performance.now(),templateStateIndex=0;
-let ukrainianStateIndex=0,ukrainianDirectionIndex=2,supportReviewPage=-1;
+let ukrainianStateIndex=0,ukrainianDirectionIndex=2,supportReviewPage=-1,buildingReview=false,buildingStateIndex=0;
+globalThis.__UFR169_BUILDING_REVIEW_ACTIVE__=false;
 let templateRuntime=null,templateLoadError=null;
 let ukrainianInfantryRuntime=null,ukrainianInfantryLoadError=null;
 let russianInfantryRuntime=null,russianInfantryLoadError=null;
@@ -69,6 +70,9 @@ let supportVisualRuntime=null,supportVisualLoadError=null;
 const ukrainianInfantryLabels=['ENGINEERS','LINE','ANTI-ARMOR','RECON','CASEVAC','AIR DEFENSE','COMMAND'];
 const russianInfantryLabels=['ENGINEERS','COMMAND','LINE','ASSAULT','ANTI-ARMOR','RECON','MEDICAL','AIR DEFENSE'];
 const ukrainianVehicleLabels=['APC','IFV','MBT','RECOVERY','ENGINEERING'];
+const buildingTypes=['hq','depot','barracks','workshop'];
+const buildingLabels=['COMMAND','LOGISTICS','INFANTRY','MOTOR POOL'];
+const buildingReviewStates=['idle','active','damaged','critical','foundation','frame','fitout','destruction','rubble'];
 
 async function loadAtlasReviews(){
  const fallback=await loadSpriteAtlas(new URL('../assets/atlases/fallback.atlas.json',import.meta.url));
@@ -186,6 +190,54 @@ function drawSupportReview(now){
  q.restore();
 }
 
+function buildingReviewEntity(type,team,state,index,row,x,y){
+ const maxHp=BUILDING_TYPES[type].hp,entity={id:900+row*10+index,type,team,x,y,hp:maxHp,maxHp,queue:[],underConstruction:false,selected:false};
+ if(state==='active')entity.queue=[{type:'review'}];
+ if(state==='damaged')entity.hp=maxHp*.55;
+ if(state==='critical')entity.hp=maxHp*.2;
+ if(state==='destruction')entity.hp=0;
+ if(['foundation','frame','fitout'].includes(state)){
+  entity.underConstruction=true;
+  const fraction=state==='foundation'?.1:state==='frame'?.4:.8;
+  entity.hp=Math.max(1,maxHp*fraction);
+  entity.constructionProgress={requiredWork:100,appliedWork:fraction*100};
+ }
+ return entity;
+}
+
+function worldPointForScreen(x,y){return{x:(x-game.camera.x)/game.camera.z,y:(y-game.camera.y)/game.camera.z};}
+
+function drawBuildingReview(now){
+ const q=renderer.x,state=buildingReviewStates[buildingStateIndex%buildingReviewStates.length],status=renderer.buildingAtlasStatus?.();
+ q.save();q.fillStyle='#070a08';q.fillRect(0,0,canvas.width,canvas.height);
+ q.textAlign='center';q.font='bold 14px ui-monospace, monospace';q.fillStyle='#f0cf71';
+ q.fillText(`UFR-169 BUILDINGS · ${state.toUpperCase()} · ${status?.ready?'ATLAS READY':status?.error?'ATLAS ERROR':'LOADING'}`,Math.round(canvas.width/2),62);
+ q.font='10px ui-monospace, monospace';q.fillStyle='#c9c1a2';
+ q.fillText('B: roster · U: lifecycle · 1/2/3: zoom · V: grayscale · S: capture',Math.round(canvas.width/2),82);
+ q.restore();
+ const spacing=Math.min(205,Math.max(145,(canvas.width-220)/buildingTypes.length));
+ const start=canvas.width/2-spacing*(buildingTypes.length-1)/2;
+ for(const [row,team] of [TEAM.UA,TEAM.RU].entries()){
+  const screenY=185+row*245;
+  q.save();q.textAlign='center';q.font='bold 11px ui-monospace, monospace';q.fillStyle=team===TEAM.UA?'#8fc7e8':'#dfb49e';
+  q.fillText(team===TEAM.UA?'UKRAINE':'RUSSIA',Math.round(canvas.width/2),screenY-76);q.restore();
+  for(let index=0;index<buildingTypes.length;index+=1){
+   const screenX=start+index*spacing,world=worldPointForScreen(screenX,screenY),type=buildingTypes[index];
+   const entity=buildingReviewEntity(type,team,state,index,row,world.x,world.y);
+   if(state==='rubble'){
+    const prime=buildingReviewEntity(type,team,'idle',index,row,world.x,world.y+10000);
+    renderer.building(prime);
+    renderer.buildingWreck({id:`${prime.id}:rubble`,sourceEntityId:String(prime.id),position:world});
+   }else renderer.building(entity);
+   q.save();q.textAlign='center';q.font='bold 9px ui-monospace, monospace';q.fillStyle='#f0cf71';q.fillText(buildingLabels[index],Math.round(screenX),Math.round(screenY+72));
+   q.font='8px ui-monospace, monospace';q.fillStyle='#aeb7a9';q.fillText(type.toUpperCase(),Math.round(screenX),Math.round(screenY+85));q.restore();
+  }
+ }
+ globalThis.__UFR169_BUILDING_ART_LAB__=Object.freeze({
+  ready:Boolean(status?.ready),error:status?.error??null,state,zoom:game.camera.z,valueCheck,
+ });
+}
+
 function drawLabels(){
  const q=renderer.x,z=game.camera.z;q.save();q.textAlign='center';q.font='bold 11px ui-monospace, monospace';
  for(const unit of game.units){const s=renderer.sp(unit.x,unit.y),type=UNIT_TYPES[unit.type];q.fillStyle='rgba(10,14,11,.78)';q.fillRect(Math.round(s.x-58),Math.round(s.y+34*z),116,17);q.fillStyle=unit.team===TEAM.UA?'#8fc7e8':'#dfb49e';q.fillText(type.short||type.name,Math.round(s.x),Math.round(s.y+46*z));}
@@ -202,9 +254,10 @@ addEventListener('keydown',event=>{
  if(event.key==='1'||event.key==='2'||event.key==='3'){game.camera.z=event.key==='1'?.65:event.key==='2'?.85:1.15;centerCamera();}
  if(event.key.toLowerCase()==='f'){facing*=-1;for(const unit of game.units)unit.angle=facing>0?-Math.PI/2:Math.PI/2;}
  if(event.key.toLowerCase()==='t')templateStateIndex=(templateStateIndex+1)%TEMPLATE_UNIT_STATES.length;
- if(event.key.toLowerCase()==='u')ukrainianStateIndex=(ukrainianStateIndex+1)%SUPPORT_VISUAL_REQUIRED_STATES.length;
+ if(event.key.toLowerCase()==='u'){if(buildingReview)buildingStateIndex=(buildingStateIndex+1)%buildingReviewStates.length;else ukrainianStateIndex=(ukrainianStateIndex+1)%SUPPORT_VISUAL_REQUIRED_STATES.length;}
  if(event.key.toLowerCase()==='r')ukrainianDirectionIndex=(ukrainianDirectionIndex+1)%SUPPORT_VISUAL_REQUIRED_DIRECTIONS.length;
- if(event.key.toLowerCase()==='p')supportReviewPage=(supportReviewPage+2)%(SUPPORT_VISUAL_REVIEW_PAGES.length+1)-1;
+ if(event.key.toLowerCase()==='p'){buildingReview=false;globalThis.__UFR169_BUILDING_REVIEW_ACTIVE__=false;supportReviewPage=(supportReviewPage+2)%(SUPPORT_VISUAL_REVIEW_PAGES.length+1)-1;}
+ if(event.key.toLowerCase()==='b'){buildingReview=!buildingReview;globalThis.__UFR169_BUILDING_REVIEW_ACTIVE__=buildingReview;if(buildingReview)supportReviewPage=-1;}
  if(event.key.toLowerCase()==='v')valueCheck=!valueCheck;
  if(event.key.toLowerCase()==='s')capture();
  if(event.code==='Space'){event.preventDefault();paused=!paused;for(const unit of game.units)unit.order=paused?null:{kind:'lab-motion'};}
@@ -213,7 +266,8 @@ addEventListener('resize',centerCamera);
 
 function frame(now){
  const dt=Math.min(.033,(now-last)/1000);last=now;if(!paused)game.time+=dt;renderer.render();
- if(supportReviewPage>=0)drawSupportReview(now);
+ if(buildingReview)drawBuildingReview(now);
+ else if(supportReviewPage>=0)drawSupportReview(now);
  else{drawUkrainianInfantryReview(now);drawRussianInfantryReview(now);drawUkrainianVehicleReview(now);drawTemplateReview(now);drawLabels();}
  applyValueCheck();requestAnimationFrame(frame);
 }

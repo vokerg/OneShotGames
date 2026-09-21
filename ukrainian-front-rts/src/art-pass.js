@@ -1,6 +1,7 @@
 import {Renderer} from './render.js';
 import {TEAM,FACTIONS} from './config.js';
 import {installUkrainianInfantryArtPass} from './render/ukrainian-infantry-art-pass.js';
+import {installBuildingArtPass} from './render/building-art-pass.js';
 
 const INK='#111512';
 const px=(q,x,y,w,h,c)=>{q.fillStyle=c;q.fillRect(Math.round(x),Math.round(y),Math.max(1,Math.round(w)),Math.max(1,Math.round(h)))};
@@ -101,3 +102,4 @@ Renderer.prototype.portrait=function(e){
 };
 
 installUkrainianInfantryArtPass(Renderer);
+installBuildingArtPass(Renderer);

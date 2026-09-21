@@ -315,6 +315,9 @@ window.__fieldsOfResolveComposition = Object.freeze({
   simulationPhases: () => SIMULATION_PHASES,
   simulationDelegates: () => simulationDelegateSnapshot(game),
   runtimeContent: () => runtimeContent,
+  visual: () => Object.freeze({
+    buildingAtlas: renderer.buildingAtlasStatus?.() ?? null,
+  }),
   audio: () => Object.freeze({
     mixer: audioMixer.snapshot(),
     output: activeAudioOutput?.snapshot() ?? null,

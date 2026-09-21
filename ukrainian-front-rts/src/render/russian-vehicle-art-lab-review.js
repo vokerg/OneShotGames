@@ -31,6 +31,7 @@ const reviewState = {
 Object.defineProperty(window, '__russianVehicleArtLabReview', { value: reviewState, configurable: true });
 
 function supportReviewActive() {
+  if (window.__UFR169_BUILDING_REVIEW_ACTIVE__ === true) return true;
   const page = window.__UFR114_ART_LAB__?.getStatus?.().page;
   return Number.isInteger(page) && page >= 0;
 }
