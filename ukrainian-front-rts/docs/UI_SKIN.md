@@ -110,3 +110,24 @@ The authoritative repository verifier runs the focused tests and the dedicated U
 `scripts/verify-ui-skin.mjs` verifies source provenance, exact generated asset equality, crisp-edge/text-free output, active stylesheet composition, component coverage, interactive states, tooltips, scrollbars, reduced motion, and high contrast.
 
 Because `ui-skin.css` is loaded by the active browser entry point, successful assembled verification and browser mission smoke justify `RUNTIME_INTEGRATED` evidence. They do not constitute a human visual matrix across every supported zoom, resolution, grayscale, color-vision mode, and UI screen. UFR-122 retains deterministic screenshot-scene and complete visual-regression ownership, so UFR-120 does not claim `PLAYER_VERIFIED` or release-level visual closure without that later evidence.
+
+## Local playability pass — October 2026
+
+The active HUD and operations screen now use thin borders, quiet dark green surfaces,
+system sans-serif text, and stronger command/resource hierarchy. Existing skin assets
+remain available for overlays and other consumers. `operation-cards.css` owns the
+operations screen overrides; `ui-skin.css` owns HUD geometry and presentation.
+The compact desktop layout keeps the minimap visible and places filters below it
+instead of over the map. Command buttons expose their full descriptions through
+native titles when the compact card text is clipped.
+
+`Renderer.battlefieldFeedback()` draws selection rectangles and short-lived accepted
+order markers above fog. It reads presentation state only. The sprite fallback guard
+now draws a faction-colored tactical contact and portrait when an atlas is unavailable,
+so asset loading failures cannot silently hide live units.
+
+Verification: focused input/menu/render tests and JavaScript syntax checks. The full
+verification suite was intentionally not run at the maintainer's request. Browser
+access to the local game was denied by the browser approval system; visual review,
+all-mission playthroughs, zoom/grayscale checks, and balance remain unverified.
+This local pass does not close a conveyor task or claim PLAYER_VERIFIED evidence.

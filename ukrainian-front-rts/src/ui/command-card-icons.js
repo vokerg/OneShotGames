@@ -100,7 +100,18 @@ function drawGlyph(documentTarget, svg, asset, status) {
     svg.append(svgNode(documentTarget, 'circle', { cx: 16, cy: 16, r: 11, ...common, fill: 'none' }));
     svg.append(svgNode(documentTarget, 'path', { d: 'M16 5V27M5 16H27M12 20L16 9L20 20L16 16Z', ...common, fill: 'none' }));
   } else {
-    svg.append(svgNode(documentTarget, 'path', { d: 'M3 2L25 17L16 19L20 29L14 31L10 21L3 27Z', ...common, fill: 'none' }));
+    const glyphs = {
+      select: 'M8 8H24V24H8Z',
+      holdPosition: 'M9 5V27M23 5V27M9 16H23',
+      attackMove: 'M4 16H27M19 8L27 16L19 24M10 7V25',
+      targetGround: 'M16 2V9M16 23V30M2 16H9M23 16H30M9 9H23V23H9Z',
+      patrol: 'M7 11A10 10 0 0 1 26 15M26 15V6M26 15H17M25 21A10 10 0 0 1 6 17M6 17V26M6 17H15',
+      guard: 'M16 3L27 8V18L16 29L5 18V8Z M16 8V23M10 15H22',
+      follow: 'M3 10H19M13 4L19 10L13 16M12 23H29M23 17L29 23L23 29',
+      repair: 'M23 3A8 8 0 0 0 14 14L4 24L8 28L18 18A8 8 0 0 0 29 9L23 15L18 10Z',
+      attack: 'M5 27L26 6M17 6H26V15M5 5L12 12M20 20L27 27',
+    };
+    svg.append(svgNode(documentTarget, 'path', { d: glyphs[asset.id] || 'M3 2L25 17L16 19L20 29L14 31L10 21L3 27Z', ...common, fill: 'none', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }));
   }
 
   const coordinate = marker(asset);

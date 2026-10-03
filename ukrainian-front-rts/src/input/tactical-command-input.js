@@ -1,3 +1,4 @@
+import { shouldIgnoreBattlefieldKey } from './keyboard-focus.js';
 import { createKeyBindings, INPUT_ACTIONS, resolveInputAction } from './action-map.js';
 import { TACTICAL_COMMAND_KINDS } from '../core/tactical-command-contract.js';
 
@@ -57,6 +58,7 @@ export function installTacticalCommandInput({
   };
 
   const onKeyDown = (event) => {
+    if (shouldIgnoreBattlefieldKey(event)) return;
     if (event.repeat || game.gameOver) return;
     const action = resolveInputAction(keyBindings, event.key);
     if (!action) return;

@@ -1,3 +1,4 @@
+import { shouldIgnoreBattlefieldKey } from './keyboard-focus.js';
 import { TEAM } from '../config.js';
 import {
   createKeyBindings,
@@ -92,6 +93,7 @@ export function installBattlefieldInput({
   }
 
   const onMouseDown = (event) => {
+    canvas.focus?.({ preventScroll: true });
     if (cameraNavigation.pointerDown(event)) {
       event.preventDefault();
       return;
@@ -124,8 +126,9 @@ export function installBattlefieldInput({
       event.preventDefault();
       return;
     }
-    if (event.button !== 0 || game.gameOver) return;
+    if (event.button !== 0 || !game.mouse.down) return;
     game.mouse.down = false;
+    if (game.gameOver) { game.mouse.drag = false; return; }
     const world = game.worldPos(event.clientX, event.clientY);
     if (game.pendingBuild && !game.mouse.drag) {
       if (game.placeBuilding(world.x, world.y)) ui.toast('Construction started. The assigned engineer is moving to the site.');
@@ -137,10 +140,10 @@ export function installBattlefieldInput({
     }
     if (game.mouse.drag) {
       const start = game.worldPos(game.mouse.startX, game.mouse.startY);
-      game.select(null);
+      if (!event.shiftKey) game.select(null);
       for (const unit of game.units) {
         if (
-          unit.team === TEAM.UA &&
+          unit.team === TEAM.UA && unit.hp > 0 && !unit.embarkedIn && !unit.garrisonId &&
           unit.x >= Math.min(start.x, world.x) &&
           unit.x <= Math.max(start.x, world.x) &&
           unit.y >= Math.min(start.y, world.y) &&
@@ -170,6 +173,7 @@ export function installBattlefieldInput({
   };
 
   const onContextMenu = (event) => {
+    canvas.focus?.({ preventScroll: true });
     event.preventDefault();
     if (game.gameOver) return;
     if (game.pendingBuild) {
@@ -181,7 +185,11 @@ export function installBattlefieldInput({
       return;
     }
     const world = game.worldPos(event.clientX, event.clientY);
-    game.issue(world.x, world.y, game.hit(world.x, world.y));
+    const target = game.hit(world.x, world.y);
+    const attacking = game.mouse.attackMove || target?.team === TEAM.RU;
+    if (game.issue(world.x, world.y, target, { append: Boolean(event.shiftKey) })) {
+      game.mouse.commandFeedback = { x: world.x, y: world.y, time: game.time, attacking };
+    } else if (game.lastError) ui.toast(game.lastError);
   };
 
   const onWheel = (event) => {
@@ -194,6 +202,7 @@ export function installBattlefieldInput({
   };
 
   const onKeyDown = (event) => {
+    if (shouldIgnoreBattlefieldKey(event) || !game.mission) return;
     const bookmarkResult = cameraNavigation.handleBookmark(event);
     if (bookmarkResult) {
       event.preventDefault();
@@ -223,6 +232,7 @@ export function installBattlefieldInput({
     const action = resolveInputAction(keyBindings, event.key);
     if (!action) return;
     if (isHeldInputAction(action)) {
+      event.preventDefault();
       game.keys.add(action);
       heldActionsByKey.set(event.code || event.key, action);
     }
@@ -235,6 +245,10 @@ export function installBattlefieldInput({
     } else if (action === INPUT_ACTIONS.CANCEL && game.pendingBuild) {
       game.cancelBuild();
       ui.toast('Construction placement cancelled.');
+      ui.refresh();
+    } else if (action === INPUT_ACTIONS.CANCEL && game.mouse.attackMove) {
+      game.mouse.attackMove = false;
+      ui.toast('Attack-move cancelled.');
       ui.refresh();
     } else if (action === INPUT_ACTIONS.ATTACK_MOVE && !event.repeat) {
       if (game.armAttackMove()) ui.toast('Attack-move: right-click destination.');
@@ -253,8 +267,8 @@ export function installBattlefieldInput({
   const onKeyUp = (event) => {
     const keyId = event.code || event.key;
     const action = heldActionsByKey.get(keyId) || resolveInputAction(keyBindings, event.key);
-    if (action && isHeldInputAction(action)) game.keys.delete(action);
     heldActionsByKey.delete(keyId);
+    if (action && isHeldInputAction(action) && ![...heldActionsByKey.values()].includes(action)) game.keys.delete(action);
   };
 
   const onBlur = () => {
@@ -272,7 +286,7 @@ export function installBattlefieldInput({
   };
 
   const onMinimapMouseDown = (event) => {
-    if (game.gameOver) return;
+    if (event.button !== 0 || game.gameOver) return;
     const bounds = minimap.getBoundingClientRect();
     const x = ((event.clientX - bounds.left) / bounds.width) * WORLD_WIDTH;
     const y = ((event.clientY - bounds.top) / bounds.height) * WORLD_HEIGHT;
@@ -289,6 +303,17 @@ export function installBattlefieldInput({
   listen(windowTarget, 'keydown', onKeyDown);
   listen(windowTarget, 'keyup', onKeyUp);
   listen(windowTarget, 'blur', onBlur);
+  listen(windowTarget, 'focusin', (event) => {
+    if (shouldIgnoreBattlefieldKey(event)) onBlur();
+  });
+  // A release over the HUD must end the gesture without selecting through it.
+  listen(windowTarget, 'mouseup', (event) => {
+    cameraNavigation.pointerUp(event);
+    if (event.button === 0 && game.mouse.down) {
+      game.mouse.down = false;
+      game.mouse.drag = false;
+    }
+  });
   listen(minimap, 'mousedown', onMinimapMouseDown);
   return () => disposers.splice(0).reverse().forEach((dispose) => dispose());
 }

@@ -1,3 +1,4 @@
+import { shouldIgnoreBattlefieldKey } from './keyboard-focus.js';
 export function installConstructionPlacementInput({
   game,
   ui,
@@ -13,6 +14,7 @@ export function installConstructionPlacementInput({
 
   const normalizedKey = String(rotateKey).toLowerCase();
   const onKeyDown = (event) => {
+    if (shouldIgnoreBattlefieldKey(event)) return;
     if (
       !game.pendingBuild ||
       event.repeat ||

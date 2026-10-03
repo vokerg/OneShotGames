@@ -246,3 +246,214 @@
     color: Highlight;
   }
 }
+
+/* Live readability repair. This stylesheet is the final HUD presentation owner. */
+:root {
+  --ui-body-font: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --ui-display-font: var(--ui-body-font);
+  --ui-color-text: #edf2ef;
+  --ui-color-text-muted: #b4c3bc;
+  --ui-color-panel: #172421;
+  --ui-color-panel-raised: #293c35;
+  --release-topbar-height: 56px;
+}
+html, body, #shell, #economyHud, #techTree, button, input, select, textarea {
+  font-family: var(--ui-body-font);
+}
+#topbar, #commandPanel, #objectives, #economyHud {
+  border: 1px solid #52655b;
+  border-image: none;
+  border-radius: 6px;
+  background: #172421f5;
+  box-shadow: 0 6px 22px #0005;
+}
+#topbar { inset: 8px 10px auto; padding: 6px 12px; gap: 8px; }
+#topbar .crest { font: 700 11px/1.3 var(--ui-body-font); letter-spacing: .16em; color: #d4c491; text-shadow: none; }
+#topbar .resource { min-width: 72px; min-height: 32px; padding: 2px 8px; background: none; border: 0; border-left: 1px solid #496052; box-shadow: none; }
+#topbar .resource b { font: 650 16px/1.2 var(--ui-body-font); font-variant-numeric: tabular-nums; }
+#topbar .resource small { font: 10px/1.2 var(--ui-body-font); letter-spacing: .06em; color: #b7c7bc; }
+#topbar .resource span { font-size: 18px; filter: none; }
+#topbar .resource.threat { min-width: 140px; }
+#topbar .resource.threat b { font-size: 12px; color: #e1ccae; }
+#topbar button { font: 600 12px/1.2 var(--ui-body-font); padding: 6px 10px; min-height: 32px; }
+button, .ability, .selectionUnitCard, .selectionSubgroupTab, .economyHudAction {
+  border: 1px solid #53695d;
+  border-image: none;
+  border-radius: 4px;
+  background: #293c35;
+  color: #edf2ef;
+  text-shadow: none;
+}
+button:hover { border-color: #a3cab5; background: #375345; filter: none; }
+button:disabled { opacity: 1; color: #96a49d; background: #202b26; border-color: #3c4a43; filter: none; }
+button:focus-visible { outline: 2px solid #b7eed8; outline-offset: 2px; box-shadow: none; }
+#commandPanel { height: 184px; padding: 12px; gap: 16px; grid-template-columns: minmax(250px, .95fr) minmax(460px, 1.55fr) 220px; }
+#commandPanel > * { min-height: 0; }
+.portrait { grid-template-columns: 96px minmax(0, 1fr); gap: 12px; border-right: 1px solid #405349; }
+.portrait > canvas { height: 92px; margin-top: 2px; border: 1px solid #728676; border-image: none; border-radius: 4px; }
+.portrait h3 { font: 650 14px/1.35 var(--ui-body-font); color: #eddfb4; text-shadow: none; margin: 0 0 7px; }
+.portrait p { font: 12px/1.5 var(--ui-body-font); color: #b7c8bf; }
+#abilities { min-height: 0; }
+.commandCardGrid { gap: 5px; grid-template-rows: repeat(3, minmax(36px, 1fr)); }
+.commandCardAction.ability { border-image: none; border-style: solid; box-shadow: none; min-height: 36px; border-width: 1px; padding: 5px 8px; column-gap: 8px; grid-template-columns: 20px minmax(0, 1fr) auto auto; background: #243a31; }
+.commandCardAction .commandTitle { font: 600 12px/1.3 var(--ui-body-font); color: #edf2ef; }
+.commandCardAction .commandHotkey { font: 600 10px/1.2 var(--ui-body-font); background: #13251d; color: #c7d9ce; border: 1px solid #516a5b; border-radius: 3px; padding: 2px 4px; }
+.commandCardAction .abilityMeta { font: 10px/1.2 var(--ui-body-font); color: #b6c7bb; background: none; border: 0; }
+.commandCardAction:disabled .commandTitle { color: #8f9e94; }
+.commandCardAction:disabled .commandCardIcon { color: #7c8d80; }
+.commandCardAction.ability.stance-on, .commandCardAction.ability[aria-pressed='true'] { border-color: #88bc9c; background: #2a4435; box-shadow: inset 0 -2px #88bc9c; }
+.commandCardAction.ability.build-command { background: #433c2a; }
+.commandCardAction.ability.production-command { background: #273f4b; }
+.commandCardAction.ability.upgrade-command { background: #3b3349; }
+.commandCardIcon { color: #b8cbbf; width: 18px; height: 18px; }
+.commandCardPager { height: 24px; min-height: 24px; gap: 8px; }
+.commandCardPageButton { border-width: 1px; min-height: 24px; font: 500 11px/1.2 var(--ui-body-font); }
+.minimapFrame { display: block; padding: 0; }
+.minimapCanvasFrame { height: calc(100% - 32px); }
+.minimapFrame canvas { border: 1px solid #617866; border-image: none; border-radius: 3px; }
+.minimapFilters { position: static; background: none; border: 0; height: 30px; font: 10px/1.2 var(--ui-body-font); padding: 4px 0 0; gap: 2px 8px; }
+.minimapFilters input { width: 12px; height: 12px; accent-color: #8ccbac; }
+.minimapLegend { font: 9px/1.2 var(--ui-body-font); }
+#economyHud { top: 76px; width: min(430px, calc(100vw - 32px)); max-height: calc(100vh - 280px); padding: 0; overflow: hidden; }
+.economyHudHeader { padding: 14px 16px; background: #21352c; border-bottom: 1px solid #4d6256; }
+.economyHudHeader small, .techTreeHeader small { color: #aabeaf; font-size: 10px; letter-spacing: .13em; }
+.economyHudHeader h2 { font: 650 19px/1.3 var(--ui-body-font); color: #edf2ef; }
+#economyHudContent { padding: 12px; gap: 10px; overflow: auto; min-height: 0; }
+.economyHudSection { background: #1c2c24; border: 1px solid #3c5546; padding: 12px; }
+.economyHudSection h3 { font: 650 11px/1.3 var(--ui-body-font); letter-spacing: .1em; color: #adc5b4; margin-bottom: 10px; }
+.economyHudResource { border-color: #425c4b; background: #253c2e; padding: 8px; }
+.economyHudResource strong { font-size: 12px; color: #c0d5c6; }
+.economyHudResource span { font: 650 21px/1.3 var(--ui-body-font); color: #f1f4ec; }
+.economyHudResource small { font: 10px/1.4 var(--ui-body-font); color: #afc2b5; }
+.economyHudWorkerTask { background: #2c4436; border: 1px solid #506f59; color: #e3eee4; padding: 7px 2px; }
+.economyHudWorkerTask.warning { background: #51422b; border-color: #b29a57; color: #ffebb1; }
+.economyHudWorkerTask small { font-size: 9px; color: inherit; }
+.economyHudWarning { color: #ffcb9c; }
+.economyHudWorkerResources, .economyHudCapacity, .economyHudEmpty { font: 12px/1.55 var(--ui-body-font); color: #c8d9cc; }
+.economyHudQueueRow, .economyHudControlRow, .economyHudPrerequisite { background: #20392a; border-color: #3d5a46; }
+#techTree { inset: 76px 24px 24px; border-color: #53685a; border-radius: 8px; background: #14221eef; color: #edf2ef; }
+.techTreeHeader { background: #20342b; border-bottom-color: #415b49; }
+.techTreeHeader h2 { font: 650 22px/1.35 var(--ui-body-font); }
+.techTreeLayout { grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; }
+.techTreeLanes { gap: 16px; }
+.techTreeLane { background: #1a2d23; border: 1px solid #3a5543; border-radius: 5px; padding: 16px; gap: 16px; grid-template-columns: 180px minmax(0, 1fr); }
+.techTreeLaneHeader h3 { font: 650 16px/1.3 var(--ui-body-font); color: #ceddbd; }
+.techTreeLaneHeader p { font: 12px/1.5 var(--ui-body-font); color: #b4c7b9; }
+.techTreeNode { background: #243a2e; border-color: #4c6754; min-height: 104px; padding: 14px; }
+.techTreeNode strong { font: 650 14px/1.4 var(--ui-body-font); }
+.techTreeNode small { font: 12px/1.4 var(--ui-body-font); color: #becfba; }
+.techTreeNodeEyebrow { font: 600 10px/1.3 var(--ui-body-font); letter-spacing: .08em; color: #adbfaa; }
+.techTreeNode.state-locked { opacity: 1; filter: none; background: #1c2b23; color: #a4b5a6; box-shadow: inset 3px 0 #6e7c6d; }
+.techTreeNode.state-locked small { color: #a4b5a6; }
+.techTreeNode[aria-pressed='true'] { border-color: #d5ce98; background: #354431; transform: none; }
+.techTreeDetails { background: #1d3025; border-color: #56725b; border-radius: 5px; }
+.techTreeDetails h3 { font: 650 19px/1.35 var(--ui-body-font); }
+.techTreeDetails p { font: 13px/1.55 var(--ui-body-font); color: #c8d8c8; }
+.techTreeBlockingReasons { font: 12px/1.5 var(--ui-body-font); color: #fac4a1; }
+#objectives { top: 76px; font: 13px/1.5 var(--ui-body-font); }
+#objectives h2 { font: 650 19px/1.3 var(--ui-body-font); }
+.notificationToast { border-width: 1px; font: 12px/1.4 var(--ui-body-font); }
+#topbar [data-tooltip]::after { font: 12px/1.4 var(--ui-body-font); }
+@media (max-width: 1400px) {
+  #commandPanel { grid-template-columns: minmax(230px, .85fr) minmax(360px, 1.5fr) 190px; gap: 12px; }
+  .portrait { grid-template-columns: 72px minmax(0, 1fr); }
+  .portrait > canvas { height: 78px; }
+}
+@media (max-width: 1100px) {
+  #topbar { gap: 4px; padding-inline: 8px; }
+  #topbar button { padding-inline: 7px; }
+  #commandPanel { grid-template-columns: minmax(190px, .8fr) minmax(310px, 1.5fr) 170px; gap: 8px; }
+  .portrait { grid-template-columns: 1fr; }
+  .portrait > canvas { display: none; }
+  .techTreeLane { grid-template-columns: 1fr; }
+}
+@media (max-width: 900px) {
+  .techTreeLayout { grid-template-columns: 1fr; }
+  .techTreeDetails { position: static; }
+  #techTree { inset: 68px 8px 8px; }
+}
+@media (max-width: 760px) {
+  #commandPanel { grid-template-columns: minmax(0, 1fr) 140px; height: 184px; padding: 8px; }
+  .portrait { display: none; }
+  #topbar .resource { min-width: 52px; padding-inline: 5px; }
+  #economyHud { max-height: calc(100vh - 260px); }
+  .commandCardAction .commandTitle { font-size: 11px; }
+}
+@media (forced-colors: active) {
+  #topbar, #commandPanel, #objectives, #economyHud, #techTree, button, .ability, .techTreeNode, .economyHudWorkerTask {
+    background: Canvas; color: CanvasText; border-color: CanvasText; border-image: none;
+  }
+}
+
+/* Campaign pages share the battlefield's quiet command-center palette. */
+#missionSelect { background: radial-gradient(ellipse at 20% 15%, #2c4945, #0c1718 70%); }
+#missionSelect .book {
+  background: #142320;
+  color: #edf2ef;
+  border: 1px solid #52655b;
+  border-image: none;
+  border-radius: 8px;
+  padding: 30px;
+  box-shadow: 0 12px 40px #0005;
+  text-align: left;
+}
+#missionSelect .book h1 { font: 700 38px/1.2 var(--ui-body-font); letter-spacing: -.04em; color: #e8ddb5; text-shadow: none; }
+#missionSelect .book > p { font: 14px/1.6 var(--ui-body-font); color: #b4c3bc; }
+#missionSelect .book .disclaimer { font: 11px/1.5 var(--ui-body-font); color: #a4b5ae; }
+#missionSelect .missionCard {
+  background: #21372e;
+  color: #edf2ef;
+  border: 1px solid #53695d;
+  border-image: none;
+  border-radius: 5px;
+  padding: 18px;
+}
+#missionSelect .missionCard:hover { filter: none; border-color: #8ea797; }
+#missionSelect .missionCard h3 { font: 650 18px/1.3 var(--ui-body-font); color: #e8ddb5; }
+#missionSelect .missionCard small { font: 11px/1.4 var(--ui-body-font); color: #afc6b8; }
+#missionSelect .missionCard p { font: 13px/1.55 var(--ui-body-font); color: #c3d0c9; }
+#missionSelect .missionCard .missionPacing { color: #d5c58e; }
+#missionSelect .missionCard canvas { border: 1px solid #617866; border-image: none; border-radius: 3px; }
+#missionSelect .missionCard button { font: 600 12px/1.3 var(--ui-body-font); min-height: 40px; }
+#missionSelect .missionCard button.primary { background: #d7c488; color: #18271f; border-color: #e4d7a9; }
+#missionSelect .missionCard button.primary:hover { background: #f0dfa5; }
+@media (forced-colors: active) {
+  #missionSelect, #missionSelect .book, #missionSelect .missionCard { background: Canvas; color: CanvasText; border-color: CanvasText; }
+}
+
+/* Briefings contain text and actions, not the operation card's thumbnail grid. */
+#missionSelect .missionCard[data-campaign-briefing] {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 20px;
+  padding: 24px;
+  max-width: 900px;
+  margin-inline: auto;
+}
+#missionSelect .missionCard[data-campaign-briefing] > div:first-child {
+  max-width: 74ch;
+}
+#missionSelect .missionCard[data-campaign-briefing] h3 {
+  font: 700 25px/1.25 var(--ui-body-font);
+  margin: 0 0 8px;
+}
+#missionSelect .missionCard[data-campaign-briefing] p,
+#missionSelect .missionCard[data-campaign-briefing] li {
+  font: 400 14px/1.65 var(--ui-body-font);
+}
+#missionSelect .missionCard[data-campaign-briefing] strong { color: #e8ddb5; }
+#missionSelect .missionCard[data-campaign-briefing] ul { padding-left: 20px; margin: 8px 0 18px; }
+#missionSelect .missionCard[data-campaign-briefing] > div:last-child {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  border-top: 1px solid #4b6255;
+  padding-top: 18px;
+}
+#missionSelect .missionCard[data-campaign-briefing] button { min-width: 160px; }
+
+/* State-specific legacy sprite frames must not override the final control style. */
+.selectionUnitCard.primary, .selectionSubgroupTab[aria-selected='true'],
+#message, .notificationToast { border-image: none; }
+#message { border: 1px solid #6b7b60; border-radius: 5px; background: #142019f2; font: 600 14px/1.4 var(--ui-body-font); box-shadow: 0 5px 15px #0005; }

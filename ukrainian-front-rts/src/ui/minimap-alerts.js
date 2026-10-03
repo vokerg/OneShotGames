@@ -9,9 +9,13 @@ import {
 } from './minimap-alerts-model.js';
 
 const TERRAIN_COLORS = Object.freeze({
-  0: '#66774f',
-  1: '#6b6654',
-  2: '#36523c',
+  0: '#778867',
+  1: '#897458',
+  2: '#384f3c',
+  3: '#858984',
+  4: '#40879d',
+  5: '#baa984',
+  6: '#535a5b',
 });
 
 const MARKER_COLORS = Object.freeze({

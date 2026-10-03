@@ -161,6 +161,7 @@ export class UI {
     const button = document.createElement('button');
     button.className = `ability ${className}`.trim();
     button.disabled = disabled;
+    button.title = [title, description, meta].filter(Boolean).join(' — ');
     button.innerHTML = `<strong>${title}</strong><small>${description}</small>${meta ? `<span class="abilityMeta">${meta}</span>` : ''}`;
 
     const activate = (event) => {
@@ -418,6 +419,7 @@ export class UI {
       item.classList.toggle('done', Boolean(player.objectives[index]));
     });
     document.body.classList.toggle('placing', Boolean(this.g.pendingBuild));
+    document.body.classList.toggle('targeting', Boolean(this.g.mouse?.attackMove || this.g.pendingTacticalCommand || this.g.isAttackGroundArmed?.()));
 
     if (this.g.gameOver) this.showEndgame();
 

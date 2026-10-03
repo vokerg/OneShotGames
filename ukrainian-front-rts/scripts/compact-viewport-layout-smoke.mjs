@@ -175,10 +175,10 @@ async function capture(file) {
 }
 
 const targets = [
-  { width: 960, height: 600, expectedMode: 'compact', noticeVisible: false, minimapVisible: false },
-  { width: 1017, height: 838, expectedMode: 'compact', noticeVisible: false, minimapVisible: false },
+  { width: 960, height: 600, expectedMode: 'compact', noticeVisible: false, minimapVisible: true },
+  { width: 1017, height: 838, expectedMode: 'compact', noticeVisible: false, minimapVisible: true },
   { width: 1280, height: 720, expectedMode: 'standard', noticeVisible: false, minimapVisible: true },
-  { width: 650, height: 838, expectedMode: 'minimum', noticeVisible: true, minimapVisible: false },
+  { width: 650, height: 838, expectedMode: 'minimum', noticeVisible: true, minimapVisible: true },
 ];
 
 try {
@@ -253,7 +253,13 @@ try {
           visibleChildren,
           childrenBeyondViewport:visibleChildren.filter((entry)=>entry.rect.bottom>viewportHeight+1||entry.rect.right>viewportWidth+1||entry.rect.left<-1).map((entry)=>entry.id||entry.className)
         },
-        minimap:{display:getComputedStyle(minimap).display,visible:getComputedStyle(minimap).display!=='none'},
+        minimap:{
+          display:getComputedStyle(minimap).display,visible:getComputedStyle(minimap).display!=='none',
+          overflowingFilters:[...minimap.querySelectorAll('.minimapFilters label')].filter((label)=>{
+            const rect=label.getBoundingClientRect(),frame=minimap.getBoundingClientRect();
+            return rect.right>Math.min(frame.right,viewportWidth)+1||rect.left<frame.left-1;
+          }).map((label)=>label.textContent.trim())
+        },
         topbar:{scrollWidth:document.querySelector('#topbar').scrollWidth,clientWidth:document.querySelector('#topbar').clientWidth}
       };
     })())`));
@@ -261,6 +267,7 @@ try {
     const failures = [];
     if (state.mode !== target.expectedMode) failures.push(`expected mode ${target.expectedMode}, found ${state.mode}`);
     if (state.noticeVisible !== target.noticeVisible) failures.push(`notice visibility expected ${target.noticeVisible}, found ${state.noticeVisible}`);
+    if (state.minimap.visible && state.minimap.overflowingFilters.length) failures.push(`minimap filters exceed their frame: ${state.minimap.overflowingFilters.join(', ')}`);
     if (state.minimap.visible !== target.minimapVisible) failures.push(`minimap visibility expected ${target.minimapVisible}, found ${state.minimap.visible}`);
     if (state.command.rect.bottom > target.height + 1) failures.push(`command panel bottom ${state.command.rect.bottom} exceeds ${target.height}`);
     if (state.command.rect.right > target.width + 1 || state.command.rect.left < -1) failures.push('command panel exceeds horizontal viewport bounds');

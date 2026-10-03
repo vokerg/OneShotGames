@@ -150,3 +150,45 @@
     color: CanvasText;
   }
 }
+
+/* Operations desk. Keep the mission descriptions readable without parchment noise. */
+#missionSelect {
+  background:
+    radial-gradient(ellipse at 12% 0, #284d45 0, transparent 58%),
+    linear-gradient(135deg, #152522, #0a1415);
+}
+#missionSelect .book {
+  width: min(1040px, 94vw);
+  max-height: calc(100vh - 100px);
+  margin-top: 64px;
+  padding: 30px;
+  border: 1px solid #51675a;
+  border-image: none;
+  border-radius: 8px;
+  color: #e5ece7;
+  background: #13211f;
+  box-shadow: 0 24px 80px #0007;
+}
+#missionSelect .book h1 { text-align: left; color: #f1e5bd; font: 650 clamp(25px, 3vw, 40px)/1.15 var(--ui-body-font); letter-spacing: -.035em; }
+#missionSelect .book > p { text-align: left; color: #a7b8b1; font: 13px/1.6 var(--ui-body-font); max-width: 680px; }
+#missionSelect .book .disclaimer { color: #90a69a; font-size: 11px; }
+#missionSelect .missionCard {
+  margin: 12px 0; padding: 16px; gap: 18px;
+  border: 1px solid #354e42; border-image: none; border-radius: 5px;
+  background: #1d3029; color: #e5ece7;
+  box-shadow: none;
+}
+#missionSelect .missionCard:hover { border-color: #89a98a; filter: none; background: #243b31; }
+#missionSelect .missionCard h3 { color: #eee1b2; font-size: 17px; }
+#missionSelect .missionCard p { color: #c0cfc4; font-size: 12px; line-height: 1.55; }
+#missionSelect .missionCard small { color: #93b4a3; font: 10px/1.5 var(--ui-data-font); }
+#missionSelect .missionCard .missionPacing { color: #d5c58e; font-size: 11px; }
+#missionSelect .missionCard canvas { border: 1px solid #68816b; border-image: none; border-radius: 3px; }
+#missionSelect .missionCard button { background: #d7c488; color: #18271f; border-color: #e4d7a9; min-height: 40px; font-size: 12px; }
+#missionSelect .missionCard button:hover { background: #f0dfa5; }
+#missionSelect .skirmishSetupField select { padding: 7px; color: #e5ece7; background: #13231d; border: 1px solid #526b59; border-radius: 3px; }
+@media (max-width: 760px) { #missionSelect .book { padding: 18px; } }
+@media (forced-colors: active) {
+  #missionSelect .book, #missionSelect .missionCard, #missionSelect .missionCard button { background: Canvas; color: CanvasText; border-color: CanvasText; }
+  #missionSelect .book :is(h1, p, h3, small) { color: CanvasText; }
+}

@@ -1,3 +1,4 @@
+import { drawFallbackContact } from './fallback-contact.js';
 import { resolveUkrainianInfantryAtlasUnitId } from './ukrainian-infantry-atlas.js';
 import { resolveRussianInfantryAtlasUnitId } from './russian-infantry-atlas.js';
 import { resolveUkrainianVehicleAtlasUnitId } from './ukrainian-vehicle-atlas.js';
@@ -75,6 +76,7 @@ export function installReleaseArtFallbackGuard(RendererClass) {
   const guardedUnit = function guardedReleaseUnit(entity) {
     if (shouldSuppressProceduralFallback(this, entity)) {
       counters.suppressedUnits += 1;
+      drawFallbackContact(this, entity, statsFor(this, entity) ?? {});
       return Object.freeze({ suppressedProceduralFallback: true });
     }
     return previousUnit.call(this, entity);
@@ -82,7 +84,7 @@ export function installReleaseArtFallbackGuard(RendererClass) {
   const guardedPortrait = function guardedReleasePortrait(entity) {
     if (entity && shouldSuppressProceduralFallback(this, entity)) {
       counters.suppressedPortraits += 1;
-      this.px?.clearRect?.(0, 0, 144, 112);
+      drawFallbackContact(this, entity, statsFor(this, entity) ?? {}, { portrait: true });
       return Object.freeze({ suppressedProceduralFallback: true });
     }
     return previousPortrait.call(this, entity);

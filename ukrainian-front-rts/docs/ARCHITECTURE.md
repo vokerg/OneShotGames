@@ -238,6 +238,8 @@ New required fields, identity changes, renames, type changes, and semantic chang
 
 ### Rendering and UI
 
+`src/render/battlefield-terrain.js` presents the authoritative numeric runtime cells (open, mud, shelterbelt, rubble, water, road, blocked) using cached tile textures and explicit bridge cells. It does not infer movement or visibility from art. The minimap uses the same terrain meanings, and map labels draw after fog as HUD information. `release-ui.css` is the final presentation override for the battlefield HUD, economy, technology tree and campaign pages. See [Live visual readability repair](LIVE_VISUAL_READABILITY_REPAIR.md) for review evidence.
+
 `render.js` and visual-pass modules translate state into pixels. `ui.js` and focused UI modules translate state into information and invoke public commands. Focused presentation modules also own their browser-facing visibility, focus, and dismissal behavior; for example, `src/ui/objectives-panel.js` owns the non-modal Objectives toggle/Escape contract while battlefield commands remain owned by `src/input/`. Neither layer owns combat outcomes, resources, objectives, path decisions, production completion, research completion, or AI planning decisions. Shared read-only contracts such as combat-readability snapshots and research-queue descriptors may cross into these layers without transferring mutation ownership.
 
 ## State, command, and event flow

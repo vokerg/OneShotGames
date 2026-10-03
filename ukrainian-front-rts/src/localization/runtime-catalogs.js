@@ -147,6 +147,7 @@ const ENGLISH_RUNTIME_MESSAGES = {
     autoFireOff: 'Auto-fire OFF',
   },
   wave: {
+    operationActive: 'operation active',
     complete: 'assault plan complete',
     held: 'wave {wave} held',
     countdown: 'wave {wave} in {seconds}s',
@@ -307,6 +308,7 @@ const UKRAINIAN_RUNTIME_MESSAGES = {
     autoFireOff: 'Автовогонь ВИМК.',
   },
   wave: {
+    operationActive: 'операція триває',
     complete: 'план штурмів завершено',
     held: 'хвилю {wave} затримано',
     countdown: 'хвиля {wave} через {seconds} с',

@@ -259,7 +259,7 @@ try {
   assert(report.ukrainian.viewportNoticeHeading === 'Область перегляду менша за підтримуваний мінімум', 'Minimum viewport notice heading did not localize to the supported-minimum contract.');
   assert(report.ukrainian.viewportNoticeBody === 'Використовуйте щонайменше 960 × 600 CSS-пікселів або повноекранний режим. У підтримуваному компактному режимі другорядні панелі автоматично згортаються, щоб основні команди залишалися доступними.', 'Minimum viewport notice body did not localize to the compact-layout contract.');
   assert(report.ukrainian.missionButton === 'Почати операцію', 'Mission action did not rerender in Ukrainian.');
-  assert(report.ukrainian.missionPacing?.includes('Заплановано хвиль'), 'Mission pacing did not rerender in Ukrainian.');
+  assert(/^\d+ завдань$/.test(report.ukrainian.missionPacing || ''), 'Authored mission objective count did not rerender in Ukrainian.');
   assert(report.ukrainian.diagnostics?.fontCoverageReady === true, 'Browser font loading API did not confirm the Latin/Cyrillic stack.');
   assert(report.ukrainian.diagnostics?.fontProbeWidth > 0, 'Cyrillic font probe did not render measurable text.');
   assert(report.ukrainian.diagnostics?.styleMounted === true, 'Localization font/style owner is not mounted.');
@@ -283,6 +283,7 @@ try {
   report.restored = await snapshot();
   assert(report.restored.locale === 'en', 'Locale switch did not restore English.');
   assert(report.restored.missionButton === 'Begin Operation', 'Mission action did not restore English.');
+  assert(/^\d+ objectives$/.test(report.restored.missionPacing || ''), 'Authored objective count did not restore English.');
   assert(report.restored.fullscreenText === 'Fullscreen', 'Viewport fullscreen action did not restore English.');
   assert(report.restored.viewportNoticeHeading === 'Viewport below supported minimum', 'English minimum viewport heading did not restore.');
   assert(report.restored.viewportNoticeBody === 'Use at least 960 × 600 CSS pixels or enter fullscreen. Supported compact layouts automatically collapse secondary panels to keep core commands reachable.', 'English minimum viewport guidance did not restore.');
