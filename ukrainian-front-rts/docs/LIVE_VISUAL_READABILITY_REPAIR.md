@@ -90,3 +90,10 @@ first mission), and
 captures each battlefield at the minimum and maximum wheel-zoom bounds. It uses
 the existing campaign smoke finish diagnostic only in that isolated test profile.
 This is startup/render coverage, not a claim of completing every mission's gameplay.
+
+The expanded nine-map startup check found an existing fourth-operation debrief
+failure: later operation titles live in mission/briefing data. Next-operation
+titles now resolve those existing authored fields, as the operation selector
+already does. An assembled browser-runtime regression test completes the full
+nine-operation sequence, checks the next unlocked title, and verifies repeated
+UI refresh does not duplicate campaign results.

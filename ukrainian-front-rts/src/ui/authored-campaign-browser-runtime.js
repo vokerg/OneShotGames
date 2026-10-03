@@ -370,7 +370,7 @@ export function installAuthoredCampaignBrowserRuntime({
       timeline: [],
       nextOperations: next ? [{
         operationId: next.id,
-        title: next.title,
+        title: next.title ?? next.mission?.title ?? next.briefing?.title ?? next.id,
         summary: next.briefing?.summary ?? '',
         unlocked: game.campaignRuntime.snapshot().profile.unlockedOperationIds.includes(next.id),
         recommended: true,
