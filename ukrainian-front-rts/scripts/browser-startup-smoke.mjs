@@ -357,6 +357,7 @@ try {
   await call('Log.enable');
   await call('Page.enable');
   await call('Network.enable');
+  await call('Emulation.setDeviceMetricsOverride', { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
   await call('Page.navigate', { url: pageUrl });
   await waitFor(`document.readyState === 'complete' && document.querySelector('.missionCard button')`, 'mission selection to become interactive');
   await waitFor(
@@ -579,11 +580,17 @@ try {
     await waitFor(`window.__fieldsOfResolveAuthoredCampaign.snapshot().stage === 'battlefield' && window.__fieldsOfResolveAuthoredCampaign.snapshot().activeOperationId === ${JSON.stringify(operationId)}`, `battlefield ${operationId}`);
     await waitFor(`window.__fieldsOfResolveComposition.visual().buildingAtlas.ready === true`, `building atlas ready ${operationId}`);
     const captures = [];
-    for (const [zoom, deltaY] of [['minimum', 120], ['maximum', -120]]) {
+    const zoomLevels = [];
+    if (!await evaluate(`document.elementFromPoint(640, 300) === document.querySelector('#game')`)) {
+      throw new Error(`Campaign zoom pointer is obstructed: ${operationId}`);
+    }
+    for (const [zoom, deltaY, expected] of [['minimum', 120, 0.55], ['maximum', -120, 1.45]]) {
       for (let step = 0; step < 24; step += 1) {
         await call('Input.dispatchMouseEvent', { type: 'mouseWheel', x: 640, y: 300, deltaX: 0, deltaY });
       }
       await evaluate(`new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))`, { awaitPromise: true });
+      await waitFor(`window.__fieldsOfResolveAuthoredCampaign.snapshot().cameraZoom === ${expected}`, `${zoom} camera zoom ${operationId}`);
+      zoomLevels.push({ bound: zoom, value: expected });
       const filename = `campaign-${index + 1}-${zoom}.png`;
       const shot = await call('Page.captureScreenshot', { format: 'png' });
       await writeFile(join(artifacts, filename), Buffer.from(shot.data, 'base64'));
@@ -591,7 +598,7 @@ try {
     }
     const campaign = await evaluate(`window.__fieldsOfResolveAuthoredCampaign.snapshot()`);
     if (!campaign.authoredMission || !campaign.mapId) throw new Error(`Invalid mounted campaign map: ${operationId}`);
-    state.missionReviews.push({ operationId, mapId: campaign.mapId, captures });
+    state.missionReviews.push({ operationId, mapId: campaign.mapId, zoomLevels, captures });
   }
   if (new Set(state.missionReviews.map(review => review.mapId)).size !== CAMPAIGN_OPERATION_IDS.length) {
     throw new Error('Campaign browser review did not mount nine distinct authored maps.');

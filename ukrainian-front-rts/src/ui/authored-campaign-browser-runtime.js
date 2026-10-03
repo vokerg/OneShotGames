@@ -482,6 +482,7 @@ export function installAuthoredCampaignBrowserRuntime({
         activeOperationId: activeOperation?.id ?? null,
         authoredMission: Boolean(game.mission?.authored),
         mapId: game.authoredMap?.id ?? null,
+        cameraZoom: game.camera?.z ?? null,
         operationCount: game.campaignRuntime.snapshot().operations.length,
         unlockedOperationIds: [...game.campaignRuntime.snapshot().profile.unlockedOperationIds],
         completedOperationIds: [...game.campaignRuntime.snapshot().profile.completedOperationIds],

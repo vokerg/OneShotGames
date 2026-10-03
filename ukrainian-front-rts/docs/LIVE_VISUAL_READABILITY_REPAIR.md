@@ -97,3 +97,8 @@ titles now resolve those existing authored fields, as the operation selector
 already does. An assembled browser-runtime regression test completes the full
 nine-operation sequence, checks the next unlocked title, and verifies repeated
 UI refresh does not duplicate campaign results.
+
+Campaign captures use a supported 1280×800 viewport. The smoke checks that the
+wheel pointer hits the battlefield canvas and asserts the observed camera bounds
+(0.55 and 1.45) through the existing campaign diagnostic before saving captures.
+It cannot pass by scrolling an overlay or leaving the camera unchanged.
