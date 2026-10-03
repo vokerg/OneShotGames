@@ -99,6 +99,7 @@ test('building art pass draws canonical atlas animation while preserving fallbac
   assert.equal(active.frameId, 'ua.command-post.active.frame');
   assert.equal(draws[0].animationId, 'ua.command-post.active');
   assert.equal(renderer.healthCalls, 1);
+  assert.equal(renderer.buildingAtlasStatus().drawCount, 1);
 
   renderer.building({
     id: 9,

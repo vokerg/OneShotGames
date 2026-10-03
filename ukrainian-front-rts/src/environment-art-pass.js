@@ -168,5 +168,5 @@ Renderer.prototype.buildingGhost = function buildingGhost() {
 };
 
 Renderer.prototype.render = function render() {
-  this.x.clearRect(0,0,innerWidth,innerHeight);this.terrain();this.g.nodes.forEach((node)=>this.resourceNode(node));this.g.buildings.slice().sort((a,b)=>a.y-b.y).forEach((building)=>this.building(building));this.buildingGhost();this.g.units.slice().sort((a,b)=>a.y-b.y).forEach((unit)=>this.unit(unit));this.effects();this.fog();this.mini();this.portrait(this.g.selectedEntities()[0]);
+  this.x.clearRect(0,0,innerWidth,innerHeight);this.terrain();this.g.nodes.forEach((node)=>this.resourceNode(node));this.g.buildings.slice().sort((a,b)=>a.y-b.y).forEach((building)=>this.building(building));this.buildingGhost();(this.g.buildingWrecks||[]).slice().sort((a,b)=>(a.position?.y??a.y??0)-(b.position?.y??b.y??0)).forEach(wreck=>this.buildingWreck(wreck));this.g.units.slice().sort((a,b)=>a.y-b.y).forEach((unit)=>this.unit(unit));this.effects();this.fog();this.mini();this.portrait(this.g.selectedEntities()[0]);
 };

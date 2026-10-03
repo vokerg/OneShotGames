@@ -141,7 +141,7 @@ export function installBuildingArtPass(RendererClass, { loadAtlases = loadBuildi
   const fallbackWreck = RendererClass.prototype.buildingWreck;
   if (typeof fallbackBuilding !== 'function') throw new TypeError('Renderer must expose building() before building atlas installation.');
 
-  const state = { status: 'loading', runtimes: null, error: null };
+  const state = { status: 'loading', runtimes: null, error: null, drawCount: 0 };
   Promise.resolve()
     .then(() => loadAtlases())
     .then((runtimes) => {
@@ -165,6 +165,7 @@ export function installBuildingArtPass(RendererClass, { loadAtlases = loadBuildi
     const resolved = drawAtlasAnimation(this, runtime, animationId, view, {
       elapsedMs: buildingAtlasElapsedMs(building, visualState, this.g.time),
     });
+    state.drawCount += 1;
     drawSelectionAndHealth(this, building, view);
     return resolved;
   }
@@ -209,7 +210,7 @@ export function installBuildingArtPass(RendererClass, { loadAtlases = loadBuildi
     return drawAtlasAnimation(this, runtime, animationId, view, { alpha });
   };
   RendererClass.prototype.buildingAtlasStatus = function buildingAtlasStatus() {
-    return statusRecord(state);
+    return { ...statusRecord(state), drawCount: state.drawCount };
   };
 
   const installation = Object.freeze({

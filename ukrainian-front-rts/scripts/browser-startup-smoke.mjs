@@ -566,7 +566,7 @@ try {
   const audioPassed = state.audio.mounted && state.audio.panelOpen && state.audio.panelClosed && state.audio.shellIsolated && state.audio.focusRestored && state.audio.requestedMusic === 0.37 && state.audio.persistedMusic === 0.37 && state.audio.effectiveMusic === 0.37 && state.audio.visualCue?.includes('Incoming attack') && state.audio.visualCueUrgency === 'critical';
   const menuPassed = state.menu.mounted && state.menu.panelOpen && state.menu.panelClosed && state.menu.shellIsolated && state.menu.controlsView && state.menu.destructiveConfirmation && state.menu.audioSettingsHandoff && state.menu.restoredAfterSettings && state.menu.focusRestored;
   const campaignPassed = state.campaign?.operationCount === 9 && state.campaign?.authoredMission === true && state.campaign?.mapId;
-  const buildingArtPassed = state.buildingAtlas?.ready === true && !state.buildingAtlas?.error;
+  const buildingArtPassed = state.buildingAtlas?.ready === true && state.buildingAtlas.drawCount > 0 && !state.buildingAtlas?.error;
   if (!state.title || !state.hidden || !state.canvas || !audioPassed || !menuPassed || !campaignPassed || !buildingArtPassed || failures.length) {
     try {
       const shot = await call('Page.captureScreenshot', { format: 'png' });
