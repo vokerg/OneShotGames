@@ -310,5 +310,5 @@ try {
   }
   if (!chromeExited) throw new Error('Chromium did not exit after forced localization-smoke teardown.');
   await new Promise((resolveClose) => server.close(resolveClose));
-  await rm(profile, { recursive: true, force: true });
+  await rm(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
 }

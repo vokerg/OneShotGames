@@ -60,7 +60,7 @@ for(const [teamKey,types] of Object.entries(roster)){
 }
 
 game.camera={x:innerWidth/2-origin.x*.85,y:innerHeight/2-origin.y*.85,z:.85};
-let paused=false,facing=1,valueCheck=false,last=performance.now(),templateStateIndex=0;
+let paused=false,facing=1,valueCheck=new URLSearchParams(location.search).get('value')==='1',last=performance.now(),templateStateIndex=0;
 let ukrainianStateIndex=0,ukrainianDirectionIndex=2,supportReviewPage=-1,buildingReview=false,buildingStateIndex=0;
 globalThis.__UFR169_BUILDING_REVIEW_ACTIVE__=false;
 let templateRuntime=null,templateLoadError=null;
@@ -263,6 +263,7 @@ addEventListener('keydown',event=>{
  if(event.key.toLowerCase()==='v')valueCheck=!valueCheck;
  if(event.key.toLowerCase()==='s')capture();
  if(event.code==='Space'){event.preventDefault();paused=!paused;for(const unit of game.units)unit.order=paused?null:{kind:'lab-motion'};}
+ document.querySelector('.panel')?.classList.toggle('hidden',buildingReview||supportReviewPage>=0);
 });
 addEventListener('resize',centerCamera);
 
