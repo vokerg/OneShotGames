@@ -6,6 +6,7 @@ import { delimiter, dirname, extname, isAbsolute, join, relative, resolve, sep }
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
+import { CAMPAIGN_OPERATION_IDS } from '../src/content/campaign/campaign-operation-registry.js';
 import { TUTORIAL_PROLOGUE_ID, TUTORIAL_STEPS } from '../src/content/campaign/tutorial-prologue.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -121,8 +122,8 @@ function call(method, params = {}, timeoutMilliseconds = 5000) {
   });
 }
 
-async function evaluate(expression) {
-  const evaluation = await call('Runtime.evaluate', { expression, returnByValue: true });
+async function evaluate(expression, { awaitPromise = false } = {}) {
+  const evaluation = await call('Runtime.evaluate', { expression, returnByValue: true, awaitPromise });
   if (evaluation.exceptionDetails) throw new Error(`Browser evaluation failed: ${evaluation.exceptionDetails.text || 'unknown error'}`);
   return evaluation.result?.value;
 }
@@ -557,6 +558,44 @@ try {
   state.battlefieldUtilities = battlefieldUtilities;
   state.battlefieldControls = battlefieldControls;
   state.battlefieldLayering = battlefieldLayering;
+
+  // This Chromium profile is disposable. Use the existing campaign diagnostic
+  // to unlock the next map without modifying the player's real saved campaign.
+  state.missionReviews = [];
+  for (const [index, operationId] of CAMPAIGN_OPERATION_IDS.entries()) {
+    if (index > 0) {
+      if (!await evaluate(`window.__fieldsOfResolveAuthoredCampaign.finish('victory')`)) {
+        throw new Error(`Cannot finish disposable campaign smoke operation before ${operationId}`);
+      }
+      await waitFor(`window.__fieldsOfResolveAuthoredCampaign.snapshot().stage === 'debrief'`, 'smoke debrief');
+      await evaluate(`document.querySelector('#returnOperations').click()`);
+      const selector = `[data-campaign-operation-id="${operationId}"] button:not([disabled])`;
+      await waitFor(`document.querySelector(${JSON.stringify(selector)})`, `unlocked ${operationId}`);
+      await evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`);
+      await waitFor(`document.querySelector('[data-campaign-briefing] button.primary')`, `briefing ${operationId}`);
+      await evaluate(`document.querySelector('[data-campaign-briefing] button.primary').click()`);
+    }
+    await waitFor(`window.__fieldsOfResolveAuthoredCampaign.snapshot().stage === 'battlefield' && window.__fieldsOfResolveAuthoredCampaign.snapshot().activeOperationId === ${JSON.stringify(operationId)}`, `battlefield ${operationId}`);
+    await waitFor(`window.__fieldsOfResolveComposition.visual().buildingAtlas.ready === true`, `building atlas ready ${operationId}`);
+    const captures = [];
+    for (const [zoom, deltaY] of [['minimum', 120], ['maximum', -120]]) {
+      for (let step = 0; step < 24; step += 1) {
+        await call('Input.dispatchMouseEvent', { type: 'mouseWheel', x: 640, y: 300, deltaX: 0, deltaY });
+      }
+      await evaluate(`new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))`, { awaitPromise: true });
+      const filename = `campaign-${index + 1}-${zoom}.png`;
+      const shot = await call('Page.captureScreenshot', { format: 'png' });
+      await writeFile(join(artifacts, filename), Buffer.from(shot.data, 'base64'));
+      captures.push(filename);
+    }
+    const campaign = await evaluate(`window.__fieldsOfResolveAuthoredCampaign.snapshot()`);
+    if (!campaign.authoredMission || !campaign.mapId) throw new Error(`Invalid mounted campaign map: ${operationId}`);
+    state.missionReviews.push({ operationId, mapId: campaign.mapId, captures });
+  }
+  if (new Set(state.missionReviews.map(review => review.mapId)).size !== CAMPAIGN_OPERATION_IDS.length) {
+    throw new Error('Campaign browser review did not mount nine distinct authored maps.');
+  }
+
   const failures = events.filter((event) =>
     event.method === 'Runtime.exceptionThrown' || event.method === 'Inspector.targetCrashed' ||
     (event.method === 'Log.entryAdded' && event.params?.entry?.level === 'error') ||
@@ -576,7 +615,7 @@ try {
   }
 
   await writeFile(join(artifacts, 'browser-startup-smoke.json'), JSON.stringify({ status: 'passed', state, warnings }, null, 2));
-  console.log(`[browser-smoke] authored mission started after runtime-aware tutorial onboarding: ${state.title}; production building atlas ready; audio settings and pause menu exercised; warnings: ${warnings.length}`);
+  console.log(`[browser-smoke] authored mission started after runtime-aware tutorial onboarding: ${state.title}; ${state.missionReviews.length} authored maps rendered at minimum/maximum zoom; production building atlas ready; audio settings and pause menu exercised; warnings: ${warnings.length}`);
 } catch (error) {
   await writeFile(join(artifacts, 'browser-startup.log'), `${logs.join('')}\n${error.stack}\n`);
   throw error;

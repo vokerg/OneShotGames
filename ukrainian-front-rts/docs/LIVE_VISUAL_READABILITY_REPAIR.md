@@ -83,3 +83,10 @@ This PR is refreshed onto that exact main revision.
 - Final-head CI covers authored mission startup and cross-browser presentation.
 - Warnings: existing Node module-type warnings and historical completion markers
   missing evidence levels. No simulation or save schema change is introduced.
+
+The final startup smoke now advances through all nine operations in its disposable
+Chromium profile, asserts distinct mounted maps and a ready atlas (with actual draws required in the
+first mission), and
+captures each battlefield at the minimum and maximum wheel-zoom bounds. It uses
+the existing campaign smoke finish diagnostic only in that isolated test profile.
+This is startup/render coverage, not a claim of completing every mission's gameplay.
