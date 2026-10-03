@@ -1,7 +1,8 @@
 import {Game} from './game.js';
 import {Renderer} from './render.js';
 import './art-pass.js';
-import {TEAM,UNIT_TYPES} from './config.js';
+import {installBuildingArtPass} from './render/building-art-pass.js';
+import {BUILDING_TYPES,TEAM,UNIT_TYPES} from './config.js';
 import {loadSpriteAtlas} from './render/sprite-atlas-runtime.js';
 import {TEMPLATE_UNIT_DIRECTIONS,TEMPLATE_UNIT_STATES,loadTemplateUnitAtlas} from './render/template-unit-atlas.js';
 import {
@@ -38,6 +39,7 @@ const game=new Game();
 game.start(0);
 game.units=[];game.buildings=[];game.nodes=[];game.effects=[];game.projectiles=[];game.selected.clear();
 
+installBuildingArtPass(Renderer);
 const renderer=new Renderer(game,canvas,document.querySelector('#minimap'),document.querySelector('#portrait'));
 renderer.fog=()=>{};
 renderer.mini=()=>{};
@@ -58,8 +60,9 @@ for(const [teamKey,types] of Object.entries(roster)){
 }
 
 game.camera={x:innerWidth/2-origin.x*.85,y:innerHeight/2-origin.y*.85,z:.85};
-let paused=false,facing=1,valueCheck=false,last=performance.now(),templateStateIndex=0;
-let ukrainianStateIndex=0,ukrainianDirectionIndex=2,supportReviewPage=-1;
+let paused=false,facing=1,valueCheck=new URLSearchParams(location.search).get('value')==='1',last=performance.now(),templateStateIndex=0;
+let ukrainianStateIndex=0,ukrainianDirectionIndex=2,supportReviewPage=-1,buildingReview=false,buildingStateIndex=0;
+globalThis.__UFR169_BUILDING_REVIEW_ACTIVE__=false;
 let templateRuntime=null,templateLoadError=null;
 let ukrainianInfantryRuntime=null,ukrainianInfantryLoadError=null;
 let russianInfantryRuntime=null,russianInfantryLoadError=null;
@@ -69,6 +72,9 @@ let supportVisualRuntime=null,supportVisualLoadError=null;
 const ukrainianInfantryLabels=['ENGINEERS','LINE','ANTI-ARMOR','RECON','CASEVAC','AIR DEFENSE','COMMAND'];
 const russianInfantryLabels=['ENGINEERS','COMMAND','LINE','ASSAULT','ANTI-ARMOR','RECON','MEDICAL','AIR DEFENSE'];
 const ukrainianVehicleLabels=['APC','IFV','MBT','RECOVERY','ENGINEERING'];
+const buildingTypes=['hq','depot','barracks','workshop'];
+const buildingLabels=['COMMAND','LOGISTICS','INFANTRY','MOTOR POOL'];
+const buildingReviewStates=['idle','active','damaged','critical','foundation','frame','fitout','destruction','rubble'];
 
 async function loadAtlasReviews(){
  const fallback=await loadSpriteAtlas(new URL('../assets/atlases/fallback.atlas.json',import.meta.url));
@@ -112,52 +118,52 @@ function reviewPanel({title,y,start,spacing,count,tint,height=84}){
  q.fillStyle='rgba(10,14,11,.88)';
  q.fillRect(Math.round(start-spacing*.58),Math.round(y-50),Math.round(spacing*count+spacing*.16),height);
  q.textAlign='center';q.font='bold 11px ui-monospace, monospace';q.fillStyle=tint;
- q.fillText(title,Math.round(canvas.width/2),Math.round(y-36));
+ q.fillText(title,Math.round(innerWidth/2),Math.round(y-36));
 }
 
 function drawTemplateReview(now){
  const q=renderer.x,state=TEMPLATE_UNIT_STATES[templateStateIndex];
- const spacing=Math.min(88,Math.max(58,(canvas.width-120)/TEMPLATE_UNIT_DIRECTIONS.length));
- const start=canvas.width/2-spacing*(TEMPLATE_UNIT_DIRECTIONS.length-1)/2,y=canvas.height-64;
+ const spacing=Math.min(88,Math.max(58,(innerWidth-120)/TEMPLATE_UNIT_DIRECTIONS.length));
+ const start=innerWidth/2-spacing*(TEMPLATE_UNIT_DIRECTIONS.length-1)/2,y=innerHeight-64;
  q.save();q.fillStyle='rgba(10,14,11,.84)';q.fillRect(Math.round(start-spacing*.55),Math.round(y-58),Math.round(spacing*TEMPLATE_UNIT_DIRECTIONS.length),86);
- q.textAlign='center';q.font='bold 11px ui-monospace, monospace';q.fillStyle='#f0cf71';q.fillText(`UFR-109 TEMPLATE · ${state.toUpperCase()}`,Math.round(canvas.width/2),Math.round(y-43));
+ q.textAlign='center';q.font='bold 11px ui-monospace, monospace';q.fillStyle='#f0cf71';q.fillText(`UFR-109 TEMPLATE · ${state.toUpperCase()}`,Math.round(innerWidth/2),Math.round(y-43));
  if(templateRuntime){
   for(let index=0;index<TEMPLATE_UNIT_DIRECTIONS.length;index+=1){
    const direction=TEMPLATE_UNIT_DIRECTIONS[index],x=start+index*spacing;
    templateRuntime.drawAnimation(q,state,{x,y,elapsedMs:paused?0:now,direction,scale:1.05});
    q.fillStyle='#c9c1a2';q.fillText(direction.toUpperCase(),Math.round(x),Math.round(y+17));
   }
- }else{q.fillStyle='#dfb49e';q.fillText(templateLoadError?'TEMPLATE ATLAS FAILED TO LOAD':'LOADING TEMPLATE ATLAS…',Math.round(canvas.width/2),Math.round(y));}
+ }else{q.fillStyle='#dfb49e';q.fillText(templateLoadError?'TEMPLATE ATLAS FAILED TO LOAD':'LOADING TEMPLATE ATLAS…',Math.round(innerWidth/2),Math.round(y));}
  q.restore();
 }
 
 function drawUkrainianInfantryReview(now){
  const q=renderer.x,state=UKRAINIAN_INFANTRY_STATES[ukrainianStateIndex%UKRAINIAN_INFANTRY_STATES.length],direction=UKRAINIAN_INFANTRY_DIRECTIONS[ukrainianDirectionIndex%UKRAINIAN_INFANTRY_DIRECTIONS.length];
- const spacing=Math.min(122,Math.max(82,(canvas.width-160)/UKRAINIAN_INFANTRY_UNIT_IDS.length));
- const start=canvas.width/2-spacing*(UKRAINIAN_INFANTRY_UNIT_IDS.length-1)/2,y=135;
+ const spacing=Math.min(122,Math.max(82,(innerWidth-160)/UKRAINIAN_INFANTRY_UNIT_IDS.length));
+ const start=innerWidth/2-spacing*(UKRAINIAN_INFANTRY_UNIT_IDS.length-1)/2,y=135;
  q.save();reviewPanel({title:`UFR-110 UKRAINIAN INFANTRY · ${state.toUpperCase()} · ${direction.toUpperCase()}`,y,start,spacing,count:UKRAINIAN_INFANTRY_UNIT_IDS.length,tint:'#8fc7e8'});
  if(ukrainianInfantryRuntime){for(let index=0;index<UKRAINIAN_INFANTRY_UNIT_IDS.length;index+=1){const unitId=UKRAINIAN_INFANTRY_UNIT_IDS[index],x=start+index*spacing;ukrainianInfantryRuntime.drawAnimation(q,ukrainianInfantryAnimationId(unitId,state),{x,y,elapsedMs:paused?0:now,direction,scale:1.08});q.fillStyle='#c9c1a2';q.font='bold 9px ui-monospace, monospace';q.fillText(ukrainianInfantryLabels[index],Math.round(x),Math.round(y+23));}}
- else{q.fillStyle='#dfb49e';q.fillText(ukrainianInfantryLoadError?'UKRAINIAN INFANTRY ATLAS FAILED TO LOAD':'LOADING UKRAINIAN INFANTRY ATLAS…',Math.round(canvas.width/2),Math.round(y));}
+ else{q.fillStyle='#dfb49e';q.fillText(ukrainianInfantryLoadError?'UKRAINIAN INFANTRY ATLAS FAILED TO LOAD':'LOADING UKRAINIAN INFANTRY ATLAS…',Math.round(innerWidth/2),Math.round(y));}
  q.restore();
 }
 
 function drawRussianInfantryReview(now){
  const q=renderer.x,state=RUSSIAN_INFANTRY_STATES[ukrainianStateIndex%RUSSIAN_INFANTRY_STATES.length],direction=RUSSIAN_INFANTRY_DIRECTIONS[ukrainianDirectionIndex%RUSSIAN_INFANTRY_DIRECTIONS.length];
- const spacing=Math.min(108,Math.max(72,(canvas.width-150)/RUSSIAN_INFANTRY_UNIT_IDS.length));
- const start=canvas.width/2-spacing*(RUSSIAN_INFANTRY_UNIT_IDS.length-1)/2,y=235;
+ const spacing=Math.min(108,Math.max(72,(innerWidth-150)/RUSSIAN_INFANTRY_UNIT_IDS.length));
+ const start=innerWidth/2-spacing*(RUSSIAN_INFANTRY_UNIT_IDS.length-1)/2,y=235;
  q.save();reviewPanel({title:`UFR-111 RUSSIAN INFANTRY · ${state.toUpperCase()} · ${direction.toUpperCase()}`,y,start,spacing,count:RUSSIAN_INFANTRY_UNIT_IDS.length,tint:'#dfb49e'});
  if(russianInfantryRuntime){for(let index=0;index<RUSSIAN_INFANTRY_UNIT_IDS.length;index+=1){const unitId=RUSSIAN_INFANTRY_UNIT_IDS[index],x=start+index*spacing;russianInfantryRuntime.drawAnimation(q,russianInfantryAnimationId(unitId,state),{x,y,elapsedMs:paused?0:now,direction,scale:1.08});q.fillStyle='#c9c1a2';q.font='bold 9px ui-monospace, monospace';q.fillText(russianInfantryLabels[index],Math.round(x),Math.round(y+23));}}
- else{q.fillStyle='#dfb49e';q.fillText(russianInfantryLoadError?'RUSSIAN INFANTRY ATLAS FAILED TO LOAD':'LOADING RUSSIAN INFANTRY ATLAS…',Math.round(canvas.width/2),Math.round(y));}
+ else{q.fillStyle='#dfb49e';q.fillText(russianInfantryLoadError?'RUSSIAN INFANTRY ATLAS FAILED TO LOAD':'LOADING RUSSIAN INFANTRY ATLAS…',Math.round(innerWidth/2),Math.round(y));}
  q.restore();
 }
 
 function drawUkrainianVehicleReview(now){
  const q=renderer.x,state=UKRAINIAN_VEHICLE_STATES[ukrainianStateIndex%UKRAINIAN_VEHICLE_STATES.length],direction=UKRAINIAN_VEHICLE_DIRECTIONS[ukrainianDirectionIndex%UKRAINIAN_VEHICLE_DIRECTIONS.length];
- const spacing=Math.min(150,Math.max(110,(canvas.width-220)/UKRAINIAN_VEHICLE_UNIT_IDS.length));
- const start=canvas.width/2-spacing*(UKRAINIAN_VEHICLE_UNIT_IDS.length-1)/2,y=350;
- q.save();q.fillStyle='rgba(10,14,11,.91)';q.fillRect(Math.round(start-spacing*.58),Math.round(y-58),Math.round(spacing*UKRAINIAN_VEHICLE_UNIT_IDS.length+spacing*.16),100);q.textAlign='center';q.font='bold 11px ui-monospace, monospace';q.fillStyle='#8fc7e8';q.fillText(`UFR-112 UKRAINIAN VEHICLES · ${state.toUpperCase()} · ${direction.toUpperCase()}`,Math.round(canvas.width/2),Math.round(y-42));
+ const spacing=Math.min(150,Math.max(110,(innerWidth-220)/UKRAINIAN_VEHICLE_UNIT_IDS.length));
+ const start=innerWidth/2-spacing*(UKRAINIAN_VEHICLE_UNIT_IDS.length-1)/2,y=350;
+ q.save();q.fillStyle='rgba(10,14,11,.91)';q.fillRect(Math.round(start-spacing*.58),Math.round(y-58),Math.round(spacing*UKRAINIAN_VEHICLE_UNIT_IDS.length+spacing*.16),100);q.textAlign='center';q.font='bold 11px ui-monospace, monospace';q.fillStyle='#8fc7e8';q.fillText(`UFR-112 UKRAINIAN VEHICLES · ${state.toUpperCase()} · ${direction.toUpperCase()}`,Math.round(innerWidth/2),Math.round(y-42));
  if(ukrainianVehicleRuntime){for(let index=0;index<UKRAINIAN_VEHICLE_UNIT_IDS.length;index+=1){const unitId=UKRAINIAN_VEHICLE_UNIT_IDS[index],x=start+index*spacing;ukrainianVehicleRuntime.drawAnimation(q,ukrainianVehicleAnimationId(unitId,state),{x,y,elapsedMs:paused?0:now,direction,scale:1.02});q.fillStyle='#c9c1a2';q.font='bold 9px ui-monospace, monospace';q.fillText(ukrainianVehicleLabels[index],Math.round(x),Math.round(y+31));}}
- else{q.fillStyle='#dfb49e';q.fillText(ukrainianVehicleLoadError?'UKRAINIAN VEHICLE ATLAS FAILED TO LOAD':'LOADING UKRAINIAN VEHICLE ATLAS…',Math.round(canvas.width/2),Math.round(y));}
+ else{q.fillStyle='#dfb49e';q.fillText(ukrainianVehicleLoadError?'UKRAINIAN VEHICLE ATLAS FAILED TO LOAD':'LOADING UKRAINIAN VEHICLE ATLAS…',Math.round(innerWidth/2),Math.round(y));}
  q.restore();
 }
 
@@ -167,11 +173,11 @@ function drawSupportReview(now){
  const state=SUPPORT_VISUAL_REQUIRED_STATES[ukrainianStateIndex%SUPPORT_VISUAL_REQUIRED_STATES.length];
  const direction=SUPPORT_VISUAL_REQUIRED_DIRECTIONS[ukrainianDirectionIndex%SUPPORT_VISUAL_REQUIRED_DIRECTIONS.length];
  const columns=Math.min(4,page.unitIds.length),rows=Math.ceil(page.unitIds.length/columns),left=120,right=120,top=125,bottom=70;
- const cellW=(canvas.width-left-right)/columns,cellH=(canvas.height-top-bottom)/Math.max(1,rows);
- q.save();q.fillStyle='rgba(7,10,8,.96)';q.fillRect(0,0,canvas.width,canvas.height);
+ const cellW=(innerWidth-left-right)/columns,cellH=(innerHeight-top-bottom)/Math.max(1,rows);
+ q.save();q.fillStyle='rgba(7,10,8,.96)';q.fillRect(0,0,innerWidth,innerHeight);
  q.textAlign='center';q.font='bold 14px ui-monospace, monospace';q.fillStyle=page.unitIds[0]?.startsWith('ua.')?'#8fc7e8':'#dfb49e';
- q.fillText(`UFR-114 ${page.label} · PAGE ${supportReviewPage+1}/${SUPPORT_VISUAL_REVIEW_PAGES.length} · ${state.toUpperCase()} · ${direction.toUpperCase()}`,Math.round(canvas.width/2),70);
- q.font='10px ui-monospace, monospace';q.fillStyle='#c9c1a2';q.fillText('P: next page / roster · U: lifecycle · R: direction · 1/2/3: zoom · V: grayscale · S: capture',Math.round(canvas.width/2),90);
+ q.fillText(`UFR-114 ${page.label} · PAGE ${supportReviewPage+1}/${SUPPORT_VISUAL_REVIEW_PAGES.length} · ${state.toUpperCase()} · ${direction.toUpperCase()}`,Math.round(innerWidth/2),70);
+ q.font='10px ui-monospace, monospace';q.fillStyle='#c9c1a2';q.fillText('P: next page / roster · U: lifecycle · R: direction · 1/2/3: zoom · V: grayscale · S: capture',Math.round(innerWidth/2),90);
  if(supportVisualRuntime){
   for(let index=0;index<page.unitIds.length;index+=1){
    const unitId=page.unitIds[index],column=index%columns,row=Math.floor(index/columns),x=left+cellW*(column+.5),y=top+cellH*(row+.48);
@@ -182,16 +188,64 @@ function drawSupportReview(now){
    q.fillStyle='#c9c1a2';q.font='9px ui-monospace, monospace';q.fillText(unitId,Math.round(x),Math.round(y+cellH*.27));
    q.fillStyle='#879183';q.fillText(`${catalog?.family??'unknown'} · ${catalog?.role??'unknown'}`,Math.round(x),Math.round(y+cellH*.35));
   }
- }else{q.fillStyle='#dfb49e';q.font='bold 14px ui-monospace, monospace';q.fillText(supportVisualLoadError?'SUPPORT ATLAS FAILED TO LOAD':'LOADING UFR-114 SUPPORT ATLAS…',Math.round(canvas.width/2),Math.round(canvas.height/2));}
+ }else{q.fillStyle='#dfb49e';q.font='bold 14px ui-monospace, monospace';q.fillText(supportVisualLoadError?'SUPPORT ATLAS FAILED TO LOAD':'LOADING UFR-114 SUPPORT ATLAS…',Math.round(innerWidth/2),Math.round(innerHeight/2));}
  q.restore();
+}
+
+function buildingReviewEntity(type,team,state,index,row,x,y){
+ const maxHp=BUILDING_TYPES[type].hp,entity={id:900+row*10+index,type,team,x,y,hp:maxHp,maxHp,queue:[],underConstruction:false,selected:false};
+ if(state==='active')entity.queue=[{type:'review'}];
+ if(state==='damaged')entity.hp=maxHp*.55;
+ if(state==='critical')entity.hp=maxHp*.2;
+ if(state==='destruction')entity.hp=0;
+ if(['foundation','frame','fitout'].includes(state)){
+  entity.underConstruction=true;
+  const fraction=state==='foundation'?.1:state==='frame'?.4:.8;
+  entity.hp=Math.max(1,maxHp*fraction);
+  entity.constructionProgress={requiredWork:100,appliedWork:fraction*100};
+ }
+ return entity;
+}
+
+function worldPointForScreen(x,y){return{x:(x-game.camera.x)/game.camera.z,y:(y-game.camera.y)/game.camera.z};}
+
+function drawBuildingReview(now){
+ const q=renderer.x,state=buildingReviewStates[buildingStateIndex%buildingReviewStates.length],status=renderer.buildingAtlasStatus?.();
+ q.save();q.fillStyle='#070a08';q.fillRect(0,0,innerWidth,innerHeight);
+ q.textAlign='center';q.font='bold 14px ui-monospace, monospace';q.fillStyle='#f0cf71';
+ q.fillText(`UFR-169 BUILDINGS · ${state.toUpperCase()} · ${status?.ready?'ATLAS READY':status?.error?'ATLAS ERROR':'LOADING'}`,Math.round(innerWidth/2),62);
+ q.font='10px ui-monospace, monospace';q.fillStyle='#c9c1a2';
+ q.fillText('B: roster · U: lifecycle · 1/2/3: zoom · V: grayscale · S: capture',Math.round(innerWidth/2),82);
+ q.restore();
+ const spacing=Math.min(205,Math.max(145,(innerWidth-220)/buildingTypes.length));
+ const start=innerWidth/2-spacing*(buildingTypes.length-1)/2;
+ for(const [row,team] of [TEAM.UA,TEAM.RU].entries()){
+  const screenY=185+row*245;
+  q.save();q.textAlign='center';q.font='bold 11px ui-monospace, monospace';q.fillStyle=team===TEAM.UA?'#8fc7e8':'#dfb49e';
+  q.fillText(team===TEAM.UA?'UKRAINE':'RUSSIA',Math.round(innerWidth/2),screenY-76);q.restore();
+  for(let index=0;index<buildingTypes.length;index+=1){
+   const screenX=start+index*spacing,world=worldPointForScreen(screenX,screenY),type=buildingTypes[index];
+   const entity=buildingReviewEntity(type,team,state,index,row,world.x,world.y);
+   if(state==='rubble'){
+    const prime=buildingReviewEntity(type,team,'idle',index,row,world.x,world.y+10000);
+    renderer.building(prime);
+    renderer.buildingWreck({id:`${prime.id}:rubble`,sourceEntityId:String(prime.id),position:world});
+   }else renderer.building(entity);
+   q.save();q.textAlign='center';q.font='bold 9px ui-monospace, monospace';q.fillStyle='#f0cf71';q.fillText(buildingLabels[index],Math.round(screenX),Math.round(screenY+72));
+   q.font='8px ui-monospace, monospace';q.fillStyle='#aeb7a9';q.fillText(type.toUpperCase(),Math.round(screenX),Math.round(screenY+85));q.restore();
+  }
+ }
+ globalThis.__UFR169_BUILDING_ART_LAB__=Object.freeze({
+  ready:Boolean(status?.ready),error:status?.error??null,state,zoom:game.camera.z,valueCheck,
+ });
 }
 
 function drawLabels(){
  const q=renderer.x,z=game.camera.z;q.save();q.textAlign='center';q.font='bold 11px ui-monospace, monospace';
  for(const unit of game.units){const s=renderer.sp(unit.x,unit.y),type=UNIT_TYPES[unit.type];q.fillStyle='rgba(10,14,11,.78)';q.fillRect(Math.round(s.x-58),Math.round(s.y+34*z),116,17);q.fillStyle=unit.team===TEAM.UA?'#8fc7e8':'#dfb49e';q.fillText(type.short||type.name,Math.round(s.x),Math.round(s.y+46*z));}
- q.textAlign='right';q.fillStyle='#f0cf71';q.fillText(valueCheck?'VALUE CHECK':'FULL COLOR',canvas.width-18,canvas.height-18);q.restore();
+ q.textAlign='right';q.fillStyle='#f0cf71';q.fillText(valueCheck?'VALUE CHECK':'FULL COLOR',innerWidth-18,innerHeight-18);q.restore();
 }
-function applyValueCheck(){if(!valueCheck)return;const q=renderer.x,image=q.getImageData(0,0,canvas.width,canvas.height),d=image.data;for(let i=0;i<d.length;i+=4){const y=Math.round(d[i]*.2126+d[i+1]*.7152+d[i+2]*.0722);d[i]=d[i+1]=d[i+2]=y;}q.putImageData(image,0,0);}
+function applyValueCheck(){canvas.style.filter=valueCheck?'grayscale(1)':'';}
 function capture(){
  const stamp=new Date().toISOString().replace(/[:.]/g,'-'),state=SUPPORT_VISUAL_REQUIRED_STATES[ukrainianStateIndex%SUPPORT_VISUAL_REQUIRED_STATES.length],direction=SUPPORT_VISUAL_REQUIRED_DIRECTIONS[ukrainianDirectionIndex%SUPPORT_VISUAL_REQUIRED_DIRECTIONS.length],link=document.createElement('a');
  const prefix=supportReviewPage>=0?`ufr-114-page-${supportReviewPage+1}`:'roster-template';
@@ -202,18 +256,21 @@ addEventListener('keydown',event=>{
  if(event.key==='1'||event.key==='2'||event.key==='3'){game.camera.z=event.key==='1'?.65:event.key==='2'?.85:1.15;centerCamera();}
  if(event.key.toLowerCase()==='f'){facing*=-1;for(const unit of game.units)unit.angle=facing>0?-Math.PI/2:Math.PI/2;}
  if(event.key.toLowerCase()==='t')templateStateIndex=(templateStateIndex+1)%TEMPLATE_UNIT_STATES.length;
- if(event.key.toLowerCase()==='u')ukrainianStateIndex=(ukrainianStateIndex+1)%SUPPORT_VISUAL_REQUIRED_STATES.length;
+ if(event.key.toLowerCase()==='u'){if(buildingReview)buildingStateIndex=(buildingStateIndex+1)%buildingReviewStates.length;else ukrainianStateIndex=(ukrainianStateIndex+1)%SUPPORT_VISUAL_REQUIRED_STATES.length;}
  if(event.key.toLowerCase()==='r')ukrainianDirectionIndex=(ukrainianDirectionIndex+1)%SUPPORT_VISUAL_REQUIRED_DIRECTIONS.length;
- if(event.key.toLowerCase()==='p')supportReviewPage=(supportReviewPage+2)%(SUPPORT_VISUAL_REVIEW_PAGES.length+1)-1;
+ if(event.key.toLowerCase()==='p'){buildingReview=false;globalThis.__UFR169_BUILDING_REVIEW_ACTIVE__=false;supportReviewPage=(supportReviewPage+2)%(SUPPORT_VISUAL_REVIEW_PAGES.length+1)-1;}
+ if(event.key.toLowerCase()==='b'){buildingReview=!buildingReview;globalThis.__UFR169_BUILDING_REVIEW_ACTIVE__=buildingReview;if(buildingReview)supportReviewPage=-1;}
  if(event.key.toLowerCase()==='v')valueCheck=!valueCheck;
  if(event.key.toLowerCase()==='s')capture();
  if(event.code==='Space'){event.preventDefault();paused=!paused;for(const unit of game.units)unit.order=paused?null:{kind:'lab-motion'};}
+ document.querySelector('.panel')?.classList.toggle('hidden',buildingReview||supportReviewPage>=0);
 });
 addEventListener('resize',centerCamera);
 
 function frame(now){
  const dt=Math.min(.033,(now-last)/1000);last=now;if(!paused)game.time+=dt;renderer.render();
- if(supportReviewPage>=0)drawSupportReview(now);
+ if(buildingReview)drawBuildingReview(now);
+ else if(supportReviewPage>=0)drawSupportReview(now);
  else{drawUkrainianInfantryReview(now);drawRussianInfantryReview(now);drawUkrainianVehicleReview(now);drawTemplateReview(now);drawLabels();}
  applyValueCheck();requestAnimationFrame(frame);
 }
