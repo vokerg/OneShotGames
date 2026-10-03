@@ -124,7 +124,7 @@ function call(method, params = {}, timeoutMilliseconds = 5000) {
 
 async function evaluate(expression, { awaitPromise = false } = {}) {
   const evaluation = await call('Runtime.evaluate', { expression, returnByValue: true, awaitPromise });
-  if (evaluation.exceptionDetails) throw new Error(`Browser evaluation failed: ${evaluation.exceptionDetails.text || 'unknown error'}`);
+  if (evaluation.exceptionDetails) throw new Error(`Browser evaluation failed: ${evaluation.exceptionDetails.exception?.description || evaluation.exceptionDetails.text || 'unknown error'}`);
   return evaluation.result?.value;
 }
 
@@ -564,6 +564,7 @@ try {
   state.missionReviews = [];
   for (const [index, operationId] of CAMPAIGN_OPERATION_IDS.entries()) {
     if (index > 0) {
+      logs.push(`[campaign] finishing ${CAMPAIGN_OPERATION_IDS[index - 1]} before ${operationId}\n`);
       if (!await evaluate(`window.__fieldsOfResolveAuthoredCampaign.finish('victory')`)) {
         throw new Error(`Cannot finish disposable campaign smoke operation before ${operationId}`);
       }
