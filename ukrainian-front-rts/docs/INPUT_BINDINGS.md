@@ -36,3 +36,17 @@ installBattlefieldInput({
 ```
 
 A future settings UI should persist only overrides, validate duplicate bindings for mutually exclusive actions, and pass the resolved overrides into the input installer. The input adapter remains responsible for keydown/keyup and blur cleanup; simulation and UI code should consume actions or public game commands rather than browser keys.
+
+## Gesture and focus behavior
+
+- Drag selection has a visible rectangle; Shift-drag adds living field units.
+- Only a selection gesture started on the battlefield can finish selection. A
+  force-fire click captured by its input owner no longer clears the selected force.
+- Releasing over the HUD clears drag state without issuing a selection through it.
+- Text fields, selects, editable content, and dialogs own their keyboard events.
+  Command-button activation keys remain native; Escape can still cancel a command.
+- Escape cancels construction or armed targeting before opening Pause on a later press.
+- Holding both aliases of a camera direction (for example W and Up) continues moving
+  until both release. Focus changes and browser blur clear held camera input.
+- Accepted right-click orders show a brief destination marker; Shift state is passed
+  explicitly to the public order command. Only left-clicks navigate the minimap.

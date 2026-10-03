@@ -1,3 +1,4 @@
+import { shouldIgnoreBattlefieldKey } from './keyboard-focus.js';
 import { WORLD } from '../config.js';
 import { appendOrder, replaceOrders } from './queued-orders.js';
 
@@ -92,6 +93,7 @@ export function createAttackGroundController(game) {
 
 export function installAttackGroundInput({ game, canvas, ui, windowTarget = window, key = 'f' }) {
   const onKeyDown = (event) => {
+    if (game.gameOver || shouldIgnoreBattlefieldKey(event)) return;
     if (String(event.key).toLowerCase() === key) {
       event.preventDefault();
       if (!event.repeat && game.armAttackGround()) ui.toast('Force-fire: left-click a battlefield point.');

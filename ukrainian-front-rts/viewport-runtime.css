@@ -63,11 +63,11 @@
  * Viewport mode is the final layout authority. Static minimap-alert rules are
  * intentionally loaded after styles.css and may restore `.minimapFrame` to
  * display:block; this runtime stylesheet is appended last and keeps secondary
- * tactical chrome collapsed whenever compact or minimum viewport mode is active.
+ * navigation available in compact layouts; the minimap is a core control.
  */
 :root[data-viewport-mode='compact'] #commandPanel > .minimapFrame,
 :root[data-viewport-mode='minimum'] #commandPanel > .minimapFrame {
-  display: none;
+  display: block;
 }
 
 :root[data-viewport-mode='minimum'] #topbar {
@@ -92,4 +92,20 @@
   .viewportNotice {
     transition: none;
   }
+}
+
+/* Retained compact minimaps need a wrapping filter layout inside their frame. */
+:root[data-viewport-mode='compact'] .minimapFilters,
+:root[data-viewport-mode='minimum'] .minimapFilters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  height: auto;
+  gap: 2px 4px;
+  font-size: 9px;
+}
+
+:root[data-viewport-mode='compact'] .minimapFilters label,
+:root[data-viewport-mode='minimum'] .minimapFilters label {
+  min-width: 0;
+  white-space: normal;
 }

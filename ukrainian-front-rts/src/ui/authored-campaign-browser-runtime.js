@@ -178,13 +178,13 @@ export function installAuthoredCampaignBrowserRuntime({
     const status = summary.completed ? 'COMPLETED' : summary.unlocked ? 'AVAILABLE' : 'LOCKED';
     body.append(
       element(documentTarget, 'h3', '', `${summary.order}. ${summary.title}`),
-      element(documentTarget, 'small', '', `${status} · ${operationMapId(operation)}`),
+      element(documentTarget, 'small', '', status),
       element(documentTarget, 'p', '', operation.briefing?.summary ?? 'Authored campaign operation.'),
       element(
         documentTarget,
         'p',
         'missionPacing',
-        `${ui.t('runtime.mission.plannedWaves', { count: 0 })} · ${operation.briefing?.objectives?.length ?? operation.mission?.objectiveDefinitions?.length ?? 0} objectives · scripted pressure`,
+        `${operation.briefing?.objectives?.length ?? operation.mission?.objectiveDefinitions?.length ?? 0} objectives`,
       ),
     );
     const begin = button(
@@ -260,7 +260,7 @@ export function installAuthoredCampaignBrowserRuntime({
     const body = element(documentTarget, 'div');
     body.append(
       element(documentTarget, 'h3', '', briefing.title),
-      element(documentTarget, 'small', '', `${briefing.difficulty.label.toUpperCase()} · ${briefing.mapPreview.mapId}`),
+      element(documentTarget, 'small', '', briefing.difficulty.label.toUpperCase()),
       element(documentTarget, 'p', '', briefing.summary),
       element(documentTarget, 'strong', '', 'Objectives'),
     );
@@ -454,9 +454,7 @@ export function installAuthoredCampaignBrowserRuntime({
 
   ui.updateWaveStatus = function updateAuthoredCampaignStatus() {
     if (!game.mission?.authored) return previousUpdateWaveStatus.call(this);
-    const pending = (game.missionScriptState?.pending ?? []).length;
-    const triggered = (game.missionScriptRecords ?? []).filter((record) => record.type === 'mission.trigger').length;
-    this.e.wave.textContent = `SCRIPTED OPERATION · ${triggered} triggers · ${pending} pending`;
+    this.e.wave.textContent = this.t('runtime.wave.operationActive');
   };
 
   ui.showEndgame = function showAuthoredCampaignEndgame() {

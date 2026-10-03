@@ -1,3 +1,4 @@
+import { resourceDisplayLabel } from './render/battlefield-terrain.js';
 import { Renderer } from './render.js';
 import { BUILDING_TYPES, TEAM } from './config.js';
 
@@ -159,7 +160,7 @@ Renderer.prototype.resourceNode = function resourceNode(node) {
   }else{
     px(q,-31*z,7*z,62*z,10*z,'#343944');px(q,-21*z,-7*z,24*z,17*z,'#5c6478');outline(q,-21*z,-7*z,24*z,17*z,z);px(q,-17*z,-3*z,16*z,5*z,'#8fa8c8');line(q,15*z,10*z,15*z,-37*z,'#a8adb0',3*z);line(q,2*z,-23*z,28*z,-23*z,'#a8adb0',2*z);q.strokeStyle='#91b0d8';q.lineWidth=Math.max(1,2*z);q.beginPath();q.arc(16*z,-27*z,12*z,Math.PI*1.15,Math.PI*1.85);q.stroke();line(q,15*z,-27*z,25*z,-35*z,'#91b0d8',2*z);px(q,22*z,5*z,13*z,12*z,'#786345');outline(q,22*z,5*z,13*z,12*z,z);
   }
-  q.globalAlpha=1;const labelWidth=Math.max(74,node.label.length*6.5)*z;px(q,-labelWidth/2,-48*z,labelWidth,16*z,'rgba(17,21,18,.88)');outline(q,-labelWidth/2,-48*z,labelWidth,16*z,z);q.font=`bold ${Math.max(8,Math.round(9*z))}px monospace`;q.textAlign='center';q.fillStyle=depleted?'#9b9480':'#f4e3a8';q.fillText(depleted?`${node.label} — depleted`:node.label,0,-37*z);px(q,-31*z,22*z,62*z,6*z,'#1c1d1a');px(q,-30*z,23*z,60*z*ratio,4*z,node.kind==='fuel'?'#c8893c':node.kind==='intel'?'#82a4cf':'#a7b0b2');q.restore();
+  q.globalAlpha=1;const label=resourceDisplayLabel(node,document.documentElement.lang);const labelWidth=Math.max(74,label.length*6.5)*z;px(q,-labelWidth/2,-48*z,labelWidth,16*z,'rgba(17,21,18,.88)');outline(q,-labelWidth/2,-48*z,labelWidth,16*z,z);q.font=`bold ${Math.max(8,Math.round(9*z))}px monospace`;q.textAlign='center';q.fillStyle=depleted?'#9b9480':'#f4e3a8';q.fillText(depleted?`${label} — depleted`:label,0,-37*z);px(q,-31*z,22*z,62*z,6*z,'#1c1d1a');px(q,-30*z,23*z,60*z*ratio,4*z,node.kind==='fuel'?'#c8893c':node.kind==='intel'?'#82a4cf':'#a7b0b2');q.restore();
 };
 
 Renderer.prototype.buildingGhost = function buildingGhost() {
@@ -168,5 +169,5 @@ Renderer.prototype.buildingGhost = function buildingGhost() {
 };
 
 Renderer.prototype.render = function render() {
-  this.x.clearRect(0,0,innerWidth,innerHeight);this.terrain();this.g.nodes.forEach((node)=>this.resourceNode(node));this.g.buildings.slice().sort((a,b)=>a.y-b.y).forEach((building)=>this.building(building));this.buildingGhost();(this.g.buildingWrecks||[]).slice().sort((a,b)=>(a.position?.y??a.y??0)-(b.position?.y??b.y??0)).forEach(wreck=>this.buildingWreck(wreck));this.g.units.slice().sort((a,b)=>a.y-b.y).forEach((unit)=>this.unit(unit));this.effects();this.fog();this.mini();this.portrait(this.g.selectedEntities()[0]);
+  this.x.clearRect(0,0,innerWidth,innerHeight);this.terrain();this.g.nodes.forEach((node)=>this.resourceNode(node));this.g.buildings.slice().sort((a,b)=>a.y-b.y).forEach((building)=>this.building(building));this.buildingGhost();(this.g.buildingWrecks||[]).slice().sort((a,b)=>(a.position?.y??a.y??0)-(b.position?.y??b.y??0)).forEach(wreck=>this.buildingWreck(wreck));this.g.units.slice().sort((a,b)=>a.y-b.y).forEach((unit)=>this.unit(unit));this.effects();this.fog();this.mapLabel();this.battlefieldFeedback();this.mini();this.portrait(this.g.selectedEntities()[0]);
 };

@@ -102,3 +102,29 @@ test('viewport culling keeps the configured safety margin', () => {
   assert.equal(isWorldPointVisible(renderer, -VISUAL_PERFORMANCE_BUDGETS.viewportMarginPx + 1, 20), true);
   assert.equal(isWorldPointVisible(renderer, -VISUAL_PERFORMANCE_BUDGETS.viewportMarginPx - 1, 20), false);
 });
+
+
+test('missing production sprites keep world contacts, selection and portraits visible', () => {
+  const Renderer = makeRendererClass();
+  const installation = installReleaseArtFallbackGuard(Renderer);
+  const renderer = new Renderer();
+  const calls = [];
+  const drawing = (surface) => Object.fromEntries(
+    ['save', 'restore', 'clearRect', 'fillRect', 'strokeRect', 'translate', 'beginPath', 'ellipse', 'moveTo', 'lineTo', 'stroke', 'fillText']
+      .map((method) => [method, (...args) => calls.push({ surface, method, args })]),
+  );
+  renderer.x = drawing('world');
+  renderer.px = drawing('portrait');
+  renderer.selection = (...args) => calls.push({ surface: 'world', method: 'selection', args });
+  const entity = { type: 'uaTank', team: 0, x: 100, y: 120, selected: true };
+  const before = structuredClone(entity);
+  renderer.unit(entity);
+  renderer.portrait(entity);
+  assert.equal(renderer.calls.unit, 0);
+  assert.equal(renderer.calls.portrait, 0);
+  assert.ok(calls.some((call) => call.surface === 'world' && call.method === 'strokeRect'));
+  assert.ok(calls.some((call) => call.method === 'selection' && call.args[0] === entity));
+  assert.ok(calls.some((call) => call.surface === 'portrait' && call.method === 'fillText'));
+  assert.deepEqual(entity, before);
+  installation.restore();
+});

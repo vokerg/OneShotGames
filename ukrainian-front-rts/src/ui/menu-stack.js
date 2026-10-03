@@ -488,6 +488,8 @@ export function installMenuStack({
   const onKeyDown = (event) => {
     if (!state.snapshot().open) {
       if (event.key === 'Escape' && missionActive() && !anotherEscapeOwnerOpen()) {
+        // Let the input owner cancel targeting before a later Escape opens Pause.
+        if (game.pendingBuild || game.mouse?.attackMove || game.pendingTacticalCommand || game.isAttackGroundArmed?.()) return;
         event.preventDefault?.();
         event.stopImmediatePropagation?.();
         open();

@@ -120,7 +120,8 @@ function normalizeLegacyArtifacts(value) {
 
 export function translateLiveRuntimeText(value, locale = 'en') {
   if (locale !== 'uk') return String(value ?? '');
-  return normalizeLegacyArtifacts(legacyTranslate(value, locale));
+  return normalizeLegacyArtifacts(legacyTranslate(value, locale))
+    .replace(/^(\d+) objectives$/, '$1 завдань');
 }
 
 function localeOf(documentTarget) {
